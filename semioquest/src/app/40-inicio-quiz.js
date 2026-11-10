@@ -154,6 +154,11 @@ function zu() {
               children: [
                 s.jsxs("a", {
                   className: "mini ia",
+                  href: "#/ia/preceptor",
+                  children: [s.jsx(q, { n: "grad" }), s.jsx("b", { children: "Preceptor" }), s.jsx("small", { children: "dúvidas com fontes da biblioteca" })],
+                }),
+                s.jsxs("a", {
+                  className: "mini ia",
                   href: "#/jogo/novo-caso",
                   children: [s.jsx(q, { n: "spark" }), s.jsx("b", { children: "Paciente inédito" }), s.jsx("small", { children: "caso gerado na hora" })],
                 }),
@@ -162,12 +167,17 @@ function zu() {
                   href: "#/jogo/ia/fraquezas",
                   children: [s.jsx(q, { n: "flag" }), s.jsx("b", { children: "Treino nas fraquezas" }), s.jsx("small", { children: "questões sob medida" })],
                 }),
-                t &&
-                  s.jsxs("a", {
-                    className: "mini ia",
-                    href: `#/jogo/ia/topico/${t.id}`,
-                    children: [s.jsx(q, { n: "chat" }), s.jsx("b", { children: "Questões do tópico" }), s.jsx("small", { children: t.titulo })],
-                  }),
+                t
+                  ? s.jsxs("a", {
+                      className: "mini ia",
+                      href: `#/jogo/ia/topico/${t.id}`,
+                      children: [s.jsx(q, { n: "chat" }), s.jsx("b", { children: "Questões do tópico" }), s.jsx("small", { children: t.titulo })],
+                    })
+                  : s.jsxs("a", {
+                      className: "mini ia",
+                      href: "#/ia/osce",
+                      children: [s.jsx(q, { n: "clock" }), s.jsx("b", { children: "Circuito OSCE" }), s.jsx("small", { children: "4 estações com nota final" })],
+                    }),
               ],
             }),
           ],
@@ -190,6 +200,10 @@ function zu() {
           children: [
             s.jsxs("a", {
               className: "mini",
+              href: "#/jogo/simulado",
+              children: [s.jsx(q, { n: "target" }), s.jsx("b", { children: "Simulado de prova" }), s.jsxs("small", { children: [O.questoes.length, " vinhetas"] })],
+            }),            s.jsxs("a", {
+              className: "mini",
               href: "#/jogar",
               children: [s.jsx(q, { n: "body" }), s.jsx("b", { children: "Paciente Virtual" }), s.jsxs("small", { children: [O.casos.length, " casos"] })],
             }),
@@ -211,6 +225,11 @@ function zu() {
                 s.jsx("b", { children: "Caderno de Quadros" }),
                 s.jsxs("small", { children: [ra.quadros.length, " quadros"] }),
               ],
+            }),
+            s.jsxs("a", {
+              className: "mini",
+              href: "#/jogo/sindrome",
+              children: [s.jsx(q, { n: "puzzle" }), s.jsx("b", { children: "Monte a Síndrome" }), s.jsxs("small", { children: [O.sindromes.length, " tabelas"] })],
             }),
           ],
         }),

@@ -62,6 +62,15 @@ function Du() {
           children: [
             s.jsxs("a", {
               className: "gtile",
+              href: "#/jogo/simulado",
+              children: [
+                s.jsx(q, { n: "target", size: 26 }),
+                s.jsx("b", { children: "Simulado de prova" }),
+                s.jsxs("small", { children: [O.questoes.length, " vinhetas clínicas com explicação, por sistema"] }),
+              ],
+            }),
+            s.jsxs("a", {
+              className: "gtile",
               href: "#/jogo/estetoscopio/quiz",
               children: [
                 s.jsx(q, { n: "ear", size: 26 }),

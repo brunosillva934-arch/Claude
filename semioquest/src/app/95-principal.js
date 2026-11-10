@@ -59,6 +59,8 @@ function R1(a) {
           return { el: s.jsx(I1, { id: i[2] }, a), tab: "jogar", full: !0 };
         case "desafio":
           return { el: s.jsx(N1, {}, a), tab: "home", full: !0 };
+        case "simulado":
+          return i[2] ? { el: s.jsx(Simulado, { sis: i[2] }, a), tab: "jogar", full: !0 } : { el: s.jsx(Simulado, {}), tab: "jogar" };
         case "quadro":
           return { el: s.jsx(T1, { num: i[2] }, a), tab: "jogar", full: !0 };
         case "novo-caso":

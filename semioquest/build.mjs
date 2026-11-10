@@ -307,6 +307,8 @@ D.sindromes = porId(base.sindromes, await extra("sindromes"), "sindromes");
   const add = (await extra("caderno-vinculos")) || {};
   D.caderno = { ...base.caderno, topicos: { ...base.caderno.topicos, ...(add.topicos || {}) }, modulos: { ...base.caderno.modulos, ...(add.modulos || {}) } };
 }
+for (const [k, lista] of [...Object.entries(D.caderno.topicos), ...Object.entries(D.caderno.modulos)])
+  for (const n of lista) if (!base.caderno.quadros.some((q) => q.num === n)) erro(`caderno-vinculos: ${k} aponta para quadro inexistente ${n}`);
 // questões de banco fixo (simulados) e estações prontas
 D.questoes = (await extra("questoes")) || [];
 
