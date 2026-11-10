@@ -1,0 +1,251 @@
+/* Acréscimos da versão 2: destaques nos tópicos, estações novas, competências, voz e preceptor. */
+.sq-boot {
+  padding: 48px 20px;
+  text-align: center;
+  color: var(--muted);
+}
+.prose h4 {
+  margin: 14px 0 4px;
+  font-size: 1em;
+  font-weight: 700;
+}
+.prose li > ul {
+  margin: 2px 0;
+}
+.prose code {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.9em;
+  background: var(--brand-soft);
+  padding: 1px 5px;
+  border-radius: 5px;
+}
+/* Destaques: dica, atenção, evidência, pérola, prova */
+.cx {
+  margin: 10px 0;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: var(--brand-soft);
+}
+.cx-t {
+  display: block;
+  font-size: 0.72em;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--brand);
+  margin-bottom: 2px;
+}
+.cx > p {
+  margin: 2px 0;
+}
+.cx-alerta {
+  background: var(--bad-soft);
+}
+.cx-alerta .cx-t {
+  color: var(--bad);
+}
+.cx-evidencia {
+  background: var(--ia-soft);
+}
+.cx-evidencia .cx-t {
+  color: var(--ia);
+}
+.cx-perola {
+  background: var(--warn-soft);
+}
+.cx-perola .cx-t {
+  color: var(--warn);
+}
+.cx-prova {
+  background: var(--accent-soft);
+}
+.cx-prova .cx-t {
+  color: var(--accent);
+}
+
+/* Competências (barras) */
+.comp {
+  display: grid;
+  gap: 8px;
+  margin: 8px 0 4px;
+}
+.comp-l {
+  display: grid;
+  grid-template-columns: minmax(0, 9.5em) minmax(0, 1fr) 2.6em;
+  gap: 8px;
+  align-items: center;
+  font-size: 0.86em;
+}
+.comp-l > span:first-child {
+  overflow-wrap: anywhere;
+}
+.comp-b {
+  height: 9px;
+  border-radius: 99px;
+  background: var(--line);
+  overflow: hidden;
+}
+.comp-b > i {
+  display: block;
+  height: 100%;
+  border-radius: 99px;
+  background: var(--brand2);
+}
+.comp-b > i.warn {
+  background: var(--warn);
+}
+.comp-b > i.bad {
+  background: var(--bad);
+}
+.comp-l > b {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.comp-n {
+  font-size: 0.8em;
+  color: var(--muted);
+  margin: 0;
+}
+
+/* Momentos-chave da correção */
+.momentos {
+  display: grid;
+  gap: 8px;
+  margin: 6px 0;
+}
+.momento {
+  border-left: 3px solid var(--line);
+  padding: 2px 0 2px 10px;
+  font-size: 0.92em;
+}
+.momento.bom {
+  border-color: var(--ok);
+}
+.momento.melhorar {
+  border-color: var(--warn);
+}
+.momento.critico {
+  border-color: var(--bad);
+}
+.momento q {
+  display: block;
+  font-style: italic;
+  quotes: "“" "”";
+}
+.momento small {
+  color: var(--muted);
+}
+.critico-box {
+  background: var(--bad-soft);
+  border-radius: 12px;
+  padding: 10px 14px;
+  margin: 8px 0;
+}
+.critico-box b {
+  color: var(--bad);
+}
+.critico-box ul {
+  margin: 4px 0 0;
+  padding-left: 18px;
+}
+
+/* Voz */
+.voz-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  padding: 6px 16px 0;
+  font-size: 0.82em;
+  color: var(--muted);
+}
+.voz-bar label {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  cursor: pointer;
+}
+.iconbtn.mic.on {
+  background: var(--bad);
+  color: #fff;
+  animation: sq-pulso 1.2s ease-in-out infinite;
+}
+@keyframes sq-pulso {
+  50% {
+    opacity: 0.6;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .iconbtn.mic.on {
+    animation: none;
+  }
+}
+.falando {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+  color: var(--ia);
+  font-size: 0.8em;
+}
+
+/* Perfil do paciente e seletores extras nas estações */
+.seletor {
+  display: grid;
+  gap: 6px;
+  margin: 6px 0 2px;
+}
+.seletor small {
+  color: var(--muted);
+}
+
+/* Estação de ausculta */
+.ausculta-card {
+  display: grid;
+  gap: 10px;
+  justify-items: start;
+}
+.ausculta-card .som-linha {
+  width: 100%;
+}
+
+/* Preceptor (conversa geral) */
+.prec-fontes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 4px 0 2px;
+}
+.prec-fontes a {
+  font-size: 0.78em;
+  padding: 3px 9px;
+  border-radius: 99px;
+  background: var(--brand-soft);
+  color: var(--brand);
+  text-decoration: none;
+  font-weight: 600;
+}
+.prec-modos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 8px 0;
+}
+
+/* Banco de questões */
+.qb-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 6px 0;
+}
+.novo-tag {
+  font-size: 0.68em;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: var(--accent-soft);
+  color: var(--accent);
+  padding: 2px 7px;
+  border-radius: 99px;
+  margin-left: 6px;
+  vertical-align: middle;
+}

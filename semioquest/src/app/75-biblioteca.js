@@ -219,7 +219,7 @@ function Vx({ id: a }) {
               "section",
               {
                 id: `s${b}`,
-                className: "tsec tsec-" + h.titulo.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").split(" ")[0],
+                className: "tsec" + (/^como cai/i.test(h.titulo) ? " tsec-como" : /^armadilha/i.test(h.titulo) ? " tsec-armadilhas" : ""),
                 children: [s.jsx("h2", { children: h.titulo }), s.jsx(Ba, { html: h.html })],
               },
               b,

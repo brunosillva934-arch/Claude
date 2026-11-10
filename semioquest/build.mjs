@@ -274,11 +274,24 @@ D.sinais = porId(base.sinais, await extra("sinais"), "sinais").map((s) => ({
 D.sons = porId(base.sons, await extra("sons"), "sons");
 D.sequencias = porId(base.sequencias, await extra("sequencias"), "sequencias");
 D.sindromes = porId(base.sindromes, await extra("sindromes"), "sindromes");
-D.casos = porId(base.casos, await extra("casos"), "casos");
 {
   const add = (await extra("regioes")) || {};
   D.regioes = base.regioes.map((r) => ({ ...r, manobras: porId(r.manobras, add[r.id], `regioes.${r.id}`) }));
   for (const k of Object.keys(add)) if (!base.regioes.some((r) => r.id === k)) erro(`regioes: região inexistente ${k}`);
+}
+{
+  // casos novos podem vir resumidos: o build completa ids das perguntas e nome/tipo/região das manobras
+  const man = new Map();
+  for (const r of D.regioes) for (const m of r.manobras) man.set(m.id, { regiao: r.id, nome: m.nome, tipo: m.tipo });
+  const novosCasos = ((await extra("casos")) || []).map((c) => ({
+    nivel: "Clínico",
+    ensino: [],
+    revisar: [],
+    ...c,
+    anamnese: (c.anamnese || []).map((q, i) => ({ id: `q${i}`, nota: "", ...q })),
+    exame: (c.exame || []).map((e) => ({ som: null, chave: false, nota: "", ...(man.get(e.id) || {}), ...e })),
+  }));
+  D.casos = porId(base.casos, novosCasos, "casos");
 }
 // glossário
 {

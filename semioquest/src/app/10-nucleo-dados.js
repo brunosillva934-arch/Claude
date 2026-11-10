@@ -33,6 +33,7 @@ const tf = io(O.regioes),
     "mamas-genital": "Mamas e geniturinário",
     mental: "Estado mental",
     especiais: "Criança, gestante e idoso",
+    integracao: "Integração clínica",
   };
 for (const a of O.caderno.areas) lf[`area-${a.num}`] = `Caderno · ${a.titulo}`;
 const se = (a) => lf[a] || a,
