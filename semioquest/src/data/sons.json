@@ -1,0 +1,486 @@
+[
+ {
+  "id": "normal",
+  "nome": "Bulhas normais (B1 e B2)",
+  "categoria": "cardiaco",
+  "nivel": 1,
+  "topico": "cardio-bulhas",
+  "spec": {
+   "tipo": "coracao",
+   "fc": 72
+  },
+  "onde": "Todos os focos; B1 mais intensa no ápice, B2 na base",
+  "descricao": "Ritmo regular em dois tempos: <strong>B1</strong> (fechamento das valvas mitral e tricúspide, início da sístole), um intervalo curto (sístole), <strong>B2</strong> (fechamento das valvas aórtica e pulmonar) e um intervalo mais longo (diástole). No prontuário: <em>ritmo cardíaco regular em 2 tempos, bulhas normofonéticas, sem sopros</em>.",
+  "significado": "Padrão normal e referência para todos os outros sons. Para não confundir B1 com B2, palpe o pulso carotídeo: B1 coincide com o início do pulso."
+ },
+ {
+  "id": "b2-fisiologico",
+  "nome": "Desdobramento fisiológico de B2",
+  "categoria": "cardiaco",
+  "nivel": 2,
+  "topico": "cardio-bulhas",
+  "spec": {
+   "tipo": "coracao",
+   "fc": 70,
+   "desdobramento": "fisiologico",
+   "p2": 0.8
+  },
+  "onde": "Foco pulmonar (2º espaço intercostal esquerdo)",
+  "descricao": "Na inspiração, B2 se divide em dois componentes — A2 (aórtico) e P2 (pulmonar); na expiração, volta a soar única. A inspiração aumenta o retorno venoso ao coração direito e atrasa o fechamento da valva pulmonar.",
+  "significado": "Normal, sobretudo em crianças e jovens."
+ },
+ {
+  "id": "b2-amplo",
+  "nome": "Desdobramento amplo de B2",
+  "categoria": "cardiaco",
+  "nivel": 2,
+  "topico": "cardio-bulhas",
+  "spec": {
+   "tipo": "coracao",
+   "fc": 70,
+   "desdobramento": "amplo",
+   "p2": 0.85
+  },
+  "onde": "Foco pulmonar",
+  "descricao": "B2 já está desdobrada na expiração, e o desdobramento aumenta ainda mais na inspiração.",
+  "significado": "Atraso do componente pulmonar: bloqueio de ramo direito, estenose pulmonar. Também por antecipação de A2 (insuficiência mitral)."
+ },
+ {
+  "id": "b2-fixo",
+  "nome": "Desdobramento fixo de B2",
+  "categoria": "cardiaco",
+  "nivel": 3,
+  "topico": "cardio-bulhas",
+  "spec": {
+   "tipo": "coracao",
+   "fc": 72,
+   "desdobramento": "fixo",
+   "p2": 0.85
+  },
+  "onde": "Foco pulmonar",
+  "descricao": "B2 desdobrada de forma constante, com o mesmo intervalo na inspiração e na expiração.",
+  "significado": "Comunicação interatrial (CIA): o shunt equaliza o enchimento dos dois lados ao longo do ciclo respiratório."
+ },
+ {
+  "id": "b2-paradoxal",
+  "nome": "Desdobramento paradoxal de B2",
+  "categoria": "cardiaco",
+  "nivel": 3,
+  "topico": "cardio-bulhas",
+  "spec": {
+   "tipo": "coracao",
+   "fc": 72,
+   "desdobramento": "paradoxal",
+   "p2": 0.85
+  },
+  "onde": "Foco pulmonar e aórtico",
+  "descricao": "O inverso do normal: B2 desdobra na expiração e fica única na inspiração, porque P2 vem antes de A2.",
+  "significado": "Atraso do fechamento aórtico: bloqueio de ramo esquerdo, estenose aórtica grave, marca-passo no ventrículo direito."
+ },
+ {
+  "id": "b3",
+  "nome": "Terceira bulha (B3)",
+  "categoria": "cardiaco",
+  "nivel": 1,
+  "topico": "cardio-extras",
+  "spec": {
+   "tipo": "coracao",
+   "fc": 92,
+   "b3": 0.85
+  },
+  "onde": "Foco mitral, com a campânula e o paciente em decúbito lateral esquerdo",
+  "descricao": "Som grave e surdo logo após B2, no início da diástole, durante o enchimento ventricular rápido. Com taquicardia forma o <strong>ritmo de galope</strong> ventricular, como a palavra “Ken-tu-cky”.",
+  "significado": "Pode ser fisiológica em crianças, jovens atletas e gestantes. Depois dos 40 anos sugere disfunção ventricular (insuficiência cardíaca) ou sobrecarga de volume, como na insuficiência mitral importante."
+ },
+ {
+  "id": "b4",
+  "nome": "Quarta bulha (B4)",
+  "categoria": "cardiaco",
+  "nivel": 1,
+  "topico": "cardio-extras",
+  "spec": {
+   "tipo": "coracao",
+   "fc": 76,
+   "b4": 0.85
+  },
+  "onde": "Foco mitral, campânula, decúbito lateral esquerdo",
+  "descricao": "Som grave imediatamente antes de B1, no fim da diástole, produzido pela contração atrial contra um ventrículo rígido — como “Ten-nes-see”.",
+  "significado": "Ventrículo pouco complacente: hipertrofia por hipertensão ou estenose aórtica, cardiopatia isquêmica, cardiomiopatia hipertrófica. Não existe na fibrilação atrial, porque não há contração atrial eficaz."
+ },
+ {
+  "id": "ejecao-eao",
+  "nome": "Sopro sistólico de ejeção (estenose aórtica)",
+  "categoria": "cardiaco",
+  "nivel": 1,
+  "topico": "cardio-sopros",
+  "spec": {
+   "tipo": "coracao",
+   "fc": 70,
+   "a2": 0.45,
+   "sopros": [
+    {
+     "fase": "sis",
+     "forma": "diamante",
+     "amp": 1.1,
+     "pico": 0.55
+    }
+   ]
+  },
+  "onde": "Foco aórtico (2º espaço intercostal direito), irradiando para as carótidas",
+  "descricao": "Sopro em crescendo-decrescendo (“em diamante”) entre B1 e B2, de timbre rude, que termina antes de B2. B2 pode estar hipofonética.",
+  "significado": "Estenose aórtica. Quanto mais grave, mais tardio o pico, mais fraca a B2 e mais lento o pulso (parvus et tardus)."
+ },
+ {
+  "id": "holo-im",
+  "nome": "Sopro holossistólico (insuficiência mitral)",
+  "categoria": "cardiaco",
+  "nivel": 1,
+  "topico": "cardio-sopros",
+  "spec": {
+   "tipo": "coracao",
+   "fc": 76,
+   "b1": 0.6,
+   "sopros": [
+    {
+     "fase": "sis",
+     "forma": "plato",
+     "amp": 0.95
+    }
+   ]
+  },
+  "onde": "Foco mitral (ápice), irradiando para a axila",
+  "descricao": "Sopro de intensidade constante (“em platô”) que ocupa toda a sístole, de B1 até B2, com timbre suave e aspirativo, como jato de vapor.",
+  "significado": "Insuficiência mitral. O mesmo padrão em borda esternal esquerda baixa, aumentando na inspiração, sugere insuficiência tricúspide; em borda esternal esquerda média com frêmito, comunicação interventricular."
+ },
+ {
+  "id": "diast-iao",
+  "nome": "Sopro diastólico aspirativo (insuficiência aórtica)",
+  "categoria": "cardiaco",
+  "nivel": 1,
+  "topico": "cardio-sopros",
+  "spec": {
+   "tipo": "coracao",
+   "fc": 72,
+   "sopros": [
+    {
+     "fase": "dia",
+     "forma": "decrescendo",
+     "amp": 0.85
+    }
+   ]
+  },
+  "onde": "Foco aórtico acessório (3º espaço intercostal esquerdo), com o diafragma, paciente sentado e inclinado para frente, em expiração",
+  "descricao": "Sopro suave e agudo, em decrescendo, que começa logo após B2 — lembra um “R” aspirado. É fácil de perder: procure com o paciente inclinado e em expiração.",
+  "significado": "Insuficiência aórtica. Costuma vir com pulso em martelo d&#39;água, pressão arterial divergente e sinais periféricos como Musset e Quincke."
+ },
+ {
+  "id": "ruflar-em",
+  "nome": "Ruflar diastólico (estenose mitral)",
+  "categoria": "cardiaco",
+  "nivel": 1,
+  "topico": "cardio-sopros",
+  "spec": {
+   "tipo": "coracao",
+   "fc": 76,
+   "b1": 1.6,
+   "estalido": 0.8,
+   "sopros": [
+    {
+     "fase": "dia",
+     "forma": "ruflar",
+     "amp": 1.2
+    }
+   ]
+  },
+  "onde": "Foco mitral, com a campânula, em decúbito lateral esquerdo",
+  "descricao": "B1 hiperfonética, <strong>estalido de abertura</strong> logo após B2 e um sopro grave, em ronco (“ruflar”), na diástole, com reforço pré-sistólico quando há ritmo sinusal.",
+  "significado": "Estenose mitral, quase sempre reumática. Quanto mais grave, mais perto de B2 fica o estalido. O reforço pré-sistólico desaparece na fibrilação atrial."
+ },
+ {
+  "id": "inocente",
+  "nome": "Sopro sistólico inocente",
+  "categoria": "cardiaco",
+  "nivel": 3,
+  "topico": "cardio-sopros",
+  "spec": {
+   "tipo": "coracao",
+   "fc": 84,
+   "sopros": [
+    {
+     "fase": "sis",
+     "forma": "curto",
+     "amp": 0.5,
+     "pico": 0.4
+    }
+   ]
+  },
+  "onde": "Borda esternal esquerda e foco pulmonar",
+  "descricao": "Sopro suave, curto, mesossistólico, de baixa intensidade (até 2+/6+), sem frêmito, com bulhas normais.",
+  "significado": "Comum em crianças, jovens, gestantes e estados hiperdinâmicos (febre, anemia, tireotoxicose). Sopro inocente nunca é diastólico, nunca tem frêmito e não vem com bulhas alteradas."
+ },
+ {
+  "id": "pvm",
+  "nome": "Clique mesossistólico e sopro telessistólico (prolapso mitral)",
+  "categoria": "cardiaco",
+  "nivel": 3,
+  "topico": "cardio-extras",
+  "spec": {
+   "tipo": "coracao",
+   "fc": 72,
+   "cliqueMeso": 0.9,
+   "sopros": [
+    {
+     "fase": "sis",
+     "forma": "tardio",
+     "amp": 0.75
+    }
+   ]
+  },
+  "onde": "Foco mitral",
+  "descricao": "Clique agudo no meio da sístole, seguido de um sopro no fim da sístole, que vai até B2.",
+  "significado": "Prolapso da valva mitral. Ficar em pé ou fazer Valsalva diminui o volume do ventrículo esquerdo, antecipa o clique e alonga o sopro; agachar faz o contrário."
+ },
+ {
+  "id": "atrito-pericardico",
+  "nome": "Atrito pericárdico",
+  "categoria": "cardiaco",
+  "nivel": 2,
+  "topico": "cardio-extras",
+  "spec": {
+   "tipo": "coracao",
+   "fc": 96,
+   "atrito": 1
+  },
+  "onde": "Borda esternal esquerda, com o paciente inclinado para frente, em expiração",
+  "descricao": "Ruído áspero e superficial, como couro raspado, com até três componentes por ciclo: sístole atrial, sístole ventricular e diástole. Pode mudar com a posição e de um dia para outro.",
+  "significado": "Pericardite aguda. Diferente do atrito pleural, persiste quando o paciente prende a respiração."
+ },
+ {
+  "id": "fa",
+  "nome": "Fibrilação atrial",
+  "categoria": "cardiaco",
+  "nivel": 2,
+  "topico": "cardio-bulhas",
+  "spec": {
+   "tipo": "coracao",
+   "fc": 108,
+   "irregular": true
+  },
+  "onde": "Todos os focos; compare com o pulso radial",
+  "descricao": "Ritmo <strong>irregularmente irregular</strong>: os intervalos entre batimentos variam sem padrão, e a intensidade de B1 muda de batimento para batimento. Não há B4.",
+  "significado": "Fibrilação atrial. O pulso radial pode ser menor que a frequência auscultada (déficit de pulso), porque batimentos com enchimento curto não geram onda palpável."
+ },
+ {
+  "id": "pca",
+  "nome": "Sopro contínuo (em maquinaria)",
+  "categoria": "cardiaco",
+  "nivel": 3,
+  "topico": "cardio-sopros",
+  "spec": {
+   "tipo": "coracao",
+   "fc": 80,
+   "sopros": [
+    {
+     "fase": "cont",
+     "forma": "continuo",
+     "amp": 0.85
+    }
+   ]
+  },
+  "onde": "Região infraclavicular esquerda",
+  "descricao": "Sopro que atravessa B2 sem interrupção, ocupando sístole e diástole, com intensidade máxima em torno de B2.",
+  "significado": "Persistência do canal arterial; também fístulas arteriovenosas."
+ },
+ {
+  "id": "mv-normal",
+  "nome": "Murmúrio vesicular normal",
+  "categoria": "pulmonar",
+  "nivel": 1,
+  "topico": "resp-ausculta",
+  "spec": {
+   "tipo": "pulmao",
+   "fr": 14,
+   "base": "vesicular"
+  },
+  "onde": "Maior parte do tórax, sobretudo bases e regiões axilares",
+  "descricao": "Som suave e de baixa frequência, ouvido durante toda a inspiração e só no início da expiração, que é curta e mais fraca.",
+  "significado": "Parênquima pulmonar normal e aerado. No prontuário: <em>murmúrio vesicular presente e simétrico, sem ruídos adventícios</em>."
+ },
+ {
+  "id": "traqueal",
+  "nome": "Som traqueal",
+  "categoria": "pulmonar",
+  "nivel": 3,
+  "topico": "resp-ausculta",
+  "spec": {
+   "tipo": "pulmao",
+   "fr": 14,
+   "base": "traqueal"
+  },
+  "onde": "Sobre a traqueia, no pescoço",
+  "descricao": "Som alto, áspero e oco, com inspiração e expiração de intensidade parecida, separadas por uma pausa.",
+  "significado": "Normal sobre a traqueia. É a referência para entender o sopro tubário: o mesmo tipo de som aparecendo sobre o pulmão."
+ },
+ {
+  "id": "broncovesicular",
+  "nome": "Som broncovesicular",
+  "categoria": "pulmonar",
+  "nivel": 3,
+  "topico": "resp-ausculta",
+  "spec": {
+   "tipo": "pulmao",
+   "fr": 14,
+   "base": "broncovesicular"
+  },
+  "onde": "Região esternal superior e interescapular",
+  "descricao": "Intermediário entre o brônquico e o vesicular: inspiração e expiração com duração e intensidade semelhantes.",
+  "significado": "Normal perto dos brônquios principais. Fora dessas áreas, sugere consolidação parcial."
+ },
+ {
+  "id": "sopro-tubario",
+  "nome": "Sopro tubário",
+  "categoria": "pulmonar",
+  "nivel": 1,
+  "topico": "resp-ausculta",
+  "spec": {
+   "tipo": "pulmao",
+   "fr": 22,
+   "base": "bronquico"
+  },
+  "onde": "Sobre área de consolidação",
+  "descricao": "Som brônquico, alto e agudo, com expiração longa e tão intensa quanto a inspiração, ouvido onde deveria haver murmúrio vesicular.",
+  "significado": "Consolidação com brônquio pérvio: o parênquima sólido transmite melhor o som da via aérea. Vem com frêmito toracovocal aumentado, macicez e broncofonia."
+ },
+ {
+  "id": "consolidacao",
+  "nome": "Sopro tubário com crepitações",
+  "categoria": "pulmonar",
+  "nivel": 2,
+  "topico": "resp-sindromes",
+  "spec": {
+   "tipo": "pulmao",
+   "fr": 24,
+   "base": "bronquico",
+   "crepFinas": 0.7
+  },
+  "onde": "Área de pneumonia lobar",
+  "descricao": "Sopro tubário acompanhado de crepitações no fim da inspiração.",
+  "significado": "Padrão típico da pneumonia lobar: alvéolos cheios de exsudato (crepitações) e parênquima consolidado transmitindo o som brônquico (sopro tubário)."
+ },
+ {
+  "id": "mv-diminuido",
+  "nome": "Murmúrio vesicular diminuído",
+  "categoria": "pulmonar",
+  "nivel": 1,
+  "topico": "resp-ausculta",
+  "spec": {
+   "tipo": "pulmao",
+   "fr": 16,
+   "base": "diminuido"
+  },
+  "onde": "Sobre a área afetada (ou difusamente)",
+  "descricao": "Murmúrio vesicular muito fraco ou quase inaudível.",
+  "significado": "Algo impede a geração ou a transmissão do som: derrame pleural, pneumotórax, atelectasia obstrutiva, enfisema, obesidade. Compare sempre com o lado oposto."
+ },
+ {
+  "id": "crep-finas",
+  "nome": "Crepitações finas",
+  "categoria": "pulmonar",
+  "nivel": 1,
+  "topico": "resp-ausculta",
+  "spec": {
+   "tipo": "pulmao",
+   "fr": 18,
+   "base": "vesicular",
+   "crepFinas": 1
+  },
+  "onde": "Bases pulmonares",
+  "descricao": "Estalidos curtos, agudos e numerosos no fim da inspiração, como cabelo atritado perto do ouvido ou velcro sendo aberto. Não mudam com a tosse.",
+  "significado": "Abertura súbita de pequenas vias aéreas e alvéolos colapsados ou com líquido: congestão pulmonar (insuficiência cardíaca), pneumonia, doença intersticial (fibrose)."
+ },
+ {
+  "id": "crep-grossas",
+  "nome": "Crepitações grossas",
+  "categoria": "pulmonar",
+  "nivel": 2,
+  "topico": "resp-ausculta",
+  "spec": {
+   "tipo": "pulmao",
+   "fr": 18,
+   "base": "vesicular",
+   "crepGrossas": 1
+  },
+  "onde": "Variável; acompanha as vias aéreas com secreção",
+  "descricao": "Estalidos mais graves, longos e menos numerosos, no início da inspiração e também na expiração. Podem mudar ou sumir com a tosse.",
+  "significado": "Secreção em vias aéreas de maior calibre: bronquite, bronquiectasias, DPOC com hipersecreção."
+ },
+ {
+  "id": "sibilos",
+  "nome": "Sibilos",
+  "categoria": "pulmonar",
+  "nivel": 1,
+  "topico": "resp-ausculta",
+  "spec": {
+   "tipo": "pulmao",
+   "fr": 22,
+   "base": "vesicular",
+   "amp": 0.55,
+   "ie": 3,
+   "sibilos": 1
+  },
+  "onde": "Difusos (asma, DPOC) ou localizados",
+  "descricao": "Sons musicais, agudos e contínuos, como um assobio, predominando na expiração, que fica prolongada. Costumam ser difusos e de vários tons (polifônicos).",
+  "significado": "Estreitamento de vias aéreas de médio e pequeno calibre: asma, DPOC, broncoespasmo; também congestão pulmonar. Sibilo localizado e fixo sugere obstrução focal (tumor, corpo estranho)."
+ },
+ {
+  "id": "roncos",
+  "nome": "Roncos",
+  "categoria": "pulmonar",
+  "nivel": 2,
+  "topico": "resp-ausculta",
+  "spec": {
+   "tipo": "pulmao",
+   "fr": 18,
+   "base": "vesicular",
+   "amp": 0.6,
+   "roncos": 1
+  },
+  "onde": "Difusos, sobre os brônquios maiores",
+  "descricao": "Sons contínuos e graves, como ronco, na inspiração e na expiração. Costumam mudar ou desaparecer com a tosse.",
+  "significado": "Secreção em vias aéreas de grande calibre: bronquite aguda, DPOC."
+ },
+ {
+  "id": "estridor",
+  "nome": "Estridor",
+  "categoria": "pulmonar",
+  "nivel": 2,
+  "topico": "resp-ausculta",
+  "spec": {
+   "tipo": "pulmao",
+   "fr": 24,
+   "base": "traqueal",
+   "amp": 0.45,
+   "estridor": 1
+  },
+  "onde": "Pescoço e traqueia — às vezes audível sem estetoscópio",
+  "descricao": "Som musical agudo e alto, predominantemente inspiratório.",
+  "significado": "Obstrução de via aérea alta (laringe ou traqueia): edema de glote, anafilaxia, corpo estranho, epiglotite, laringotraqueíte. É sinal de alerta."
+ },
+ {
+  "id": "atrito-pleural",
+  "nome": "Atrito pleural",
+  "categoria": "pulmonar",
+  "nivel": 2,
+  "topico": "resp-ausculta",
+  "spec": {
+   "tipo": "pulmao",
+   "fr": 18,
+   "base": "vesicular",
+   "amp": 0.7,
+   "atrito": 1
+  },
+  "onde": "Regiões axilares e bases, no local da dor",
+  "descricao": "Ruído áspero, como couro sendo dobrado, no fim da inspiração e no início da expiração. Não muda com a tosse e some quando o paciente prende a respiração.",
+  "significado": "Inflamação dos folhetos pleurais (pleurite) — em pneumonia, embolia com infarto pulmonar ou fase inicial de derrame. Tende a sumir quando o líquido separa os folhetos."
+ }
+]

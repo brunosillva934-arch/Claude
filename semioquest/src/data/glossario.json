@@ -1,0 +1,336 @@
+[
+ {
+  "termo": "Anasarca",
+  "def": "Edema generalizado, incluindo face, tronco e cavidades serosas.",
+  "sinonimos": [],
+  "id": "anasarca"
+ },
+ {
+  "termo": "Apneia",
+  "def": "Parada da respiração.",
+  "sinonimos": [],
+  "id": "apneia"
+ },
+ {
+  "termo": "Ascite",
+  "def": "Acúmulo de líquido livre na cavidade peritoneal.",
+  "sinonimos": [],
+  "id": "ascite"
+ },
+ {
+  "termo": "Baqueteamento digital",
+  "def": "Aumento das falanges distais com perda do ângulo entre a unha e a prega ungueal.",
+  "sinonimos": [
+   "dedos em baqueta",
+   "hipocratismo digital",
+   "unhas em vidro de relógio"
+  ],
+  "id": "baqueteamento-digital"
+ },
+ {
+  "termo": "Bradicardia",
+  "def": "Frequência cardíaca abaixo de 50–60 bpm, conforme a referência usada.",
+  "sinonimos": [],
+  "id": "bradicardia"
+ },
+ {
+  "termo": "Bradipneia",
+  "def": "Frequência respiratória abaixo do normal (no adulto, menos de 12 irpm).",
+  "sinonimos": [],
+  "id": "bradipneia"
+ },
+ {
+  "termo": "Broncofonia",
+  "def": "Voz falada auscultada com mais intensidade e nitidez que o normal sobre uma área do tórax.",
+  "sinonimos": [],
+  "id": "broncofonia"
+ },
+ {
+  "termo": "Bulhas",
+  "def": "Sons produzidos principalmente pelo fechamento das valvas cardíacas: B1 (mitral e tricúspide) e B2 (aórtica e pulmonar).",
+  "sinonimos": [
+   "sons cardíacos",
+   "B1",
+   "B2"
+  ],
+  "id": "bulhas"
+ },
+ {
+  "termo": "Cacifo",
+  "def": "Depressão que persiste após a compressão digital de uma área edemaciada.",
+  "sinonimos": [
+   "sinal de Godet",
+   "fóvea"
+  ],
+  "id": "cacifo"
+ },
+ {
+  "termo": "Cianose",
+  "def": "Coloração azulada da pele e das mucosas por aumento da hemoglobina reduzida nos capilares.",
+  "sinonimos": [],
+  "id": "cianose"
+ },
+ {
+  "termo": "Crepitações",
+  "def": "Ruídos adventícios descontínuos, curtos e explosivos. Finas: fim da inspiração; grossas: início da inspiração e expiração.",
+  "sinonimos": [
+   "estertores",
+   "estertores crepitantes",
+   "estertores subcrepitantes",
+   "crackles"
+  ],
+  "id": "crepitacoes"
+ },
+ {
+  "termo": "Dispneia",
+  "def": "Sensação subjetiva de dificuldade para respirar.",
+  "sinonimos": [
+   "falta de ar",
+   "cansaço",
+   "canseira"
+  ],
+  "id": "dispneia"
+ },
+ {
+  "termo": "Dispneia paroxística noturna",
+  "def": "Dispneia que acorda o paciente algumas horas depois de deitar e melhora ao sentar ou levantar; sugere congestão pulmonar.",
+  "sinonimos": [
+   "DPN"
+  ],
+  "id": "dispneia-paroxistica-noturna"
+ },
+ {
+  "termo": "Ectoscopia",
+  "def": "Avaliação geral do paciente antes do exame dos sistemas: estado geral, consciência, fácies, atitude, nutrição, hidratação, pele e mucosas.",
+  "sinonimos": [
+   "exame físico geral",
+   "somatoscopia",
+   "inspeção geral"
+  ],
+  "id": "ectoscopia"
+ },
+ {
+  "termo": "Egofonia",
+  "def": "Ressonância vocal com timbre anasalado, de cabra; o “i” falado soa como “ê”. Típica do limite superior de derrame pleural.",
+  "sinonimos": [],
+  "id": "egofonia"
+ },
+ {
+  "termo": "Eupneia",
+  "def": "Respiração normal, sem esforço, em frequência e ritmo normais.",
+  "sinonimos": [],
+  "id": "eupneia"
+ },
+ {
+  "termo": "Fácies",
+  "def": "Conjunto de traços da face que, em certas doenças, forma um padrão característico.",
+  "sinonimos": [],
+  "id": "facies"
+ },
+ {
+  "termo": "Fonese",
+  "def": "Intensidade de uma bulha: normofonética, hiperfonética (aumentada) ou hipofonética (diminuída).",
+  "sinonimos": [
+   "normofonese",
+   "hiperfonese",
+   "hipofonese"
+  ],
+  "id": "fonese"
+ },
+ {
+  "termo": "Frêmito",
+  "def": "Vibração palpável. Toracovocal: vibração da voz no tórax. Cardiovascular: vibração palpável de um sopro intenso (4+/6+ ou mais).",
+  "sinonimos": [],
+  "id": "fremito"
+ },
+ {
+  "termo": "Hemoptise",
+  "def": "Expectoração de sangue proveniente das vias aéreas inferiores.",
+  "sinonimos": [],
+  "id": "hemoptise"
+ },
+ {
+  "termo": "Hepatimetria",
+  "def": "Medida da altura do fígado pela percussão na linha hemiclavicular direita.",
+  "sinonimos": [],
+  "id": "hepatimetria"
+ },
+ {
+  "termo": "Hipocratismo",
+  "def": "Sinônimo de baqueteamento digital.",
+  "sinonimos": [
+   "baqueteamento"
+  ],
+  "id": "hipocratismo"
+ },
+ {
+  "termo": "Ictus cordis",
+  "def": "Impulso do ápice do ventrículo esquerdo contra a parede torácica, normalmente no 5º espaço intercostal esquerdo, na linha hemiclavicular.",
+  "sinonimos": [
+   "choque da ponta",
+   "impulso apical",
+   "ictus"
+  ],
+  "id": "ictus-cordis"
+ },
+ {
+  "termo": "Icterícia",
+  "def": "Coloração amarelada de pele, escleras e mucosas por aumento da bilirrubina.",
+  "sinonimos": [],
+  "id": "ictericia"
+ },
+ {
+  "termo": "Irpm",
+  "def": "Incursões respiratórias por minuto, unidade da frequência respiratória.",
+  "sinonimos": [],
+  "id": "irpm"
+ },
+ {
+  "termo": "Lúcido e orientado",
+  "def": "Paciente consciente, que sabe quem é, onde está e em que momento está.",
+  "sinonimos": [
+   "LOTE",
+   "orientado no tempo e no espaço"
+  ],
+  "id": "lucido-e-orientado"
+ },
+ {
+  "termo": "Macicez",
+  "def": "Som seco e sem ressonância à percussão, sobre estruturas sólidas ou líquidas.",
+  "sinonimos": [
+   "som maciço",
+   "submacicez"
+  ],
+  "id": "macicez"
+ },
+ {
+  "termo": "Murmúrio vesicular",
+  "def": "Som respiratório normal ouvido sobre a maior parte dos pulmões.",
+  "sinonimos": [
+   "MV",
+   "som vesicular"
+  ],
+  "id": "murmurio-vesicular"
+ },
+ {
+  "termo": "Ortopneia",
+  "def": "Dispneia ao deitar, que melhora ao elevar o tronco; o paciente usa vários travesseiros.",
+  "sinonimos": [],
+  "id": "ortopneia"
+ },
+ {
+  "termo": "Pectorilóquia",
+  "def": "Ausculta nítida das palavras faladas (fônica) ou sussurradas (afônica) através do tórax; indica consolidação.",
+  "sinonimos": [],
+  "id": "pectoriloquia"
+ },
+ {
+  "termo": "Pressão arterial divergente",
+  "def": "Diferença grande entre sistólica e diastólica, como na insuficiência aórtica.",
+  "sinonimos": [
+   "pressão de pulso alargada",
+   "PA divergente"
+  ],
+  "id": "pressao-arterial-divergente"
+ },
+ {
+  "termo": "Ritmo de galope",
+  "def": "Cadência de três tempos causada por B3 ou B4 associada a taquicardia, lembrando o galope de um cavalo.",
+  "sinonimos": [
+   "galope",
+   "B3",
+   "B4"
+  ],
+  "id": "ritmo-de-galope"
+ },
+ {
+  "termo": "Roncos",
+  "def": "Ruídos adventícios contínuos, graves, gerados por secreção em brônquios de grande calibre.",
+  "sinonimos": [],
+  "id": "roncos"
+ },
+ {
+  "termo": "Sibilos",
+  "def": "Ruídos adventícios contínuos, agudos e musicais, por estreitamento de vias aéreas.",
+  "sinonimos": [
+   "chiado",
+   "chieira",
+   "wheezing"
+  ],
+  "id": "sibilos"
+ },
+ {
+  "termo": "Sopro",
+  "def": "Ruído produzido por fluxo turbulento de sangue no coração ou nos vasos.",
+  "sinonimos": [
+   "murmur"
+  ],
+  "id": "sopro"
+ },
+ {
+  "termo": "Sopro tubário",
+  "def": "Som brônquico ouvido sobre o parênquima pulmonar, onde deveria haver murmúrio vesicular; indica consolidação.",
+  "sinonimos": [
+   "som brônquico patológico"
+  ],
+  "id": "sopro-tubario"
+ },
+ {
+  "termo": "Taquicardia",
+  "def": "Frequência cardíaca acima de 100 bpm no adulto.",
+  "sinonimos": [],
+  "id": "taquicardia"
+ },
+ {
+  "termo": "Taquipneia",
+  "def": "Frequência respiratória acima do normal (no adulto, mais de 20 irpm).",
+  "sinonimos": [],
+  "id": "taquipneia"
+ },
+ {
+  "termo": "Tiragem",
+  "def": "Retração inspiratória dos espaços intercostais, da fúrcula ou das fossas supraclaviculares por esforço respiratório.",
+  "sinonimos": [
+   "retração intercostal",
+   "uso de musculatura acessória"
+  ],
+  "id": "tiragem"
+ },
+ {
+  "termo": "Trepopneia",
+  "def": "Dispneia em um decúbito lateral que melhora no decúbito oposto.",
+  "sinonimos": [],
+  "id": "trepopneia"
+ },
+ {
+  "termo": "Platipneia",
+  "def": "Dispneia que surge ou piora na posição sentada ou em pé e melhora deitado.",
+  "sinonimos": [],
+  "id": "platipneia"
+ },
+ {
+  "termo": "Turgência jugular",
+  "def": "Distensão da veia jugular com o paciente a 45°, indicando pressão venosa central elevada.",
+  "sinonimos": [
+   "estase jugular",
+   "distensão jugular",
+   "TJ"
+  ],
+  "id": "turgencia-jugular"
+ },
+ {
+  "termo": "Visceromegalia",
+  "def": "Aumento do tamanho de uma víscera, como fígado ou baço.",
+  "sinonimos": [
+   "hepatomegalia",
+   "esplenomegalia"
+  ],
+  "id": "visceromegalia"
+ },
+ {
+  "termo": "Xantelasma",
+  "def": "Placas amareladas nas pálpebras por depósito de lipídios.",
+  "sinonimos": [],
+  "id": "xantelasma"
+ }
+]

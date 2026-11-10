@@ -1,0 +1,146 @@
+[
+ {
+  "id": "fundamentos",
+  "num": 1,
+  "titulo": "Fundamentos da semiologia",
+  "descricao": "Sinal, sintoma e síndrome; os quatro métodos do exame físico; instrumentos e a relação com o paciente.",
+  "icone": "steth",
+  "fase": 1,
+  "disponivel": true
+ },
+ {
+  "id": "anamnese",
+  "num": 2,
+  "titulo": "Anamnese",
+  "descricao": "A estrutura da história clínica, como caracterizar qualquer sintoma e como conduzir a entrevista.",
+  "icone": "clipboard",
+  "fase": 1,
+  "disponivel": true
+ },
+ {
+  "id": "sintomas",
+  "num": 3,
+  "titulo": "Sinais e sintomas gerais",
+  "descricao": "Febre, dor, edema, cianose, icterícia, palidez, dispneia e tosse — o que significam e como caracterizar.",
+  "icone": "thermo",
+  "fase": 1,
+  "disponivel": true
+ },
+ {
+  "id": "geral",
+  "num": 4,
+  "titulo": "Exame físico geral",
+  "descricao": "Ectoscopia completa — estado geral, fácies, atitude, nutrição, hidratação, pele, marcha e linfonodos.",
+  "icone": "eye",
+  "fase": 1,
+  "disponivel": true
+ },
+ {
+  "id": "vitais",
+  "num": 5,
+  "titulo": "Sinais vitais",
+  "descricao": "Pressão arterial, pulso, frequência e padrões respiratórios, temperatura e saturação de oxigênio.",
+  "icone": "gauge",
+  "fase": 1,
+  "disponivel": true
+ },
+ {
+  "id": "pele",
+  "num": 6,
+  "titulo": "Pele, fâneros e lesões elementares",
+  "descricao": "Lesões primárias e secundárias, alterações vasculares, unhas e cabelos.",
+  "icone": "skin",
+  "fase": 2,
+  "disponivel": false
+ },
+ {
+  "id": "cabeca-pescoco",
+  "num": 7,
+  "titulo": "Cabeça e pescoço",
+  "descricao": "Olhos, ouvidos, orofaringe, tireoide, linfonodos cervicais e vasos do pescoço.",
+  "icone": "eye",
+  "fase": 2,
+  "disponivel": false
+ },
+ {
+  "id": "respiratorio",
+  "num": 8,
+  "titulo": "Aparelho respiratório",
+  "descricao": "Anatomia de superfície, inspeção, palpação, percussão, ausculta e as grandes síndromes pleuropulmonares.",
+  "icone": "lungs",
+  "fase": 1,
+  "disponivel": true
+ },
+ {
+  "id": "cardiovascular",
+  "num": 9,
+  "titulo": "Aparelho cardiovascular",
+  "descricao": "Precórdio, pulso venoso, bulhas, sopros, valvopatias, insuficiência cardíaca e exame vascular periférico.",
+  "icone": "heart",
+  "fase": 1,
+  "disponivel": true
+ },
+ {
+  "id": "abdome",
+  "num": 10,
+  "titulo": "Abdome",
+  "descricao": "Inspeção, ausculta, percussão e palpação; fígado, baço, rins; sinais de irritação peritoneal e ascite.",
+  "icone": "abdomen",
+  "fase": 2,
+  "disponivel": false
+ },
+ {
+  "id": "neurologico",
+  "num": 11,
+  "titulo": "Neurológico",
+  "descricao": "Estado mental, nervos cranianos, força, tônus, reflexos, sensibilidade, coordenação e síndromes.",
+  "icone": "brain",
+  "fase": 2,
+  "disponivel": false
+ },
+ {
+  "id": "osteoarticular",
+  "num": 12,
+  "titulo": "Osteoarticular",
+  "descricao": "Método do exame articular e testes especiais de coluna, ombro, punho, quadril e joelho.",
+  "icone": "bone",
+  "fase": 3,
+  "disponivel": false
+ },
+ {
+  "id": "mamas-genital",
+  "num": 13,
+  "titulo": "Mamas, região inguinal e geniturinário",
+  "descricao": "Exame das mamas e axilas, hérnias, exame urológico e noções do exame ginecológico.",
+  "icone": "body",
+  "fase": 3,
+  "disponivel": false
+ },
+ {
+  "id": "mental",
+  "num": 14,
+  "titulo": "Exame do estado mental",
+  "descricao": "Semiologia psiquiátrica — consciência, orientação, pensamento, humor, sensopercepção e juízo.",
+  "icone": "brain",
+  "fase": 3,
+  "disponivel": false
+ },
+ {
+  "id": "especiais",
+  "num": 15,
+  "titulo": "Populações especiais",
+  "descricao": "Adaptações do exame em crianças, gestantes e idosos.",
+  "icone": "user",
+  "fase": 3,
+  "disponivel": false
+ },
+ {
+  "id": "integracao",
+  "num": 16,
+  "titulo": "Integração clínica",
+  "descricao": "Do achado à síndrome, modelos de descrição do exame no prontuário e apresentação de caso.",
+  "icone": "clipboard",
+  "fase": 3,
+  "disponivel": false
+ }
+]

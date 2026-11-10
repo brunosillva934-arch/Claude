@@ -1,0 +1,537 @@
+[
+ {
+  "id": "geral",
+  "nome": "Ectoscopia",
+  "vista": "botao",
+  "manobras": [
+   {
+    "id": "estado-geral",
+    "tipo": "inspecao",
+    "nome": "Estado geral e consciência",
+    "normal": "Bom estado geral, lúcido, orientado no tempo e no espaço, colaborativo."
+   },
+   {
+    "id": "facies",
+    "tipo": "inspecao",
+    "nome": "Fácies",
+    "normal": "Fácies atípica."
+   },
+   {
+    "id": "atitude",
+    "tipo": "inspecao",
+    "nome": "Atitude e decúbito",
+    "normal": "Decúbito dorsal indiferente, sem posição antálgica."
+   },
+   {
+    "id": "padrao-resp",
+    "tipo": "inspecao",
+    "nome": "Padrão respiratório à distância",
+    "normal": "Eupneico, sem uso de musculatura acessória, fala frases completas."
+   },
+   {
+    "id": "mucosas",
+    "tipo": "inspecao",
+    "nome": "Mucosas",
+    "normal": "Mucosas coradas, úmidas, anictéricas e acianóticas."
+   },
+   {
+    "id": "pele",
+    "tipo": "inspecao",
+    "nome": "Pele",
+    "normal": "Pele corada, morna, sem cianose, icterícia, petéquias ou lesões."
+   },
+   {
+    "id": "hidratacao",
+    "tipo": "palpacao",
+    "nome": "Hidratação e turgor",
+    "normal": "Hidratado: mucosas úmidas e turgor cutâneo preservado (prega desfaz de imediato)."
+   },
+   {
+    "id": "nutricional",
+    "tipo": "inspecao",
+    "nome": "Estado nutricional",
+    "normal": "Eutrófico, panículo adiposo e massas musculares preservados."
+   },
+   {
+    "id": "marcha",
+    "tipo": "inspecao",
+    "nome": "Marcha",
+    "normal": "Marcha atípica, sem auxílio."
+   }
+  ]
+ },
+ {
+  "id": "sinais",
+  "nome": "Sinais vitais",
+  "vista": "botao",
+  "manobras": [
+   {
+    "id": "pa",
+    "tipo": "medida",
+    "nome": "Pressão arterial",
+    "normal": "—"
+   },
+   {
+    "id": "fc",
+    "tipo": "medida",
+    "nome": "Frequência cardíaca e pulso",
+    "normal": "—"
+   },
+   {
+    "id": "fr",
+    "tipo": "medida",
+    "nome": "Frequência respiratória",
+    "normal": "—"
+   },
+   {
+    "id": "temp",
+    "tipo": "medida",
+    "nome": "Temperatura axilar",
+    "normal": "—"
+   },
+   {
+    "id": "spo2",
+    "tipo": "medida",
+    "nome": "Saturação de O2 (oxímetro)",
+    "normal": "—"
+   },
+   {
+    "id": "pa-ortostatica",
+    "tipo": "medida",
+    "nome": "PA e FC em pé (ortostatismo)",
+    "normal": "Sem queda significativa da PA ou aumento importante da FC ao ficar em pé."
+   },
+   {
+    "id": "pulso-paradoxal",
+    "tipo": "medida",
+    "nome": "Pesquisa de pulso paradoxal",
+    "normal": "Variação inspiratória da PA sistólica menor que 10 mmHg."
+   }
+  ]
+ },
+ {
+  "id": "cabeca",
+  "nome": "Cabeça e face",
+  "vista": "frente",
+  "manobras": [
+   {
+    "id": "olhos",
+    "tipo": "inspecao",
+    "nome": "Olhos, conjuntivas e escleras",
+    "normal": "Conjuntivas coradas, escleras anictéricas, sem exoftalmia."
+   },
+   {
+    "id": "pupilas",
+    "tipo": "especial",
+    "nome": "Pupilas e reflexo fotomotor",
+    "normal": "Pupilas isocóricas e fotorreagentes (reflexos direto e consensual presentes)."
+   },
+   {
+    "id": "labios",
+    "tipo": "inspecao",
+    "nome": "Lábios e língua",
+    "normal": "Lábios e língua corados, sem cianose."
+   },
+   {
+    "id": "cabeca-repouso",
+    "tipo": "inspecao",
+    "nome": "Cabeça em repouso (movimentos)",
+    "normal": "Sem movimentos anormais da cabeça."
+   },
+   {
+    "id": "orofaringe",
+    "tipo": "inspecao",
+    "nome": "Cavidade oral e orofaringe",
+    "normal": "Mucosa oral úmida, orofaringe sem hiperemia ou exsudato, dentes em bom estado."
+   }
+  ]
+ },
+ {
+  "id": "pescoco",
+  "nome": "Pescoço",
+  "vista": "frente",
+  "manobras": [
+   {
+    "id": "pescoco-insp",
+    "tipo": "inspecao",
+    "nome": "Inspeção do pescoço",
+    "normal": "Pescoço simétrico, sem abaulamentos; sem uso de musculatura acessória."
+   },
+   {
+    "id": "jugular",
+    "tipo": "inspecao",
+    "nome": "Pulso venoso jugular (cabeceira a 45°)",
+    "normal": "Sem turgência jugular a 45°; pulso venoso visível na base do pescoço, colapsando na inspiração."
+   },
+   {
+    "id": "traqueia",
+    "tipo": "palpacao",
+    "nome": "Posição da traqueia",
+    "normal": "Traqueia centrada na fúrcula."
+   },
+   {
+    "id": "tireoide",
+    "tipo": "palpacao",
+    "nome": "Tireoide",
+    "normal": "Tireoide de volume normal, consistência fibroelástica, móvel à deglutição, sem nódulos."
+   },
+   {
+    "id": "linfonodos-cervicais",
+    "tipo": "palpacao",
+    "nome": "Linfonodos cervicais e supraclaviculares",
+    "normal": "Sem linfonodomegalias palpáveis."
+   },
+   {
+    "id": "carotidas",
+    "tipo": "palpacao",
+    "nome": "Pulso carotídeo",
+    "normal": "Pulsos carotídeos simétricos, de amplitude e ascensão normais."
+   },
+   {
+    "id": "ausculta-carotidas",
+    "tipo": "ausculta",
+    "nome": "Ausculta das carótidas",
+    "normal": "Sem sopros carotídeos."
+   }
+  ]
+ },
+ {
+  "id": "torax_ant",
+  "nome": "Tórax anterior",
+  "vista": "frente",
+  "manobras": [
+   {
+    "id": "ta-inspecao",
+    "tipo": "inspecao",
+    "nome": "Inspeção estática e dinâmica",
+    "normal": "Tórax de forma normal, simétrico; respiração toracoabdominal, sem tiragem."
+   },
+   {
+    "id": "ta-expansibilidade",
+    "tipo": "palpacao",
+    "nome": "Expansibilidade dos ápices",
+    "normal": "Expansibilidade dos ápices preservada e simétrica."
+   },
+   {
+    "id": "ta-ftv",
+    "tipo": "palpacao",
+    "nome": "Frêmito toracovocal",
+    "normal": "Frêmito toracovocal normal e simétrico."
+   },
+   {
+    "id": "ta-percussao",
+    "tipo": "percussao",
+    "nome": "Percussão comparativa",
+    "normal": "Som claro pulmonar nos campos anteriores; macicez cardíaca e hepática nos limites habituais."
+   },
+   {
+    "id": "ta-ausculta",
+    "tipo": "ausculta",
+    "nome": "Ausculta pulmonar",
+    "normal": "Murmúrio vesicular presente e simétrico, sem ruídos adventícios.",
+    "som": "mv-normal"
+   },
+   {
+    "id": "ta-voz",
+    "tipo": "ausculta",
+    "nome": "Ressonância vocal",
+    "normal": "Ressonância vocal normal, sem broncofonia, egofonia ou pectorilóquia."
+   }
+  ]
+ },
+ {
+  "id": "torax_post",
+  "nome": "Tórax posterior",
+  "vista": "costas",
+  "manobras": [
+   {
+    "id": "tp-inspecao",
+    "tipo": "inspecao",
+    "nome": "Inspeção estática e dinâmica",
+    "normal": "Coluna sem desvios, tórax simétrico, expansão simétrica."
+   },
+   {
+    "id": "tp-expansibilidade",
+    "tipo": "palpacao",
+    "nome": "Expansibilidade das bases",
+    "normal": "Expansibilidade das bases preservada e simétrica."
+   },
+   {
+    "id": "tp-ftv",
+    "tipo": "palpacao",
+    "nome": "Frêmito toracovocal",
+    "normal": "Frêmito toracovocal normal e simétrico."
+   },
+   {
+    "id": "tp-percussao",
+    "tipo": "percussao",
+    "nome": "Percussão comparativa",
+    "normal": "Som claro pulmonar em todos os campos posteriores."
+   },
+   {
+    "id": "tp-ausculta",
+    "tipo": "ausculta",
+    "nome": "Ausculta pulmonar",
+    "normal": "Murmúrio vesicular presente e simétrico, sem ruídos adventícios.",
+    "som": "mv-normal"
+   },
+   {
+    "id": "tp-voz",
+    "tipo": "ausculta",
+    "nome": "Ressonância vocal",
+    "normal": "Ressonância vocal normal, sem broncofonia, egofonia ou pectorilóquia."
+   }
+  ]
+ },
+ {
+  "id": "precordio",
+  "nome": "Precórdio",
+  "vista": "frente",
+  "manobras": [
+   {
+    "id": "pr-inspecao",
+    "tipo": "inspecao",
+    "nome": "Inspeção do precórdio",
+    "normal": "Sem abaulamentos ou retrações; ictus cordis não visível."
+   },
+   {
+    "id": "ictus",
+    "tipo": "palpacao",
+    "nome": "Ictus cordis",
+    "normal": "Ictus cordis no 5º espaço intercostal esquerdo, na linha hemiclavicular, com 1 a 2 polpas digitais, sem impulsões."
+   },
+   {
+    "id": "fremito",
+    "tipo": "palpacao",
+    "nome": "Pesquisa de frêmito",
+    "normal": "Sem frêmitos palpáveis."
+   },
+   {
+    "id": "foco-mitral",
+    "tipo": "ausculta",
+    "nome": "Ausculta do foco mitral",
+    "normal": "Ritmo cardíaco regular em 2 tempos, bulhas normofonéticas, sem sopros.",
+    "som": "normal"
+   },
+   {
+    "id": "foco-tricuspide",
+    "tipo": "ausculta",
+    "nome": "Ausculta do foco tricúspide",
+    "normal": "Bulhas normofonéticas, sem sopros.",
+    "som": "normal"
+   },
+   {
+    "id": "foco-aortico",
+    "tipo": "ausculta",
+    "nome": "Ausculta do foco aórtico",
+    "normal": "B2 normofonética, sem sopros.",
+    "som": "normal"
+   },
+   {
+    "id": "foco-aortico-acessorio",
+    "tipo": "ausculta",
+    "nome": "Ausculta do foco aórtico acessório",
+    "normal": "Sem sopros.",
+    "som": "normal"
+   },
+   {
+    "id": "foco-pulmonar",
+    "tipo": "ausculta",
+    "nome": "Ausculta do foco pulmonar",
+    "normal": "B2 com desdobramento fisiológico na inspiração, sem sopros.",
+    "som": "b2-fisiologico"
+   },
+   {
+    "id": "decubito-lateral",
+    "tipo": "especial",
+    "nome": "Ausculta em decúbito lateral esquerdo (campânula)",
+    "normal": "Sem bulhas acessórias ou sopros em decúbito lateral esquerdo.",
+    "som": "normal"
+   },
+   {
+    "id": "inclinado",
+    "tipo": "especial",
+    "nome": "Ausculta inclinado para frente, em expiração",
+    "normal": "Sem sopro diastólico ou atrito com o paciente inclinado para frente.",
+    "som": "normal"
+   }
+  ]
+ },
+ {
+  "id": "abdome",
+  "nome": "Abdome e região lombar",
+  "vista": "frente",
+  "manobras": [
+   {
+    "id": "ab-inspecao",
+    "tipo": "inspecao",
+    "nome": "Inspeção",
+    "normal": "Abdome plano, simétrico, sem cicatrizes, abaulamentos ou circulação colateral."
+   },
+   {
+    "id": "ab-ausculta",
+    "tipo": "ausculta",
+    "nome": "Ausculta",
+    "normal": "Ruídos hidroaéreos presentes e normais, sem sopros."
+   },
+   {
+    "id": "ab-percussao",
+    "tipo": "percussao",
+    "nome": "Percussão",
+    "normal": "Timpanismo difuso; espaço de Traube livre."
+   },
+   {
+    "id": "hepatimetria",
+    "tipo": "percussao",
+    "nome": "Hepatimetria",
+    "normal": "Hepatimetria de cerca de 10 cm na linha hemiclavicular direita."
+   },
+   {
+    "id": "macicez-movel",
+    "tipo": "percussao",
+    "nome": "Pesquisa de macicez móvel",
+    "normal": "Sem macicez móvel."
+   },
+   {
+    "id": "ab-palpacao-sup",
+    "tipo": "palpacao",
+    "nome": "Palpação superficial",
+    "normal": "Abdome flácido, indolor, sem massas."
+   },
+   {
+    "id": "ab-palpacao-prof",
+    "tipo": "palpacao",
+    "nome": "Palpação profunda",
+    "normal": "Indolor, sem massas palpáveis."
+   },
+   {
+    "id": "figado",
+    "tipo": "palpacao",
+    "nome": "Palpação do fígado",
+    "normal": "Fígado não palpável abaixo do rebordo costal direito."
+   },
+   {
+    "id": "baco",
+    "tipo": "palpacao",
+    "nome": "Palpação do baço",
+    "normal": "Baço não palpável."
+   },
+   {
+    "id": "murphy",
+    "tipo": "especial",
+    "nome": "Sinal de Murphy",
+    "normal": "Sinal de Murphy negativo."
+   },
+   {
+    "id": "blumberg",
+    "tipo": "especial",
+    "nome": "Descompressão brusca",
+    "normal": "Descompressão brusca indolor."
+   },
+   {
+    "id": "refluxo-hj",
+    "tipo": "especial",
+    "nome": "Refluxo hepatojugular",
+    "normal": "Refluxo hepatojugular ausente."
+   },
+   {
+    "id": "giordano",
+    "tipo": "especial",
+    "nome": "Punho-percussão lombar (Giordano)",
+    "normal": "Punho-percussão lombar indolor bilateralmente."
+   }
+  ]
+ },
+ {
+  "id": "msup",
+  "nome": "Membros superiores",
+  "vista": "frente",
+  "manobras": [
+   {
+    "id": "pulso-radial",
+    "tipo": "palpacao",
+    "nome": "Pulso radial",
+    "normal": "Pulsos radiais cheios, rítmicos e simétricos."
+   },
+   {
+    "id": "maos",
+    "tipo": "inspecao",
+    "nome": "Mãos e unhas",
+    "normal": "Sem baqueteamento digital, cianose, tremores ou alterações ungueais."
+   },
+   {
+    "id": "deficit-pulso",
+    "tipo": "especial",
+    "nome": "Pulso radial × frequência auscultada",
+    "normal": "Pulso radial igual à frequência cardíaca auscultada."
+   },
+   {
+    "id": "leito-ungueal",
+    "tipo": "inspecao",
+    "nome": "Leito ungueal (pulsação capilar)",
+    "normal": "Sem pulsação visível no leito ungueal."
+   },
+   {
+    "id": "enchimento",
+    "tipo": "especial",
+    "nome": "Tempo de enchimento capilar",
+    "normal": "Tempo de enchimento capilar menor que 3 segundos."
+   },
+   {
+    "id": "flapping",
+    "tipo": "especial",
+    "nome": "Pesquisa de asterixe (flapping)",
+    "normal": "Sem asterixe."
+   }
+  ]
+ },
+ {
+  "id": "minf",
+  "nome": "Membros inferiores",
+  "vista": "frente",
+  "manobras": [
+   {
+    "id": "mmii-inspecao",
+    "tipo": "inspecao",
+    "nome": "Inspeção (pele, pelos, varizes)",
+    "normal": "Pele íntegra, coloração e pilificação normais, sem varizes ou úlceras."
+   },
+   {
+    "id": "edema",
+    "tipo": "palpacao",
+    "nome": "Pesquisa de edema (cacifo)",
+    "normal": "Sem edema; sinal do cacifo negativo."
+   },
+   {
+    "id": "pulsos-mmii",
+    "tipo": "palpacao",
+    "nome": "Pulsos femorais, poplíteos e pediosos",
+    "normal": "Pulsos femorais, poplíteos, pediosos e tibiais posteriores palpáveis e simétricos."
+   },
+   {
+    "id": "temperatura-mmii",
+    "tipo": "palpacao",
+    "nome": "Temperatura das extremidades",
+    "normal": "Extremidades mornas e simétricas."
+   },
+   {
+    "id": "itb",
+    "tipo": "medida",
+    "nome": "Índice tornozelo-braquial (Doppler)",
+    "normal": "ITB de 1,1 bilateralmente."
+   },
+   {
+    "id": "buerger",
+    "tipo": "especial",
+    "nome": "Teste de Buerger (elevação e pendência)",
+    "normal": "Sem palidez à elevação nem rubor tardio à pendência."
+   },
+   {
+    "id": "panturrilhas",
+    "tipo": "palpacao",
+    "nome": "Panturrilhas",
+    "normal": "Panturrilhas livres, sem empastamento ou dor."
+   }
+  ]
+ }
+]

@@ -1,0 +1,461 @@
+[
+ {
+  "id": "pleuropulmonares",
+  "titulo": "Síndromes pleuropulmonares",
+  "sistema": "respiratorio",
+  "descricao": "Os achados do exame do tórax na área afetada. Os casos do app são conferidos contra esta tabela na compilação.",
+  "colunas": [
+   {
+    "id": "exp",
+    "nome": "Expansibilidade"
+   },
+   {
+    "id": "ftv",
+    "nome": "Frêmito toracovocal"
+   },
+   {
+    "id": "perc",
+    "nome": "Percussão"
+   },
+   {
+    "id": "mv",
+    "nome": "Murmúrio vesicular"
+   },
+   {
+    "id": "voz",
+    "nome": "Ressonância vocal"
+   },
+   {
+    "id": "traqueia",
+    "nome": "Traqueia"
+   }
+  ],
+  "linhas": [
+   {
+    "nome": "Consolidação",
+    "valores": {
+     "exp": "Diminuída no local",
+     "ftv": "Aumentado",
+     "perc": "Maciça/submaciça",
+     "mv": "Sopro tubário",
+     "voz": "Aumentada (broncofonia, pectorilóquia)",
+     "traqueia": "Centrada"
+    },
+    "nota": "Crepitações são frequentes. Exige brônquio pérvio; se o brônquio estiver obstruído, os achados ficam como os da atelectasia."
+   },
+   {
+    "nome": "Derrame pleural",
+    "valores": {
+     "exp": "Diminuída",
+     "ftv": "Diminuído ou abolido",
+     "perc": "Maciça",
+     "mv": "Diminuído ou abolido",
+     "voz": "Diminuída (egofonia no limite superior)",
+     "traqueia": "Centrada ou desviada para o lado oposto"
+    },
+    "nota": "O desvio contralateral aparece nos derrames volumosos. Sinal de Signorelli e curva de Damoiseau ajudam na percussão."
+   },
+   {
+    "nome": "Pneumotórax",
+    "valores": {
+     "exp": "Diminuída",
+     "ftv": "Diminuído ou abolido",
+     "perc": "Hipersonora/timpânica",
+     "mv": "Diminuído ou abolido",
+     "voz": "Diminuída",
+     "traqueia": "Centrada ou desviada para o lado oposto"
+    },
+    "nota": "Desvio contralateral, hipotensão e turgência jugular indicam pneumotórax hipertensivo — emergência."
+   },
+   {
+    "nome": "Atelectasia (obstrutiva)",
+    "valores": {
+     "exp": "Diminuída, com retração",
+     "ftv": "Diminuído ou abolido",
+     "perc": "Maciça/submaciça",
+     "mv": "Diminuído ou abolido",
+     "voz": "Diminuída",
+     "traqueia": "Desviada para o lado afetado"
+    },
+    "nota": "A perda de volume puxa o mediastino para o lado doente — o oposto do derrame volumoso."
+   },
+   {
+    "nome": "Hiperinsuflação (enfisema)",
+    "valores": {
+     "exp": "Diminuída bilateralmente",
+     "ftv": "Diminuído difusamente",
+     "perc": "Hipersonora",
+     "mv": "Diminuído difusamente",
+     "voz": "Diminuída",
+     "traqueia": "Centrada"
+    },
+    "nota": "Tórax em tonel, expiração prolongada, uso de musculatura acessória e sinal de Hoover nos casos avançados."
+   }
+  ]
+ },
+ {
+  "id": "valvopatias",
+  "titulo": "Valvopatias — sopros e achados",
+  "sistema": "cardiovascular",
+  "colunas": [
+   {
+    "id": "fase",
+    "nome": "Fase do ciclo"
+   },
+   {
+    "id": "foco",
+    "nome": "Foco de máxima intensidade"
+   },
+   {
+    "id": "irradiacao",
+    "nome": "Irradiação"
+   },
+   {
+    "id": "carater",
+    "nome": "Configuração e timbre"
+   },
+   {
+    "id": "associados",
+    "nome": "Achados associados"
+   }
+  ],
+  "linhas": [
+   {
+    "nome": "Estenose aórtica",
+    "valores": {
+     "fase": "Sistólico (ejeção)",
+     "foco": "Aórtico (2º EIC direito)",
+     "irradiacao": "Carótidas",
+     "carater": "Crescendo-decrescendo, rude",
+     "associados": "Pulso parvus et tardus; B2 hipofonética; B4"
+    }
+   },
+   {
+    "nome": "Insuficiência mitral",
+    "valores": {
+     "fase": "Holossistólico",
+     "foco": "Mitral (ápice)",
+     "irradiacao": "Axila",
+     "carater": "Em platô, aspirativo",
+     "associados": "B1 hipofonética; B3; ictus desviado"
+    }
+   },
+   {
+    "nome": "Insuficiência aórtica",
+    "valores": {
+     "fase": "Diastólico (protodiastólico)",
+     "foco": "Aórtico acessório (3º EIC esquerdo)",
+     "irradiacao": "Borda esternal esquerda, rumo ao ápice",
+     "carater": "Decrescendo, aspirativo, agudo",
+     "associados": "Pulso em martelo d'água; PA divergente; Musset e Quincke"
+    }
+   },
+   {
+    "nome": "Estenose mitral",
+    "valores": {
+     "fase": "Mesodiastólico",
+     "foco": "Mitral (ápice)",
+     "irradiacao": "Localizado (não irradia)",
+     "carater": "Ruflar grave com reforço pré-sistólico",
+     "associados": "B1 hiperfonética; estalido de abertura"
+    }
+   },
+   {
+    "nome": "Insuficiência tricúspide",
+    "valores": {
+     "fase": "Holossistólico",
+     "foco": "Tricúspide (borda esternal esquerda baixa)",
+     "irradiacao": "Borda esternal direita e região xifoide",
+     "carater": "Em platô, aumenta na inspiração",
+     "associados": "Turgência jugular com onda v; fígado pulsátil"
+    }
+   }
+  ]
+ },
+ {
+  "id": "pulsos",
+  "titulo": "Tipos de pulso arterial",
+  "sistema": "vitais",
+  "colunas": [
+   {
+    "id": "carac",
+    "nome": "Característica"
+   },
+   {
+    "id": "causa",
+    "nome": "Causa típica"
+   }
+  ],
+  "linhas": [
+   {
+    "nome": "Parvus et tardus",
+    "valores": {
+     "carac": "Amplitude pequena e ascensão lenta",
+     "causa": "Estenose aórtica grave"
+    }
+   },
+   {
+    "nome": "Célere (martelo d'água)",
+    "valores": {
+     "carac": "Ascensão e queda rápidas, grande amplitude",
+     "causa": "Insuficiência aórtica; estados hiperdinâmicos"
+    }
+   },
+   {
+    "nome": "Bisferiens",
+    "valores": {
+     "carac": "Dois picos durante a sístole",
+     "causa": "Insuficiência aórtica importante; cardiomiopatia hipertrófica obstrutiva"
+    }
+   },
+   {
+    "nome": "Alternante",
+    "valores": {
+     "carac": "Batimentos fortes e fracos alternados, com ritmo regular",
+     "causa": "Disfunção grave do ventrículo esquerdo"
+    }
+   },
+   {
+    "nome": "Paradoxal",
+    "valores": {
+     "carac": "Queda da PA sistólica maior que 10 mmHg na inspiração",
+     "causa": "Tamponamento cardíaco; asma grave"
+    }
+   }
+  ]
+ },
+ {
+  "id": "respiratorios",
+  "titulo": "Padrões respiratórios",
+  "sistema": "vitais",
+  "colunas": [
+   {
+    "id": "padrao",
+    "nome": "Padrão"
+   },
+   {
+    "id": "causa",
+    "nome": "Causas típicas"
+   }
+  ],
+  "linhas": [
+   {
+    "nome": "Cheyne-Stokes",
+    "valores": {
+     "padrao": "Amplitude cresce e decresce em ciclos, alternando com apneia",
+     "causa": "Insuficiência cardíaca grave; lesão neurológica; uremia"
+    }
+   },
+   {
+    "nome": "Kussmaul",
+    "valores": {
+     "padrao": "Respirações amplas, profundas e regulares",
+     "causa": "Acidose metabólica (cetoacidose diabética, uremia)"
+    }
+   },
+   {
+    "nome": "Biot",
+    "valores": {
+     "padrao": "Irregular, com apneias imprevisíveis",
+     "causa": "Lesão do tronco encefálico; hipertensão intracraniana"
+    }
+   },
+   {
+    "nome": "Suspirosa",
+    "valores": {
+     "padrao": "Ritmo normal interrompido por suspiros profundos",
+     "causa": "Ansiedade"
+    }
+   }
+  ]
+ },
+ {
+  "id": "marchas",
+  "titulo": "Tipos de marcha",
+  "sistema": "geral",
+  "colunas": [
+   {
+    "id": "desc",
+    "nome": "Como é"
+   },
+   {
+    "id": "causa",
+    "nome": "Causa típica"
+   }
+  ],
+  "linhas": [
+   {
+    "nome": "Hemiplégica (ceifante)",
+    "valores": {
+     "desc": "Perna estendida descreve um semicírculo; braço fletido junto ao corpo",
+     "causa": "AVC com hemiparesia (lesão piramidal)"
+    }
+   },
+   {
+    "nome": "Parkinsoniana",
+    "valores": {
+     "desc": "Passos curtos e arrastados, tronco fletido, sem balanço dos braços",
+     "causa": "Doença de Parkinson"
+    }
+   },
+   {
+    "nome": "Cerebelar (ebriosa)",
+    "valores": {
+     "desc": "Base alargada, cambaleante, em zigue-zague",
+     "causa": "Lesão cerebelar; intoxicação alcoólica"
+    }
+   },
+   {
+    "nome": "Tabética (talonante)",
+    "valores": {
+     "desc": "Olha para o chão e bate o calcanhar; piora de olhos fechados",
+     "causa": "Perda da sensibilidade profunda (tabes, deficiência de B12)"
+    }
+   },
+   {
+    "nome": "Escarvante",
+    "valores": {
+     "desc": "Pé caído; eleva muito o joelho para não arrastar a ponta",
+     "causa": "Lesão do nervo fibular"
+    }
+   },
+   {
+    "nome": "Anserina",
+    "valores": {
+     "desc": "Gingado do quadril de um lado para outro, com lordose acentuada",
+     "causa": "Fraqueza da cintura pélvica (miopatias)"
+    }
+   }
+  ]
+ },
+ {
+  "id": "percussao",
+  "titulo": "Sons da percussão",
+  "sistema": "fundamentos",
+  "colunas": [
+   {
+    "id": "carac",
+    "nome": "Característica"
+   },
+   {
+    "id": "normal",
+    "nome": "Onde é normal"
+   },
+   {
+    "id": "patol",
+    "nome": "Exemplo patológico"
+   }
+  ],
+  "linhas": [
+   {
+    "nome": "Claro pulmonar",
+    "valores": {
+     "carac": "Ressonante, de timbre intermediário",
+     "normal": "Sobre os pulmões",
+     "patol": "Sua ausência sobre o pulmão é que sugere doença"
+    }
+   },
+   {
+    "nome": "Timpânico",
+    "valores": {
+     "carac": "Oco e mais agudo, como tambor",
+     "normal": "Espaço de Traube e alças intestinais",
+     "patol": "Pneumotórax volumoso; distensão gasosa"
+    }
+   },
+   {
+    "nome": "Hipersonoro",
+    "valores": {
+     "carac": "Mais intenso e mais grave que o claro pulmonar",
+     "normal": "Não é normal no adulto",
+     "patol": "Enfisema; pneumotórax; crise de asma"
+    }
+   },
+   {
+    "nome": "Submaciço",
+    "valores": {
+     "carac": "Abafado, entre o claro e o maciço",
+     "normal": "Transição entre pulmão e fígado ou coração",
+     "patol": "Consolidação incompleta; derrame pequeno"
+    }
+   },
+   {
+    "nome": "Maciço",
+    "valores": {
+     "carac": "Seco e curto, sem ressonância",
+     "normal": "Fígado, coração e grandes massas musculares",
+     "patol": "Derrame pleural; consolidação; atelectasia"
+    }
+   }
+  ]
+ },
+ {
+  "id": "edemas",
+  "titulo": "Edema conforme a causa",
+  "sistema": "sintomas",
+  "colunas": [
+   {
+    "id": "dist",
+    "nome": "Distribuição típica"
+   },
+   {
+    "id": "cacifo",
+    "nome": "Consistência e cacifo"
+   },
+   {
+    "id": "pistas",
+    "nome": "Pistas associadas"
+   }
+  ],
+  "linhas": [
+   {
+    "nome": "Cardíaco",
+    "valores": {
+     "dist": "Membros inferiores, vespertino; em acamados, região sacral",
+     "cacifo": "Mole, com cacifo",
+     "pistas": "Turgência jugular, B3, crepitações, hepatomegalia"
+    }
+   },
+   {
+    "nome": "Renal (síndrome nefrótica)",
+    "valores": {
+     "dist": "Periorbitário e matinal, podendo generalizar (anasarca)",
+     "cacifo": "Mole, com cacifo",
+     "pistas": "Urina espumosa; proteinúria e hipoalbuminemia"
+    }
+   },
+   {
+    "nome": "Hepático (cirrose)",
+    "valores": {
+     "dist": "Membros inferiores, com ascite",
+     "cacifo": "Mole, com cacifo",
+     "pistas": "Icterícia, aranhas vasculares, circulação colateral"
+    }
+   },
+   {
+    "nome": "Insuficiência venosa",
+    "valores": {
+     "dist": "Perimaleolar, unilateral ou assimétrico, piora em pé",
+     "cacifo": "Com cacifo; endurece com o tempo",
+     "pistas": "Varizes, dermatite ocre, úlcera no maléolo medial"
+    }
+   },
+   {
+    "nome": "Linfedema",
+    "valores": {
+     "dist": "Membro afetado, incluindo o dorso do pé e dos dedos",
+     "cacifo": "Firme, com pouco ou nenhum cacifo na fase crônica",
+     "pistas": "Cirurgia ou radioterapia linfonodal; erisipelas de repetição"
+    }
+   },
+   {
+    "nome": "Mixedema (hipotireoidismo)",
+    "valores": {
+     "dist": "Face, região pré-tibial, difuso",
+     "cacifo": "Elástico, sem cacifo",
+     "pistas": "Pele seca e fria, bradicardia, queda do terço externo das sobrancelhas"
+    }
+   }
+  ]
+ }
+]

@@ -1,0 +1,169 @@
+[
+ {
+  "id": "exame-torax",
+  "titulo": "Exame do tórax",
+  "sistema": "respiratorio",
+  "contexto": "Você vai examinar o tórax posterior de um paciente com tosse e febre.",
+  "passos": [
+   "Inspeção estática",
+   "Inspeção dinâmica",
+   "Palpação da expansibilidade",
+   "Frêmito toracovocal",
+   "Percussão comparativa",
+   "Ausculta pulmonar",
+   "Ausculta da voz (ressonância vocal)"
+  ],
+  "explicacao": "<p>No tórax a ordem clássica é <strong>inspeção → palpação → percussão → ausculta</strong>, sempre comparando pontos simétricos dos dois lados, de cima para baixo. A ressonância vocal fecha a ausculta e confirma o que o frêmito sugeriu.</p>\n"
+ },
+ {
+  "id": "exame-abdome",
+  "titulo": "Exame do abdome",
+  "sistema": "abdome",
+  "contexto": "Paciente com dor abdominal em decúbito dorsal, abdome exposto.",
+  "passos": [
+   "Inspeção",
+   "Ausculta",
+   "Percussão",
+   "Palpação superficial",
+   "Palpação profunda"
+  ],
+  "explicacao": "<p>No abdome a <strong>ausculta vem antes da percussão e da palpação</strong>, porque manipular as alças pode alterar os ruídos hidroaéreos. A palpação começa superficial e longe da área dolorosa.</p>\n"
+ },
+ {
+  "id": "aferir-pa",
+  "titulo": "Aferição da pressão arterial",
+  "sistema": "vitais",
+  "contexto": "Medida da PA no consultório pelo método auscultatório.",
+  "passos": [
+   "Paciente sentado, em repouso por 3 a 5 minutos, bexiga vazia",
+   "Escolher o manguito adequado à circunferência do braço",
+   "Apoiar o braço na altura do coração, palma para cima",
+   "Posicionar o manguito 2 a 3 cm acima da fossa cubital",
+   "Estimar a sistólica palpando o pulso radial enquanto insufla",
+   "Posicionar o estetoscópio sobre a artéria braquial",
+   "Insuflar 20 a 30 mmHg acima da sistólica estimada",
+   "Desinsuflar devagar, cerca de 2 mmHg por segundo",
+   "Sistólica no primeiro som (fase I) e diastólica no desaparecimento (fase V)"
+  ],
+  "explicacao": "<p>Estimar a sistólica pela palpação evita o erro do <strong>hiato auscultatório</strong>. A diretriz brasileira de 2025 prefere aparelhos automáticos de braço, mas a técnica auscultatória continua sendo cobrada. Manguito pequeno superestima a PA; braço abaixo do coração também. Na primeira consulta, meça nos dois braços e use o de maior valor.</p>\n"
+ },
+ {
+  "id": "anamnese",
+  "titulo": "Estrutura da anamnese",
+  "sistema": "anamnese",
+  "contexto": "Ordem das partes da história clínica no prontuário.",
+  "passos": [
+   "Identificação",
+   "Queixa principal",
+   "História da doença atual",
+   "Interrogatório sintomatológico",
+   "Antecedentes pessoais",
+   "Antecedentes familiares",
+   "Hábitos de vida",
+   "Condições socioeconômicas e culturais"
+  ],
+  "explicacao": "<p>A queixa principal vem com as palavras do paciente e a duração. A HDA detalha cronologicamente essa queixa. O interrogatório sintomatológico varre os outros sistemas para pegar o que o paciente não contou espontaneamente.</p>\n"
+ },
+ {
+  "id": "jugular",
+  "titulo": "Estimativa da pressão venosa jugular",
+  "sistema": "cardiovascular",
+  "contexto": "Paciente com suspeita de congestão sistêmica.",
+  "passos": [
+   "Elevar a cabeceira a 45°",
+   "Rodar levemente a cabeça para o lado oposto",
+   "Identificar o ponto mais alto da pulsação da jugular interna",
+   "Medir a distância vertical até o ângulo esternal",
+   "Somar cerca de 5 cm para estimar a pressão venosa central"
+  ],
+  "explicacao": "<p>O ângulo esternal (de Louis) fica cerca de 5 cm acima do átrio direito em qualquer inclinação. Altura acima de 3 a 4 cm do ângulo esternal indica pressão venosa elevada. A pulsação venosa, diferente da carotídea, tem duas ondas, não é palpável e cai na inspiração.</p>\n"
+ },
+ {
+  "id": "ascite",
+  "titulo": "Pesquisa de ascite por macicez móvel",
+  "sistema": "abdome",
+  "contexto": "Paciente cirrótico com abdome distendido.",
+  "passos": [
+   "Paciente em decúbito dorsal",
+   "Percutir do umbigo para o flanco até a transição timpanismo–macicez",
+   "Marcar o limite da macicez",
+   "Virar o paciente em decúbito lateral para o lado oposto",
+   "Aguardar alguns segundos e percutir de novo",
+   "Verificar se a macicez se deslocou para a parte pendente"
+  ],
+  "explicacao": "<p>O líquido livre se move com a gravidade e as alças com gás flutuam. Se a área antes maciça fica timpânica ao virar o paciente, a macicez é <strong>móvel</strong> — sinal de ascite (em geral a partir de volumes moderados).</p>\n"
+ },
+ {
+  "id": "pulso-paradoxal",
+  "titulo": "Pesquisa do pulso paradoxal",
+  "sistema": "vitais",
+  "contexto": "Suspeita de tamponamento cardíaco.",
+  "passos": [
+   "Insuflar o manguito acima da PA sistólica",
+   "Desinsuflar devagar até ouvir os primeiros sons só na expiração",
+   "Anotar esse primeiro valor",
+   "Continuar desinsuflando até ouvir os sons em todo o ciclo respiratório",
+   "Anotar o segundo valor",
+   "Calcular a diferença entre os dois"
+  ],
+  "explicacao": "<p>Diferença <strong>maior que 10 mmHg</strong> caracteriza pulso paradoxal — um exagero da queda inspiratória normal da PA. Aparece no tamponamento cardíaco, na asma grave e na DPOC grave.</p>\n"
+ },
+ {
+  "id": "ortostatica",
+  "titulo": "Pesquisa de hipotensão ortostática",
+  "sistema": "vitais",
+  "contexto": "Idosa com tontura ao levantar.",
+  "passos": [
+   "Manter o paciente deitado por 5 minutos",
+   "Medir PA e FC deitado",
+   "Colocar o paciente em pé",
+   "Medir PA e FC após 1 e 3 minutos em pé",
+   "Comparar com os valores deitado"
+  ],
+  "explicacao": "<p>Hipotensão ortostática = queda de <strong>20 mmHg ou mais na sistólica</strong> ou <strong>10 mmHg ou mais na diastólica</strong> até 3 minutos após ficar em pé. Se a FC sobe muito junto, pense em hipovolemia; se não sobe, em disautonomia ou medicamentos.</p>\n"
+ },
+ {
+  "id": "enchimento-capilar",
+  "titulo": "Tempo de enchimento capilar",
+  "sistema": "geral",
+  "contexto": "Avaliação da perfusão periférica.",
+  "passos": [
+   "Posicionar a mão do paciente na altura do coração",
+   "Comprimir o leito ungueal até empalidecer",
+   "Manter a pressão por cerca de 5 segundos",
+   "Soltar a pressão",
+   "Contar o tempo até a cor voltar"
+  ],
+  "explicacao": "<p>No adulto o normal é até cerca de 3 segundos (2 segundos em crianças). Tempo prolongado sugere má perfusão periférica: choque, desidratação, vasoconstrição. Frio ambiente e idade avançada também prolongam.</p>\n"
+ },
+ {
+  "id": "cacifo",
+  "titulo": "Pesquisa e graduação do edema",
+  "sistema": "sintomas",
+  "contexto": "Paciente com inchaço nas pernas.",
+  "passos": [
+   "Escolher área com plano ósseo, como a face anterior da tíbia",
+   "Comprimir firme com o polegar por cerca de 5 segundos",
+   "Retirar o dedo",
+   "Observar e palpar a depressão que ficou",
+   "Graduar de 1+ a 4+ conforme a profundidade",
+   "Comparar com o membro oposto"
+  ],
+  "explicacao": "<p>Depressão que persiste = <strong>sinal do cacifo (Godet) positivo</strong>, típico de edema com água livre no interstício. Mixedema e linfedema crônico podem não deixar cacifo. Edema unilateral pede investigação de causa local, como trombose venosa.</p>\n"
+ },
+ {
+  "id": "ausculta-pulmonar",
+  "titulo": "Ausculta pulmonar",
+  "sistema": "respiratorio",
+  "contexto": "Ausculta do tórax posterior com o paciente sentado.",
+  "passos": [
+   "Pedir que respire pela boca, mais fundo que o normal",
+   "Começar pelos ápices",
+   "Comparar sempre o ponto simétrico do outro lado",
+   "Descer em degraus até as bases",
+   "Auscultar as regiões axilares",
+   "Pesquisar a ressonância vocal onde houver alteração"
+  ],
+  "explicacao": "<p>Respirar pela boca reduz ruídos nasais. A comparação lado a lado é o que revela uma assimetria discreta. Ausculte sobre a pele, nunca sobre a roupa.</p>\n"
+ }
+]

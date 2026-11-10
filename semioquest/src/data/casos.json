@@ -1,0 +1,2691 @@
+[
+ {
+  "id": "pac-asma",
+  "titulo": "Juliana, 19 anos",
+  "queixa": "Chiado e falta de ar há 6 horas",
+  "sistema": "respiratorio",
+  "nivel": "Básico",
+  "paciente": {
+   "sexo": "F",
+   "idade": 19
+  },
+  "abertura": "Universitária, entra sentada, respirando com dificuldade e falando em frases curtas: “Comecei depois de fazer faxina… usei a bombinha várias vezes… não melhorou.”",
+  "vitais": {
+   "PA": "118 × 70 mmHg",
+   "FC": "118 bpm, regular",
+   "FR": "30 irpm",
+   "Temp": "36,6 °C",
+   "SpO2": "92% em ar ambiente"
+  },
+  "anamnese": [
+   {
+    "id": "q0",
+    "p": "Você tem asma? Desde quando?",
+    "r": "Desde criança. Tenho rinite também.",
+    "tipo": "chave",
+    "nota": ""
+   },
+   {
+    "id": "q1",
+    "p": "O que desencadeou essa crise?",
+    "r": "Faxina no quarto, muita poeira.",
+    "tipo": "chave",
+    "nota": "Alérgenos (ácaros, poeira) são gatilhos clássicos."
+   },
+   {
+    "id": "q2",
+    "p": "Quantas vezes usou a bombinha hoje?",
+    "r": "Umas quatro ou cinco vezes, com intervalo de uma hora. Alivia um pouco e volta.",
+    "tipo": "chave",
+    "nota": "Resposta ruim ao broncodilatador de resgate é sinal de crise mais grave."
+   },
+   {
+    "id": "q3",
+    "p": "Já precisou ser internada ou intubada por asma?",
+    "r": "Internei duas vezes quando era criança. Intubada, nunca.",
+    "tipo": "util",
+    "nota": "História de internação ou intubação aumenta o risco de crise fatal."
+   },
+   {
+    "id": "q4",
+    "p": "Usa algum remédio todo dia para a asma?",
+    "r": "Tinha uma bombinha de corticoide, mas parei faz meses.",
+    "tipo": "util",
+    "nota": ""
+   },
+   {
+    "id": "q5",
+    "p": "Tem febre ou catarro amarelado?",
+    "r": "Não.",
+    "tipo": "util",
+    "nota": ""
+   },
+   {
+    "id": "q6",
+    "p": "A dor ou a falta de ar começou de repente, de um lado só?",
+    "r": "Não, é o peito todo apertado, foi piorando aos poucos.",
+    "tipo": "util",
+    "nota": "Piora súbita e assimétrica numa asmática sugeriria pneumotórax."
+   },
+   {
+    "id": "q7",
+    "p": "Toma anticoncepcional?",
+    "r": "Tomo.",
+    "tipo": "neutra",
+    "nota": ""
+   },
+   {
+    "id": "q8",
+    "p": "Tem alergia a algum remédio?",
+    "r": "Não que eu saiba.",
+    "tipo": "neutra",
+    "nota": ""
+   }
+  ],
+  "exame": [
+   {
+    "id": "estado-geral",
+    "regiao": "geral",
+    "nome": "Estado geral e consciência",
+    "tipo": "inspecao",
+    "achado": "Regular estado geral, ansiosa, lúcida.",
+    "som": null,
+    "chave": false,
+    "nota": ""
+   },
+   {
+    "id": "atitude",
+    "regiao": "geral",
+    "nome": "Atitude e decúbito",
+    "tipo": "inspecao",
+    "achado": "Sentada, não consegue deitar.",
+    "som": null,
+    "chave": false,
+    "nota": ""
+   },
+   {
+    "id": "padrao-resp",
+    "regiao": "geral",
+    "nome": "Padrão respiratório à distância",
+    "tipo": "inspecao",
+    "achado": "Taquipneica, <strong>fala frases curtas</strong>, usa musculatura acessória.",
+    "som": null,
+    "chave": true,
+    "nota": ""
+   },
+   {
+    "id": "ta-inspecao",
+    "regiao": "torax_ant",
+    "nome": "Inspeção estática e dinâmica",
+    "tipo": "inspecao",
+    "achado": "Tiragem intercostal e de fúrcula; tórax de forma normal.",
+    "som": null,
+    "chave": true,
+    "nota": ""
+   },
+   {
+    "id": "tp-percussao",
+    "regiao": "torax_post",
+    "nome": "Percussão comparativa",
+    "tipo": "percussao",
+    "achado": "Hipersonoridade discreta bilateral.",
+    "som": null,
+    "chave": false,
+    "nota": ""
+   },
+   {
+    "id": "tp-ausculta",
+    "regiao": "torax_post",
+    "nome": "Ausculta pulmonar",
+    "tipo": "ausculta",
+    "achado": "<strong>Sibilos expiratórios difusos</strong>, polifônicos, com expiração prolongada; murmúrio vesicular presente bilateralmente.",
+    "som": "sibilos",
+    "chave": true,
+    "nota": ""
+   },
+   {
+    "id": "ta-ausculta",
+    "regiao": "torax_ant",
+    "nome": "Ausculta pulmonar",
+    "tipo": "ausculta",
+    "achado": "Sibilos expiratórios difusos.",
+    "som": "sibilos",
+    "chave": false,
+    "nota": ""
+   },
+   {
+    "id": "pulso-paradoxal",
+    "regiao": "sinais",
+    "nome": "Pesquisa de pulso paradoxal",
+    "tipo": "medida",
+    "achado": "Variação inspiratória da PA sistólica de 14 mmHg (pulso paradoxal).",
+    "som": null,
+    "chave": true,
+    "nota": "Pulso paradoxal na asma indica crise grave, com grande variação da pressão intratorácica."
+   },
+   {
+    "id": "foco-mitral",
+    "regiao": "precordio",
+    "nome": "Ausculta do foco mitral",
+    "tipo": "ausculta",
+    "achado": "Taquicardia, ritmo regular, bulhas normofonéticas, sem sopros.",
+    "som": "normal",
+    "chave": false,
+    "nota": ""
+   }
+  ],
+  "sintese": {
+   "sindrome": {
+    "opcoes": [
+     "Broncoespasmo (obstrução difusa das vias aéreas)",
+     "Consolidação",
+     "Pneumotórax",
+     "Derrame pleural",
+     "Obstrução de via aérea alta"
+    ],
+    "correta": "Broncoespasmo (obstrução difusa das vias aéreas)",
+    "explicacao": "Sibilos expiratórios difusos com expiração prolongada, tiragem e hipersonoridade discreta, sem achado focal."
+   },
+   "hipotese": {
+    "opcoes": [
+     "Crise de asma moderada a grave",
+     "Exacerbação de DPOC",
+     "Anafilaxia",
+     "Pneumotórax espontâneo",
+     "Edema agudo de pulmão"
+    ],
+    "correta": "Crise de asma moderada a grave",
+    "explicacao": "Asmática com gatilho alérgico, má resposta ao resgate, frases curtas, FR 30, FC 118, SpO2 92% e pulso paradoxal."
+   }
+  },
+  "ensino": [
+   "Fala em frases curtas ou palavras, musculatura acessória e pulso paradoxal são sinais de gravidade.",
+   "Tórax silencioso é sinal de alarme: pouco fluxo de ar, não melhora.",
+   "Piora súbita e assimétrica durante a crise: pense em pneumotórax."
+  ],
+  "revisar": [
+   "resp-ausculta",
+   "resp-sindromes",
+   "vit-respiracao"
+  ]
+ },
+ {
+  "id": "pac-dap",
+  "titulo": "Seu Osvaldo, 68 anos",
+  "queixa": "Dor na panturrilha ao caminhar",
+  "sistema": "vascular",
+  "nivel": "Clínico",
+  "paciente": {
+   "sexo": "M",
+   "idade": 68
+  },
+  "abertura": "Porteiro aposentado: “Faz uns seis meses que, depois de dois quarteirões, a batata da perna direita começa a doer e eu tenho que parar. Parado um pouco, passa e eu sigo.”",
+  "vitais": {
+   "PA": "148 × 88 mmHg",
+   "FC": "78 bpm, regular",
+   "FR": "16 irpm",
+   "Temp": "36,3 °C",
+   "SpO2": "96% em ar ambiente"
+  },
+  "anamnese": [
+   {
+    "id": "q0",
+    "p": "Quanto tempo parado leva para a dor passar? Precisa sentar?",
+    "r": "Uns dois ou três minutos em pé, parado. Não preciso sentar.",
+    "tipo": "chave",
+    "nota": "Alívio rápido parado em pé caracteriza claudicação vascular; a neurogênica exige sentar ou fletir o tronco."
+   },
+   {
+    "id": "q1",
+    "p": "A distância que o senhor anda até doer é sempre a mesma?",
+    "r": "Mais ou menos, uns duzentos metros. Ladeira é pior.",
+    "tipo": "chave",
+    "nota": ""
+   },
+   {
+    "id": "q2",
+    "p": "O senhor fuma?",
+    "r": "Fumo 30 cigarros por dia há 30 anos.",
+    "tipo": "chave",
+    "nota": "45 maços-ano: tabagismo é o principal fator de risco para doença arterial periférica."
+   },
+   {
+    "id": "q3",
+    "p": "Tem diabetes, pressão alta ou colesterol?",
+    "r": "Diabetes e pressão alta. Colesterol não sei.",
+    "tipo": "chave",
+    "nota": ""
+   },
+   {
+    "id": "q4",
+    "p": "A perna dói parado ou à noite?",
+    "r": "Não, só andando.",
+    "tipo": "util",
+    "nota": "Dor em repouso indicaria isquemia crítica."
+   },
+   {
+    "id": "q5",
+    "p": "Tem alguma ferida no pé que não cicatriza?",
+    "r": "Não.",
+    "tipo": "util",
+    "nota": ""
+   },
+   {
+    "id": "q6",
+    "p": "Tem dor nas costas que desce para as pernas?",
+    "r": "Não.",
+    "tipo": "util",
+    "nota": "Ajuda a afastar estenose do canal lombar."
+   },
+   {
+    "id": "q7",
+    "p": "Teve dor no peito ou derrame?",
+    "r": "Não.",
+    "tipo": "util",
+    "nota": "Doença arterial periférica é marcador de doença aterosclerótica em outros territórios."
+   },
+   {
+    "id": "q8",
+    "p": "Toma algum remédio?",
+    "r": "Metformina e losartana.",
+    "tipo": "neutra",
+    "nota": ""
+   }
+  ],
+  "exame": [
+   {
+    "id": "mmii-inspecao",
+    "regiao": "minf",
+    "nome": "Inspeção (pele, pelos, varizes)",
+    "tipo": "inspecao",
+    "achado": "Perna direita com pele fina e brilhante, <strong>rarefação de pelos</strong>, unhas espessadas; sem úlceras.",
+    "som": null,
+    "chave": true,
+    "nota": ""
+   },
+   {
+    "id": "temperatura-mmii",
+    "regiao": "minf",
+    "nome": "Temperatura das extremidades",
+    "tipo": "palpacao",
+    "achado": "Pé direito mais frio que o esquerdo.",
+    "som": null,
+    "chave": true,
+    "nota": ""
+   },
+   {
+    "id": "pulsos-mmii",
+    "regiao": "minf",
+    "nome": "Pulsos femorais, poplíteos e pediosos",
+    "tipo": "palpacao",
+    "achado": "Femorais presentes; <strong>poplíteo direito diminuído</strong>; <strong>pedioso e tibial posterior direitos ausentes</strong>; pulsos esquerdos presentes.",
+    "som": null,
+    "chave": true,
+    "nota": "Doença no segmento femoropoplíteo direito — combina com dor na panturrilha."
+   },
+   {
+    "id": "sopro-femoral",
+    "regiao": "minf",
+    "nome": "Ausculta das artérias femorais",
+    "tipo": "ausculta",
+    "achado": "Sopro sistólico na femoral direita.",
+    "som": null,
+    "chave": true,
+    "nota": ""
+   },
+   {
+    "id": "itb",
+    "regiao": "minf",
+    "nome": "Índice tornozelo-braquial (Doppler)",
+    "tipo": "medida",
+    "achado": "ITB de <strong>0,62</strong> à direita e 0,98 à esquerda.",
+    "som": null,
+    "chave": true,
+    "nota": "ITB de 0,9 ou menos confirma doença arterial periférica."
+   },
+   {
+    "id": "buerger",
+    "regiao": "minf",
+    "nome": "Teste de Buerger (elevação e pendência)",
+    "tipo": "especial",
+    "achado": "Palidez do pé direito à elevação e rubor tardio na pendência.",
+    "som": null,
+    "chave": true,
+    "nota": ""
+   },
+   {
+    "id": "enchimento",
+    "regiao": "msup",
+    "nome": "Tempo de enchimento capilar",
+    "tipo": "especial",
+    "achado": "Enchimento capilar normal nas mãos.",
+    "som": null,
+    "chave": false,
+    "nota": ""
+   }
+  ],
+  "sintese": {
+   "sindrome": {
+    "opcoes": [
+     "Insuficiência arterial periférica crônica",
+     "Insuficiência venosa crônica",
+     "Trombose venosa profunda",
+     "Claudicação neurogênica",
+     "Isquemia arterial aguda"
+    ],
+    "correta": "Insuficiência arterial periférica crônica",
+    "explicacao": "Claudicação intermitente com pulsos distais ausentes, sopro femoral, alterações tróficas, Buerger positivo e ITB reduzido."
+   },
+   "hipotese": {
+    "opcoes": [
+     "Doença arterial obstrutiva periférica (claudicação intermitente)",
+     "Neuropatia diabética",
+     "Estenose do canal vertebral lombar",
+     "Embolia arterial aguda",
+     "Síndrome compartimental crônica"
+    ],
+    "correta": "Doença arterial obstrutiva periférica (claudicação intermitente)",
+    "explicacao": "Tabagista, diabético e hipertenso com dor reprodutível ao caminhar, aliviada em pé, e exame arterial alterado. Sem os 6 Ps: não é isquemia aguda."
+   }
+  },
+  "ensino": [
+   "Claudicação vascular passa parado em pé; a neurogênica precisa sentar ou fletir o tronco.",
+   "ITB ≤ 0,9 confirma doença arterial periférica; em diabéticos com artérias calcificadas, pode vir falsamente alto.",
+   "Parar de fumar e caminhar regularmente são tratamentos centrais."
+  ],
+  "revisar": [
+   "cardio-vascular",
+   "anam-antecedentes"
+  ]
+ },
+ {
+  "id": "pac-derrame",
+  "titulo": "Dona Cida, 58 anos",
+  "queixa": "Falta de ar progressiva há 3 semanas",
+  "sistema": "respiratorio",
+  "nivel": "Básico",
+  "paciente": {
+   "sexo": "F",
+   "idade": 58
+  },
+  "abertura": "Professora aposentada, chega caminhando devagar: “Venho ficando sem fôlego há umas três semanas. No começo era só para subir escada; agora até para tomar banho.”",
+  "vitais": {
+   "PA": "130 × 80 mmHg",
+   "FC": "98 bpm, regular",
+   "FR": "24 irpm",
+   "Temp": "36,8 °C",
+   "SpO2": "93% em ar ambiente"
+  },
+  "anamnese": [
+   {
+    "id": "q0",
+    "p": "A senhora tem ou teve alguma doença importante?",
+    "r": "Tive câncer de mama há quatro anos. Tirei a mama esquerda e fiz quimioterapia. Estava tudo bem nas últimas consultas.",
+    "tipo": "chave",
+    "nota": "Câncer de mama é uma das causas mais comuns de derrame pleural neoplásico."
+   },
+   {
+    "id": "q1",
+    "p": "Teve dor no peito?",
+    "r": "No começo doía do lado esquerdo quando eu respirava fundo. Agora quase não dói mais, só falta o ar.",
+    "tipo": "chave",
+    "nota": "Dor pleurítica que melhora enquanto a dispneia piora é típica do derrame que se acumula: o líquido separa os folhetos da pleura."
+   },
+   {
+    "id": "q2",
+    "p": "Perdeu peso nesse período?",
+    "r": "Uns quatro quilos sem fazer dieta.",
+    "tipo": "chave",
+    "nota": "Emagrecimento involuntário reforça neoplasia ou tuberculose."
+   },
+   {
+    "id": "q3",
+    "p": "Tem tosse? Febre?",
+    "r": "Uma tosse seca de vez em quando. Febre, não.",
+    "tipo": "util",
+    "nota": ""
+   },
+   {
+    "id": "q4",
+    "p": "Consegue deitar? Tem lado preferido?",
+    "r": "Durmo melhor virada para o lado esquerdo. Do lado direito me falta o ar.",
+    "tipo": "util",
+    "nota": "Deitar sobre o lado do derrame deixa o pulmão sadio livre para expandir."
+   },
+   {
+    "id": "q5",
+    "p": "Teve contato com alguém com tuberculose? Sua à noite?",
+    "r": "Não que eu saiba. Suor à noite, não.",
+    "tipo": "util",
+    "nota": "No Brasil, tuberculose pleural é diferencial obrigatório de derrame unilateral."
+   },
+   {
+    "id": "q6",
+    "p": "As pernas incham? Precisa de travesseiros para dormir?",
+    "r": "Não incham. Durmo com um travesseiro só.",
+    "tipo": "util",
+    "nota": "Sem sinais de insuficiência cardíaca, causa comum de derrame — mas geralmente bilateral."
+   },
+   {
+    "id": "q7",
+    "p": "Fuma?",
+    "r": "Nunca fumei.",
+    "tipo": "neutra",
+    "nota": ""
+   },
+   {
+    "id": "q8",
+    "p": "Como está o apetite?",
+    "r": "Diminuiu um pouco.",
+    "tipo": "neutra",
+    "nota": ""
+   }
+  ],
+  "exame": [
+   {
+    "id": "atitude",
+    "regiao": "geral",
+    "nome": "Atitude e decúbito",
+    "tipo": "inspecao",
+    "achado": "Prefere o decúbito lateral esquerdo.",
+    "som": null,
+    "chave": false,
+    "nota": ""
+   },
+   {
+    "id": "tp-inspecao",
+    "regiao": "torax_post",
+    "nome": "Inspeção estática e dinâmica",
+    "tipo": "inspecao",
+    "achado": "Redução da movimentação do hemitórax esquerdo.",
+    "som": null,
+    "chave": false,
+    "nota": ""
+   },
+   {
+    "id": "tp-expansibilidade",
+    "regiao": "torax_post",
+    "nome": "Expansibilidade das bases",
+    "tipo": "palpacao",
+    "achado": "Expansibilidade diminuída na base esquerda.",
+    "som": null,
+    "chave": true,
+    "nota": ""
+   },
+   {
+    "id": "tp-ftv",
+    "regiao": "torax_post",
+    "nome": "Frêmito toracovocal",
+    "tipo": "palpacao",
+    "achado": "Frêmito toracovocal <strong>abolido</strong> nos dois terços inferiores do hemitórax esquerdo.",
+    "som": null,
+    "chave": true,
+    "nota": "FTV abolido com macicez separa derrame de consolidação."
+   },
+   {
+    "id": "tp-percussao",
+    "regiao": "torax_post",
+    "nome": "Percussão comparativa",
+    "tipo": "percussao",
+    "achado": "Macicez nos dois terços inferiores do hemitórax esquerdo, com limite superior em curva (Damoiseau) e macicez à percussão da coluna torácica baixa (Signorelli).",
+    "som": null,
+    "chave": true,
+    "nota": ""
+   },
+   {
+    "id": "tp-ausculta",
+    "regiao": "torax_post",
+    "nome": "Ausculta pulmonar",
+    "tipo": "ausculta",
+    "achado": "Murmúrio vesicular abolido nos dois terços inferiores à esquerda; normal à direita.",
+    "som": "mv-diminuido",
+    "chave": true,
+    "nota": ""
+   },
+   {
+    "id": "tp-voz",
+    "regiao": "torax_post",
+    "nome": "Ressonância vocal",
+    "tipo": "ausculta",
+    "achado": "Egofonia no limite superior do derrame; ressonância vocal abolida abaixo dele.",
+    "som": null,
+    "chave": true,
+    "nota": ""
+   },
+   {
+    "id": "ta-inspecao",
+    "regiao": "torax_ant",
+    "nome": "Inspeção estática e dinâmica",
+    "tipo": "inspecao",
+    "achado": "Cicatriz de mastectomia à esquerda; redução da expansão do hemitórax esquerdo.",
+    "som": null,
+    "chave": false,
+    "nota": ""
+   },
+   {
+    "id": "linfonodos-cervicais",
+    "regiao": "pescoco",
+    "nome": "Linfonodos cervicais e supraclaviculares",
+    "tipo": "palpacao",
+    "achado": "Linfonodo supraclavicular esquerdo de 1,5 cm, endurecido e aderido.",
+    "som": null,
+    "chave": true,
+    "nota": "Linfonodo supraclavicular endurecido em paciente com câncer prévio sugere doença metastática."
+   }
+  ],
+  "sintese": {
+   "sindrome": {
+    "opcoes": [
+     "Derrame pleural",
+     "Consolidação",
+     "Atelectasia",
+     "Pneumotórax",
+     "Hiperinsuflação"
+    ],
+    "correta": "Derrame pleural",
+    "explicacao": "Macicez com frêmito abolido, murmúrio abolido e egofonia no limite superior. Traqueia centrada: derrame moderado, não volumoso a ponto de desviar o mediastino."
+   },
+   "hipotese": {
+    "opcoes": [
+     "Derrame pleural neoplásico (metástase de câncer de mama)",
+     "Derrame parapneumônico",
+     "Tuberculose pleural",
+     "Insuficiência cardíaca",
+     "Embolia pulmonar"
+    ],
+    "correta": "Derrame pleural neoplásico (metástase de câncer de mama)",
+    "explicacao": "Câncer de mama prévio, emagrecimento, derrame unilateral sem febre e linfonodo supraclavicular endurecido. A confirmação vem da toracocentese com citologia; tuberculose pleural segue como diferencial."
+   }
+  },
+  "ensino": [
+   "Na macicez, o frêmito decide: abolido no derrame, aumentado na consolidação.",
+   "Derrame unilateral pede toracocentese diagnóstica; bilateral com sinais de IC costuma ser transudato.",
+   "Signorelli e a curva de Damoiseau são achados de percussão que reforçam derrame livre."
+  ],
+  "revisar": [
+   "resp-sindromes",
+   "resp-percussao",
+   "resp-palpacao"
+  ]
+ },
+ {
+  "id": "pac-desidratacao",
+  "titulo": "Dona Rosa, 81 anos",
+  "queixa": "Diarreia há 3 dias e tontura ao levantar",
+  "sistema": "geral",
+  "nivel": "Básico",
+  "paciente": {
+   "sexo": "F",
+   "idade": 81
+  },
+  "abertura": "Trazida pela neta: “Minha avó está com diarreia há três dias, quase não come nem bebe, e hoje quase caiu ao levantar da cama.”",
+  "vitais": {
+   "PA": "102 × 64 mmHg (deitada)",
+   "FC": "108 bpm, regular",
+   "FR": "20 irpm",
+   "Temp": "37,2 °C",
+   "SpO2": "96% em ar ambiente"
+  },
+  "anamnese": [
+   {
+    "id": "q0",
+    "p": "Quantas vezes por dia evacua? Como são as fezes?",
+    "r": "(Neta) Umas sete vezes por dia, bem líquidas, sem sangue.",
+    "tipo": "chave",
+    "nota": ""
+   },
+   {
+    "id": "q1",
+    "p": "Está conseguindo beber água? Teve vômitos?",
+    "r": "Vomitou ontem duas vezes. Bebe pouquinho.",
+    "tipo": "chave",
+    "nota": "Perdas maiores que a ingestão: desidratação."
+   },
+   {
+    "id": "q2",
+    "p": "Está urinando quanto?",
+    "r": "Bem pouco desde ontem, e a urina está escura.",
+    "tipo": "chave",
+    "nota": "Oligúria e urina concentrada indicam hipovolemia significativa."
+   },
+   {
+    "id": "q3",
+    "p": "Que remédios ela toma?",
+    "r": "Hidroclorotiazida e enalapril para pressão.",
+    "tipo": "chave",
+    "nota": "Diurético e IECA agravam a hipovolemia e a lesão renal: em geral devem ser suspensos temporariamente."
+   },
+   {
+    "id": "q4",
+    "p": "Tem febre ou dor na barriga?",
+    "r": "Um pouco de cólica antes de evacuar. Febre alta, não.",
+    "tipo": "util",
+    "nota": ""
+   },
+   {
+    "id": "q5",
+    "p": "Está mais sonolenta ou confusa que o normal?",
+    "r": "(Neta) Está mais quieta, dormindo mais.",
+    "tipo": "util",
+    "nota": "Alteração do estado mental em idoso pode ser o primeiro sinal de gravidade."
+   },
+   {
+    "id": "q6",
+    "p": "Alguém mais em casa com diarreia? Comeu algo diferente?",
+    "r": "O neto pequeno teve diarreia semana passada.",
+    "tipo": "util",
+    "nota": ""
+   },
+   {
+    "id": "q7",
+    "p": "Tem dor ao urinar?",
+    "r": "Não.",
+    "tipo": "neutra",
+    "nota": ""
+   }
+  ],
+  "exame": [
+   {
+    "id": "estado-geral",
+    "regiao": "geral",
+    "nome": "Estado geral e consciência",
+    "tipo": "inspecao",
+    "achado": "Regular estado geral, sonolenta mas orientada, abatida.",
+    "som": null,
+    "chave": false,
+    "nota": ""
+   },
+   {
+    "id": "facies",
+    "regiao": "geral",
+    "nome": "Fácies",
+    "tipo": "inspecao",
+    "achado": "Olhos encovados, face abatida.",
+    "som": null,
+    "chave": true,
+    "nota": ""
+   },
+   {
+    "id": "mucosas",
+    "regiao": "geral",
+    "nome": "Mucosas",
+    "tipo": "inspecao",
+    "achado": "Mucosas <strong>secas</strong>, coradas.",
+    "som": null,
+    "chave": true,
+    "nota": ""
+   },
+   {
+    "id": "hidratacao",
+    "regiao": "geral",
+    "nome": "Hidratação e turgor",
+    "tipo": "palpacao",
+    "achado": "Língua seca, axilas secas; prega cutânea desfaz devagar (pouco confiável na idade).",
+    "som": null,
+    "chave": true,
+    "nota": ""
+   },
+   {
+    "id": "pa-ortostatica",
+    "regiao": "sinais",
+    "nome": "PA e FC em pé (ortostatismo)",
+    "tipo": "medida",
+    "achado": "Deitada: 102 × 64 mmHg, FC 108. Em pé, após 1 minuto: <strong>78 × 50 mmHg</strong>, FC 128, com tontura.",
+    "som": null,
+    "chave": true,
+    "nota": "Queda de 24 mmHg na sistólica com aumento da FC: hipotensão ortostática por hipovolemia."
+   },
+   {
+    "id": "enchimento",
+    "regiao": "msup",
+    "nome": "Tempo de enchimento capilar",
+    "tipo": "especial",
+    "achado": "Enchimento capilar de 4 segundos.",
+    "som": null,
+    "chave": true,
+    "nota": ""
+   },
+   {
+    "id": "ab-ausculta",
+    "regiao": "abdome",
+    "nome": "Ausculta",
+    "tipo": "ausculta",
+    "achado": "Ruídos hidroaéreos aumentados.",
+    "som": null,
+    "chave": false,
+    "nota": ""
+   },
+   {
+    "id": "ab-palpacao-sup",
+    "regiao": "abdome",
+    "nome": "Palpação superficial",
+    "tipo": "palpacao",
+    "achado": "Abdome flácido, levemente doloroso de forma difusa, sem defesa.",
+    "som": null,
+    "chave": false,
+    "nota": ""
+   },
+   {
+    "id": "jugular",
+    "regiao": "pescoco",
+    "nome": "Pulso venoso jugular (cabeceira a 45°)",
+    "tipo": "inspecao",
+    "achado": "Jugulares colabadas, mesmo em decúbito.",
+    "som": null,
+    "chave": false,
+    "nota": ""
+   }
+  ],
+  "sintese": {
+   "sindrome": {
+    "opcoes": [
+     "Hipovolemia (desidratação)",
+     "Choque séptico",
+     "Insuficiência cardíaca descompensada",
+     "Irritação peritoneal",
+     "Hipotensão ortostática neurogênica"
+    ],
+    "correta": "Hipovolemia (desidratação)",
+    "explicacao": "Mucosas secas, olhos encovados, jugulares colabadas, taquicardia, hipotensão ortostática com aumento da FC, enchimento capilar lento e oligúria."
+   },
+   "hipotese": {
+    "opcoes": [
+     "Desidratação moderada a grave por gastroenterite aguda, agravada por diurético e IECA",
+     "Sepse de foco urinário",
+     "Abdome agudo obstrutivo",
+     "Insuficiência adrenal",
+     "Hemorragia digestiva"
+    ],
+    "correta": "Desidratação moderada a grave por gastroenterite aguda, agravada por diurético e IECA",
+    "explicacao": "Diarreia aquosa com contato doméstico, perdas maiores que a ingestão e medicamentos que pioram a volemia. Abdome sem irritação peritoneal; sem sangue nas fezes."
+   }
+  },
+  "ensino": [
+   "No idoso, turgor engana: prefira mucosas, axilas, jugulares, ortostatismo e diurese.",
+   "Hipotensão ortostática com taquicardia compensatória sugere hipovolemia.",
+   "Em diarreia ou vômitos, diuréticos e IECA costumam ser suspensos até reidratar."
+  ],
+  "revisar": [
+   "ger-nutricao-hidratacao",
+   "vit-pa"
+  ]
+ },
+ {
+  "id": "pac-dpoc",
+  "titulo": "Seu Raimundo, 70 anos",
+  "queixa": "Piora da falta de ar há 3 dias",
+  "sistema": "respiratorio",
+  "nivel": "Clínico",
+  "paciente": {
+   "sexo": "M",
+   "idade": 70
+  },
+  "abertura": "Lavrador aposentado, chega sentado na cadeira de rodas, respirando com esforço: “O cansaço eu já tenho faz anos, mas de três dias para cá piorou muito, e o catarro aumentou.”",
+  "vitais": {
+   "PA": "138 × 84 mmHg",
+   "FC": "106 bpm, regular",
+   "FR": "28 irpm",
+   "Temp": "37,4 °C",
+   "SpO2": "87% em ar ambiente"
+  },
+  "anamnese": [
+   {
+    "id": "q0",
+    "p": "O senhor fuma? Quanto?",
+    "r": "Fumo desde os 15 anos, uns 20 por dia. Ainda fumo um pouco.",
+    "tipo": "chave",
+    "nota": "Mais de 50 maços-ano: principal fator de risco para DPOC."
+   },
+   {
+    "id": "q1",
+    "p": "Como está o catarro? Mudou de cor ou quantidade?",
+    "r": "Aumentou muito e ficou esverdeado.",
+    "tipo": "chave",
+    "nota": "Piora da dispneia, aumento do volume e da purulência do escarro: os três critérios de Anthonisen da exacerbação."
+   },
+   {
+    "id": "q2",
+    "p": "Cozinhava com fogão a lenha?",
+    "r": "A vida inteira, na roça.",
+    "tipo": "util",
+    "nota": "Fumaça de biomassa é causa importante de DPOC no Brasil."
+   },
+   {
+    "id": "q3",
+    "p": "Antes desses dias, como era seu cansaço?",
+    "r": "Andava devagar e parava para respirar depois de uns cem metros.",
+    "tipo": "chave",
+    "nota": "mMRC 3 na linha de base: DPOC avançada."
+   },
+   {
+    "id": "q4",
+    "p": "Tem chiado no peito?",
+    "r": "Tem, piorou também.",
+    "tipo": "util",
+    "nota": ""
+   },
+   {
+    "id": "q5",
+    "p": "As pernas incham? Dorme com quantos travesseiros?",
+    "r": "Não incham. Durmo com dois travesseiros, como sempre.",
+    "tipo": "util",
+    "nota": "Ajuda a afastar insuficiência cardíaca descompensada e cor pulmonale."
+   },
+   {
+    "id": "q6",
+    "p": "Teve febre ou dor no peito?",
+    "r": "Um pouco de febre ontem. Dor, não.",
+    "tipo": "util",
+    "nota": ""
+   },
+   {
+    "id": "q7",
+    "p": "Usa as bombinhas direito?",
+    "r": "Uso a azul quando aperta. A outra acabou faz um mês.",
+    "tipo": "util",
+    "nota": "Falta de tratamento de manutenção favorece exacerbações."
+   },
+   {
+    "id": "q8",
+    "p": "Toma algum remédio para dormir?",
+    "r": "Não.",
+    "tipo": "neutra",
+    "nota": ""
+   }
+  ],
+  "exame": [
+   {
+    "id": "estado-geral",
+    "regiao": "geral",
+    "nome": "Estado geral e consciência",
+    "tipo": "inspecao",
+    "achado": "Regular estado geral, lúcido, orientado, em esforço respiratório.",
+    "som": null,
+    "chave": false,
+    "nota": ""
+   },
+   {
+    "id": "atitude",
+    "regiao": "geral",
+    "nome": "Atitude e decúbito",
+    "tipo": "inspecao",
+    "achado": "Sentado inclinado para frente, apoiando as mãos nos joelhos.",
+    "som": null,
+    "chave": false,
+    "nota": ""
+   },
+   {
+    "id": "padrao-resp",
+    "regiao": "geral",
+    "nome": "Padrão respiratório à distância",
+    "tipo": "inspecao",
+    "achado": "Taquipneico, expira com os <strong>lábios semicerrados</strong>, usa os esternocleidomastóideos e fala frases curtas.",
+    "som": null,
+    "chave": true,
+    "nota": ""
+   },
+   {
+    "id": "labios",
+    "regiao": "cabeca",
+    "nome": "Lábios e língua",
+    "tipo": "inspecao",
+    "achado": "Cianose labial discreta.",
+    "som": null,
+    "chave": true,
+    "nota": ""
+   },
+   {
+    "id": "ta-inspecao",
+    "regiao": "torax_ant",
+    "nome": "Inspeção estática e dinâmica",
+    "tipo": "inspecao",
+    "achado": "<strong>Tórax em tonel</strong>, tiragem intercostal e retração das margens costais inferiores na inspiração (sinal de Hoover).",
+    "som": null,
+    "chave": true,
+    "nota": ""
+   },
+   {
+    "id": "tp-expansibilidade",
+    "regiao": "torax_post",
+    "nome": "Expansibilidade das bases",
+    "tipo": "palpacao",
+    "achado": "Expansibilidade diminuída bilateralmente.",
+    "som": null,
+    "chave": true,
+    "nota": ""
+   },
+   {
+    "id": "tp-ftv",
+    "regiao": "torax_post",
+    "nome": "Frêmito toracovocal",
+    "tipo": "palpacao",
+    "achado": "Frêmito toracovocal diminuído difusamente.",
+    "som": null,
+    "chave": false,
+    "nota": ""
+   },
+   {
+    "id": "tp-percussao",
+    "regiao": "torax_post",
+    "nome": "Percussão comparativa",
+    "tipo": "percussao",
+    "achado": "Hipersonoridade difusa; excursão diafragmática reduzida.",
+    "som": null,
+    "chave": true,
+    "nota": ""
+   },
+   {
+    "id": "tp-ausculta",
+    "regiao": "torax_post",
+    "nome": "Ausculta pulmonar",
+    "tipo": "ausculta",
+    "achado": "Murmúrio vesicular diminuído difusamente, <strong>expiração prolongada</strong>, sibilos expiratórios esparsos e roncos.",
+    "som": "sibilos",
+    "chave": true,
+    "nota": ""
+   },
+   {
+    "id": "ictus",
+    "regiao": "precordio",
+    "nome": "Ictus cordis",
+    "tipo": "palpacao",
+    "achado": "Ictus não palpável.",
+    "som": null,
+    "chave": false,
+    "nota": "O pulmão hiperinsuflado se interpõe entre o coração e a parede."
+   },
+   {
+    "id": "foco-mitral",
+    "regiao": "precordio",
+    "nome": "Ausculta do foco mitral",
+    "tipo": "ausculta",
+    "achado": "Bulhas hipofonéticas, taquicárdicas, ritmo regular, sem sopros.",
+    "som": "normal",
+    "chave": false,
+    "nota": ""
+   }
+  ],
+  "sintese": {
+   "sindrome": {
+    "opcoes": [
+     "Hiperinsuflação com broncoespasmo",
+     "Consolidação",
+     "Derrame pleural",
+     "Pneumotórax",
+     "Congestão pulmonar"
+    ],
+    "correta": "Hiperinsuflação com broncoespasmo",
+    "explicacao": "Tórax em tonel, hipersonoridade e murmúrio reduzidos difusamente, com expiração prolongada e sibilos."
+   },
+   "hipotese": {
+    "opcoes": [
+     "Exacerbação de DPOC",
+     "Crise de asma",
+     "Insuficiência cardíaca descompensada",
+     "Pneumonia lobar",
+     "Pneumotórax espontâneo"
+    ],
+    "correta": "Exacerbação de DPOC",
+    "explicacao": "Tabagista pesado com dispneia crônica, agora com piora da dispneia e escarro mais volumoso e purulento. A ausência de achado focal fala contra pneumonia lobar, mas a radiografia ainda é necessária."
+   }
+  },
+  "ensino": [
+   "Critérios de Anthonisen: piora da dispneia, aumento do volume e da purulência do escarro.",
+   "Na DPOC com retenção de CO2, o alvo de SpO2 costuma ser 88% a 92%.",
+   "Baqueteamento não é da DPOC; se aparecer, procure câncer de pulmão ou bronquiectasias."
+  ],
+  "revisar": [
+   "resp-inspecao",
+   "resp-sindromes",
+   "vit-respiracao"
+  ]
+ },
+ {
+  "id": "pac-eao",
+  "titulo": "Seu Geraldo, 76 anos",
+  "queixa": "Desmaiou duas vezes subindo ladeira",
+  "sistema": "cardiovascular",
+  "nivel": "Clínico",
+  "paciente": {
+   "sexo": "M",
+   "idade": 76
+  },
+  "abertura": "Comerciante aposentado, trazido pela filha: “Ele apagou duas vezes este mês, sempre subindo a ladeira de casa. Disseram que ele tem um sopro, mas nunca foi atrás.”",
+  "vitais": {
+   "PA": "112 × 84 mmHg",
+   "FC": "72 bpm, regular",
+   "FR": "18 irpm",
+   "Temp": "36,3 °C",
+   "SpO2": "96% em ar ambiente"
+  },
+  "anamnese": [
+   {
+    "id": "q0",
+    "p": "Como foram os desmaios? Aconteceram em esforço ou parado?",
+    "r": "Os dois na subida, andando rápido. Escureceu a vista e eu caí. Voltei logo.",
+    "tipo": "chave",
+    "nota": "Síncope ao esforço é sinal de alarme cardíaco — na estenose aórtica, o débito não aumenta com o exercício."
+   },
+   {
+    "id": "q1",
+    "p": "Sente dor ou aperto no peito?",
+    "r": "Quando ando rápido, aperta o peito. Parando, passa em poucos minutos.",
+    "tipo": "chave",
+    "nota": "Angina: a hipertrofia aumenta o consumo de oxigênio, mesmo com coronárias normais."
+   },
+   {
+    "id": "q2",
+    "p": "Tem falta de ar?",
+    "r": "Para subir um andar de escada, já canso. Faz uns seis meses.",
+    "tipo": "chave",
+    "nota": "Angina, síncope e dispneia: a tríade da estenose aórtica sintomática."
+   },
+   {
+    "id": "q3",
+    "p": "Teve palpitação antes de desmaiar?",
+    "r": "Não senti o coração disparar.",
+    "tipo": "util",
+    "nota": "Ajuda a diferenciar de síncope arrítmica."
+   },
+   {
+    "id": "q4",
+    "p": "Desmaia ao levantar rápido ou em pé muito tempo?",
+    "r": "Não, só no esforço.",
+    "tipo": "util",
+    "nota": "Afasta hipotensão ortostática e síncope vasovagal típica."
+   },
+   {
+    "id": "q5",
+    "p": "Tem pressão alta, diabetes, colesterol?",
+    "r": "Colesterol alto. Pressão sempre foi boa.",
+    "tipo": "util",
+    "nota": ""
+   },
+   {
+    "id": "q6",
+    "p": "Teve febre reumática na infância?",
+    "r": "Não que eu saiba.",
+    "tipo": "util",
+    "nota": ""
+   },
+   {
+    "id": "q7",
+    "p": "Toma algum remédio?",
+    "r": "Sinvastatina.",
+    "tipo": "neutra",
+    "nota": ""
+   },
+   {
+    "id": "q8",
+    "p": "Fuma ou bebe?",
+    "r": "Parei de fumar há 20 anos. Bebo pouco.",
+    "tipo": "neutra",
+    "nota": ""
+   }
+  ],
+  "exame": [
+   {
+    "id": "carotidas",
+    "regiao": "pescoco",
+    "nome": "Pulso carotídeo",
+    "tipo": "palpacao",
+    "achado": "Pulso carotídeo de <strong>amplitude pequena e ascensão lenta</strong> (parvus et tardus), simétrico.",
+    "som": null,
+    "chave": true,
+    "nota": ""
+   },
+   {
+    "id": "ausculta-carotidas",
+    "regiao": "pescoco",
+    "nome": "Ausculta das carótidas",
+    "tipo": "ausculta",
+    "achado": "Sopro sistólico nas duas carótidas, irradiado do precórdio.",
+    "som": null,
+    "chave": false,
+    "nota": ""
+   },
+   {
+    "id": "ictus",
+    "regiao": "precordio",
+    "nome": "Ictus cordis",
+    "tipo": "palpacao",
+    "achado": "Ictus no 5º espaço intercostal, na linha hemiclavicular, <strong>propulsivo e sustentado</strong>, com 2 polpas.",
+    "som": null,
+    "chave": true,
+    "nota": "Sobrecarga de pressão: hipertrofia concêntrica, pouca dilatação."
+   },
+   {
+    "id": "fremito",
+    "regiao": "precordio",
+    "nome": "Pesquisa de frêmito",
+    "tipo": "palpacao",
+    "achado": "Frêmito sistólico no foco aórtico.",
+    "som": null,
+    "chave": true,
+    "nota": ""
+   },
+   {
+    "id": "foco-aortico",
+    "regiao": "precordio",
+    "nome": "Ausculta do foco aórtico",
+    "tipo": "ausculta",
+    "achado": "<strong>Sopro sistólico ejetivo</strong> em diamante, rude, 4+/6+, com pico tardio, irradiado para as carótidas; <strong>B2 hipofonética</strong>.",
+    "som": "ejecao-eao",
+    "chave": true,
+    "nota": "Pico tardio e B2 fraca indicam estenose grave."
+   },
+   {
+    "id": "foco-mitral",
+    "regiao": "precordio",
+    "nome": "Ausculta do foco mitral",
+    "tipo": "ausculta",
+    "achado": "B4 e sopro sistólico mais suave (irradiação do sopro aórtico).",
+    "som": "b4",
+    "chave": false,
+    "nota": ""
+   },
+   {
+    "id": "foco-aortico-acessorio",
+    "regiao": "precordio",
+    "nome": "Ausculta do foco aórtico acessório",
+    "tipo": "ausculta",
+    "achado": "Sopro sistólico ejetivo audível; sem sopro diastólico.",
+    "som": "ejecao-eao",
+    "chave": false,
+    "nota": ""
+   },
+   {
+    "id": "pulso-radial",
+    "regiao": "msup",
+    "nome": "Pulso radial",
+    "tipo": "palpacao",
+    "achado": "Pulsos radiais de amplitude reduzida, simétricos, regulares.",
+    "som": null,
+    "chave": false,
+    "nota": ""
+   }
+  ],
+  "sintese": {
+   "sindrome": {
+    "opcoes": [
+     "Estenose aórtica",
+     "Insuficiência mitral",
+     "Cardiomiopatia hipertrófica obstrutiva",
+     "Insuficiência aórtica",
+     "Comunicação interventricular"
+    ],
+    "correta": "Estenose aórtica",
+    "explicacao": "Sopro ejetivo no foco aórtico irradiado para as carótidas, com frêmito, pulso parvus et tardus, ictus sustentado, B2 hipofonética e B4."
+   },
+   "hipotese": {
+    "opcoes": [
+     "Estenose aórtica calcífica grave, sintomática",
+     "Cardiomiopatia hipertrófica obstrutiva",
+     "Síncope vasovagal",
+     "Insuficiência mitral por prolapso",
+     "Bloqueio atrioventricular total"
+    ],
+    "correta": "Estenose aórtica calcífica grave, sintomática",
+    "explicacao": "Idoso com a tríade angina, síncope e dispneia e sinais de gravidade (pico tardio, B2 fraca, pulso parvus et tardus). Sintomas indicam necessidade de avaliar troca valvar."
+   }
+  },
+  "ensino": [
+   "Angina, síncope ao esforço e dispneia: a tríade da estenose aórtica.",
+   "Gravidade não é intensidade do sopro: olhe o pico (tardio), B2 (fraca) e o pulso (parvus et tardus).",
+   "PA com pressão de pulso estreita (112 × 84) combina com baixo volume ejetado."
+  ],
+  "revisar": [
+   "cardio-sopros",
+   "cardio-valvopatias-ic",
+   "vit-pulso"
+  ]
+ },
+ {
+  "id": "pac-em",
+  "titulo": "Maria José, 32 anos",
+  "queixa": "Cansaço progressivo e palpitações há 1 ano",
+  "sistema": "cardiovascular",
+  "nivel": "Clínico",
+  "paciente": {
+   "sexo": "F",
+   "idade": 32
+  },
+  "abertura": "Diarista, procura o ambulatório: “O fôlego está cada vez menor. Às vezes o coração dispara, e semana passada cuspi um pouco de sangue depois de subir o morro.”",
+  "vitais": {
+   "PA": "108 × 72 mmHg",
+   "FC": "96 bpm, regular",
+   "FR": "22 irpm",
+   "Temp": "36,5 °C",
+   "SpO2": "95% em ar ambiente"
+  },
+  "anamnese": [
+   {
+    "id": "q0",
+    "p": "Teve febre reumática ou dor nas juntas quando criança?",
+    "r": "Aos dez anos tive dor nos joelhos que mudava de lugar, e o médico falou de sopro. Tomei injeção de benzetacil por uns anos, depois parei.",
+    "tipo": "chave",
+    "nota": "Febre reumática é a principal causa de estenose mitral, sobretudo no Brasil."
+   },
+   {
+    "id": "q1",
+    "p": "Como foi esse sangue que a senhora cuspiu?",
+    "r": "Veio com a tosse, vermelho vivo, pouquinho, depois de um esforço.",
+    "tipo": "chave",
+    "nota": "Hemoptise na estenose mitral resulta de hipertensão venosa pulmonar."
+   },
+   {
+    "id": "q2",
+    "p": "Dorme deitada? Acorda com falta de ar?",
+    "r": "Preciso de dois travesseiros. Às vezes acordo sufocada.",
+    "tipo": "chave",
+    "nota": ""
+   },
+   {
+    "id": "q3",
+    "p": "Como são as palpitações?",
+    "r": "O coração dispara do nada, fica rápido e às vezes parece desritmado, por alguns minutos.",
+    "tipo": "util",
+    "nota": "Episódios de fibrilação atrial paroxística são comuns pelo átrio esquerdo dilatado."
+   },
+   {
+    "id": "q4",
+    "p": "Piorou na gravidez?",
+    "r": "Na última gestação quase fui internada de tanto cansaço.",
+    "tipo": "util",
+    "nota": "O aumento do débito e da frequência na gestação piora muito a estenose mitral."
+   },
+   {
+    "id": "q5",
+    "p": "Teve algum derrame ou perda de força?",
+    "r": "Não.",
+    "tipo": "util",
+    "nota": "Embolia sistêmica é complicação importante (átrio dilatado + FA)."
+   },
+   {
+    "id": "q6",
+    "p": "Tem febre agora?",
+    "r": "Não.",
+    "tipo": "util",
+    "nota": ""
+   },
+   {
+    "id": "q7",
+    "p": "Usa anticoncepcional?",
+    "r": "Uso injeção trimestral.",
+    "tipo": "neutra",
+    "nota": ""
+   },
+   {
+    "id": "q8",
+    "p": "Fuma?",
+    "r": "Não.",
+    "tipo": "neutra",
+    "nota": ""
+   }
+  ],
+  "exame": [
+   {
+    "id": "facies",
+    "regiao": "geral",
+    "nome": "Fácies",
+    "tipo": "inspecao",
+    "achado": "Região malar arroxeada (fácies mitral).",
+    "som": null,
+    "chave": false,
+    "nota": ""
+   },
+   {
+    "id": "ictus",
+    "regiao": "precordio",
+    "nome": "Ictus cordis",
+    "tipo": "palpacao",
+    "achado": "Ictus no 5º espaço intercostal, na linha hemiclavicular, com 2 polpas; impulsão paraesternal esquerda.",
+    "som": null,
+    "chave": false,
+    "nota": "VE de tamanho normal (a estenose protege o VE); a impulsão paraesternal indica sobrecarga do VD."
+   },
+   {
+    "id": "fremito",
+    "regiao": "precordio",
+    "nome": "Pesquisa de frêmito",
+    "tipo": "palpacao",
+    "achado": "Frêmito diastólico discreto no ápice.",
+    "som": null,
+    "chave": false,
+    "nota": ""
+   },
+   {
+    "id": "foco-mitral",
+    "regiao": "precordio",
+    "nome": "Ausculta do foco mitral",
+    "tipo": "ausculta",
+    "achado": "<strong>B1 hiperfonética</strong>, <strong>estalido de abertura</strong> logo após B2 e sopro diastólico grave em ruflar.",
+    "som": "ruflar-em",
+    "chave": true,
+    "nota": ""
+   },
+   {
+    "id": "decubito-lateral",
+    "regiao": "precordio",
+    "nome": "Ausculta em decúbito lateral esquerdo (campânula)",
+    "tipo": "especial",
+    "achado": "<strong>Ruflar mesodiastólico</strong> com reforço pré-sistólico, bem mais nítido em decúbito lateral esquerdo com a campânula.",
+    "som": "ruflar-em",
+    "chave": true,
+    "nota": "Sem o decúbito lateral esquerdo e a campânula, o ruflar passa despercebido."
+   },
+   {
+    "id": "foco-pulmonar",
+    "regiao": "precordio",
+    "nome": "Ausculta do foco pulmonar",
+    "tipo": "ausculta",
+    "achado": "<strong>B2 hiperfonética</strong> (componente pulmonar aumentado).",
+    "som": null,
+    "chave": true,
+    "nota": "Sinal de hipertensão pulmonar secundária."
+   },
+   {
+    "id": "tp-ausculta",
+    "regiao": "torax_post",
+    "nome": "Ausculta pulmonar",
+    "tipo": "ausculta",
+    "achado": "Crepitações finas discretas nas bases.",
+    "som": "crep-finas",
+    "chave": false,
+    "nota": ""
+   },
+   {
+    "id": "pulso-radial",
+    "regiao": "msup",
+    "nome": "Pulso radial",
+    "tipo": "palpacao",
+    "achado": "Pulso regular, de amplitude levemente reduzida.",
+    "som": null,
+    "chave": false,
+    "nota": ""
+   }
+  ],
+  "sintese": {
+   "sindrome": {
+    "opcoes": [
+     "Estenose mitral",
+     "Insuficiência mitral",
+     "Insuficiência aórtica",
+     "Estenose aórtica",
+     "Comunicação interatrial"
+    ],
+    "correta": "Estenose mitral",
+    "explicacao": "B1 hiperfonética, estalido de abertura e ruflar mesodiastólico com reforço pré-sistólico no ápice."
+   },
+   "hipotese": {
+    "opcoes": [
+     "Estenose mitral reumática com hipertensão pulmonar",
+     "Prolapso da valva mitral",
+     "Mixoma atrial esquerdo",
+     "Endocardite infecciosa",
+     "Cardiomiopatia dilatada"
+    ],
+    "correta": "Estenose mitral reumática com hipertensão pulmonar",
+    "explicacao": "Mulher jovem com febre reumática na infância, dispneia, hemoptise e palpitações; P2 hiperfonética e impulsão paraesternal indicam hipertensão pulmonar. Mixoma pode imitar estenose mitral, mas sem história reumática e com achados que variam com a posição."
+   }
+  },
+  "ensino": [
+   "Ruflar mitral: ápice, campânula, decúbito lateral esquerdo — e às vezes um pouco de exercício para acelerar o fluxo.",
+   "Na estenose mitral o VE não dilata: ictus normal com impulsão paraesternal esquerda.",
+   "Profilaxia secundária da febre reumática interrompida é oportunidade perdida."
+  ],
+  "revisar": [
+   "cardio-sopros",
+   "cardio-valvopatias-ic",
+   "cardio-extras"
+  ]
+ },
+ {
+  "id": "pac-fa",
+  "titulo": "Seu João, 72 anos",
+  "queixa": "Coração disparado e desritmado há 1 semana",
+  "sistema": "cardiovascular",
+  "nivel": "Básico",
+  "paciente": {
+   "sexo": "M",
+   "idade": 72
+  },
+  "abertura": "Pedreiro aposentado, chega com a mão no peito: “Faz uma semana que o coração está acelerado e batendo fora do ritmo. Me cansei mais e fiquei com medo.”",
+  "vitais": {
+   "PA": "132 × 86 mmHg",
+   "FC": "Cerca de 120 bpm, irregular",
+   "FR": "18 irpm",
+   "Temp": "36,5 °C",
+   "SpO2": "96% em ar ambiente"
+  },
+  "anamnese": [
+   {
+    "id": "q0",
+    "p": "Como o senhor sente o coração?",
+    "r": "Disparado e bagunçado, sem ritmo nenhum, o tempo todo.",
+    "tipo": "chave",
+    "nota": "Palpitação irregular e contínua sugere fibrilação atrial."
+   },
+   {
+    "id": "q1",
+    "p": "Quando começou? Já tinha acontecido?",
+    "r": "Começou há uma semana, depois de um fim de semana de festa em que bebi bastante. Nunca tinha acontecido.",
+    "tipo": "chave",
+    "nota": "Álcool é gatilho conhecido (“coração de feriado”). Início há mais de 48 horas muda a conduta sobre cardioversão."
+   },
+   {
+    "id": "q2",
+    "p": "Tem pressão alta, diabetes ou já teve derrame?",
+    "r": "Pressão alta há 20 anos. Derrame, não.",
+    "tipo": "chave",
+    "nota": "Idade e hipertensão entram no escore CHA2DS2-VASc de risco de AVC."
+   },
+   {
+    "id": "q3",
+    "p": "Teve perda de força, dificuldade para falar ou vista turva?",
+    "r": "Não.",
+    "tipo": "util",
+    "nota": "Procure sinais de embolia cerebral."
+   },
+   {
+    "id": "q4",
+    "p": "Tem dor no peito ou falta de ar?",
+    "r": "Cansaço para andar, sem dor.",
+    "tipo": "util",
+    "nota": ""
+   },
+   {
+    "id": "q5",
+    "p": "Tem tremor, perdeu peso, sente muito calor?",
+    "r": "Não.",
+    "tipo": "util",
+    "nota": "Hipertireoidismo é causa tratável de fibrilação atrial."
+   },
+   {
+    "id": "q6",
+    "p": "Ronca muito? Já disseram que para de respirar dormindo?",
+    "r": "A esposa reclama que ronco alto.",
+    "tipo": "util",
+    "nota": "Apneia do sono se associa a fibrilação atrial."
+   },
+   {
+    "id": "q7",
+    "p": "Como está o intestino?",
+    "r": "Normal.",
+    "tipo": "neutra",
+    "nota": ""
+   }
+  ],
+  "exame": [
+   {
+    "id": "pulso-radial",
+    "regiao": "msup",
+    "nome": "Pulso radial",
+    "tipo": "palpacao",
+    "achado": "Pulso <strong>irregularmente irregular</strong>, com amplitude variável de batimento para batimento.",
+    "som": null,
+    "chave": true,
+    "nota": ""
+   },
+   {
+    "id": "deficit-pulso",
+    "regiao": "msup",
+    "nome": "Pulso radial × frequência auscultada",
+    "tipo": "especial",
+    "achado": "Frequência auscultada de 124 bpm; pulso radial de 102 bpm — <strong>déficit de pulso</strong> de 22.",
+    "som": null,
+    "chave": true,
+    "nota": "Batimentos com enchimento curto não geram onda palpável."
+   },
+   {
+    "id": "foco-mitral",
+    "regiao": "precordio",
+    "nome": "Ausculta do foco mitral",
+    "tipo": "ausculta",
+    "achado": "Ritmo irregularmente irregular, <strong>B1 de intensidade variável</strong>, sem sopros e sem B4.",
+    "som": "fa",
+    "chave": true,
+    "nota": ""
+   },
+   {
+    "id": "jugular",
+    "regiao": "pescoco",
+    "nome": "Pulso venoso jugular (cabeceira a 45°)",
+    "tipo": "inspecao",
+    "achado": "Sem turgência jugular; ondas a ausentes.",
+    "som": null,
+    "chave": false,
+    "nota": "Sem contração atrial eficaz, não há onda a."
+   },
+   {
+    "id": "tp-ausculta",
+    "regiao": "torax_post",
+    "nome": "Ausculta pulmonar",
+    "tipo": "ausculta",
+    "achado": "Murmúrio vesicular presente e simétrico, sem crepitações.",
+    "som": "mv-normal",
+    "chave": false,
+    "nota": ""
+   }
+  ],
+  "sintese": {
+   "sindrome": {
+    "opcoes": [
+     "Taquiarritmia irregular",
+     "Taquicardia sinusal",
+     "Bradiarritmia",
+     "Insuficiência cardíaca descompensada",
+     "Síndrome coronariana aguda"
+    ],
+    "correta": "Taquiarritmia irregular",
+    "explicacao": "Frequência alta com ritmo irregularmente irregular, B1 variável e déficit de pulso."
+   },
+   "hipotese": {
+    "opcoes": [
+     "Fibrilação atrial de alta resposta ventricular",
+     "Flutter atrial com condução 2:1",
+     "Extrassístoles ventriculares isoladas",
+     "Taquicardia sinusal por desidratação",
+     "Taquicardia ventricular"
+    ],
+    "correta": "Fibrilação atrial de alta resposta ventricular",
+    "explicacao": "Ritmo irregularmente irregular contínuo, sem onda a e com déficit de pulso. O flutter 2:1 costuma ser regular, perto de 150 bpm. Confirme no ECG."
+   }
+  },
+  "ensino": [
+   "Irregularmente irregular + B1 variável + déficit de pulso = fibrilação atrial até o ECG dizer o contrário.",
+   "Conte o pulso por um minuto inteiro quando o ritmo for irregular.",
+   "Avalie o risco de AVC (CHA2DS2-VASc) e procure causas: tireoide, álcool, valvopatia, apneia do sono."
+  ],
+  "revisar": [
+   "vit-pulso",
+   "cardio-bulhas"
+  ]
+ },
+ {
+  "id": "pac-iao",
+  "titulo": "Seu Paulo, 45 anos",
+  "queixa": "Coração batendo forte e cansaço aos esforços",
+  "sistema": "cardiovascular",
+  "nivel": "Clínico",
+  "paciente": {
+   "sexo": "M",
+   "idade": 45
+  },
+  "abertura": "Motorista de ônibus, veio após o exame admissional: “Disseram que eu tenho um sopro. Faz um ano que sinto o coração bater forte, principalmente deitado do lado esquerdo, e canso mais para subir escada.”",
+  "vitais": {
+   "PA": "160 × 50 mmHg",
+   "FC": "84 bpm, regular",
+   "FR": "16 irpm",
+   "Temp": "36,4 °C",
+   "SpO2": "97% em ar ambiente"
+  },
+  "anamnese": [
+   {
+    "id": "q0",
+    "p": "Como é essa sensação do coração batendo?",
+    "r": "Sinto as batidas fortes no peito e no pescoço, como se pulsasse tudo. Deitado do lado esquerdo é pior.",
+    "tipo": "chave",
+    "nota": "Grande volume sistólico e VE dilatado deixam os batimentos perceptíveis."
+   },
+   {
+    "id": "q1",
+    "p": "Desde quando cansa? Quanto consegue andar?",
+    "r": "Piorou devagar em um ano. Subo dois andares e preciso parar.",
+    "tipo": "chave",
+    "nota": ""
+   },
+   {
+    "id": "q2",
+    "p": "Alguém na família teve problema na aorta ou morte súbita?",
+    "r": "Meu pai morreu de um aneurisma que estourou, aos 55.",
+    "tipo": "chave",
+    "nota": "Doença da raiz da aorta familiar é uma causa de insuficiência aórtica."
+   },
+   {
+    "id": "q3",
+    "p": "Teve febre recentemente? Tratamento dentário?",
+    "r": "Não.",
+    "tipo": "util",
+    "nota": "Afasta endocardite como causa aguda."
+   },
+   {
+    "id": "q4",
+    "p": "Teve dor forte no peito ou nas costas, de repente?",
+    "r": "Nunca.",
+    "tipo": "util",
+    "nota": "Dissecção aguda de aorta causa insuficiência aórtica aguda com dor lancinante."
+   },
+   {
+    "id": "q5",
+    "p": "Perdeu peso, tem tremor, intolerância ao calor?",
+    "r": "Não.",
+    "tipo": "util",
+    "nota": "Hipertireoidismo também alarga a pressão de pulso."
+   },
+   {
+    "id": "q6",
+    "p": "Tem pressão alta?",
+    "r": "Disseram que a máxima é alta.",
+    "tipo": "util",
+    "nota": ""
+   },
+   {
+    "id": "q7",
+    "p": "Fuma?",
+    "r": "Não.",
+    "tipo": "neutra",
+    "nota": ""
+   },
+   {
+    "id": "q8",
+    "p": "Faz exercício?",
+    "r": "Pouco.",
+    "tipo": "neutra",
+    "nota": ""
+   }
+  ],
+  "exame": [
+   {
+    "id": "cabeca-repouso",
+    "regiao": "cabeca",
+    "nome": "Cabeça em repouso (movimentos)",
+    "tipo": "inspecao",
+    "achado": "Movimento discreto da cabeça para frente e para trás, sincrônico com os batimentos (sinal de Musset).",
+    "som": null,
+    "chave": true,
+    "nota": ""
+   },
+   {
+    "id": "carotidas",
+    "regiao": "pescoco",
+    "nome": "Pulso carotídeo",
+    "tipo": "palpacao",
+    "achado": "Pulsações carotídeas amplas e visíveis no pescoço.",
+    "som": null,
+    "chave": false,
+    "nota": ""
+   },
+   {
+    "id": "pulso-radial",
+    "regiao": "msup",
+    "nome": "Pulso radial",
+    "tipo": "palpacao",
+    "achado": "Pulso <strong>amplo, de ascensão e queda rápidas</strong>, acentuado ao elevar o braço (martelo d&#39;água).",
+    "som": null,
+    "chave": true,
+    "nota": ""
+   },
+   {
+    "id": "leito-ungueal",
+    "regiao": "msup",
+    "nome": "Leito ungueal (pulsação capilar)",
+    "tipo": "inspecao",
+    "achado": "Pulsação capilar visível no leito ungueal (sinal de Quincke).",
+    "som": null,
+    "chave": true,
+    "nota": ""
+   },
+   {
+    "id": "ictus",
+    "regiao": "precordio",
+    "nome": "Ictus cordis",
+    "tipo": "palpacao",
+    "achado": "Ictus no 6º espaço intercostal, lateral à linha hemiclavicular, amplo e difuso, com 3 polpas.",
+    "som": null,
+    "chave": true,
+    "nota": "Sobrecarga de volume: VE dilatado."
+   },
+   {
+    "id": "inclinado",
+    "regiao": "precordio",
+    "nome": "Ausculta inclinado para frente, em expiração",
+    "tipo": "especial",
+    "achado": "<strong>Sopro diastólico aspirativo</strong> em decrescendo, 3+/6+, no foco aórtico acessório, nítido com o paciente inclinado para frente em expiração.",
+    "som": "diast-iao",
+    "chave": true,
+    "nota": "Sem essa posição, o sopro pode passar despercebido."
+   },
+   {
+    "id": "foco-aortico-acessorio",
+    "regiao": "precordio",
+    "nome": "Ausculta do foco aórtico acessório",
+    "tipo": "ausculta",
+    "achado": "Sopro diastólico suave logo após B2.",
+    "som": "diast-iao",
+    "chave": false,
+    "nota": ""
+   },
+   {
+    "id": "foco-aortico",
+    "regiao": "precordio",
+    "nome": "Ausculta do foco aórtico",
+    "tipo": "ausculta",
+    "achado": "Sopro sistólico ejetivo suave, de hiperfluxo.",
+    "som": null,
+    "chave": false,
+    "nota": ""
+   },
+   {
+    "id": "foco-mitral",
+    "regiao": "precordio",
+    "nome": "Ausculta do foco mitral",
+    "tipo": "ausculta",
+    "achado": "Ruflar mesodiastólico discreto no ápice (sopro de Austin Flint).",
+    "som": null,
+    "chave": false,
+    "nota": ""
+   }
+  ],
+  "sintese": {
+   "sindrome": {
+    "opcoes": [
+     "Insuficiência aórtica",
+     "Estenose aórtica",
+     "Estenose mitral",
+     "Persistência do canal arterial",
+     "Insuficiência mitral"
+    ],
+    "correta": "Insuficiência aórtica",
+    "explicacao": "Sopro protodiastólico aspirativo no foco aórtico acessório, PA divergente, pulso em martelo d'água, Musset, Quincke e ictus desviado e difuso."
+   },
+   "hipotese": {
+    "opcoes": [
+     "Insuficiência aórtica crônica importante",
+     "Dissecção aguda de aorta",
+     "Hipertireoidismo",
+     "Endocardite infecciosa aguda",
+     "Cardiomiopatia hipertrófica"
+    ],
+    "correta": "Insuficiência aórtica crônica importante",
+    "explicacao": "Evolução de um ano, bem tolerada, com VE dilatado e sinais periféricos exuberantes. Sem dor súbita (dissecção), sem febre (endocardite) e sem sinais de tireotoxicose. A história familiar sugere doença da raiz da aorta."
+   }
+  },
+  "ensino": [
+   "Procure o sopro da insuficiência aórtica com o paciente sentado, inclinado para frente, em expiração, com o diafragma.",
+   "PA divergente + pulso em martelo d&#39;água + sinais periféricos = grande volume sistólico.",
+   "O ruflar de Austin Flint aparece sem estenose mitral: o jato regurgitante limita a abertura da mitral."
+  ],
+  "revisar": [
+   "cardio-sopros",
+   "cardio-valvopatias-ic",
+   "vit-pa"
+  ]
+ },
+ {
+  "id": "pac-ic",
+  "titulo": "Dona Marlene, 67 anos",
+  "queixa": "Falta de ar para deitar e pernas inchadas",
+  "sistema": "cardiovascular",
+  "nivel": "Clínico",
+  "paciente": {
+   "sexo": "F",
+   "idade": 67
+  },
+  "abertura": "Costureira aposentada, chega sentada e ofegante: “Faz dois meses que o fôlego vem acabando. Agora não consigo nem deitar direito, e as pernas incharam.”",
+  "vitais": {
+   "PA": "150 × 92 mmHg",
+   "FC": "104 bpm, regular",
+   "FR": "26 irpm",
+   "Temp": "36,4 °C",
+   "SpO2": "90% em ar ambiente"
+  },
+  "anamnese": [
+   {
+    "id": "q0",
+    "p": "Consegue deitar reto? Usa quantos travesseiros?",
+    "r": "Não consigo. Durmo com três travesseiros, quase sentada.",
+    "tipo": "chave",
+    "nota": "Ortopneia: congestão pulmonar."
+   },
+   {
+    "id": "q1",
+    "p": "Acorda à noite com falta de ar?",
+    "r": "Acordo sufocada de madrugada e tenho que sentar na beira da cama até passar.",
+    "tipo": "chave",
+    "nota": "Dispneia paroxística noturna: muito sugestiva de insuficiência cardíaca esquerda."
+   },
+   {
+    "id": "q2",
+    "p": "A senhora já teve problema de coração?",
+    "r": "Tive um infarto há cinco anos e tenho pressão alta.",
+    "tipo": "chave",
+    "nota": "Cardiopatia isquêmica é a principal causa de IC com fração de ejeção reduzida."
+   },
+   {
+    "id": "q3",
+    "p": "Toma os remédios direitinho?",
+    "r": "Parei o remédio de urinar faz umas três semanas, porque me fazia levantar muito à noite. E nas festas comi bastante salgado.",
+    "tipo": "chave",
+    "nota": "Suspensão do diurético e excesso de sal são as causas mais comuns de descompensação."
+   },
+   {
+    "id": "q4",
+    "p": "Quanto consegue andar sem cansar?",
+    "r": "Hoje canso só de ir ao banheiro.",
+    "tipo": "util",
+    "nota": "NYHA III a IV."
+   },
+   {
+    "id": "q5",
+    "p": "Ganhou peso?",
+    "r": "Uns cinco quilos em um mês, e não foi de comida.",
+    "tipo": "util",
+    "nota": "Ganho rápido de peso = retenção de líquido."
+   },
+   {
+    "id": "q6",
+    "p": "Teve dor no peito?",
+    "r": "Não.",
+    "tipo": "util",
+    "nota": "Ajuda a afastar isquemia aguda como gatilho."
+   },
+   {
+    "id": "q7",
+    "p": "Tem febre ou tosse com catarro?",
+    "r": "Uma tosse seca à noite. Febre, não.",
+    "tipo": "util",
+    "nota": ""
+   },
+   {
+    "id": "q8",
+    "p": "Como está o intestino?",
+    "r": "Normal.",
+    "tipo": "neutra",
+    "nota": ""
+   }
+  ],
+  "exame": [
+   {
+    "id": "atitude",
+    "regiao": "geral",
+    "nome": "Atitude e decúbito",
+    "tipo": "inspecao",
+    "achado": "Atitude ortopneica: sentada, sem tolerar o decúbito.",
+    "som": null,
+    "chave": false,
+    "nota": ""
+   },
+   {
+    "id": "jugular",
+    "regiao": "pescoco",
+    "nome": "Pulso venoso jugular (cabeceira a 45°)",
+    "tipo": "inspecao",
+    "achado": "<strong>Turgência jugular</strong> a 45°, cerca de 6 cm acima do ângulo esternal.",
+    "som": null,
+    "chave": true,
+    "nota": "Pressão venosa central estimada em cerca de 11 cm de água."
+   },
+   {
+    "id": "refluxo-hj",
+    "regiao": "abdome",
+    "nome": "Refluxo hepatojugular",
+    "tipo": "especial",
+    "achado": "Refluxo hepatojugular positivo, com elevação sustentada da coluna venosa.",
+    "som": null,
+    "chave": true,
+    "nota": ""
+   },
+   {
+    "id": "ictus",
+    "regiao": "precordio",
+    "nome": "Ictus cordis",
+    "tipo": "palpacao",
+    "achado": "Ictus no 6º espaço intercostal, na linha axilar anterior, difuso, com 3 polpas.",
+    "som": null,
+    "chave": true,
+    "nota": "Ictus desviado e difuso: VE dilatado."
+   },
+   {
+    "id": "foco-mitral",
+    "regiao": "precordio",
+    "nome": "Ausculta do foco mitral",
+    "tipo": "ausculta",
+    "achado": "Ritmo em 3 tempos por <strong>B3</strong> (galope) e sopro holossistólico 2+/6+ irradiado para a axila.",
+    "som": "b3",
+    "chave": true,
+    "nota": "B3 em idosa dispneica é disfunção ventricular até prova em contrário. O sopro é de insuficiência mitral funcional, pela dilatação do VE."
+   },
+   {
+    "id": "decubito-lateral",
+    "regiao": "precordio",
+    "nome": "Ausculta em decúbito lateral esquerdo (campânula)",
+    "tipo": "especial",
+    "achado": "B3 mais nítida em decúbito lateral esquerdo, com a campânula.",
+    "som": "b3",
+    "chave": false,
+    "nota": ""
+   },
+   {
+    "id": "tp-ausculta",
+    "regiao": "torax_post",
+    "nome": "Ausculta pulmonar",
+    "tipo": "ausculta",
+    "achado": "<strong>Crepitações finas</strong> em ambas as bases, até o terço médio.",
+    "som": "crep-finas",
+    "chave": true,
+    "nota": ""
+   },
+   {
+    "id": "tp-percussao",
+    "regiao": "torax_post",
+    "nome": "Percussão comparativa",
+    "tipo": "percussao",
+    "achado": "Submacicez na base direita.",
+    "som": null,
+    "chave": false,
+    "nota": "Pequeno derrame pleural, comum na IC."
+   },
+   {
+    "id": "figado",
+    "regiao": "abdome",
+    "nome": "Palpação do fígado",
+    "tipo": "palpacao",
+    "achado": "Fígado palpável a 4 cm do rebordo costal direito, borda romba, doloroso.",
+    "som": null,
+    "chave": true,
+    "nota": ""
+   },
+   {
+    "id": "hepatimetria",
+    "regiao": "abdome",
+    "nome": "Hepatimetria",
+    "tipo": "percussao",
+    "achado": "Hepatimetria de cerca de 15 cm.",
+    "som": null,
+    "chave": false,
+    "nota": ""
+   },
+   {
+    "id": "edema",
+    "regiao": "minf",
+    "nome": "Pesquisa de edema (cacifo)",
+    "tipo": "palpacao",
+    "achado": "<strong>Edema 3+/4+</strong> com cacifo, bilateral e simétrico, até os joelhos; edema sacral discreto.",
+    "som": null,
+    "chave": true,
+    "nota": ""
+   },
+   {
+    "id": "enchimento",
+    "regiao": "msup",
+    "nome": "Tempo de enchimento capilar",
+    "tipo": "especial",
+    "achado": "Enchimento capilar de 2 segundos; extremidades mornas.",
+    "som": null,
+    "chave": false,
+    "nota": "Perfusão preservada: perfil quente."
+   }
+  ],
+  "sintese": {
+   "sindrome": {
+    "opcoes": [
+     "Insuficiência cardíaca congestiva (congestão pulmonar e sistêmica)",
+     "Síndrome nefrótica",
+     "Cirrose hepática descompensada",
+     "Pneumonia bilateral",
+     "Exacerbação de DPOC"
+    ],
+    "correta": "Insuficiência cardíaca congestiva (congestão pulmonar e sistêmica)",
+    "explicacao": "Congestão pulmonar (ortopneia, DPN, crepitações) e sistêmica (turgência jugular, refluxo hepatojugular, hepatomegalia, edema), com B3 e VE dilatado."
+   },
+   "hipotese": {
+    "opcoes": [
+     "IC descompensada de causa isquêmica, perfil quente e úmido",
+     "IC com perfil frio e úmido (choque cardiogênico)",
+     "Tromboembolismo pulmonar",
+     "Insuficiência renal aguda",
+     "Pericardite constritiva"
+    ],
+    "correta": "IC descompensada de causa isquêmica, perfil quente e úmido",
+    "explicacao": "Congesta (úmida) e com extremidades mornas, PA elevada e enchimento capilar normal (quente). Descompensação por suspensão do diurético e excesso de sal, num coração dilatado pós-infarto."
+   }
+  },
+  "ensino": [
+   "Ortopneia e DPN são as perguntas mais úteis na suspeita de IC.",
+   "Classifique o perfil à beira do leito: congesto ou seco, quente ou frio.",
+   "Sempre procure o fator de descompensação: má adesão, sal, infecção, arritmia, isquemia."
+  ],
+  "revisar": [
+   "cardio-valvopatias-ic",
+   "cardio-jugular",
+   "cardio-extras"
+  ]
+ },
+ {
+  "id": "pac-pericardite",
+  "titulo": "Rafael, 28 anos",
+  "queixa": "Dor no peito que piora deitado há 2 dias",
+  "sistema": "cardiovascular",
+  "nivel": "Básico",
+  "paciente": {
+   "sexo": "M",
+   "idade": 28
+  },
+  "abertura": "Programador, chega sentado e inclinado para frente: “Essa dor no peito não me deixa deitar. Sentado e curvado melhora um pouco.”",
+  "vitais": {
+   "PA": "124 × 78 mmHg",
+   "FC": "102 bpm, regular",
+   "FR": "20 irpm",
+   "Temp": "37,9 °C",
+   "SpO2": "98% em ar ambiente"
+  },
+  "anamnese": [
+   {
+    "id": "q0",
+    "p": "Como é a dor? O que piora e o que melhora?",
+    "r": "É no meio do peito, em pontada. Piora deitado e quando respiro fundo; melhora sentado e inclinado para frente.",
+    "tipo": "chave",
+    "nota": "Piora em decúbito e melhora ao inclinar o tronco: dor pericárdica típica."
+   },
+   {
+    "id": "q1",
+    "p": "A dor vai para algum lugar?",
+    "r": "Às vezes sobe para o ombro esquerdo, em cima, no músculo.",
+    "tipo": "chave",
+    "nota": "Irradiação para a borda do trapézio é característica da dor pericárdica (inervação frênica)."
+   },
+   {
+    "id": "q2",
+    "p": "Teve gripe ou resfriado nas últimas semanas?",
+    "r": "Fiquei resfriado há uns dez dias.",
+    "tipo": "chave",
+    "nota": "Pericardite viral ou idiopática costuma suceder uma infecção respiratória."
+   },
+   {
+    "id": "q3",
+    "p": "A dor aparece com esforço e melhora com repouso?",
+    "r": "Não, ela fica o tempo todo; muda com a posição.",
+    "tipo": "util",
+    "nota": "Dor que muda com a posição e a respiração fala contra isquemia."
+   },
+   {
+    "id": "q4",
+    "p": "Tem tosse com sangue, viagem longa ou perna inchada?",
+    "r": "Não.",
+    "tipo": "util",
+    "nota": "Diferencial com embolia pulmonar."
+   },
+   {
+    "id": "q5",
+    "p": "Tem falta de ar ou sente que vai desmaiar?",
+    "r": "Só um pouco de falta de ar quando a dor aperta. Desmaio, não.",
+    "tipo": "util",
+    "nota": "Dispneia importante, hipotensão ou síncope sugeririam tamponamento."
+   },
+   {
+    "id": "q6",
+    "p": "Tem doença autoimune, tuberculose, câncer ou insuficiência renal?",
+    "r": "Não.",
+    "tipo": "util",
+    "nota": ""
+   },
+   {
+    "id": "q7",
+    "p": "Usa drogas?",
+    "r": "Não.",
+    "tipo": "neutra",
+    "nota": ""
+   },
+   {
+    "id": "q8",
+    "p": "Fuma?",
+    "r": "Não.",
+    "tipo": "neutra",
+    "nota": ""
+   }
+  ],
+  "exame": [
+   {
+    "id": "atitude",
+    "regiao": "geral",
+    "nome": "Atitude e decúbito",
+    "tipo": "inspecao",
+    "achado": "Prefere ficar sentado, inclinado para frente.",
+    "som": null,
+    "chave": false,
+    "nota": ""
+   },
+   {
+    "id": "inclinado",
+    "regiao": "precordio",
+    "nome": "Ausculta inclinado para frente, em expiração",
+    "tipo": "especial",
+    "achado": "<strong>Atrito pericárdico</strong> áspero, com três componentes, na borda esternal esquerda; mais nítido inclinado para frente em expiração e <strong>persiste com a respiração presa</strong>.",
+    "som": "atrito-pericardico",
+    "chave": true,
+    "nota": ""
+   },
+   {
+    "id": "foco-tricuspide",
+    "regiao": "precordio",
+    "nome": "Ausculta do foco tricúspide",
+    "tipo": "ausculta",
+    "achado": "Ruído áspero e superficial (atrito).",
+    "som": "atrito-pericardico",
+    "chave": false,
+    "nota": ""
+   },
+   {
+    "id": "foco-mitral",
+    "regiao": "precordio",
+    "nome": "Ausculta do foco mitral",
+    "tipo": "ausculta",
+    "achado": "Taquicardia, ritmo regular, bulhas normofonéticas, sem sopros; atrito audível.",
+    "som": "atrito-pericardico",
+    "chave": false,
+    "nota": ""
+   },
+   {
+    "id": "jugular",
+    "regiao": "pescoco",
+    "nome": "Pulso venoso jugular (cabeceira a 45°)",
+    "tipo": "inspecao",
+    "achado": "Sem turgência jugular; pulso venoso normal, cai na inspiração.",
+    "som": null,
+    "chave": true,
+    "nota": "Turgência jugular, hipotensão e pulso paradoxal indicariam tamponamento."
+   },
+   {
+    "id": "pulso-paradoxal",
+    "regiao": "sinais",
+    "nome": "Pesquisa de pulso paradoxal",
+    "tipo": "medida",
+    "achado": "Variação inspiratória da PA sistólica de 4 mmHg — sem pulso paradoxal.",
+    "som": null,
+    "chave": true,
+    "nota": ""
+   },
+   {
+    "id": "tp-ausculta",
+    "regiao": "torax_post",
+    "nome": "Ausculta pulmonar",
+    "tipo": "ausculta",
+    "achado": "Murmúrio vesicular presente e simétrico, sem atrito pleural.",
+    "som": "mv-normal",
+    "chave": false,
+    "nota": ""
+   }
+  ],
+  "sintese": {
+   "sindrome": {
+    "opcoes": [
+     "Síndrome pericárdica inflamatória",
+     "Síndrome isquêmica miocárdica aguda",
+     "Síndrome pleural",
+     "Tamponamento cardíaco",
+     "Síndrome aórtica aguda"
+    ],
+    "correta": "Síndrome pericárdica inflamatória",
+    "explicacao": "Dor torácica posicional e pleurítica com atrito pericárdico, sem sinais de tamponamento."
+   },
+   "hipotese": {
+    "opcoes": [
+     "Pericardite aguda viral ou idiopática",
+     "Infarto agudo do miocárdio",
+     "Embolia pulmonar",
+     "Pneumotórax espontâneo",
+     "Pericardite tuberculosa"
+    ],
+    "correta": "Pericardite aguda viral ou idiopática",
+    "explicacao": "Jovem, após infecção respiratória, com febre baixa, dor que piora deitado e melhora inclinado e atrito pericárdico. O ECG com supradesnivelamento difuso de ST ajuda a confirmar."
+   }
+  },
+  "ensino": [
+   "Atrito pericárdico persiste com a respiração presa; o pleural some.",
+   "Em toda pericardite, procure tamponamento: turgência jugular, hipotensão, bulhas abafadas e pulso paradoxal.",
+   "Dor que muda com posição e respiração fala contra isquemia, mas o ECG é obrigatório."
+  ],
+  "revisar": [
+   "cardio-extras",
+   "anam-sintomas",
+   "cardio-jugular"
+  ]
+ },
+ {
+  "id": "pac-pneumonia",
+  "titulo": "Seu Antônio, 64 anos",
+  "queixa": "Febre e tosse há 4 dias",
+  "sistema": "respiratorio",
+  "nivel": "Básico",
+  "paciente": {
+   "sexo": "M",
+   "idade": 64
+  },
+  "abertura": "Pedreiro aposentado, chega ao pronto-atendimento com a esposa: “Doutor, faz quatro dias que estou com febre e uma tosse que não para. Hoje fiquei cansado só de andar até aqui.”",
+  "vitais": {
+   "PA": "124 × 76 mmHg",
+   "FC": "108 bpm, regular",
+   "FR": "26 irpm",
+   "Temp": "38,9 °C",
+   "SpO2": "91% em ar ambiente"
+  },
+  "anamnese": [
+   {
+    "id": "q0",
+    "p": "Como é a tosse? Tem catarro?",
+    "r": "Começou seca. Agora sai catarro amarelado, às vezes cor de ferrugem.",
+    "tipo": "chave",
+    "nota": "Expectoração purulenta ou cor de ferrugem é clássica da pneumonia pneumocócica."
+   },
+   {
+    "id": "q1",
+    "p": "Tem dor no peito? Ela piora quando respira fundo?",
+    "r": "Dói do lado direito, embaixo, quando puxo o ar ou tusso.",
+    "tipo": "chave",
+    "nota": "Dor ventilatório-dependente (pleurítica) indica comprometimento da pleura sobre a área doente."
+   },
+   {
+    "id": "q2",
+    "p": "Teve calafrios?",
+    "r": "No primeiro dia tremi muito, batendo o queixo.",
+    "tipo": "util",
+    "nota": ""
+   },
+   {
+    "id": "q3",
+    "p": "O senhor fuma ou já fumou?",
+    "r": "Fumei um maço por dia por 30 anos. Parei há cinco.",
+    "tipo": "chave",
+    "nota": "30 maços-ano. Tabagismo aumenta o risco de pneumonia e exige seguimento para excluir neoplasia se a imagem não resolver."
+   },
+   {
+    "id": "q4",
+    "p": "Emagreceu? Tem suado à noite? Teve contato com alguém com tuberculose?",
+    "r": "Não, nada disso. O peso está o mesmo.",
+    "tipo": "util",
+    "nota": "Bom diferencial: febre e tosse também podem ser tuberculose."
+   },
+   {
+    "id": "q5",
+    "p": "Tem alguma doença? Usa remédios?",
+    "r": "Só pressão alta. Tomo losartana.",
+    "tipo": "util",
+    "nota": ""
+   },
+   {
+    "id": "q6",
+    "p": "Está confuso ou sonolento? Alguém notou ele diferente?",
+    "r": "(Esposa) Não, está normal, conversando direitinho.",
+    "tipo": "util",
+    "nota": "Confusão mental é critério de gravidade na pneumonia (o C do CURB-65)."
+   },
+   {
+    "id": "q7",
+    "p": "Como está o intestino?",
+    "r": "Normal.",
+    "tipo": "neutra",
+    "nota": ""
+   },
+   {
+    "id": "q8",
+    "p": "Tem dor ao urinar?",
+    "r": "Não.",
+    "tipo": "neutra",
+    "nota": ""
+   },
+   {
+    "id": "q9",
+    "p": "Teve viagem recente?",
+    "r": "Não saí da cidade.",
+    "tipo": "neutra",
+    "nota": ""
+   }
+  ],
+  "exame": [
+   {
+    "id": "estado-geral",
+    "regiao": "geral",
+    "nome": "Estado geral e consciência",
+    "tipo": "inspecao",
+    "achado": "Regular estado geral, lúcido e orientado, febril ao toque, corado.",
+    "som": null,
+    "chave": false,
+    "nota": ""
+   },
+   {
+    "id": "padrao-resp",
+    "regiao": "geral",
+    "nome": "Padrão respiratório à distância",
+    "tipo": "inspecao",
+    "achado": "Taquipneico, fala frases completas, sem uso importante de musculatura acessória.",
+    "som": null,
+    "chave": false,
+    "nota": ""
+   },
+   {
+    "id": "tp-expansibilidade",
+    "regiao": "torax_post",
+    "nome": "Expansibilidade das bases",
+    "tipo": "palpacao",
+    "achado": "Expansibilidade diminuída na base direita.",
+    "som": null,
+    "chave": true,
+    "nota": ""
+   },
+   {
+    "id": "tp-ftv",
+    "regiao": "torax_post",
+    "nome": "Frêmito toracovocal",
+    "tipo": "palpacao",
+    "achado": "Frêmito toracovocal <strong>aumentado</strong> na base direita.",
+    "som": null,
+    "chave": true,
+    "nota": "É o achado que separa consolidação de derrame: no derrame o frêmito cai."
+   },
+   {
+    "id": "tp-percussao",
+    "regiao": "torax_post",
+    "nome": "Percussão comparativa",
+    "tipo": "percussao",
+    "achado": "Submacicez na base direita; som claro pulmonar no restante.",
+    "som": null,
+    "chave": true,
+    "nota": ""
+   },
+   {
+    "id": "tp-ausculta",
+    "regiao": "torax_post",
+    "nome": "Ausculta pulmonar",
+    "tipo": "ausculta",
+    "achado": "Sopro tubário e crepitações na base direita; murmúrio vesicular normal à esquerda.",
+    "som": "consolidacao",
+    "chave": true,
+    "nota": ""
+   },
+   {
+    "id": "tp-voz",
+    "regiao": "torax_post",
+    "nome": "Ressonância vocal",
+    "tipo": "ausculta",
+    "achado": "Broncofonia e pectorilóquia afônica na base direita.",
+    "som": null,
+    "chave": true,
+    "nota": "A ressonância vocal aumentada confirma a consolidação."
+   },
+   {
+    "id": "foco-mitral",
+    "regiao": "precordio",
+    "nome": "Ausculta do foco mitral",
+    "tipo": "ausculta",
+    "achado": "Taquicardia, ritmo regular em 2 tempos, bulhas normofonéticas, sem sopros.",
+    "som": "normal",
+    "chave": false,
+    "nota": ""
+   }
+  ],
+  "sintese": {
+   "sindrome": {
+    "opcoes": [
+     "Consolidação",
+     "Derrame pleural",
+     "Pneumotórax",
+     "Hiperinsuflação",
+     "Atelectasia"
+    ],
+    "correta": "Consolidação",
+    "explicacao": "Frêmito aumentado, submacicez, sopro tubário e broncofonia na mesma área formam a síndrome de consolidação."
+   },
+   "hipotese": {
+    "opcoes": [
+     "Pneumonia adquirida na comunidade",
+     "Tuberculose pulmonar",
+     "Insuficiência cardíaca descompensada",
+     "Embolia pulmonar",
+     "Câncer de pulmão"
+    ],
+    "correta": "Pneumonia adquirida na comunidade",
+    "explicacao": "Quadro agudo de febre, calafrios, tosse produtiva e dor pleurítica com consolidação lobar. Sem confusão e com idade < 65 anos; FR < 30 e PA preservada."
+   }
+  },
+  "ensino": [
+   "Frêmito toracovocal é o divisor de águas entre consolidação (aumentado) e derrame (diminuído).",
+   "Em pneumonia, avalie gravidade à beira do leito: nível de consciência, FR, PA e idade.",
+   "Tabagista com pneumonia precisa de controle de imagem após o tratamento."
+  ],
+  "revisar": [
+   "resp-ausculta",
+   "resp-palpacao",
+   "resp-sindromes"
+  ]
+ },
+ {
+  "id": "pac-pneumotorax",
+  "titulo": "Lucas, 22 anos",
+  "queixa": "Dor no peito súbita e falta de ar há 3 horas",
+  "sistema": "respiratorio",
+  "nivel": "Básico",
+  "paciente": {
+   "sexo": "M",
+   "idade": 22
+  },
+  "abertura": "Estudante, alto e magro, chega com a mão no lado direito do peito: “Eu estava sentado estudando e de repente deu uma pontada aqui e o ar ficou curto.”",
+  "vitais": {
+   "PA": "122 × 78 mmHg",
+   "FC": "104 bpm, regular",
+   "FR": "24 irpm",
+   "Temp": "36,5 °C",
+   "SpO2": "94% em ar ambiente"
+  },
+  "anamnese": [
+   {
+    "id": "q0",
+    "p": "Como começou a dor? Foi de repente?",
+    "r": "Do nada, em segundos. Eu nem estava fazendo esforço.",
+    "tipo": "chave",
+    "nota": "Início súbito, em repouso, num jovem longilíneo é o cenário clássico do pneumotórax espontâneo primário."
+   },
+   {
+    "id": "q1",
+    "p": "Como é a dor? Piora ao respirar?",
+    "r": "É uma pontada do lado direito que piora quando puxo o ar.",
+    "tipo": "chave",
+    "nota": ""
+   },
+   {
+    "id": "q2",
+    "p": "Você fuma?",
+    "r": "Fumo uns dez cigarros por dia há uns três anos.",
+    "tipo": "chave",
+    "nota": "Tabagismo aumenta bastante o risco de pneumotórax espontâneo."
+   },
+   {
+    "id": "q3",
+    "p": "Teve alguma batida ou trauma no peito?",
+    "r": "Não, nada.",
+    "tipo": "util",
+    "nota": "Exclui pneumotórax traumático."
+   },
+   {
+    "id": "q4",
+    "p": "Já aconteceu isso antes? Alguém na família?",
+    "r": "Nunca. Na família não sei de ninguém.",
+    "tipo": "util",
+    "nota": ""
+   },
+   {
+    "id": "q5",
+    "p": "Tem febre, tosse ou catarro?",
+    "r": "Não.",
+    "tipo": "util",
+    "nota": ""
+   },
+   {
+    "id": "q6",
+    "p": "Viajou ou ficou muito tempo parado recentemente? Usa algum hormônio?",
+    "r": "Não.",
+    "tipo": "util",
+    "nota": "Bom diferencial: dor súbita e dispneia também podem ser embolia pulmonar."
+   },
+   {
+    "id": "q7",
+    "p": "Tem alguma doença?",
+    "r": "Não, sou saudável.",
+    "tipo": "neutra",
+    "nota": ""
+   },
+   {
+    "id": "q8",
+    "p": "Usa alguma droga?",
+    "r": "Não.",
+    "tipo": "neutra",
+    "nota": ""
+   }
+  ],
+  "exame": [
+   {
+    "id": "nutricional",
+    "regiao": "geral",
+    "nome": "Estado nutricional",
+    "tipo": "inspecao",
+    "achado": "Longilíneo, magro.",
+    "som": null,
+    "chave": false,
+    "nota": ""
+   },
+   {
+    "id": "padrao-resp",
+    "regiao": "geral",
+    "nome": "Padrão respiratório à distância",
+    "tipo": "inspecao",
+    "achado": "Taquipneico, ansioso, fala frases completas.",
+    "som": null,
+    "chave": false,
+    "nota": ""
+   },
+   {
+    "id": "traqueia",
+    "regiao": "pescoco",
+    "nome": "Posição da traqueia",
+    "tipo": "palpacao",
+    "achado": "Traqueia centrada.",
+    "som": null,
+    "chave": true,
+    "nota": "Traqueia centrada, sem turgência jugular e com PA normal afastam pneumotórax hipertensivo."
+   },
+   {
+    "id": "jugular",
+    "regiao": "pescoco",
+    "nome": "Pulso venoso jugular (cabeceira a 45°)",
+    "tipo": "inspecao",
+    "achado": "Sem turgência jugular.",
+    "som": null,
+    "chave": false,
+    "nota": ""
+   },
+   {
+    "id": "ta-expansibilidade",
+    "regiao": "torax_ant",
+    "nome": "Expansibilidade dos ápices",
+    "tipo": "palpacao",
+    "achado": "Expansibilidade diminuída no ápice direito.",
+    "som": null,
+    "chave": false,
+    "nota": ""
+   },
+   {
+    "id": "tp-expansibilidade",
+    "regiao": "torax_post",
+    "nome": "Expansibilidade das bases",
+    "tipo": "palpacao",
+    "achado": "Expansibilidade diminuída à direita.",
+    "som": null,
+    "chave": true,
+    "nota": ""
+   },
+   {
+    "id": "tp-ftv",
+    "regiao": "torax_post",
+    "nome": "Frêmito toracovocal",
+    "tipo": "palpacao",
+    "achado": "Frêmito toracovocal <strong>abolido</strong> em todo o hemitórax direito.",
+    "som": null,
+    "chave": true,
+    "nota": ""
+   },
+   {
+    "id": "tp-percussao",
+    "regiao": "torax_post",
+    "nome": "Percussão comparativa",
+    "tipo": "percussao",
+    "achado": "Hipersonoridade (quase timpanismo) em todo o hemitórax direito.",
+    "som": null,
+    "chave": true,
+    "nota": "É o achado que separa pneumotórax de derrame: os dois abolem frêmito e murmúrio, mas o pneumotórax é hipersonoro."
+   },
+   {
+    "id": "tp-ausculta",
+    "regiao": "torax_post",
+    "nome": "Ausculta pulmonar",
+    "tipo": "ausculta",
+    "achado": "Murmúrio vesicular abolido à direita; normal à esquerda.",
+    "som": "mv-diminuido",
+    "chave": true,
+    "nota": ""
+   },
+   {
+    "id": "ta-percussao",
+    "regiao": "torax_ant",
+    "nome": "Percussão comparativa",
+    "tipo": "percussao",
+    "achado": "Hipersonoridade no hemitórax direito anterior.",
+    "som": null,
+    "chave": false,
+    "nota": ""
+   },
+   {
+    "id": "ta-ausculta",
+    "regiao": "torax_ant",
+    "nome": "Ausculta pulmonar",
+    "tipo": "ausculta",
+    "achado": "Murmúrio vesicular abolido à direita.",
+    "som": "mv-diminuido",
+    "chave": false,
+    "nota": ""
+   },
+   {
+    "id": "tp-voz",
+    "regiao": "torax_post",
+    "nome": "Ressonância vocal",
+    "tipo": "ausculta",
+    "achado": "Ressonância vocal abolida à direita.",
+    "som": null,
+    "chave": false,
+    "nota": ""
+   }
+  ],
+  "sintese": {
+   "sindrome": {
+    "opcoes": [
+     "Pneumotórax",
+     "Derrame pleural",
+     "Consolidação",
+     "Atelectasia",
+     "Hiperinsuflação"
+    ],
+    "correta": "Pneumotórax",
+    "explicacao": "Expansibilidade, frêmito e murmúrio reduzidos ou abolidos com hipersonoridade no mesmo hemitórax."
+   },
+   "hipotese": {
+    "opcoes": [
+     "Pneumotórax espontâneo primário",
+     "Pneumotórax hipertensivo",
+     "Embolia pulmonar",
+     "Pericardite aguda",
+     "Pneumonia"
+    ],
+    "correta": "Pneumotórax espontâneo primário",
+    "explicacao": "Jovem longilíneo e tabagista, sem doença pulmonar, com início súbito em repouso. Estável, com traqueia centrada e sem turgência jugular: não é hipertensivo."
+   }
+  },
+  "ensino": [
+   "Hipersonoridade separa pneumotórax de derrame; o frêmito e o murmúrio caem nos dois.",
+   "Desvio da traqueia para o lado oposto, turgência jugular e hipotensão = pneumotórax hipertensivo: descompressão imediata, sem esperar imagem.",
+   "Parar de fumar reduz o risco de recorrência."
+  ],
+  "revisar": [
+   "resp-sindromes",
+   "resp-percussao"
+  ]
+ }
+]

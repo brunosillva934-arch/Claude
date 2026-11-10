@@ -1,0 +1,32 @@
+[
+ {
+  "id": "apresentar",
+  "nome": "Apresentar-se",
+  "nota": "Diga seu nome e sua função e confirme o nome do paciente."
+ },
+ {
+  "id": "maos",
+  "nome": "Higienizar as mãos",
+  "nota": "Antes de tocar o paciente — um dos cinco momentos de higiene das mãos da OMS."
+ },
+ {
+  "id": "consentimento",
+  "nome": "Pedir consentimento",
+  "nota": "Explique o que vai fazer e peça permissão antes de examinar."
+ },
+ {
+  "id": "privacidade",
+  "nome": "Garantir privacidade",
+  "nota": "Exponha só a região examinada e mantenha o restante do corpo coberto."
+ },
+ {
+  "id": "dor",
+  "nome": "Perguntar sobre dor antes de palpar",
+  "nota": "Comece longe da área dolorosa e observe a face do paciente durante a palpação."
+ },
+ {
+  "id": "orientar",
+  "nome": "Explicar achados e próximos passos",
+  "nota": "Encerre resumindo em linguagem simples e abra espaço para dúvidas."
+ }
+]
