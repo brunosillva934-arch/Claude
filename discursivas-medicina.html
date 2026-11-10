@@ -1,0 +1,2145 @@
+<title>Discursivas de Medicina</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+<style>
+/* Layout: coluna única de folha de prova; o enunciado aparece enquanto é escrito; o espelho é um anexo lacrado. */
+:root{
+  --paper:#f3f4f7; --surface:#ffffff; --surface-2:#eceff5;
+  --ink:#14171f; --ink-2:#4b5263; --ink-3:#6b7387;
+  --rule:#d4d9e3; --rule-strong:#b3bbcb;
+  --accent:#2b4b9b; --accent-soft:#e7ecfa; --accent-ink:#1d3773; --on-accent:#ffffff;
+  --ok:#17704a; --ok-soft:#e2f2ea; --warn:#8a6412; --warn-soft:#faf0d9; --bad:#a3301d; --bad-soft:#fae9e5;
+  --seal:#7c6425; --seal-soft:#f5eedd;
+  --display:"Newsreader",Georgia,"Times New Roman",serif;
+  --body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0e1117; --surface:#161a22; --surface-2:#1d222c;
+  --ink:#e9ecf3; --ink-2:#9ea7b9; --ink-3:#8089a0;
+  --rule:#2a3140; --rule-strong:#3b4455;
+  --accent:#8ea8ff; --accent-soft:#1a2340; --accent-ink:#b9c8ff; --on-accent:#0e1117;
+  --ok:#5cc292; --ok-soft:#13291f; --warn:#d9a845; --warn-soft:#2a2113; --bad:#e58470; --bad-soft:#2d1814;
+  --seal:#cfae60; --seal-soft:#272013;
+  color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --paper:#0e1117; --surface:#161a22; --surface-2:#1d222c;
+  --ink:#e9ecf3; --ink-2:#9ea7b9; --ink-3:#8089a0;
+  --rule:#2a3140; --rule-strong:#3b4455;
+  --accent:#8ea8ff; --accent-soft:#1a2340; --accent-ink:#b9c8ff; --on-accent:#0e1117;
+  --ok:#5cc292; --ok-soft:#13291f; --warn:#d9a845; --warn-soft:#2a2113; --bad:#e58470; --bad-soft:#2d1814;
+  --seal:#cfae60; --seal-soft:#272013;
+  color-scheme:dark;
+}
+
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.55;margin:0;-webkit-text-size-adjust:100%}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--surface)}
+h1,h2,h3{font-family:var(--display);font-weight:600;text-wrap:balance;margin:0;letter-spacing:-.01em}
+p{margin:0}
+button{font:inherit;color:inherit;cursor:pointer}
+input,select,textarea{font:inherit;color:inherit}
+a{color:var(--accent)}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.wrap{max-width:62rem;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+
+/* ── cabeçalho ───────────────────────────────── */
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--surface);border-bottom:1px solid var(--rule)}
+.top .wrap{padding-block:10px;display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+.brand{font-family:var(--display);font-size:20px;font-weight:600;letter-spacing:-.02em}
+.brand em{font-style:italic;color:var(--accent)}
+.kicker{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3)}
+nav.tabs{margin-left:auto;display:flex;gap:2px;flex-wrap:wrap}
+nav.tabs button{background:none;border:0;padding:6px 11px;border-radius:999px;font-size:13.5px;font-weight:500;color:var(--ink-2)}
+nav.tabs button[aria-selected="true"]{background:var(--accent-soft);color:var(--accent-ink)}
+nav.tabs button:hover{color:var(--ink)}
+.theme-btn{background:none;border:1px solid var(--rule);border-radius:999px;width:28px;height:28px;line-height:1;color:var(--ink-2);font-size:13px}
+
+/* ── blocos ──────────────────────────────────── */
+main{padding-block:22px 64px}
+section.card{background:var(--surface);border:1px solid var(--rule);border-radius:4px;padding:18px;min-width:0}
+section.card.fino{padding:12px 18px}
+.stack{display:flex;flex-direction:column;gap:18px}
+.eyebrow{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);display:flex;align-items:center;gap:8px}
+.eyebrow::after{content:"";flex:1;height:1px;background:var(--rule)}
+.hint{font-size:13px;color:var(--ink-2)}
+.hint.tight{font-size:12.5px}
+.sep{flex:1;min-width:1rem}
+
+/* ── parâmetros ──────────────────────────────── */
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,210px),1fr));gap:12px}
+label.f{display:flex;flex-direction:column;gap:4px;min-width:0}
+@media (min-width:560px){label.f.largo{grid-column:span 2}}
+label.f > span{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+select,input[type=text],textarea{background:var(--surface);border:1px solid var(--rule-strong);border-radius:3px;padding:7px 8px;width:100%;min-width:0}
+textarea{resize:vertical;line-height:1.6}
+select:focus-visible,input:focus-visible,textarea:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+
+.dial{display:flex;gap:4px}
+.dial button{flex:1;border:1px solid var(--rule-strong);background:var(--surface);border-radius:3px;padding:6px 0;font-family:var(--mono);font-size:14px}
+.dial button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.dial.txt button{font-family:var(--body);font-size:13px;font-weight:500}
+.dial.gr button{font-family:var(--body);font-size:14.5px;font-weight:600;padding:11px 0}
+
+/* ── botões de dificuldade ───────────────────── */
+.botoes{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr));gap:8px}
+.btn-sw{text-align:left;background:var(--surface-2);border:1px solid var(--rule);border-radius:3px;padding:8px 10px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.btn-sw b{font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px}
+.btn-sw small{font-size:11.5px;color:var(--ink-3);line-height:1.4}
+.btn-sw[data-on="1"]{background:var(--accent-soft);border-color:var(--accent);box-shadow:inset 3px 0 0 var(--accent)}
+.btn-sw[data-on="1"] b{color:var(--accent-ink)}
+.btn-sw[data-on="1"] small{color:var(--ink-2)}
+.pin{font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;background:var(--seal-soft);color:var(--seal);border-radius:2px;padding:1px 4px;text-transform:uppercase}
+.alerta{background:var(--warn-soft);border-left:3px solid var(--warn);color:var(--ink);font-size:13px;padding:8px 10px;border-radius:0 3px 3px 0}
+.alerta.bad{background:var(--bad-soft);border-color:var(--bad)}
+.alerta.ok{background:var(--ok-soft);border-color:var(--ok)}
+
+/* ── esteira ─────────────────────────────────── */
+.esteira{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px}
+.et{flex:1 1 0;min-width:118px;border:1px solid var(--rule);border-radius:3px;padding:8px 9px;background:var(--surface-2)}
+.et .n{font-family:var(--mono);font-size:10px;color:var(--ink-3);letter-spacing:.1em}
+.et .t{font-size:12.5px;font-weight:600;margin-top:2px}
+.et .s{font-size:11.5px;color:var(--ink-3);margin-top:3px;min-height:1.4em}
+.et[data-st="rodando"]{border-color:var(--accent);background:var(--accent-soft)}
+.et[data-st="rodando"] .s{color:var(--accent-ink)}
+.et[data-st="ok"]{border-color:var(--ok)}
+.et[data-st="ok"] .s{color:var(--ok)}
+.et[data-st="falhou"]{border-color:var(--bad)}
+.et[data-st="falhou"] .s{color:var(--bad)}
+@keyframes pulse{50%{opacity:.4}}
+.et[data-st="rodando"] .t{animation:pulse 1.4s ease-in-out infinite}
+.medidor{font-family:var(--mono);font-size:11.5px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+
+/* ── ações ───────────────────────────────────── */
+.acoes{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.go{background:var(--accent);color:var(--on-accent);border:1px solid var(--accent);border-radius:3px;padding:9px 18px;font-weight:600;font-size:14px}
+.go[disabled]{opacity:.5;cursor:not-allowed}
+.ghost{background:var(--surface);border:1px solid var(--rule-strong);border-radius:3px;padding:8px 13px;font-size:13.5px;font-weight:500}
+.ghost.sm{padding:5px 10px;font-size:12.5px}
+.ghost[disabled]{opacity:.45;cursor:not-allowed}
+.ghost[aria-pressed="true"]{border-color:var(--accent);color:var(--accent-ink);background:var(--accent-soft)}
+.chk{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--ink-2)}
+
+/* ── prova ───────────────────────────────────── */
+.cab{display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap}
+.cab-t{flex:1;min-width:14rem}
+.cab-t h2{font-size:22px;margin-top:4px}
+.barra-acoes{margin-top:14px;border-top:1px solid var(--rule);padding-top:12px}
+.vivo{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px;font-family:var(--mono);font-size:12px;color:var(--accent-ink);background:var(--accent-soft);border-radius:3px;padding:7px 10px}
+.vivo .pt{width:7px;height:7px;border-radius:50%;background:var(--accent);animation:pulse 1.2s ease-in-out infinite}
+.vivo .tm{color:var(--ink-3);font-variant-numeric:tabular-nums}
+.caret{display:inline-block;width:.45em;height:1em;background:var(--accent);vertical-align:-.12em;margin-left:2px;animation:pulse 1s ease-in-out infinite}
+.prova{font-family:var(--display);font-size:16.5px;line-height:1.62;max-width:46rem}
+.prova p{margin:0 0 .7em}
+.prova p:last-child{margin-bottom:0}
+.prova .vit{font-family:var(--mono);font-size:14px;background:var(--surface-2);padding:1px 4px;border-radius:2px;white-space:nowrap}
+.prova .vr{font-family:var(--mono);font-size:12.5px;color:var(--ink-3);white-space:nowrap}
+.prova .vr .vit{background:none;padding:0;font-size:inherit}
+.momento{border-top:2px solid var(--ink);padding-top:12px;margin-top:4px}
+.momento > .mh{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin-bottom:8px}
+.item{border-top:1px solid var(--rule);padding-top:12px;margin-top:14px}
+.item .cmd{display:flex;gap:9px;align-items:baseline}
+.item .cmd .letra{font-family:var(--display);font-weight:600;font-size:17px;color:var(--accent);min-width:1.1em}
+.item .meta{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:7px 0 5px;font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-spacing:.06em;text-transform:uppercase}
+.conta{font-family:var(--mono);font-size:11.5px;color:var(--ink-3)}
+.conta[data-over="1"]{color:var(--bad);font-weight:500}
+.trava{background:var(--surface-2);border:1px dashed var(--rule-strong);border-radius:3px;padding:14px;font-size:13px;color:var(--ink-2);text-align:center}
+
+/* ── lacre do espelho ────────────────────────── */
+.lacre{border:1px solid var(--seal);background:var(--seal-soft);border-radius:3px;padding:14px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.lacre .sel{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--seal);font-weight:500}
+.lacre p{font-size:13px;color:var(--ink-2);flex:1;min-width:14rem}
+
+/* ── espelho / correção ──────────────────────── */
+.esp-item{border-top:1px solid var(--rule);padding-top:12px;margin-top:12px}
+.esp-item:first-child{border-top:0;margin-top:0;padding-top:0}
+.esp-cab{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.esp-cab > b{font-family:var(--display);font-size:17px;color:var(--accent)}
+.tag{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;border:1px solid var(--rule-strong);border-radius:2px;padding:1px 5px;color:var(--ink-2);white-space:nowrap}
+.tag.ac{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+.tag.gv{border-color:var(--bad);color:var(--bad);background:var(--bad-soft)}
+ul.q{list-style:none;padding:0;margin:8px 0 0;display:flex;flex-direction:column;gap:5px}
+ul.q li{display:flex;gap:9px;align-items:baseline;font-size:13.5px;border-bottom:1px dotted var(--rule);padding-bottom:5px}
+ul.q li > span:last-child{min-width:0}
+ul.q li .pts{font-family:var(--mono);font-size:12.5px;color:var(--ink-3);min-width:3.6em;text-align:right;font-variant-numeric:tabular-nums;flex:none}
+ul.q li[data-r="integral"] .pts{color:var(--ok);font-weight:500}
+ul.q li[data-r="parcial"] .pts{color:var(--warn);font-weight:500}
+ul.q li[data-r="zero"] .pts{color:var(--bad);font-weight:500}
+ul.q li .mot{display:block;font-size:12px;color:var(--ink-3);margin-top:2px}
+ul.q li .vel{color:var(--ink-3);font-style:italic}
+.nota{font-family:var(--display);font-size:34px;font-weight:600;line-height:1;font-variant-numeric:tabular-nums}
+.nota small{font-family:var(--mono);font-size:13px;color:var(--ink-3);font-weight:400}
+.linha-nota{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap}
+.barra{flex:1;min-width:10rem;height:7px;background:var(--surface-2);border-radius:999px;overflow:hidden}
+.barra i{display:block;height:100%;background:var(--accent)}
+.feedback{font-family:var(--display);font-size:16px;line-height:1.65;max-width:46rem}
+ol.passos{margin:8px 0 0;padding-left:1.3em;font-family:var(--display);font-size:16px;line-height:1.6;display:flex;flex-direction:column;gap:4px;max-width:46rem}
+.sel-dark{background:var(--surface-2);border-radius:3px;padding:12px;font-size:13px;white-space:pre-wrap;font-family:var(--mono);line-height:1.5;max-height:16rem;overflow:auto}
+ul.lint{list-style:none;padding:0;margin:10px 0 0;display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:var(--ink-2)}
+ul.lint li{padding-left:16px;position:relative}
+ul.lint li::before{content:"";position:absolute;left:2px;top:.5em;width:7px;height:7px;border-radius:50%;background:var(--ok)}
+ul.lint li[data-n="warn"]::before{background:var(--warn)}
+ul.lint li[data-n="bad"]::before{background:var(--bad)}
+ul.lint li[data-n="info"]::before{background:var(--rule-strong)}
+
+/* ── validação ───────────────────────────────── */
+.rolavel{overflow-x:auto}
+table.val{width:100%;border-collapse:collapse;font-size:13.5px}
+table.val th,table.val td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--rule);vertical-align:top}
+table.val th{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);font-weight:400}
+table.val td.num,table.val th.num{font-family:var(--mono);text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.carimbo{display:inline-flex;align-items:center;gap:8px;border:2px solid var(--ok);color:var(--ok);border-radius:3px;padding:5px 12px;font-family:var(--mono);font-size:12.5px;letter-spacing:.16em;text-transform:uppercase;font-weight:500;transform:rotate(-1.2deg)}
+.carimbo[data-v="REESCREVER"]{border-color:var(--warn);color:var(--warn)}
+.carimbo[data-v="DESCARTAR"]{border-color:var(--bad);color:var(--bad)}
+.carimbo[data-v="EXEMPLO"],.carimbo[data-v="SEM CARIMBO"],.carimbo[data-v="ESCREVENDO"]{border-color:var(--rule-strong);color:var(--ink-3);transform:none}
+.carimbo[data-v="CONFERINDO"]{border-color:var(--accent);color:var(--accent);transform:none;animation:pulse 1.6s ease-in-out infinite}
+.carimbo.mini{transform:none;font-size:10.5px;padding:3px 8px}
+
+/* ── painel ──────────────────────────────────── */
+.placar{display:flex;flex-direction:column;gap:7px}
+.pl-row{display:grid;grid-template-columns:minmax(7.5rem,1fr) 1fr 3.2rem;gap:10px;align-items:center;font-size:13.5px}
+.pl-row .bar{height:9px;background:var(--surface-2);border-radius:2px;overflow:hidden}
+.pl-row .bar i{display:block;height:100%}
+.pl-row .v{font-family:var(--mono);font-size:12.5px;text-align:right;font-variant-numeric:tabular-nums;color:var(--ink-2)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,130px),1fr));gap:10px}
+.tile{border:1px solid var(--rule);border-radius:3px;padding:10px 12px;background:var(--surface-2)}
+.tile .k{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+.tile .v{font-family:var(--display);font-size:23px;font-weight:600;font-variant-numeric:tabular-nums;margin-top:2px}
+.tile .v.txt{font-size:16px;line-height:1.3}
+.vazio{border:1px dashed var(--rule-strong);border-radius:3px;padding:20px;text-align:center;color:var(--ink-2);font-size:13.5px}
+.lista{display:flex;flex-direction:column;gap:8px}
+.reg{border:1px solid var(--rule);border-radius:3px;padding:10px 12px;display:flex;gap:12px;align-items:baseline;flex-wrap:wrap;background:var(--surface)}
+.reg .t{font-weight:600;font-size:14px;flex:1;min-width:12rem}
+.reg .t .mot{display:block;font-weight:400;font-size:12px;color:var(--ink-3);margin-top:2px}
+.reg .d{font-family:var(--mono);font-size:11.5px;color:var(--ink-3)}
+details{border-top:1px solid var(--rule);padding-top:10px}
+details summary{cursor:pointer;font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+details[open] summary{color:var(--accent)}
+details .body{padding-top:10px}
+.off{opacity:.55}
+@media (prefers-reduced-motion:reduce){.et .t,.vivo .pt,.caret,.carimbo{animation:none!important}}
+</style>
+
+<header class="top">
+  <div class="wrap">
+    <span class="brand">Discursivas de <em>Medicina</em></span>
+    <span class="kicker" id="modo-kicker">gerar, ver e exportar</span>
+    <nav class="tabs" id="tabs" role="tablist"></nav>
+    <button class="theme-btn" id="theme" title="Alternar tema" aria-label="Alternar tema">◐</button>
+  </div>
+</header>
+
+<main>
+  <div class="wrap">
+    <div id="banner"></div>
+    <div id="app" class="stack"></div>
+  </div>
+</main>
+
+<script>
+"use strict";
+/* ══════════════════════════════════════════════════════════════
+   1. TABELAS DO MÉTODO — os botões, os limites e a regra de decisão
+   ══════════════════════════════════════════════════════════════ */
+const BOT_PAC = [
+  {n:"Apresentação",          b:"típica, de livro",              a:"atípica: idoso, gestante, criança pequena, imunossuprimido", min:"básico"},
+  {n:"Diferencial",           b:"diagnóstico evidente",          a:"fronteira entre diagnósticos de condutas opostas", min:"clínico"},
+  {n:"Modificador de conduta",b:"nenhum",                        a:"comorbidade, contraindicação, alergia ou interação que muda a conduta padrão", min:"básico"},
+  {n:"Prioridade e tempo",    b:"conduta eletiva",               a:"decisão tempo-dependente em que a ordem importa", min:"internato"},
+  {n:"Ruído",                 b:"só dados relevantes",           a:"achado incidental que não explica o quadro", min:"clínico"},
+  {n:"Interpretação",         b:"resultado já interpretado",     a:"dado bruto: gasometria, hemograma, ECG ou laudo descritos", min:"básico"},
+  {n:"Recurso",               b:"hospital terciário completo",   a:"recurso limitado (UBS, sem tomografia)", min:"internato"},
+  {n:"Evolução",              b:"retrato estático",              a:"o caso evolui depois da conduta do aluno", min:"internato"},
+  {n:"Dimensão humana",       b:"só técnica",                    a:"má notícia, recusa, notificação compulsória, ética", min:"clínico"}
+];
+const BOT_SEM = [
+  {n:"Elos causais",   b:"1–2 elos, descrição direta",  a:"4 ou mais elos, do molecular ao sinal clínico", min:"básico"},
+  {n:"Comparação",     b:"conceitos distantes",         a:"conceitos vizinhos que o aluno confunde", min:"básico"},
+  {n:"Previsão",       b:"descrever o que o livro diz", a:"prever o efeito de uma situação nova", min:"básico"},
+  {n:"Contraintuitivo",b:"fato esperado",               a:"explicar um achado que parece contradizer a regra", min:"básico"},
+  {n:"Integração",     b:"uma disciplina",              a:"cruzar disciplinas", min:"básico"},
+  {n:"Interpretação",  b:"resultado já interpretado",   a:"dado bruto: curva, exame, resultado de experimento", min:"básico"}
+];
+const NIVEIS = ["básico","clínico","internato","residência (acesso)","residência (especialidade)"];
+const FACUL = ["básico","clínico","internato"];
+const RESID = ["residência (acesso)","residência (especialidade)"];
+const ehFaculdade = n => FACUL.includes(n);
+const ROTULO_NIVEL = {"básico":"básico · 1º–2º","clínico":"clínico · 3º–4º","internato":"internato · 5º–6º",
+  "residência (acesso)":"acesso","residência (especialidade)":"especialidade"};
+const ORDEM_NIVEL = n => n.startsWith("residência") ? 3 : NIVEIS.indexOf(n);
+const ORDEM_MIN   = m => m==="básico"?0 : m==="clínico"?1 : 2;
+
+const AREAS_CLIN = ["clínica médica","cirurgia","pediatria","ginecologia e obstetrícia","preventiva e saúde coletiva"];
+const AREAS_BAS  = ["anatomia","fisiologia","bioquímica","farmacologia","patologia","microbiologia","imunologia"];
+const FORMATOS   = ["caso clínico","caso evolutivo","mecanismo","comparação","interpretação de dado","previsão","integração"];
+const COM_PACIENTE = f => f==="caso clínico" || f==="caso evolutivo";
+const CENARIOS   = ["UBS","UPA","pronto-socorro","enfermaria","UTI","ambulatório","centro obstétrico"];
+const ETAPAS = ["mecanismo","comparação","previsão","interpretação","síntese","diagnóstico diferencial","investigação","conduta","seguimento","comunicação e ética"];
+const poolDe = f => COM_PACIENTE(f)?BOT_PAC:BOT_SEM;
+
+/* quantos botões no alto, e quais são obrigatórios */
+function quantos(d){ return d; }
+function obrigatorios(d,formato){
+  if(COM_PACIENTE(formato)){
+    if(d===3) return [["Diferencial","Modificador de conduta","Interpretação"]];
+    if(d===4) return [["Diferencial","Modificador de conduta"]];
+    if(d>=5)  return [["Evolução"],["Prioridade e tempo"],["Diferencial","Modificador de conduta"]];
+    return [];
+  }
+  if(d===3||d===4) return [["Elos causais","Comparação"]];
+  if(d>=5) return [["Elos causais","Comparação"],["Previsão","Contraintuitivo"]];
+  return [];
+}
+function permitido(bot,nivel){ return ORDEM_MIN(bot.min) <= ORDEM_NIVEL(nivel); }
+function autoBotoes(d,formato,nivel){
+  const pool = poolDe(formato).filter(b=>permitido(b,nivel));
+  const alvo = Math.min(quantos(d), pool.length);
+  const sel = [];
+  for(const grupo of obrigatorios(d,formato)){
+    const esc = grupo.find(g=>pool.some(p=>p.n===g) && !sel.includes(g));
+    if(esc) sel.push(esc);
+  }
+  for(const p of pool){ if(sel.length>=alvo) break; if(!sel.includes(p.n)) sel.push(p.n); }
+  return sel.slice(0,Math.max(alvo,sel.length));
+}
+function conferirBotoes(sel,d,formato,nivel){
+  const avisos=[], alvo=quantos(d);
+  const pool=poolDe(formato).filter(b=>permitido(b,nivel));
+  if(d<5 && sel.length!==alvo) avisos.push(`Dificuldade ${d} pede ${alvo} ${alvo===1?"botão":"botões"} no alto; estão ${sel.length}.`);
+  if(d===5 && sel.length<5)    avisos.push(`Dificuldade 5 pede 5 ou mais botões no alto; estão ${sel.length}.`);
+  for(const grupo of obrigatorios(d,formato)){
+    if(!grupo.some(g=>sel.includes(g))) avisos.push(`Falta obrigatório: ${grupo.join(" ou ")}.`);
+  }
+  for(const s of sel) if(!pool.some(p=>p.n===s)) avisos.push(`${s} não cabe no nível ${nivel}.`);
+  return avisos;
+}
+
+/* REGRA DE DECISÃO — a primeira linha que se aplicar decide (a página decide, não o modelo) */
+const CRITERIOS = {veross:"verossimilhança e precisão",correcao:"correção e atualidade",seguranca:"segurança",
+  clareza:"clareza do comando",vazamento:"vazamento",relevancia:"relevância",dificuldade:"dificuldade real",espelho:"espelho justo"};
+function decidir({notas,divergencia,preceptor,dificuldade}){
+  const nf=notas.forte, nm=notas.mediano, nd=notas.decoreba;
+  const crit=(preceptor&&preceptor.criterios)||[];
+  const de=k=>{ const c=crit.find(c=>c.k===k); return c?c.nota:null; };
+  const seg=["veross","correcao","seguranca"].map(de).filter(v=>v!=null);
+  const minSeg=seg.length?Math.min(...seg):null;
+  const minCrit=crit.length?Math.min(...crit.map(c=>c.nota)):null;
+  const gap=(nf!=null&&nm!=null)?nf-nm:null, limGap=dificuldade>=4?3:2;
+
+  if(minSeg!=null && minSeg<=2) return {v:"DESCARTAR",por:"O revisor deu 2 ou menos em verossimilhança, correção ou segurança: há erro clínico ou conceitual.",
+    instr:"Há erro clínico ou conceitual: corrija-o na raiz, no caso e no espelho, sem deixar resto."};
+  if(nf!=null && nf<8 && divergencia) return {v:"REESCREVER",por:"O candidato forte ficou abaixo de 8 e leu o enunciado de outro jeito: o comando está ambíguo.",
+    instr:`O enunciado admite outra leitura («${divergencia}»): reescreva o comando ambíguo.`};
+  if(nf!=null && nf<8) return {v:"REESCREVER",por:"O candidato forte ficou abaixo de 8 sem ler errado: o espelho está exigente demais ou errado. O conserto mexe só no espelho.",
+    instr:"Um ótimo candidato não chegou a 8. Ajuste só o espelho: quesito que nem ele cumpriria, resposta correta que o espelho não previa, ponto mal distribuído."};
+  if(nm!=null && nm>=8 && dificuldade>=3) return {v:"REESCREVER",por:"O candidato mediano chegou a 8 com dificuldade 3 ou mais: fácil demais para o que foi pedido.",maisBotao:true,
+    instr:"Um candidato mediano chegou a 8: a questão está fácil demais para a dificuldade pedida."};
+  if(nd!=null && nd>=7) return {v:"REESCREVER",por:"O decoreba chegou a 7: dá para resolver só de memória.",
+    instr:"A resposta decorada chegou a 7: reforce o item que exige raciocinar, de modo que recitar a regra não baste."};
+  if(gap!=null && gap<limGap) return {v:"REESCREVER",por:`Discriminação ${gap.toFixed(1).replace(".",",")}, abaixo de ${limGap}: a questão não separa quem sabe de quem não sabe.`,
+    instr:"Forte e mediano tiraram notas próximas: aumente o peso do raciocínio no espelho ou acrescente o dado que separa os dois."};
+  if(minCrit!=null && minCrit<4){
+    const pior=crit.filter(c=>c.nota===minCrit).map(c=>c.criterio).join(", ");
+    return {v:"REESCREVER",por:`O revisor deu ${minCrit} em ${pior}: defeito pontual, que o conserto resolve sem recomeçar.`,instr:""};
+  }
+  return {v:"APROVAR",por:nf!=null?"O forte vai bem, o mediano vai pior e o revisor não achou defeito que prejudique o uso.":"O revisor não achou erro clínico nem defeito que prejudique o uso."};
+}
+
+/* ══════════════════════════════════════════════════════════════
+   2. O FIO — o formato compacto em que o modelo escreve e a página lê.
+   Um objeto JSON por linha, chaves curtas, listas posicionais: custa bem menos
+   tokens que um JSON de chaves longas e pode ser lido enquanto ainda chega.
+   ══════════════════════════════════════════════════════════════ */
+const semAcento=s=>String(s==null?"":s).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+const letra=x=>semAcento(x).replace(/[^a-z0-9]/g,"").slice(0,2);
+const limpo=s=>{ const t=String(s==null?"":s).trim(); return /^(n[aã]o|nenhum[a]?|nada|false|null|0|-|—|n\/a|vazio)?\.?$/i.test(t)?"":t; };
+const par=(x,chaves)=>Array.isArray(x)?x:(x&&typeof x==="object"?chaves.map(k=>x[k]):[x]);
+
+function reparar(s){
+  let o="",str=false,esc=false;
+  for(const c of s){
+    if(str){
+      if(esc){esc=false;o+=c;}
+      else if(c==="\\"){esc=true;o+=c;}
+      else if(c==='"'){str=false;o+=c;}
+      else o+= c==="\n"?"\\n":c==="\r"?"":c==="\t"?"\\t":c;
+    }else{ if(c==='"')str=true; o+=c; }
+  }
+  return o.replace(/,\s*([}\]])/g,"$1");
+}
+/* lê objetos JSON completos de um texto que ainda está chegando; tolera cerca de código, vírgulas e colchetes em volta */
+function criarLeitor(){
+  let pos=0,ini=-1,prof=0,str=false,esc=false;
+  return {
+    alimentar(txt){
+      const novos=[];
+      for(;pos<txt.length;pos++){
+        const c=txt[pos];
+        if(str){ if(esc)esc=false; else if(c==="\\")esc=true; else if(c==='"')str=false; continue; }
+        if(c==='"'){ if(prof>0)str=true; continue; }
+        if(c==="{"){ if(prof===0)ini=pos; prof++; }
+        else if(c==="}"&&prof>0){
+          prof--;
+          if(prof===0){
+            const s=txt.slice(ini,pos+1); ini=-1;
+            try{ novos.push(JSON.parse(s)); }
+            catch(e){ try{ novos.push(JSON.parse(reparar(s))); }catch(_){} }
+          }
+        }
+      }
+      return novos.filter(o=>o&&typeof o==="object"&&!Array.isArray(o));
+    },
+    parcial(txt){ return prof>0&&ini>=0?txt.slice(ini):""; }
+  };
+}
+function lerRegistros(txt){ return criarLeitor().alimentar(String(txt||"")); }
+/* o valor de um campo de texto que ainda não fechou: é o que deixa o enunciado aparecer enquanto é escrito */
+function campoParcial(parc,chave){
+  const m=new RegExp('"'+chave+'"\\s*:\\s*"').exec(parc); if(!m)return null;
+  let out="";
+  for(let i=m.index+m[0].length;i<parc.length;i++){
+    const c=parc[i];
+    if(c==="\\"){
+      const n=parc[i+1]; if(n===undefined)break;
+      if(n==="n")out+="\n"; else if(n==="t")out+=" "; else if(n==="r"){}
+      else if(n==="u"){ const h=parc.slice(i+2,i+6); if(h.length<4)break; out+=String.fromCharCode(parseInt(h,16)||32); i+=4; }
+      else out+=n;
+      i++;
+    }else if(c==='"')break; else out+=c;
+  }
+  return out;
+}
+
+function esqueleto(p,id){
+  return {id,criado:hoje(),params:p,
+    nucleo:{formato:p.formato,paciente_oculto:null,cadeia_causal:null,ponte_clinica:"",botoes_aplicados:[],alvos:{},anti:"",conferir:[],referencia:"",
+      espelho:{itens:[],pontuacao_total:10}},
+    enunciado:{momentos:[],itens:[]},lint:[],validacao:null,
+    veredito:{v:"SEM CARIMBO",por:"Ainda não passou por um revisor. A checagem automática da página está logo abaixo."}};
+}
+/* um registro do fio entra na questão; serve igual para a primeira escrita e para o conserto */
+function aplicar(q,r){
+  const n=q.nucleo, en=q.enunciado;
+  if(!n.alvos)n.alvos={};
+  if(r.t==="plano"){
+    if(["caso","dx","fisio","oculto","evol"].some(k=>r[k]!=null)){
+      const po=n.paciente_oculto||(n.paciente_oculto={resumo:"",diagnosticos:[],fisiopatologia_central:"",o_que_o_aluno_nao_ve:"",evolucao:""});
+      if(r.caso!=null)po.resumo=String(r.caso);
+      if(r.dx!=null)po.diagnosticos=[].concat(r.dx).map(String).filter(Boolean);
+      if(r.fisio!=null)po.fisiopatologia_central=String(r.fisio);
+      if(r.oculto!=null)po.o_que_o_aluno_nao_ve=String(r.oculto);
+      if(r.evol!=null)po.evolucao=String(r.evol);
+    }
+    if(Array.isArray(r.cadeia)) n.cadeia_causal=r.cadeia.map((c,i)=>{ const [de,para,pq]=par(c,["de","para","por_que"]); return {elo:i+1,de:String(de||""),para:String(para||""),por_que:String(pq||"")}; });
+    if(r.ponte!=null) n.ponte_clinica=String(r.ponte);
+    if(r.botoes!=null&&typeof r.botoes==="object") n.botoes_aplicados=(Array.isArray(r.botoes)?r.botoes:Object.entries(r.botoes)).map(b=>{ const [bt,onde]=par(b,["botao","onde_aparece"]); return {botao:String(bt||""),onde_aparece:String(onde||"")}; });
+    const alvos=Array.isArray(r.alvos)?r.alvos:(r.alvos&&typeof r.alvos==="object"?Object.entries(r.alvos).map(([l,v])=>[l,...par(v,["etapa","alvo","pts"])]):null);
+    if(alvos){
+      for(const a of alvos){ const [l,et,al,pt]=par(a,["i","etapa","alvo","pts"]); if(letra(l)) n.alvos[letra(l)]={etapa:String(et||"").toLowerCase(),alvo:String(al||""),pts:Number(pt)||0}; }
+      for(const i of en.itens) i.etapa_raciocinio=(n.alvos[i.item]||{}).etapa||i.etapa_raciocinio||"";
+      for(const e of n.espelho.itens){ const a=n.alvos[e.item]; if(a){ e.etapa_raciocinio=a.etapa||e.etapa_raciocinio; e.pergunta_alvo=a.alvo||e.pergunta_alvo; } }
+    }
+    if(r.anti!=null) n.anti=limpo(r.anti);
+    if(r.conferir!=null) n.conferir=[].concat(r.conferir).map(limpo).filter(Boolean);
+    if(r.ref!=null){ n.referencia=limpo(r.ref); for(const e of n.espelho.itens) e.referencia=n.referencia; }
+  }else if(r.t==="mom"){
+    const num=Math.max(1,Number(r.n)||1), m=en.momentos.find(x=>x.momento===num);
+    if(m){ if(r.txt!=null)m.texto=String(r.txt); } else en.momentos.push({momento:num,texto:String(r.txt||"")});
+    en.momentos.sort((a,b)=>a.momento-b.momento);
+    const its=Array.isArray(r.itens)?r.itens:(r.itens&&typeof r.itens==="object"?Object.entries(r.itens):null);
+    if(its){
+      en.itens=en.itens.filter(i=>i.momento!==num);
+      for(const it of its){
+        const [l,c]=par(it,["i","cmd"]), k=letra(l); if(!k)continue;
+        en.itens=en.itens.filter(i=>i.item!==k);
+        en.itens.push({item:k,momento:num,comando:String(c||""),limite_linhas:q.params.limite,etapa_raciocinio:(n.alvos[k]||{}).etapa||""});
+      }
+      en.itens.sort((a,b)=>a.item.localeCompare(b.item));
+    }
+  }else if(r.t==="esp"){
+    const l=letra(r.i); if(!l)return;
+    const a=n.alvos[l]||{}, velho=n.espelho.itens.find(e=>e.item===l)||{};
+    const novo={item:l,etapa_raciocinio:a.etapa||velho.etapa_raciocinio||"",pergunta_alvo:a.alvo||velho.pergunta_alvo||"",
+      resposta_nota_maxima:String(r.max||""),
+      quesitos:(r.q||[]).map(x=>{ const [d,pt,j]=par(x,["descricao","pontos","exige_justificativa"]);
+        return {descricao:String(d||""),pontos:Number(pt)||0,exige_justificativa:j===true||Number(j)===1||/^(s|t|y)/i.test(String(j))}; }).filter(x=>x.descricao),
+      alternativas_aceitas:(r.alt||[]).map(x=>{ const [rs,c]=par(x,["resposta","condicao"]); return {resposta:String(rs||""),condicao:String(c||"")}; }).filter(x=>x.resposta),
+      erros_comuns:(r.comuns||[]).map(x=>limpo(typeof x==="string"?x:(x&&x.erro)||"")).filter(Boolean),
+      erros_graves:(r.graves||[]).map(x=>{ const [e,t,c]=par(x,["erro","tipo","consequencia_para_o_paciente"]);
+        return {erro:String(e||""),tipo:/^cond/i.test(String(t||""))?"conduta perigosa":"erro conceitual",consequencia_para_o_paciente:String(c||""),penalidade:"zera o item"}; }).filter(x=>x.erro),
+      referencia:n.referencia||velho.referencia||""};
+    const i=n.espelho.itens.findIndex(e=>e.item===l);
+    if(i>=0)n.espelho.itens[i]=novo; else n.espelho.itens.push(novo);
+    n.espelho.itens.sort((a,b)=>a.item.localeCompare(b.item));
+  }
+}
+const utilizavel=q=>!!(q&&q.enunciado.itens.length&&q.nucleo.espelho.itens.length);
+function espelhoCompleto(q){
+  const en=q.enunciado.itens, esp=q.nucleo.espelho.itens;
+  const previstos=Math.max(en.length,Object.keys(q.nucleo.alvos||{}).length);
+  return en.length>0 && esp.length>=previstos && en.every(i=>esp.some(e=>e.item===i.item));
+}
+function normalizarPontos(q){
+  const qs=[]; for(const i of q.nucleo.espelho.itens) for(const x of i.quesitos||[]) qs.push(x);
+  const soma=qs.reduce((a,x)=>a+(Number(x.pontos)||0),0);
+  if(!qs.length||!soma||Math.abs(soma-10)<0.01) return null;
+  const f=10/soma; let nova=0;
+  for(const x of qs){ x.pontos=Math.max(0.25,Math.round((Number(x.pontos)||0)*f*4)/4); nova+=x.pontos; }
+  const maior=qs.reduce((a,x)=>x.pontos>a.pontos?x:a,qs[0]);
+  maior.pontos=Math.max(0.25,Math.round((maior.pontos+(10-nova))*4)/4);
+  return Math.round(soma*100)/100;
+}
+
+/* CHECAGEM AUTOMÁTICA — o que dá para conferir sem gastar uma chamada, a página confere */
+function vazamentos(q){
+  const txt=" "+semAcento(textoEnunciado(q.enunciado)).replace(/[^a-z0-9]+/g," ")+" ", out=[];
+  for(const d of (q.nucleo.paciente_oculto&&q.nucleo.paciente_oculto.diagnosticos)||[]){
+    const bruto=String(d).split(/[,;(:]|\s[—–-]\s/)[0].trim();
+    const termo=semAcento(bruto).replace(/[^a-z0-9]+/g," ").trim();
+    if(termo.length>=8&&txt.includes(" "+termo+" ")) out.push(bruto);
+  }
+  return out;
+}
+function checar(q){
+  const A=[], p=q.params, en=q.enunciado, esp=q.nucleo.espelho.itens, lim=p.limite||10;
+  const faltam=en.itens.filter(i=>!esp.some(e=>e.item===i.item)).map(i=>i.item);
+  if(faltam.length) A.push({n:"bad",t:`Espelho incompleto: falta o item ${faltam.join(", ")}.`,conserto:`Falta o espelho do item ${faltam.join(", ")}: escreva-o, mantendo a soma da questão em 10.`});
+  if(p.itens&&en.itens.length&&en.itens.length!==p.itens) A.push({n:"info",t:`Foram pedidos ${p.itens} itens e vieram ${en.itens.length}.`});
+  if(q.reescalado!=null) A.push({n:"info",t:`Os pontos somavam ${fmt(q.reescalado)}; a página reescalou para 10.`});
+  for(const e of esp){
+    const n=linhas(e.resposta_nota_maxima);
+    if(n>lim) A.push({n:"warn",t:`Item ${e.item}: a resposta nota máxima ocupa cerca de ${n} linhas e o limite é ${lim}.`,conserto:`Item ${e.item}: a resposta nota máxima passa de ${lim} linhas. Enxugue-a ou corte um quesito, e ajuste o comando se for preciso.`});
+    if((e.quesitos||[]).length<2) A.push({n:"warn",t:`Item ${e.item}: um quesito só, o que vira tudo ou nada.`,conserto:`Item ${e.item}: divida o espelho em 2 a 4 quesitos observáveis e independentes.`});
+  }
+  for(const t of vazamentos(q)) A.push({n:"warn",t:`Possível vazamento: o enunciado contém «${t}», que está entre os diagnósticos.`,conserto:`O enunciado contém «${t}», que entrega o diagnóstico: descreva o achado sem nomeá-lo. Se for antecedente legítimo do paciente, mantenha.`});
+  const pronta=/(compat[ií]ve(l|is) com|sugestiv[oa]s? de|caracter[ií]stic[oa]s? de|t[ií]pic[oa]s? de|patognom[oô]nic)/i.exec(textoEnunciado(en));
+  if(pronta) A.push({n:"warn",t:`Leitura pronta no enunciado: «${pronta[0]}». Interpretar o dado é tarefa do aluno.`,conserto:`O enunciado traz leitura pronta («${pronta[0]}»): troque pela descrição crua do achado.`});
+  if(!faltam.length&&esp.length){
+    if(!q.nucleo.anti&&!q.exemplo&&q.nucleo.alvos&&Object.keys(q.nucleo.alvos).length) A.push({n:"info",t:"O plano não diz em que item a resposta decorada perde ponto."});
+    if(COM_PACIENTE(p.formato)&&ORDEM_NIVEL(p.nivel)>=2&&!esp.some(e=>(e.erros_graves||[]).length)) A.push({n:"warn",t:"Nenhum erro grave listado num caso que cobra conduta.",conserto:"Liste em cada item que cobra conduta os erros graves plausíveis (conduta que causaria dano), que zeram o item."});
+  }
+  if(!A.some(a=>a.n==="warn"||a.n==="bad")&&esp.length&&!faltam.length)
+    A.unshift({n:"ok",t:"Checagem automática da página: os pontos somam 10, as respostas cabem no limite de linhas e o enunciado não cita o diagnóstico."});
+  return A;
+}
+function finalizar(q){
+  if(espelhoCompleto(q)){ const antes=normalizarPontos(q); if(antes!=null)q.reescalado=antes; }
+  q.lint=checar(q);
+}
+
+/* a questão em texto corrido, para os prompts seguintes: mais barato que reenviar JSON */
+function textoEnunciado(e){
+  if(!e)return "";
+  const ms=e.momentos||[], varios=ms.length>1;
+  const m=ms.map(x=>`${varios?`[MOMENTO ${x.momento}]\n`:""}${x.texto}`).join("\n\n");
+  const i=(e.itens||[]).map(x=>`${x.item}) ${x.comando}`).join("\n");
+  return `${m}\n\n${i}`.trim();
+}
+const num=n=>String(Math.round((Number(n)||0)*100)/100);
+function textoEspelho(esp,soItem){
+  return ((esp&&esp.itens)||[]).filter(i=>!soItem||i.item===soItem).map(i=>{
+    const L=[`${i.item}) [${i.etapa_raciocinio||"—"}] resposta nota máxima: ${i.resposta_nota_maxima||"—"}`];
+    (i.quesitos||[]).forEach((x,k)=>L.push(`  q${k+1} (${num(x.pontos)}${x.exige_justificativa?"; exige justificativa":""}): ${x.descricao}`));
+    const alt=(i.alternativas_aceitas||[]).map(a=>`${a.resposta}${a.condicao?` (${a.condicao})`:""}`);
+    if(alt.length) L.push("  aceito também: "+alt.join("; "));
+    for(const g of i.erros_graves||[]) L.push(`  ERRO GRAVE, zera o item: ${g.erro}${g.consequencia_para_o_paciente?` → ${g.consequencia_para_o_paciente}`:""}`);
+    return L.join("\n");
+  }).join("\n");
+}
+function evolucaoDe(po){ return po.evolucao||[po.evolucao_sem_tratamento&&"sem tratamento: "+po.evolucao_sem_tratamento,po.evolucao_com_conduta_correta&&"com a conduta correta: "+po.evolucao_com_conduta_correta].filter(Boolean).join("; "); }
+function textoNucleo(q,curto){
+  const n=q.nucleo, po=n.paciente_oculto, L=[];
+  if(po){
+    if(po.resumo)L.push("Paciente: "+po.resumo);
+    if((po.diagnosticos||[]).length)L.push("Diagnóstico: "+po.diagnosticos.join("; "));
+    if(po.fisiopatologia_central)L.push("Fisiopatologia: "+po.fisiopatologia_central);
+    const oc=po.o_que_o_aluno_nao_ve||po.dados_completos; if(oc&&!curto)L.push("O aluno não vê: "+oc);
+    const ev=evolucaoDe(po); if(ev)L.push("Evolução: "+ev);
+  }
+  if((n.cadeia_causal||[]).length)L.push("Cadeia causal: "+n.cadeia_causal.map(e=>`${e.de} → ${e.para}${e.por_que?` (${e.por_que})`:""}`).join("; "));
+  if(n.ponte_clinica)L.push("Ponte clínica: "+n.ponte_clinica);
+  if(!curto){
+    if((n.botoes_aplicados||[]).length)L.push("Botões aplicados: "+n.botoes_aplicados.map(b=>`${b.botao} — ${b.onde_aparece}`).join("; "));
+    if(n.anti)L.push("Contra a resposta decorada: "+n.anti);
+    if((n.conferir||[]).length)L.push("O autor pediu conferência de: "+n.conferir.join("; "));
+    if(n.referencia)L.push("Fonte citada: "+n.referencia);
+  }
+  return L.join("\n")||"—";
+}
+
+/* ══════════════════════════════════════════════════════════════
+   3. PROMPTS — só entra o que vale para o formato e o nível pedidos
+   ══════════════════════════════════════════════════════════════ */
+const P_BASE="Você é preceptor e membro de banca de medicina no Brasil. Só cobra o que explica ou muda o cuidado de um paciente; a dificuldade vem do raciocínio, nunca de detalhe obscuro. Português do Brasil, linguagem de prova, sem pegadinha de português. Não invente: na dúvida sobre dose, valor de corte ou recomendação, troque o recorte ou registre a dúvida.";
+
+function regraNivel(p){
+  const pac=COM_PACIENTE(p.formato);
+  return p.nivel==="básico"
+    ? "cobra mecanismo, comparação, previsão e interpretação de dado bruto; nunca conduta, escolha de fármaco, dose ou decisão terapêutica, nem como item secundário."+(pac?" O paciente serve só de âncora: os itens perguntam o mecanismo e a leitura do achado, nunca o que fazer com ele.":"")
+    : p.nivel==="clínico"
+    ? "cobra síntese, hipóteses diagnósticas e investigação; conduta só em linhas gerais, por classe de fármaco e com o porquê, nunca dose."
+    : p.nivel==="internato"
+    ? "cobra conduta, prioridade e cenário real, no nível do generalista recém-formado; dose só quando ela muda a decisão."
+    : p.nivel==="residência (acesso)"
+    ? "prova de acesso direto: conduta, prioridade, exceção à regra, evolução depois da conduta e recurso limitado, no nível do generalista bem formado; dose só quando ela muda a decisão."
+    : "prova de especialidade: a decisão do especialista da área — exceção à regra, falha da primeira linha, evolução depois da conduta e a evidência que sustenta a escolha; dose quando ela muda a decisão.";
+}
+function regraVR(p){
+  return ((p.nivel==="básico"||p.nivel==="clínico")
+    ? 'Todo valor laboratorial, hemodinâmico, gasométrico ou de função leva unidade e valor de referência entre colchetes, como em "lactato 4,1 mmol/L [VR < 2,0]"; só dispensam VR a PA, a FC, a FR, a temperatura e a SpO2.'
+    : 'Valores com unidade. Valor de referência entre colchetes só para o que não é de memória corrente neste nível, como em "PCP 27 mmHg [VR 4–12]"; exames do dia a dia (hemograma, eletrólitos, creatinina, glicemia, gasometria) vão sem VR.')
+    +" O intervalo entra; a leitura do valor (elevado, baixo, compatível com) nunca entra, porque ler o dado é tarefa do aluno.";
+}
+function blocoParams(p,ctx,n){
+  const pac=COM_PACIENTE(p.formato), pool=poolDe(p.formato);
+  const altos=pool.filter(b=>p.botoes.includes(b.n)), baixos=pool.filter(b=>!p.botoes.includes(b.n));
+  const foco=(p.foco||"").trim(), mat=p.fonte==="curso"?String(p.material||"").replace(/[ \t]+/g," ").replace(/\n{3,}/g,"\n\n").trim().slice(0,14000):"";
+  const L=[`- Nível: ${p.nivel} — ${regraNivel(p)}`,`- Área e tema: ${p.area} · ${p.tema}`];
+  if(foco) L.push(`- Recorte pedido (manda sobre qualquer sugestão): ${foco}`);
+  L.push(`- Formato: ${p.formato}${pac?`, cenário ${p.cenario}`:""}`);
+  L.push(`- ${p.itens} itens; cada resposta em até ${p.limite} linhas (1 linha ≈ 12 palavras)`);
+  L.push(`- Dificuldade ${p.dificuldade} = ${altos.length?"estes botões no alto, cada um pesando na resposta:":"nenhum botão no alto."}`);
+  for(const b of altos) L.push(`  · ${b.n}: ${b.a}`);
+  if(baixos.length) L.push(`  Os demais ficam no baixo e não sobem por conta própria: ${baixos.map(b=>`${b.n.toLowerCase()} (${b.b})`).join("; ")}.`);
+  if(!pac&&p.semPessoas) L.push('- Sem pessoas no enunciado: nada de paciente, indivíduo, idade ou sexo. Apresente os dados como preparação experimental, amostra, curva, traçado ou valores de bancada ("em cardiomiócitos isolados", "a curva abaixo"). A ponte clínica continua obrigatória, mas só no plano.');
+  if(mat) L.push(`- MATERIAL DO CURSO — fonte de verdade desta questão, acima de qualquer diretriz. Cubra só o que ele sustenta, no recorte e na ênfase dele. Se ele contrariar a diretriz vigente, siga o material e registre a divergência em "conferir". Em "ref", cite: ${p.referencia||"material do curso"}.\n"""\n${mat}\n"""`);
+  else L.push(`- Fonte: ${p.referencia||"a diretriz brasileira vigente mais aceita; sem diretriz brasileira, a internacional de referência"}`);
+  if(ctx&&ctx.evitar&&ctx.evitar.length) L.push(`- Já gerados neste tema; mude ${pac?"o paciente":"a situação"} e o ângulo: ${ctx.evitar.map(s=>`«${s}»`).join("; ")}`);
+  if(ctx&&ctx.angulos&&ctx.angulos.length) L.push(`- Ângulos sugeridos, um por questão e nesta ordem${foco?", dentro do recorte pedido":""} (adapte ao formato): ${ctx.angulos.slice(0,n).join("; ")}`);
+  return L.join("\n");
+}
+
+/* a escrita: plano, depois enunciado, depois espelho. O enunciado sai cedo e a página já o mostra. */
+function pGerar(p,n,ctx){
+  const pac=COM_PACIENTE(p.formato), evo=p.formato==="caso evolutivo", bas=p.nivel==="básico", k=n>1?'"k":1,':"";
+  const comum=`"ponte":"por que isso muda o cuidado de alguém","botoes":[["botão","onde ele aparece"]],"alvos":[["a","etapa","o que só responde quem raciocina",4]],"anti":"item X: o que a resposta decorada diria e por que perde ponto","conferir":["dose, valor de corte ou recomendação que um humano deve conferir"],"ref":"fonte, ano"}`;
+  const plano=pac
+    ? `{"t":"plano",${k}"caso":"paciente oculto em 2 a 3 frases","dx":["diagnóstico"],"fisio":"fisiopatologia central","oculto":"o que o aluno não vê e precisa inferir","evol":"sem tratamento: …; com a conduta correta: …",${comum}`
+    : `{"t":"plano",${k}"cadeia":[["de","para","por quê"]],${comum}`;
+  return [P_BASE,"",
+    n>1?`TAREFA: escrever ${n} questões discursivas diferentes entre si — ${pac?"paciente":"situação"}, ângulo do tema e etapa dominante do raciocínio não se repetem —, todas com os parâmetros abaixo.`
+       :"TAREFA: escrever uma questão discursiva com os parâmetros abaixo.",
+    "","PARÂMETROS",blocoParams(p,ctx,n),"",
+    "MÉTODO — nesta ordem: o enunciado nasce do que se quer avaliar, e o espelho tem de ser fiel ao que o enunciado mostra.",
+    `1. PLANO. ${pac
+      ?"Paciente oculto verossímil: idade, sexo, contexto de vida, comorbidades e medicações, sinais vitais, exame físico e exames coerentes entre si, com a doença e com o tempo de evolução; epidemiologia brasileira e SUS quando fizer sentido."
+      :"Cadeia causal completa, do nível molecular ou celular ao sinal clínico, sem pular elo."} A ponte clínica: sem uma razão convincente de por que isso muda o cuidado de alguém, troque o recorte. E o alvo de cada item: uma etapa do raciocínio e os pontos (total 10; raciocinar pesa mais que lembrar).`,
+    "2. ENUNCIADO, a partir do plano.",
+    "3. ESPELHO, item a item.","",
+    "ENUNCIADO",
+    pac?"- Só o que o médico teria naquele momento, na ordem em que surgiria: queixa e duração, história, antecedentes e medicações, sinais vitais e exame físico, exames disponíveis no cenário.":"- Não entregue o mecanismo nem a conclusão: descreva por completo a situação, a curva, o exame ou o experimento, e peça que o aluno construa o raciocínio.",
+    pac?"- Dado cru, nunca rótulo: descreva o achado (o sopro, o traçado, o valor), não o nome da síndrome nem o diagnóstico; nenhum adjetivo que interprete. Fármacos pelo nome genérico.":null,
+    "- "+regraVR(p),
+    "- Cada dado tem função: sustenta a resposta, separa o diferencial ou é o distrator que um botão pede. O resto sai.",
+    evo?"- Caso evolutivo: 2 ou 3 momentos, com os itens distribuídos entre eles. Cada momento novo traz evolução ou resultado e pode revelar o que o anterior perguntava (a página só o libera depois da resposta); dentro de um mesmo momento, nenhum dado responde os itens dele.":null,
+    "- Comando de cada item: um verbo de tarefa (cite, interprete, justifique, compare, explique, preveja, priorize, indique), quantos elementos se esperam e o que vale como justificativa. Nunca «comente», «discorra» ou «fale sobre». Não escreva o limite de linhas: a página mostra.",
+    "- Nenhum item entrega a resposta de outro do mesmo momento. Se (b) depende de acertar (a), o espelho de (b) diz quanto vale a resposta coerente com um (a) errado.","",
+    "ESPELHO",
+    `- "max": a resposta de um ótimo candidato, completa e dentro de ${p.limite} linhas (≈ ${p.limite*12} palavras). Não coube? Corte quesito ou estreite o comando.`,
+    `- "q": 2 a 4 quesitos por item, cada um observável e independente («identifica X e relaciona a Y»), sem sobreposição, em múltiplos de 0,5; a questão soma 10. Marque justificativa exigida quando nomear sem justificar com dado ${pac?"do caso":"do enunciado"} só valer metade.${pac?"":" Pontue elos e relações explicados, não palavras-chave."}`,
+    `- "anti": pelo menos um item em que a resposta decorada (${pac?"a conduta padrão recitada sem olhar este paciente":"o parágrafo do livro, sem encadear os elos"}) perde ponto.`,
+    `- "alt": respostas igualmente corretas, com a condição em que valem.`,
+    `- "graves": zeram o item. ${bas?"Todo erro conceitual plausível que, na prática, levaria a uma conduta errada.":"Toda conduta plausível que causaria dano e todo erro conceitual que levaria a uma conduta errada."} Só o que um aluno deste nível de fato escreveria.`,
+    `- "comuns": 1 ou 2, em frase curta.`,
+    `- "ref": só fonte que você tem certeza de que existe, com nome e ano, sem página nem seção. "conferir": toda dose, valor de corte ou recomendação recente de que você não tenha certeza absoluta; se não houver, [].`,"",
+    `SAÍDA — só objetos JSON, um por linha, nesta ordem, sem texto fora deles e sem cerca de código${n>1?`. Todo objeto leva "k" com o número da questão (1 a ${n}); termine a questão 1 inteira (plano, mom, esp) antes de começar a 2`:""}:`,
+    plano,
+    `{"t":"mom",${k}"n":1,"txt":"o que o aluno lê","itens":[["a","comando do item"]]}`,
+    `{"t":"esp",${k}"i":"a","max":"resposta nota máxima","q":[["quesito observável",1.5,1]],"alt":[["resposta também correta","condição em que vale"]],"comuns":["erro comum"],"graves":[["erro","conduta","consequência para o paciente"]]}`,
+    `Um "mom" por momento${evo?"":" (aqui, um só)"}, com os itens dele; um "esp" por item. Em "alvos": [letra, etapa, alvo, pontos do item], e etapa é uma de: ${ETAPAS.join(" | ")}. Em "q": [quesito, pontos, 1 se exige justificativa senão 0]. Em "graves": [erro, "conduta" ou "conceito", consequência]. Lista sem conteúdo vai vazia: [].`
+  ].filter(x=>x!=null).join("\n");
+}
+
+function linhaParams(p){
+  return `${p.nivel} · ${p.area} · ${p.tema} · ${p.formato}${COM_PACIENTE(p.formato)?" · "+p.cenario:""} · dificuldade ${p.dificuldade} · botões no alto: ${(p.botoes||[]).join(", ")||"nenhum"} · até ${p.limite} linhas por resposta`;
+}
+function blocoQuestao(q){
+  return `[PLANO — o aluno não vê]\n${textoNucleo(q)}\n\n[ENUNCIADO]\n${textoEnunciado(q.enunciado)}\n\n[ESPELHO]\n${textoEspelho(q.nucleo.espelho)}`;
+}
+
+/* o conserto: o modelo devolve só os blocos que mudam, e a página encaixa */
+function pConserto(q,defeitos){
+  const p=q.params;
+  return `${P_BASE}
+
+TAREFA: consertar a questão abaixo mexendo o mínimo possível. Devolva só o que muda.
+
+QUESTÃO: ${linhaParams(p)}
+Nível ${p.nivel}: ${regraNivel(p)}
+
+${blocoQuestao(q)}
+
+DEFEITOS A CONSERTAR
+${defeitos.map(d=>"- "+d).join("\n")}
+
+REGRAS
+- O que não foi criticado fica como está: mesmo ${COM_PACIENTE(p.formato)?"paciente":"recorte"}, mesmos itens, mesmas letras; os pontos continuam somando 10.
+- Não afrouxe o que protege o paciente: erro grave continua zerando o item e justificativa exigida continua exigida.
+- ${regraVR(p)}
+- Cada resposta nota máxima cabe em ${p.limite} linhas (≈ ${p.limite*12} palavras).
+
+SAÍDA — só objetos JSON, um por linha, apenas dos blocos que mudaram, cada um inteiro:
+{"t":"mom","n":1,"txt":"momento reescrito","itens":[["a","comando"]]}
+{"t":"esp","i":"a","max":"resposta nota máxima","q":[["quesito",1.5,1]],"alt":[["resposta","condição"]],"comuns":["erro comum"],"graves":[["erro","conduta ou conceito","consequência"]]}
+{"t":"plano","…":"só as chaves do plano que mudaram (caso, dx, fisio, oculto, evol, cadeia, ponte, botoes, alvos, anti, conferir, ref)"}
+{"t":"fim","mudei":"uma linha dizendo o que mudou"}
+Em "q": [quesito, pontos, 1 se exige justificativa senão 0]. Um "mom" reescrito leva todos os itens dele.`;
+}
+
+const PERFIS={
+  forte:area=>`residente de terceiro ano de ${area}, raciocínio sólido e diretrizes em dia. Dá a melhor resposta que consegue.`,
+  mediano:()=>"interno do 6º ano que estudou por resumos. Domina o quadro típico; tropeça em apresentação atípica, contraindicação, prioridade e exame cru; em mecanismo, pula elos e confunde conceitos vizinhos.",
+  decoreba:()=>"sabe de cor as listas e os parágrafos dos livros. Em caso clínico, responde a conduta padrão sem adaptar ao paciente; sem paciente, cola o parágrafo do livro sem encadear os elos."
+};
+function pCandidatos(perfis,q){
+  const p=q.params;
+  return `Simule ${perfis.length===1?"um candidato":"candidatos"} respondendo a uma prova discursiva de medicina como responderia${perfis.length===1?"":"m"} de verdade, inclusive errando onde erraria${perfis.length===1?"":"m"}. Cada resposta em até ${p.limite} linhas (1 linha ≈ 12 palavras). Não comente os perfis.
+
+PERFIS
+${perfis.map(k=>`- ${k}: ${PERFIS[k](p.area)}`).join("\n")}
+
+[ENUNCIADO]
+${textoEnunciado(q.enunciado)}
+
+SAÍDA — só objetos JSON, um por linha, um por perfil:
+{"t":"prova","perfil":"${perfis[0]}","r":{"a":"resposta do item a","b":"resposta do item b"}}`;
+}
+
+/* o revisor. Na auditoria, a mesma chamada corrige as três provas simuladas: uma chamada a menos, e o espelho viaja uma vez só. */
+function pRevisor(q,trio){
+  const p=q.params;
+  return `Você é o revisor final de uma banca de medicina. Sua função é achar erro antes que a questão chegue ao aluno: é melhor reprovar uma questão boa do que aprovar uma com erro clínico ou conceitual. Não reescreva a questão; aponte o defeito e o conserto.
+
+QUESTÃO: ${linhaParams(p)}
+Nível ${p.nivel}: ${regraNivel(p)}
+Regra de valores: ${regraVR(p)}${p.fonte==="curso"?"\nFonte de verdade: o material do curso do aluno, que não está aqui. Divergência da diretriz registrada pelo autor não é erro.":""}
+
+${blocoQuestao(q)}
+${trio?`
+[PROVAS SIMULADAS — escritas sem ver o espelho]
+${trio.map(c=>`### ${c.perfil}\n${Object.entries(c.respostas||{}).map(([i,t])=>`[${i}] ${t||"(em branco)"}`).join("\n")}`).join("\n\n")}
+
+PRIMEIRO, corrija as três provas pelo espelho: certo sem a justificativa exigida vale no máximo metade do quesito; erro grave do espelho zera o item; não premie extensão nem termo solto; ignore o que passar de ${p.limite} linhas; aceite resposta correta que o espelho não previa e diga qual em "fora".
+DEPOIS, revise a questão.`:`
+REVISE a questão.`} Dê de 1 a 5 a cada critério (5 = nada a consertar; 4 = retoque; 3 = defeito que prejudica o uso; 1 ou 2 = erro que invalida):
+- veross: dados coerentes entre si, com a doença, com a idade e com o tempo; cadeia causal sem elo pulado
+- correcao: fármaco, dose, critério, valor de corte, classificação ou fonte errados ou desatualizados
+- seguranca: conduta perigosa plausível que ficou fora dos erros graves; resposta nota máxima que causaria dano
+- clareza: comando com duas leituras; valor sem referência que o aluno deste nível não sabe de cor
+- vazamento: o enunciado entrega diagnóstico ou conduta; um item responde outro
+- relevancia: isto importa para o nível ${p.nivel}?
+- dificuldade: os botões no alto pesam na resposta? a resposta decorada tiraria nota máxima?
+- espelho: quesito inobservável, sobreposto ou que nem um ótimo candidato cumpriria; resposta correta não prevista; resposta máxima que não cabe em ${p.limite} linhas
+
+SAÍDA — só objetos JSON, um por linha:
+${trio?`{"t":"nota","perfil":"forte","itens":{"a":0,"b":0},"faltou":"até 12 palavras","grave":"erro grave cometido, ou vazio","fora":"resposta correta aceita fora do espelho, ou vazio","diverg":"leitura diferente e plausível do enunciado, ou vazio"}
+(um "nota" por prova; em "itens", os pontos obtidos em cada item)
+`:""}{"t":"rev","notas":{"veross":5,"correcao":5,"seguranca":5,"clareza":5,"vazamento":5,"relevancia":5,"dificuldade":5,"espelho":5},"achados":[["critério","defeito concreto, com o trecho","conserto em uma frase"]],"onde":"enunciado | espelho | caso"}
+Em "achados" só entra critério com nota abaixo de 5; sem nada a consertar, a lista vai vazia.`;
+}
+
+/* a correção do aluno e a primeira devolutiva, juntas: uma chamada em vez de duas */
+const REGRAS_CORRECAO=(p,pac)=>`1. Dê os pontos de cada quesito na ordem do espelho (q1, q2…), de 0 ao máximo do quesito, em passos de 0,25.
+2. Certo sem a justificativa exigida vale no máximo metade do quesito; a justificativa precisa usar dados ${pac?"deste caso":"do enunciado"}.
+3. Aceite as alternativas do espelho e respostas clinicamente equivalentes. Se aceitar algo que o espelho não previa, diga o quê em "fora".
+4. Erro grave do espelho cometido vai em "grave", e a página zera o item.
+5. Não premie extensão, termo técnico solto nem lista genérica${pac?"":"; pontue elos e relações explicados, não palavra-chave"}. Ignore o que passar de ${p.limite} linhas (1 linha ≈ 12 palavras).
+6. Motivo de cada quesito sem ponto cheio: até 12 palavras, dizendo o que faltou sem dar a resposta. Ponto cheio: motivo vazio.`;
+function pCorrigir(q,respostas){
+  const p=q.params, pac=COM_PACIENTE(p.formato);
+  return `Você é corretor de banca de medicina e o preceptor que devolve a prova a um aluno de ${p.nivel}. Corrija estritamente pelo espelho, com o rigor de quem sabe que um paciente depende disso. O aluno ainda vai reescrever um item: oriente sem entregar a resposta.
+
+[ENUNCIADO]
+${textoEnunciado(q.enunciado)}
+
+[ESPELHO]
+${textoEspelho(q.nucleo.espelho)}
+
+[O QUE O ALUNO NÃO VÊ]
+${textoNucleo(q,true)}
+
+[RESPOSTAS DO ALUNO]
+${respostas.map(r=>`[${r.item}] ${r.texto||"(em branco)"}`).join("\n\n")}
+
+REGRAS
+${REGRAS_CORRECAO(p,pac)}
+7. "dica": o dado ${pac?"do caso":"do enunciado"} que deveria ter mudado a resposta, ou o elo do raciocínio que faltou — uma pista, não a resposta. Item com nota cheia: vazio.
+
+SAÍDA — só objetos JSON, um por linha:
+{"t":"cor","i":"a","q":[[1.5,""],[0.5,"motivo"]],"grave":"","fora":"","dica":""}
+(um "cor" por item, na ordem; em "q", um par [pontos, motivo] por quesito)
+{"t":"fim","paciente":"${pac?"o que aconteceria com este paciente se a resposta do aluno virasse conduta: concreto e plausível, em 2 a 4 frases; se estava certa, diga por quê":"a que conduta errada os erros do aluno levariam na prática, pela ponte clínica, em 2 a 4 frases; se acertou, diga o que isso garante ao paciente"}","fraco":"letra do item que mais vale reescrever","diverg":"se o aluno leu o enunciado de outro jeito plausível, qual; senão vazio"}`;
+}
+/* a reescrita e o fecho, juntos. A resposta modelo não é pedida: a página mostra a do espelho. */
+function pReescrita(q,pr){
+  const p=q.params, pac=COM_PACIENTE(p.formato), l=pr.reescrita.item;
+  const antes=(pr.correcao.itens||[]).find(i=>i.item===l);
+  const pts=antes?antes.quesitos.reduce((s,x)=>s+x.pontos_obtidos,0):0, max=antes?antes.quesitos.reduce((s,x)=>s+x.pontos_max,0):0;
+  return `Você é o preceptor que fecha a devolutiva de um aluno de ${p.nivel}. Ele recebeu a correção sem a resposta e reescreveu o item mais fraco.
+
+[ENUNCIADO]
+${textoEnunciado(q.enunciado)}
+
+[ESPELHO DO ITEM ${l}]
+${textoEspelho(q.nucleo.espelho,l)}
+
+[O QUE O ALUNO NÃO VÊ]
+${textoNucleo(q,true)}
+
+[PRIMEIRA RESPOSTA — ${num(pts)} de ${num(max)}]
+${(pr.respostas[l]||"").trim()||"(em branco)"}
+
+[REESCRITA]
+${(pr.reescrita.texto||"").trim()||"(em branco)"}
+
+PRIMEIRO, corrija a reescrita pelo espelho:
+${REGRAS_CORRECAO(p,pac)}
+DEPOIS, feche a devolutiva. Não repita a resposta modelo: a página mostra a do espelho.
+
+SAÍDA — só objetos JSON, um por linha:
+{"t":"cor","i":"${l}","q":[[1.5,""],[0.5,"motivo"]],"grave":"","fora":"","dica":""}
+{"t":"fim","melhora":"o que a reescrita ganhou e o que ainda falta, em 1 ou 2 frases","passos":["o raciocínio de um bom médico, do dado à ${pac?"decisão":"conclusão"}, em 3 a 6 passos curtos"],"licao":"uma frase com a lição que vale para o próximo paciente"}`;
+}
+
+const PROMPT_UNICO = `Você é preceptor e membro de banca: cria, valida e corrige questões discursivas de medicina, da faculdade à residência, em português do Brasil.
+
+PRINCÍPIO: só se cobra o que explica ou muda o cuidado de um paciente. A dificuldade vem do raciocínio, nunca de detalhe obscuro. Não invente diretriz, dose nem valor de corte: na dúvida, troque o recorte ou avise.
+
+== 1. PRIMEIRA MENSAGEM ==
+Pergunte tudo de uma vez, com o padrão entre parênteses:
+1. Nível: básico (1º–2º ano) | clínico (3º–4º) | internato (5º–6º) | residência
+2. Grande área e tema
+3. Formato: caso clínico | caso evolutivo | mecanismo | comparação | interpretação de dado | previsão | integração (padrão: você escolhe pelo nível)
+4. Dificuldade de 1 a 5 (padrão: 3)
+5. Modo: TREINO (eu respondo e você corrige) | BANCO (só questão e espelho) (padrão: TREINO)
+6. Referência: diretriz ou material meu (opcional)
+Se eu responder só parte, use os padrões e siga. No básico, prefira formatos sem paciente e nunca cobre conduta nem dose; no clínico, conduta só por classe de fármaco e com o porquê; no internato e na residência, quase sempre caso clínico, com dose só quando ela muda a decisão.
+
+== 2. DIFICULDADE = NÚMERO DE BOTÕES NO ALTO (1 a 5) ==
+Com paciente: apresentação atípica · diferencial entre diagnósticos de condutas opostas · modificador de conduta · prioridade e tempo · ruído · dado bruto para interpretar · recurso limitado · evolução depois da conduta · dimensão humana.
+Sem paciente: 4 ou mais elos causais · conceitos vizinhos · previsão de situação nova · achado contraintuitivo · integração de disciplinas · dado bruto.
+A partir de 3, um botão central: diferencial ou modificador de conduta (com paciente); elos causais ou comparação (sem paciente). Os botões que não subiram ficam no baixo.
+
+== 3. COMO ESCREVER (faça tudo antes de mostrar; não mostre as etapas) ==
+A. PLANO: paciente oculto coerente, ou cadeia causal completa; a ponte clínica; e o alvo de cada item — uma etapa do raciocínio e os pontos (total 10; raciocinar pesa mais que lembrar).
+B. ENUNCIADO, a partir do plano: só o que o médico teria naquele momento; dado cru, nunca rótulo nem diagnóstico; nenhum adjetivo que interprete; valor com unidade e, quando o aluno daquele nível não sabe de cor, valor de referência entre colchetes; cada dado com função. Comando com verbo de tarefa (cite, interprete, justifique, compare, explique, preveja, priorize), número de elementos e limite de linhas; nunca "comente" nem "discorra".
+C. ESPELHO, fiel ao enunciado: resposta nota máxima que cabe no limite; 2 a 4 quesitos observáveis e independentes por item; alternativas aceitas, com a condição; erros graves plausíveis, que zeram o item; pelo menos um item em que a resposta decorada perde ponto; fonte com nome e ano, sem página.
+D. TESTE interno: responda como residente forte, interno mediano e decoreba, e corrija os três pelo espelho. Refaça, até 2 vezes, se o forte não chega a 8; o mediano chega a 8 com dificuldade 3 ou mais; o decoreba chega a 7; forte menos mediano fica abaixo de 2; ou sobra dúvida clínica.
+E. No fim, liste "para conferir": toda dose, valor de corte ou recomendação recente que mereça conferência humana.
+
+== 4. MODO BANCO ==
+Mostre enunciado, espelho completo, botões aplicados, ponte clínica e a lista para conferir.
+
+== 5. MODO TREINO ==
+a) Mostre só o enunciado (caso evolutivo: um momento por vez). Guarde o espelho; não o mostre antes da minha resposta.
+b) CORREÇÃO: pontos por quesito, motivo em uma linha. Certo sem a justificativa exigida vale no máximo metade; a justificativa usa dados deste caso; erro grave zera o item; não premie extensão.
+c) DEVOLUTIVA 1: o que aconteceria com o paciente; em cada item com perda, o dado ou o elo que faltou, sem dar a resposta. Peça a reescrita do item mais fraco.
+d) DEVOLUTIVA 2, depois da reescrita: quanto melhorou, o raciocínio passo a passo, a resposta modelo e a lição em uma frase.
+e) PRÓXIMA: proponha pelo meu ponto fraco. Suba a dificuldade após 2 notas de 8 ou mais; desça após 2 notas abaixo de 5; erro grave volta em outro paciente depois de alguns dias.
+
+Seja exigente e respeitoso, como um bom preceptor. Comece agora pela primeira mensagem.`;
+
+/* ══════════════════════════════════════════════════════════════
+   4. ESTADO
+   ══════════════════════════════════════════════════════════════ */
+const REF_EX="Diretriz Brasileira de Insuficiência Cardíaca Crônica e Aguda — SBC, 2018";
+const EXEMPLO = {
+  id:"exemplo", exemplo:true, criado:"2026-11-10",
+  params:{nivel:"internato",area:"clínica médica",tema:"insuficiência cardíaca descompensada",formato:"caso clínico",dificuldade:3,cenario:"pronto-socorro",limite:10,itens:3,referencia:REF_EX,botoes:["Interpretação","Modificador de conduta","Ruído"]},
+  nucleo:{
+    formato:"caso clínico",
+    paciente_oculto:{resumo:"Homem de 68 anos com IC de fração de ejeção reduzida conhecida, em carvedilol e enalapril, descompensado por ter parado o diurético.",diagnosticos:["IC descompensada, perfil hemodinâmico quente-congesto (perfil B)"],fisiopatologia_central:"Congestão por retenção hidrossalina com débito cardíaco ainda preservado: pressão de enchimento alta sem hipoperfusão periférica.",o_que_o_aluno_nao_ve:"O rótulo de congestão sem hipoperfusão, que ele precisa montar com a turgência jugular, os estertores, o edema, a PA preservada e as extremidades quentes. O cisto renal é ruído.",evolucao:"sem tratamento: piora da congestão pulmonar e ventilação não invasiva em horas; com a conduta correta: diurese, queda da FR e melhora da SpO2 nas primeiras horas, com o betabloqueador mantido."},
+    cadeia_causal:null,
+    ponte_clinica:"Classificar o perfil hemodinâmico à beira do leito define se o paciente recebe diurético ou inotrópico; errar o perfil é a diferença entre descongestionar e piorar a perfusão.",
+    botoes_aplicados:[{botao:"Interpretação",onde_aparece:"sinais vitais e laboratório crus, sem o rótulo de congestão"},{botao:"Modificador de conduta",onde_aparece:"betabloqueador em uso: manter, reduzir ou suspender"},{botao:"Ruído",onde_aparece:"cisto renal simples, irrelevante para o quadro"}],
+    alvos:{a:{etapa:"interpretação",alvo:"classificar o perfil hemodinâmico com dados do caso",pts:4},b:{etapa:"conduta",alvo:"condutas da primeira hora e a decisão sobre o betabloqueador",pts:3.5},c:{etapa:"previsão",alvo:"o que muda se houver hipoperfusão",pts:2.5}},
+    anti:"Item b: o decoreba suspende o betabloqueador «porque descompensou». Perde o quesito e comete erro grave, porque a decisão depende da perfusão deste paciente.",
+    conferir:["Limiar de SpO2 para indicar oxigênio suplementar na IC aguda","Conduta com o betabloqueador na IC aguda sem hipoperfusão"],
+    referencia:REF_EX,
+    espelho:{pontuacao_total:10,itens:[
+      {item:"a",etapa_raciocinio:"interpretação",pergunta_alvo:"classificar o perfil hemodinâmico com dados do caso",resposta_nota_maxima:"Perfil quente-congesto (B). Há congestão — turgência jugular, estertores, edema e hepatomegalia dolorosa — sem hipoperfusão, já que a PA está preservada, as extremidades estão quentes e o reenchimento capilar é normal.",quesitos:[{descricao:"Nomeia o perfil congesto sem hipoperfusão",pontos:1.5,exige_justificativa:false},{descricao:"Sustenta a congestão com ao menos dois achados do caso",pontos:1.5,exige_justificativa:true},{descricao:"Afasta hipoperfusão citando PA, extremidades ou reenchimento capilar",pontos:1,exige_justificativa:true}],alternativas_aceitas:[{resposta:"Perfil B de Stevenson",condicao:"se descrever congestão sem hipoperfusão"}],erros_comuns:["Chamar de choque cardiogênico por causa da dispneia em repouso"],erros_graves:[{erro:"Classificar como frio-congesto e indicar inotrópico",tipo:"erro conceitual",consequencia_para_o_paciente:"inotrópico sem indicação, com risco arrítmico e isquêmico",penalidade:"zera o item"}],referencia:REF_EX},
+      {item:"b",etapa_raciocinio:"conduta",pergunta_alvo:"condutas da primeira hora e a decisão sobre o betabloqueador",resposta_nota_maxima:"Diurético de alça intravenoso, porque a congestão é o mecanismo do sintoma e a via oral tem absorção incerta no congesto; oxigênio suplementar pela SpO2 de 88% com FR de 26; manter o carvedilol, já que não há hipoperfusão nem instabilidade que justifiquem suspender.",quesitos:[{descricao:"Indica diurético de alça IV e liga a indicação à congestão deste paciente",pontos:1.5,exige_justificativa:true},{descricao:"Segunda conduta pertinente justificada por dado do caso (O2 pela SpO2 e FR, monitorização, controle de diurese)",pontos:1,exige_justificativa:true},{descricao:"Decide sobre o betabloqueador e justifica pela perfusão",pontos:1,exige_justificativa:true}],alternativas_aceitas:[{resposta:"Reduzir a dose do betabloqueador",condicao:"se justificar pela piora da congestão e mantiver a droga"},{resposta:"Vasodilatador intravenoso",condicao:"com PA preservada e congestão pulmonar importante"}],erros_comuns:["Expandir volume por causa da creatinina"],erros_graves:[{erro:"Expansão volêmica em paciente congesto",tipo:"conduta perigosa",consequencia_para_o_paciente:"piora da congestão pulmonar e insuficiência respiratória",penalidade:"zera o item"},{erro:"Suspender o betabloqueador sem instabilidade nem hipoperfusão",tipo:"erro conceitual",consequencia_para_o_paciente:"perda do benefício da droga e risco de rebote",penalidade:"zera o item"}],referencia:REF_EX},
+      {item:"c",etapa_raciocinio:"previsão",pergunta_alvo:"o que muda se houver hipoperfusão",resposta_nota_maxima:"Passaria a perfil frio-congesto. Com hipoperfusão, o diurético isolado tende a não responder e a piorar a função renal; a prioridade passa a ser restaurar o débito antes de insistir na descongestão, e o betabloqueador é reduzido ou suspenso.",quesitos:[{descricao:"Reclassifica para frio-congesto",pontos:1,exige_justificativa:false},{descricao:"Explica por que o diurético isolado tende a falhar com baixo débito",pontos:1,exige_justificativa:true},{descricao:"Muda a conduta do betabloqueador de forma coerente com a hipoperfusão",pontos:0.5,exige_justificativa:true}],alternativas_aceitas:[],erros_comuns:["Dobrar o diurético sem tratar a perfusão"],erros_graves:[{erro:"Manter ou aumentar o betabloqueador na hipoperfusão",tipo:"conduta perigosa",consequencia_para_o_paciente:"queda adicional do débito cardíaco",penalidade:"zera o item"}],referencia:REF_EX}
+    ]}
+  },
+  enunciado:{
+    momentos:[{momento:1,texto:"Homem de 68 anos chega ao pronto-socorro com dispneia progressiva há cinco dias, hoje em repouso, e não consegue dormir deitado. Tem insuficiência cardíaca em acompanhamento e usa carvedilol e enalapril; conta que parou o comprimido do \"xixi\" há duas semanas porque incomodava no trabalho.\n\nAo exame: PA 138/84 mmHg, FC 96 bpm, FR 26 irpm, SpO2 88% em ar ambiente, temperatura 36,4 °C. Lúcido. Jugulares distendidas a 45°. Estertores finos nos dois terços inferiores de ambos os hemitórax. Bulhas rítmicas, sem sopros. Fígado a 4 cm do rebordo costal direito, doloroso à compressão. Edema de membros inferiores até os joelhos, com cacifo. Extremidades quentes, tempo de reenchimento capilar de 2 segundos.\n\nExames da triagem: creatinina 1,4 mg/dL (1,3 mg/dL há três meses), sódio 136 mEq/L, potássio 4,2 mEq/L, hemoglobina 13,1 g/dL. Ultrassom de abdome: cisto renal simples de 2 cm à direita, fígado de contornos regulares."}],
+    itens:[
+      {item:"a",momento:1,comando:"Classifique o perfil hemodinâmico deste paciente e sustente a classificação com, no mínimo, dois achados do exame e um dado que afaste a alternativa oposta.",limite_linhas:10,etapa_raciocinio:"interpretação"},
+      {item:"b",momento:1,comando:"Indique duas condutas da primeira hora e justifique cada uma com um dado deste caso. Diga o que fazer com o carvedilol e por quê.",limite_linhas:10,etapa_raciocinio:"conduta"},
+      {item:"c",momento:1,comando:"Se a pressão arterial fosse 82/54 mmHg, com extremidades frias e reenchimento capilar de 4 segundos, o que mudaria na sua classificação e na sua conduta? Explique por que a mudança é necessária.",limite_linhas:10,etapa_raciocinio:"previsão"}
+    ]
+  },
+  lint:[], validacao:null,
+  veredito:{v:"EXEMPLO",por:"Exemplo que acompanha a página para ela abrir funcionando: não passou por revisor. Confira o espelho na diretriz antes de usar como gabarito."}
+};
+
+const S={
+  view:"montar", responder:false,
+  params:{nivel:"internato",area:"clínica médica",tema:"insuficiência cardíaca descompensada",foco:"",formato:"caso clínico",dificuldade:3,cenario:"pronto-socorro",limite:10,itens:3,referencia:"",fonte:"diretriz",material:"",semPessoas:false,botoes:[]},
+  quantidade:1, lote:[], provas:{}, velocidade:"seguro", motor:"maximo",
+  esteira:[], rodando:false, abort:null, t0:0, log:[],
+  questao:null, prova:null, espelhoAberto:false, remover:null,
+  historico:[], banco:[], dbPronto:false, podeEscrever:true, sampleOk:null,
+  uso:{n:0,ent:0,sai:0,itens:[]}
+};
+S.params.botoes=autoBotoes(3,"caso clínico","internato");
+
+const VELOCIDADES={
+  direto:{n:"Direto",c:1,d:"Só a escrita. A página confere de graça o que dá para conferir sem modelo: soma dos pontos, limite de linhas, vazamento literal do diagnóstico. Sem carimbo clínico; dá para pedir a revisão depois, só das questões que você for guardar."},
+  seguro:{n:"Seguro",c:2,d:"A questão sai na primeira chamada. Um revisor procura erro clínico, dose, vazamento e defeito de espelho em segundo plano, enquanto você já lê ou responde."},
+  auditoria:{n:"Auditoria",c:4,d:"Três candidatos simulados respondem sem ver o espelho; a banca corrige as três provas e revisa a questão numa chamada só, e a página mede a discriminação. Para a questão que vai ficar no banco."}
+};
+const MOTORES={
+  maximo:{n:"Máximo",escreve:"complex",corrige:"complex",d:"O modelo mais capaz escreve, revisa e corrige. É o que dá a melhor questão; pensa mais antes de começar a escrever."},
+  equilibrado:{n:"Equilibrado",escreve:"default",corrige:"default",d:"O modelo do dia a dia escreve e corrige: costuma começar a escrever mais cedo e gasta menos do seu uso. O revisor continua no modelo mais capaz."}
+};
+const motor=()=>MOTORES[S.motor]||MOTORES.maximo;
+const ETAPAS_ESTEIRA=[
+  {k:"questao",t:"Questão",d:"plano, enunciado e espelho"},
+  {k:"candidatos",t:"Candidatos",d:"forte · mediano · decoreba"},
+  {k:"revisor",t:"Revisor",d:"erro clínico, vazamento, espelho"},
+  {k:"decisao",t:"Decisão",d:"regra de aprovação"}
+];
+function zerarEsteira(){ S.esteira=ETAPAS_ESTEIRA.map(e=>({...e,st:"espera",s:e.d})); }
+zerarEsteira();
+
+/* ══════════════════════════════════════════════════════════════
+   5. UTILIDADES
+   ══════════════════════════════════════════════════════════════ */
+const el=(t,a={},...kids)=>{ const n=document.createElement(t);
+  for(const [k,v] of Object.entries(a)){
+    if(v==null||v===false||k==="value")continue;
+    if(k==="cls")n.className=v; else if(k==="txt")n.textContent=v;
+    else if(k==="html")n.innerHTML=v; else if(k.startsWith("on"))n.addEventListener(k.slice(2),v);
+    else n.setAttribute(k,v===true?"":v);
+  }
+  for(const c of kids.flat(Infinity)) if(c!=null&&c!==false) n.append(c.nodeType?c:document.createTextNode(c));
+  if(a.value!=null) n.value=a.value;
+  return n; };
+const fmt=n=>(n==null||isNaN(n))?"—":(Math.round(n*100)/100).toLocaleString("pt-BR",{minimumFractionDigits:1,maximumFractionDigits:2});
+const mil=n=>n>=1000?(n/1000).toFixed(1).replace(".",",")+" mil":String(n);
+const hoje=()=>{ const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; };
+const dias=(d,n)=>{ const x=new Date(d+"T12:00:00"); x.setDate(x.getDate()+n); return `${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,"0")}-${String(x.getDate()).padStart(2,"0")}`; };
+function linhas(t,cpl=92){ if(!t)return 0;
+  return String(t).split(/\n/).reduce((a,l)=>a+(l.trim()?Math.max(1,Math.ceil(l.length/cpl)):0),0); }
+function somaMax(itens){ let s=0; for(const i of itens||[]) for(const q of i.quesitos||[]) s+=Number(q.pontos)||0; return s; }
+function notaDaCorrecao(c){
+  if(!c)return null;
+  let o=0,m=0; for(const i of c.itens||[]) for(const q of i.quesitos||[]){ o+=Number(q.pontos_obtidos)||0; m+=Number(q.pontos_max)||0; }
+  return m?Math.round(o/m*1000)/100:(typeof c.nota_total==="number"?c.nota_total:null);
+}
+const TRANSITORIOS=new Set(["gerando","conferindo","consertando","abortConf","parcial","vez","temPlano","entregando","falha","material"]);
+const limpa=o=>JSON.parse(JSON.stringify(o,(k,v)=>TRANSITORIOS.has(k)?undefined:v));
+function embaralhar(a){ const b=[...a]; for(let i=b.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [b[i],b[j]]=[b[j],b[i]]; } return b; }
+const guardar=(k,v)=>{ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} };
+const ler=(k,pad)=>{ try{ const v=JSON.parse(localStorage.getItem(k)||"null"); return v==null?pad:v; }catch(e){ return pad; } };
+
+/* variedade: o que já saiu neste tema viaja em uma linha, para o modelo não repetir o mesmo paciente */
+const chaveTema=t=>semAcento(t).replace(/[^a-z0-9]+/g," ").trim();
+function resumoCurto(q){
+  const n=q.nucleo, base=(n.paciente_oculto&&n.paciente_oculto.resumo)||Object.values(n.alvos||{}).map(a=>a.alvo).filter(Boolean).join("; ")||"";
+  return base.split(/\s+/).slice(0,22).join(" ");
+}
+function lembrar(q){
+  const s=resumoCurto(q); if(!s)return;
+  const o=ler("disc-vistos",{}), k=chaveTema(q.params.tema);
+  o[k]=[...(o[k]||[]).filter(x=>x!==s),s].slice(-6);
+  const ks=Object.keys(o); if(ks.length>60) delete o[ks[0]];
+  guardar("disc-vistos",o);
+}
+function evitarPara(p){
+  const k=chaveTema(p.tema), set=new Set(ler("disc-vistos",{})[k]||[]);
+  for(const q of S.banco) if(chaveTema(q.params.tema)===k){ const s=resumoCurto(q); if(s)set.add(s); }
+  return [...set].slice(-5);
+}
+function angulosPara(p){
+  if(!COM_PACIENTE(p.formato)||p.nivel==="básico") return ["o mecanismo do sinal ou sintoma central","a comparação com o estado ou conceito vizinho","a previsão do efeito de uma intervenção","um achado que parece contradizer a regra","a leitura de uma curva, exame ou experimento","a integração com outra disciplina"];
+  if(p.nivel==="clínico") return ["apresentação e diagnóstico diferencial","interpretação do exame-chave","que exame pedir e por quê","fator precipitante ou etiologia","complicação ou evolução desfavorável","população especial"];
+  return ["apresentação e diagnóstico diferencial","interpretação do exame-chave","conduta inicial e prioridade","complicação ou falha da primeira conduta","população especial ou contraindicação","seguimento, alta e prevenção"];
+}
+
+/* ══════════════════════════════════════════════════════════════
+   6. CAPACIDADES — sample (Claude), db (painel e banco), downloads
+   ══════════════════════════════════════════════════════════════ */
+let _sample=null,_db=null,_dl=null,_user=null;
+async function cap(n){ try{ return (window.claude&&typeof window.claude.use==="function")?await window.claude.use(n):null; }catch(e){ return null; } }
+async function pedirSample(){
+  if(_sample)return _sample;
+  _sample=await cap("sample"); S.sampleOk=!!_sample; renderBanner(); return _sample;
+}
+/* fila própria: duas chamadas por vez, e a escrita passa na frente da conferência */
+const FILA={ativos:0,espera:[]};
+function naFila(fn,prio){ return new Promise((res,rej)=>{ const j={fn,res,rej}; if(prio)FILA.espera.unshift(j); else FILA.espera.push(j); bombear(); }); }
+function bombear(){
+  while(FILA.ativos<2&&FILA.espera.length){
+    const j=FILA.espera.shift(); FILA.ativos++;
+    Promise.resolve().then(j.fn).then(j.res,j.rej).finally(()=>{ FILA.ativos--; bombear(); });
+  }
+}
+/* medidor: estimativa pelo tamanho do texto, para você ver o que cada etapa custa */
+const TOK=n=>Math.round(n/3.4);
+function medir(rotulo,ent,sai,ms,tier,falhou){
+  const u=S.uso; u.n++; u.ent+=TOK(ent); u.sai+=TOK(sai);
+  u.itens.unshift({rotulo,ent:TOK(ent),sai:TOK(sai),s:Math.round(ms/1000),tier:tier||"",falhou:!!falhou});
+  u.itens.length=Math.min(u.itens.length,12);
+  pintarMedidor();
+}
+async function chamar(prompt,{tier,signal,onText,cache,rotulo,prio}={}){
+  const s=await pedirSample();
+  if(!s) throw {code:"not_granted",message:"Claude indisponível nesta visualização."};
+  const opts={modelTier:tier||"default"};
+  if(signal)opts.signal=signal; if(onText)opts.onText=onText; if(cache===false)opts.cache=false;
+  let t0=0;
+  try{
+    const r=await naFila(()=>{ t0=performance.now(); return s(prompt,opts); },prio);
+    medir(rotulo,prompt.length,(r&&r.text||"").length,performance.now()-t0,r&&r.modelTierApplied);
+    return r||{text:"",truncated:false};
+  }catch(e){
+    if(!(e&&e.code==="cancelled"&&!t0)) medir(rotulo,prompt.length,(e&&e.text||"").length,t0?performance.now()-t0:0,opts.modelTier,true);
+    throw e;
+  }
+}
+async function pedirRegistros(prompt,opts){
+  const r=await chamar(prompt,opts), regs=lerRegistros(r.text);
+  if(!regs.length) throw {code:"gen",message:"a resposta veio sem dados legíveis."};
+  return regs;
+}
+function erroLegivel(e){
+  const c=e&&e.code;
+  return ["not_granted","sampling_disabled","not_declared","capability_disabled","capability_removed"].includes(c)?"O Claude não está liberado nesta visualização: use o prompt único, na tela Montar."
+    :c==="rate_limited"?"Limite de uso ou de chamadas atingido. Espere um pouco antes de tentar de novo."
+    :c==="session_expired"?"A sessão expirou: entre de novo no Claude e repita."
+    :c==="refused"?"O Claude recusou este pedido. Mude o tema ou o recorte e tente de novo."
+    :c==="prompt_too_large"?"O pedido ficou grande demais: encurte o material colado."
+    :c==="cancelled"?"Interrompido."
+    :c==="gen"?`Não deu certo: ${(e&&e.message)||"a resposta veio incompleta."} Tente de novo.`
+    :(c==="invalid_json"||c==="empty_completion")?"A resposta veio vazia ou ilegível. Tente de novo."
+    :"Falha de conexão com o Claude. Tente de novo.";
+}
+
+async function iniciarDb(){
+  _user=await cap("user");
+  if(_user&&typeof _user.can==="function"){ try{ if((await _user.can("data.write"))===false) S.podeEscrever=false; }catch(e){} }
+  _db=await cap("db");
+  if(!_db){ S.dbPronto=true; render(); return; }
+  const t=setTimeout(()=>{ if(!S.dbPronto){ S.dbPronto=true; render(); } },10000);
+  try{
+    const [ses,qs]=await Promise.all([
+      _db.collection("sessoes").orderBy("criado","desc").limit(120).get(),
+      _db.collection("questoes").orderBy("criado","desc").limit(60).get()
+    ]);
+    /* os documentos chegam congelados: a página trabalha em cópias */
+    const docs=s=>((s&&s.docs)||[]).map(d=>d.data()).filter(Boolean).map(x=>JSON.parse(JSON.stringify(x)));
+    S.historico=ordenarHistorico(docs(ses));
+    const vindas=docs(qs).filter(q=>q.id&&q.params&&q.nucleo&&q.enunciado);
+    S.banco=[...S.banco.filter(q=>!vindas.some(v=>v.id===q.id)),...vindas];
+  }catch(e){}
+  clearTimeout(t); S.dbPronto=true; render();
+}
+const ordenarHistorico=h=>h.sort((a,b)=>(b.criado||"").localeCompare(a.criado||"")||((b.ts||0)-(a.ts||0)));
+async function salvar(col,id,dados){
+  if(!_db||!S.podeEscrever)return false;
+  try{ await _db.doc(`${col}/${id}`).set(dados); return true; }
+  catch(e){ if(e&&e.code==="invalid_argument"&&col==="sessoes"){ S.podeEscrever=false; renderBanner(); } return false; }
+}
+function guardarNoBanco(q,auto){
+  if(q.exemplo)return;
+  const c=limpa(q);
+  S.banco=[c,...S.banco.filter(x=>x.id!==q.id)];
+  salvar("questoes",q.id,c);
+  if(auto)renderTabs(); else render();
+}
+async function removerDoBanco(id){
+  if(S.remover!==id){ S.remover=id; render(); return; }
+  S.remover=null; S.banco=S.banco.filter(q=>q.id!==id); render();
+  if(_db&&S.podeEscrever){ try{ await _db.doc("questoes/"+id).delete(); }catch(e){} }
+}
+
+/* a mesa: a questão aberta e o que você escreveu sobrevivem a um recarregar — questão perdida é chamada desperdiçada */
+let _mesaT=0;
+function guardarMesa(){
+  const qs=(S.lote.length?S.lote:(S.questao?[S.questao]:[])).filter(q=>q&&!q.gerando&&!q.exemplo&&utilizavel(q)).map(limpa);
+  const provas={}; for(const q of qs) if(S.provas[q.id]) provas[q.id]=limpa(S.provas[q.id]);
+  guardar("disc-mesa",{qs,atual:S.questao&&S.questao.id,provas,responder:S.responder});
+}
+function agendarMesa(){ clearTimeout(_mesaT); _mesaT=setTimeout(guardarMesa,800); }
+function restaurarMesa(){
+  const m=ler("disc-mesa",null); if(!m||!Array.isArray(m.qs))return;
+  const qs=m.qs.filter(q=>q&&q.id&&q.params&&q.nucleo&&q.nucleo.espelho&&q.enunciado);
+  if(!qs.length)return;
+  S.lote=qs.length>1?qs:[]; S.provas=m.provas||{};
+  S.questao=qs.find(q=>q.id===m.atual)||qs[0]; const pr=S.prova=provaDe(S.questao);
+  S.responder=!!(m.responder||pr.entregue); S.espelhoAberto=!S.responder||pr.fase>=2||!!pr.pulou;
+}
+function guardarPrefs(){
+  const {material,...resto}=S.params;
+  guardar("disc-prefs",{velocidade:S.velocidade,motor:S.motor,quantidade:S.quantidade,params:{...resto,material:String(material||"").slice(0,20000)}});
+}
+function restaurarPrefs(){
+  const p=ler("disc-prefs",null); if(!p)return;
+  if(VELOCIDADES[p.velocidade])S.velocidade=p.velocidade;
+  if(MOTORES[p.motor])S.motor=p.motor;
+  if(p.quantidade>=1&&p.quantidade<=5)S.quantidade=p.quantidade|0;
+  const a=p.params;
+  if(a&&NIVEIS.includes(a.nivel)&&FORMATOS.includes(a.formato)&&typeof a.tema==="string"&&Array.isArray(a.botoes)){
+    Object.assign(S.params,a);
+    S.params.botoes=a.botoes.filter(b=>poolDe(a.formato).some(x=>x.n===b));
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   7. A ESTEIRA
+   ══════════════════════════════════════════════════════════════ */
+function marca(k,st,s){ const e=S.esteira.find(x=>x.k===k); if(e){ e.st=st; if(s!=null)e.s=s; } pintarEsteira(); }
+function pintarEsteira(){
+  const host=document.getElementById("esteira"); if(!host)return;
+  host.replaceChildren(...S.esteira.map((e,i)=>el("div",{cls:"et","data-st":e.st},
+    el("div",{cls:"n",txt:String(i+1).padStart(2,"0")}),
+    el("div",{cls:"t",txt:e.t}),
+    el("div",{cls:"s",txt:e.s}))));
+}
+function falharEsteira(txt){ const at=S.esteira.find(x=>x.st==="rodando"); if(at){ at.st="falhou"; at.s=txt||"falhou"; } pintarEsteira(); }
+function semCarimbo(){
+  marca("candidatos","espera","não roda no direto"); marca("revisor","espera","não roda no direto"); marca("decisao","espera","sem carimbo");
+}
+function novaProva(q){ return {questaoId:q.id,respostas:{},momento:1,correcao:null,fase:0,reescrita:null,fb2:null,entregue:false,pulou:false}; }
+function provaDe(q){ return S.provas[q.id]||(S.provas[q.id]=novaProva(q)); }
+/* abre uma questão guardando a prova de cada uma: trocar de questão no lote não apaga o que você escreveu */
+function abrirQuestao(q){
+  S.questao=q; const pr=S.prova=provaDe(q);
+  S.responder=!!pr.entregue; S.espelhoAberto=!pr.entregue||pr.fase>=2||!!pr.pulou;
+  S.view="prova"; render(); guardarMesa();
+}
+function modoResponder(on){
+  const pr=S.prova; S.responder=on;
+  S.espelhoAberto=!on||!!(pr&&(pr.fase>=2||pr.pulou));
+  render(); guardarMesa();
+}
+function abrirEspelho(){
+  const pr=S.prova; S.espelhoAberto=true;
+  if(pr&&pr.entregue&&pr.fase<2) pr.pulou=true;
+  render(); guardarMesa();
+}
+const respondida=q=>{ const p=S.provas[q.id]; return !!(p&&p.entregue); };
+function parar(){ if(S.abort)S.abort.abort(); }
+
+/* a escrita. Uma questão = uma chamada. Um lote = duas chamadas em paralelo, cada uma com metade das questões:
+   as instruções (e o material colado) viajam duas vezes em vez de uma por questão, e o modelo já planeja casos diferentes entre si. */
+async function gerarTudo(){
+  if(S.rodando)return;
+  const p={...S.params,tema:S.params.tema.trim(),foco:(S.params.foco||"").trim(),botoes:[...S.params.botoes]};
+  if(!p.tema){ S.log=["Escreva um tema antes de gerar."]; render(); return; }
+  if(p.fonte==="curso"&&!(p.material||"").trim()){ S.log=["Você escolheu o material do curso como fonte, mas não colou nada. Cole o conteúdo ou volte para a diretriz vigente."]; render(); return; }
+  const n=S.quantidade, base=Date.now(), guardado=limpa(p);
+  const qs=Array.from({length:n},(_,i)=>{ const q=esqueleto({...guardado,botoes:[...p.botoes]},"q"+(base+i)); q.gerando=true; return q; });
+  const meio=Math.ceil(n/2), blocos=n===1?[qs]:[qs.slice(0,meio),qs.slice(meio)];
+  for(const b of blocos) b.forEach((q,i)=>{ q.vez=i?"fila":"pensando"; });
+  guardarPrefs();
+  S.rodando=true; S.abort=new AbortController(); S.log=[]; S.t0=performance.now(); zerarEsteira();
+  S.lote=n>1?qs:[]; S.questao=qs[0]; S.prova=provaDe(qs[0]); S.responder=false; S.espelhoAberto=true; S.view="prova";
+  marca("questao","rodando",n>1?`${n} questões em ${blocos.length} chamadas`:"planejando o caso");
+  render();
+  const tique=setInterval(pintarVivo,1000), sig=S.abort.signal;
+  const evitar=evitarPara(p), ang=n>1?embaralhar(angulosPara(p)):[];
+  const falhas=(await Promise.all(blocos.map((b,i)=>
+    gerarBloco(p,b,{evitar,angulos:n>1?ang.slice(i?meio:0,(i?meio:0)+b.length):[]},sig).then(()=>null,e=>e||{code:"gen"})))).filter(Boolean);
+  clearInterval(tique);
+  S.rodando=false; S.abort=null;
+  for(const q of qs){ q.gerando=false; q.parcial=null; }
+  const prontas=qs.filter(utilizavel), parou=falhas.some(e=>e.code==="cancelled");
+  if(!prontas.length){
+    S.questao=null; S.prova=null; S.lote=[]; S.view="montar";
+    S.log.push(parou?"Interrompido antes de a questão ficar pronta.":erroLegivel(falhas[0]||{code:"gen",message:"a resposta veio sem questão."}));
+    falharEsteira(parou?"interrompido":"falhou"); render(); return;
+  }
+  if(prontas.length<n) S.log.push(parou?`Interrompido: ${prontas.length} de ${n} ficaram prontas.`:`${n-prontas.length} de ${n} não vieram. ${erroLegivel(falhas[0]||{code:"gen"})}`);
+  for(const q of prontas){ finalizar(q); lembrar(q); }
+  S.lote=prontas.length>1?prontas:[];
+  if(!prontas.includes(S.questao)){ S.questao=prontas[0]; S.prova=provaDe(prontas[0]); }
+  marca("questao","ok",n>1?`${prontas.length} de ${n} prontas`:`${prontas[0].nucleo.espelho.itens.length} itens · ${fmt(somaMax(prontas[0].nucleo.espelho.itens))} pontos`);
+  render(); guardarMesa();
+  if(S.velocidade!=="direto"&&!parou) conferirFila(prontas,S.velocidade); else semCarimbo();
+}
+function encerrar(q){ q.gerando=false; q.parcial=null; finalizar(q); }
+async function gerarBloco(p,alvo,ctx,signal){
+  /* se o modelo esquecer o "k" num lote, o registro vai para a questão em curso; um plano novo abre a seguinte */
+  let kAtual=1;
+  const leitor=criarLeitor(), de=k=>alvo[Math.min(alvo.length,Math.max(1,Number(k)||kAtual))-1];
+  const consumir=txt=>{
+    let novo=false;
+    for(const r of leitor.alimentar(txt)){
+      if(!["plano","mom","esp"].includes(r.t))continue;
+      if(Number(r.k)) kAtual=Math.min(alvo.length,Math.max(1,Number(r.k)));
+      else if(r.t==="plano"&&alvo[kAtual-1].temPlano&&kAtual<alvo.length) kAtual++;
+      const q=de(r.k), i=alvo.indexOf(q);
+      aplicar(q,r); q.vez="escrevendo"; if(r.t==="plano")q.temPlano=true; if(r.t==="mom")q.parcial=null;
+      for(let j=0;j<i;j++) if(alvo[j].gerando&&utilizavel(alvo[j])) encerrar(alvo[j]);
+      if(r.t==="esp"&&espelhoCompleto(q)) encerrar(q);
+      novo=true;
+    }
+    const parc=leitor.parcial(txt);
+    if(/"t"\s*:\s*"mom"/.test(parc)){
+      const tx=campoParcial(parc,"txt");
+      if(tx){ const km=/"k"\s*:\s*(\d+)/.exec(parc), nm=/"n"\s*:\s*(\d+)/.exec(parc), q=de(km&&km[1]);
+        const primeira=!q.parcial; q.parcial={n:nm?Number(nm[1]):1,txt:tx}; q.vez="escrevendo";
+        if(!novo&&q===S.questao) pintarParcial(q,primeira); }
+    }
+    if(novo) aoRegistro(); else pintarVivo();
+  };
+  try{
+    const r=await chamar(pGerar(p,alvo.length,ctx),{tier:motor().escreve,signal,cache:false,prio:true,
+      rotulo:alvo.length>1?`escrita de ${alvo.length} questões`:"escrita da questão",onText:({text})=>consumir(text)});
+    consumir(r.text);
+    if(r.truncated&&!alvo.every(espelhoCompleto)) throw {code:"gen",message:"a resposta foi cortada pelo limite de tamanho."};
+    if(!alvo.every(utilizavel)) throw {code:"gen",message:"a resposta veio incompleta."};
+  }catch(e){ if(e&&typeof e.text==="string"){ try{ consumir(e.text); }catch(_){} } throw e; }
+  finally{ for(const q of alvo){ q.parcial=null; if(utilizavel(q)) encerrar(q); } }
+}
+/* chegou um bloco inteiro: redesenha, a não ser que você esteja digitando uma resposta */
+function aoRegistro(){
+  if(S.view!=="prova")return;
+  const a=document.activeElement;
+  if(a&&a.tagName==="TEXTAREA"){ pintarVivo(); return; }
+  render();
+}
+const CARET='<span class="caret"></span>';
+function pintarParcial(q,primeira){
+  const n=document.getElementById("vivo-mom");
+  if(!n){ if(primeira)aoRegistro(); return; }
+  n.innerHTML=destacarValores(q.parcial.txt)+CARET; pintarVivo();
+}
+function faseTexto(q){
+  const en=q.enunciado, esp=q.nucleo.espelho.itens;
+  if(q.vez==="fila") return "na vez: outra questão deste bloco está sendo escrita antes";
+  if(en.itens.length&&!q.parcial){ const tot=Math.max(en.itens.length,Object.keys(q.nucleo.alvos||{}).length); return `enunciado pronto · escrevendo o espelho, item ${Math.min(esp.length+1,tot)} de ${tot}`; }
+  if(q.parcial||en.momentos.length) return "escrevendo o enunciado";
+  if(q.temPlano) return "plano fechado · começando o enunciado";
+  return "planejando o caso: o modelo pensa antes de escrever";
+}
+function pintarVivo(){
+  const host=document.getElementById("vivo"); if(!host)return;
+  const q=S.questao;
+  if(!q||!q.gerando){ if(host.firstChild){ host.replaceChildren(); host.className=""; } return; }
+  if(!host.firstChild){
+    host.className="vivo";
+    host.append(el("span",{cls:"pt"}),el("span",{id:"vivo-st"}),el("span",{cls:"tm",id:"vivo-tm"}),el("span",{cls:"sep"}),el("button",{cls:"ghost sm",onclick:parar},"Parar"));
+  }
+  document.getElementById("vivo-st").textContent=faseTexto(q);
+  document.getElementById("vivo-tm").textContent=`${Math.round((performance.now()-S.t0)/1000)} s`;
+}
+
+async function conferirFila(qs,modo){
+  for(const q of qs){ if(S.questao!==q&&!S.lote.includes(q))continue; await conferir(q,{modo}); }
+}
+const perfilDe=s=>{ const k=semAcento(s); return k.includes("forte")?"forte":k.includes("median")?"mediano":k.includes("decor")?"decoreba":null; };
+function preceptorDe(rev){
+  const notas=rev.notas||{}, ch=s=>semAcento(s).replace(/[^a-z]/g,"");
+  const achados=(rev.achados||[]).map(a=>{ const [c,d,x]=par(a,["criterio","defeito","conserto"]); return {criterio:String(c||""),defeito:String(d||""),conserto:String(x||"")}; }).filter(a=>a.defeito);
+  const criterios=[];
+  for(const [k,nome] of Object.entries(CRITERIOS)){
+    const achou=Object.entries(notas).find(([kk])=>ch(kk).startsWith(k.slice(0,5)));
+    const nota=achou?Number(achou[1]):NaN; if(isNaN(nota))continue;
+    const meus=achados.filter(a=>ch(a.criterio).startsWith(k.slice(0,5)));
+    criterios.push({k,criterio:nome,nota:Math.max(1,Math.min(5,Math.round(nota))),justificativa:meus.map(a=>a.defeito).join(" · ")});
+  }
+  return {criterios,achados,o_que_mudar:achados.map(a=>a.conserto).filter(Boolean).join(" "),etapa:String(rev.onde||"")};
+}
+/* conferência em segundo plano: não segura a questão, carimba quando chega */
+async function conferir(q,{modo="seguro",trio=null}={}){
+  if(!q||q.conferindo||q.gerando||q.exemplo||!utilizavel(q))return;
+  q.conferindo=true; const ctl=new AbortController(); q.abortConf=ctl; const sig=ctl.signal;
+  zerarEsteira(); marca("questao","ok","pronta"); pintarValidacao();
+  try{
+    if(modo==="auditoria"){
+      if(trio&&trio.length) marca("candidatos","ok","provas reaproveitadas: o enunciado não mudou");
+      else{
+        marca("candidatos","rodando","respondendo sem ver o espelho");
+        const [a,b]=await Promise.all([
+          pedirRegistros(pCandidatos(["forte"],q),{tier:motor().escreve,signal:sig,rotulo:"candidato forte"}),
+          pedirRegistros(pCandidatos(["mediano","decoreba"],q),{tier:"quick",signal:sig,rotulo:"candidatos mediano e decoreba"})]);
+        trio=[...a,...b].map(r=>{ const k=perfilDe(r.perfil); return k&&r.r&&typeof r.r==="object"?{perfil:k,respostas:Object.fromEntries(Object.entries(r.r).map(([i,t])=>[letra(i),String(t||"")]))}:null; }).filter(Boolean);
+        if(!trio.some(t=>t.perfil==="forte")||trio.length<2) throw {code:"gen",message:"as provas simuladas vieram incompletas."};
+        marca("candidatos","ok",`${trio.length} provas simuladas`);
+      }
+    }else{ trio=null; marca("candidatos","espera","só na auditoria"); }
+    marca("revisor","rodando",trio?"corrigindo as provas e revisando":"procurando erro clínico");
+    const regs=await pedirRegistros(pRevisor(q,trio),{tier:"complex",signal:sig,rotulo:trio?"banca: correção e revisão":"revisor"});
+    const rev=regs.find(r=>r.t==="rev"||r.notas);
+    if(!rev) throw {code:"gen",message:"a revisão veio sem notas."};
+    const prec=preceptorDe(rev), notas={forte:null,mediano:null,decoreba:null}, detalhe={}; let diverg="";
+    for(const r of regs){
+      const k=(r.t==="nota"||(r.perfil&&r.itens))?perfilDe(r.perfil):null; if(!k)continue;
+      const soma=Object.values(r.itens||{}).reduce((s,v)=>s+(Number(v)||0),0);
+      notas[k]=Math.round(Math.max(0,Math.min(10,soma))*100)/100;
+      detalhe[k]={faltou:limpo(r.faltou),grave:limpo(r.grave),fora:limpo(r.fora)};
+      if(k==="forte")diverg=limpo(r.diverg);
+    }
+    const ns=prec.criterios.map(c=>c.nota);
+    marca("revisor","ok",trio?`${fmt(notas.forte)} · ${fmt(notas.mediano)} · ${fmt(notas.decoreba)}`:(ns.length?`menor nota ${Math.min(...ns)} de 5`:"sem notas"));
+    marca("decisao","rodando","aplicando a regra");
+    const d=decidir({notas,divergencia:diverg,preceptor:prec,dificuldade:q.params.dificuldade});
+    q.veredito=d;
+    q.validacao={notas,detalhe,discriminacao:(notas.forte!=null&&notas.mediano!=null)?Math.round((notas.forte-notas.mediano)*100)/100:null,preceptor:prec,trio:trio||null,modo};
+    marca("decisao",d.v==="APROVAR"?"ok":"falhou",d.v==="APROVAR"?"aprovada":d.v.toLowerCase());
+    if(d.v==="APROVAR") guardarNoBanco(q,true);
+    else if(S.banco.some(x=>x.id===q.id)) guardarNoBanco(q,true);
+  }catch(e){
+    if(!(e&&e.code==="cancelled")){
+      q.veredito={v:"SEM CARIMBO",por:"A revisão não se completou. "+erroLegivel(e)+" A questão continua utilizável; só o carimbo não saiu."};
+      falharEsteira();
+    }
+  }finally{ q.conferindo=false; q.abortConf=null; pintarValidacao(); guardarMesa(); }
+}
+
+/* o que há para consertar: o que a página achou sozinha, a razão do veredito e os achados do revisor */
+function defeitos(q){
+  const L=[], v=q.veredito||{}, prec=q.validacao&&q.validacao.preceptor;
+  for(const a of q.lint||[]) if(a.conserto) L.push(a.conserto);
+  if((v.v==="REESCREVER"||v.v==="DESCARTAR")&&v.instr) L.push(v.instr);
+  for(const a of (prec&&prec.achados)||[]) L.push(`${a.criterio?`[${a.criterio}] `:""}${a.defeito}${a.conserto?` → ${a.conserto}`:""}`);
+  return L;
+}
+/* o conserto: uma chamada, e o modelo devolve só os blocos que mudam. O resto da questão — e o que você escreveu — fica de pé. */
+async function consertar(){
+  const q=S.questao; if(!q||q.gerando||q.conferindo||q.consertando||q.exemplo)return;
+  const lista=defeitos(q); if(!lista.length)return;
+  if(q.veredito&&q.veredito.maisBotao){
+    const livre=poolDe(q.params.formato).filter(b=>permitido(b,q.params.nivel)&&!q.params.botoes.includes(b.n));
+    if(livre.length){ q.params={...q.params,botoes:[...q.params.botoes,livre[0].n]}; lista.push(`Suba para o alto o botão «${livre[0].n}»: ${livre[0].a}. Ele precisa pesar na resposta.`); }
+  }
+  q.consertando=true; S.log=[]; zerarEsteira(); marca("questao","rodando","consertando só o que foi apontado"); pintarValidacao();
+  const antes=textoEnunciado(q.enunciado);
+  try{
+    const regs=await pedirRegistros(pConserto(q,lista),{tier:motor().escreve,rotulo:"conserto",cache:false,prio:true});
+    let mudou=0, fim=null;
+    for(const r of regs){ if(r.t==="fim"||r.mudei){ fim=r; continue; } if(["plano","mom","esp"].includes(r.t)){ aplicar(q,r); mudou++; } }
+    if(!mudou) throw {code:"gen",message:"o conserto não devolveu nenhum bloco."};
+    q.reescalado=null; finalizar(q);
+    q.ajuste=limpo(fim&&fim.mudei)||`${mudou} ${mudou===1?"bloco reescrito":"blocos reescritos"}`;
+    q.consertos=(q.consertos||0)+1;
+    const mesmoEnunciado=textoEnunciado(q.enunciado)===antes, trio=mesmoEnunciado&&q.validacao&&q.validacao.trio||null, modo=(q.validacao&&q.validacao.modo)||S.velocidade;
+    q.validacao=null; q.veredito={v:"SEM CARIMBO",por:"Consertada. Ainda não foi conferida de novo."};
+    marca("questao","ok","consertada");
+    q.consertando=false; render(); guardarMesa();
+    if(modo!=="direto") conferir(q,{modo,trio});
+  }catch(e){
+    S.log.push(erroLegivel(e)); falharEsteira();
+  }finally{ if(q.consertando){ q.consertando=false; render(); } }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   8. CORREÇÃO E DEVOLUTIVA DO ALUNO — duas chamadas no ciclo inteiro
+   ══════════════════════════════════════════════════════════════ */
+function itemCorrigido(q,r){
+  const l=letra(r.i), esp=q.nucleo.espelho.itens.find(e=>e.item===l); if(!esp)return null;
+  const grave=limpo(r.grave), fora=limpo(r.fora);
+  const quesitos=(esp.quesitos||[]).map((x,k)=>{
+    const [bruto,motivo]=par((r.q||[])[k],["p","m"]), max=Number(x.pontos)||0;
+    const o=grave?0:Math.max(0,Math.min(max,Math.round((Number(bruto)||0)*4)/4));
+    return {descricao:x.descricao,pontos_obtidos:o,pontos_max:max,resultado:o>=max&&max>0?"integral":o>0?"parcial":"zero",motivo:limpo(motivo)};
+  });
+  return {item:l,etapa_raciocinio:esp.etapa_raciocinio||"",quesitos,erros_graves_cometidos:grave?[grave]:[],
+    fora_do_espelho:!!fora,fora_do_espelho_motivo:fora,dado_do_caso_ignorado:limpo(r.dica)};
+}
+const pontosDoItem=i=>({o:i.quesitos.reduce((s,x)=>s+x.pontos_obtidos,0),m:i.quesitos.reduce((s,x)=>s+x.pontos_max,0)});
+async function entregar(){
+  const q=S.questao, pr=S.prova; if(!q||!pr||pr.entregando||q.gerando)return;
+  const respostas=q.enunciado.itens.map(i=>({item:i.item,texto:(pr.respostas[i.item]||"").trim()}));
+  if(!respostas.some(r=>r.texto)){ pr.falha="Escreva ao menos um item antes de entregar."; render(); return; }
+  pr.entregando=true; pr.falha=""; render();
+  const leitor=criarLeitor(), cor={itens:[],paciente:"",fraco:"",interpretacao_divergente:"",nota_total:null};
+  const consumir=txt=>{
+    let novo=false;
+    for(const r of leitor.alimentar(txt)){
+      if(r.t==="fim"||r.paciente!=null){ cor.paciente=limpo(r.paciente); cor.fraco=letra(r.fraco); cor.interpretacao_divergente=limpo(r.diverg); novo=true; }
+      else if(r.t==="cor"||Array.isArray(r.q)){ const it=itemCorrigido(q,r); if(it&&!cor.itens.some(x=>x.item===it.item)){ cor.itens.push(it); novo=true; } }
+    }
+    if(novo){ cor.nota_total=notaDaCorrecao(cor); pr.correcao=cor; render(); }
+  };
+  try{
+    const r=await chamar(pCorrigir(q,respostas),{tier:motor().corrige,rotulo:"correção e devolutiva",onText:({text})=>consumir(text)});
+    consumir(r.text);
+    if(!cor.itens.length) throw {code:"gen",message:"a correção veio vazia."};
+    /* item que o corretor pulou conta como não corrigido: entra zerado, com aviso */
+    for(const e of q.nucleo.espelho.itens) if(!cor.itens.some(i=>i.item===e.item))
+      cor.itens.push({...itemCorrigido(q,{i:e.item,q:[]}),dado_do_caso_ignorado:"O corretor não devolveu este item; confira pelo espelho."});
+    cor.itens.sort((a,b)=>a.item.localeCompare(b.item));
+    cor.nota_total=notaDaCorrecao(cor); pr.correcao=cor; pr.entregue=true;
+    const perdas=cor.itens.map(i=>({i:i.item,...pontosDoItem(i)})).filter(x=>x.m-x.o>0.001);
+    if(!perdas.length){ pr.fase=2; pr.reescrita=null; S.espelhoAberto=true; }
+    else{
+      const fraco=perdas.some(x=>x.i===cor.fraco)?cor.fraco:perdas.sort((a,b)=>(b.m-b.o)-(a.m-a.o))[0].i;
+      pr.fase=1; pr.reescrita={item:fraco,texto:"",correcao:null};
+    }
+    registrar();
+  }catch(e){
+    pr.correcao=pr.entregue?pr.correcao:null;
+    pr.falha=["not_granted","sampling_disabled"].includes(e&&e.code)?"O Claude não está liberado nesta visualização. Abra o espelho abaixo e corrija você mesmo, quesito a quesito.":erroLegivel(e);
+  }finally{ pr.entregando=false; render(); guardarMesa(); }
+}
+async function entregarReescrita(){
+  const q=S.questao, pr=S.prova; if(!q||!pr||!pr.reescrita||pr.entregando)return;
+  if(!(pr.reescrita.texto||"").trim()){ pr.falha="Escreva a reescrita antes de entregar."; render(); return; }
+  pr.entregando=true; pr.falha=""; render();
+  try{
+    const regs=await pedirRegistros(pReescrita(q,pr),{tier:motor().corrige,rotulo:"reescrita e fecho"});
+    const rc=regs.find(r=>r.t==="cor"||Array.isArray(r.q)), fim=regs.find(r=>r.t==="fim"||r.passos||r.licao)||{};
+    const it=rc&&itemCorrigido(q,{...rc,i:pr.reescrita.item});
+    if(!it) throw {code:"gen",message:"a correção da reescrita veio vazia."};
+    pr.reescrita.correcao={itens:[it]};
+    pr.fb2={melhora:limpo(fim.melhora),passos:[].concat(fim.passos||[]).map(limpo).filter(Boolean),licao:limpo(fim.licao)};
+    pr.fase=2; S.espelhoAberto=true; registrar();
+  }catch(e){ pr.falha=erroLegivel(e); }
+  finally{ pr.entregando=false; render(); guardarMesa(); }
+}
+function registrar(){
+  const q=S.questao, pr=S.prova; if(!q||!pr||!pr.correcao)return;
+  const etapas={}, graves=[];
+  for(const i of pr.correcao.itens||[]){
+    const etapa=(i.etapa_raciocinio||"—").toLowerCase(), {o,m}=pontosDoItem(i);
+    if(m){ etapas[etapa]=etapas[etapa]||{o:0,m:0}; etapas[etapa].o+=o; etapas[etapa].m+=m; }
+    for(const g of i.erros_graves_cometidos||[]) graves.push(String(g));
+  }
+  const rw=pr.reescrita&&pr.reescrita.correcao&&pr.reescrita.correcao.itens[0];
+  const reg={id:pr.questaoId+"-"+(pr.registroId||(pr.registroId=Date.now())),criado:pr.criado||(pr.criado=hoje()),ts:pr.registroId,
+    questaoId:q.id,tema:q.params.tema,area:q.params.area,nivel:q.params.nivel,formato:q.params.formato,
+    dificuldade:q.params.dificuldade,nota:notaDaCorrecao(pr.correcao),etapas,graves,
+    reescrita_nota:rw?(()=>{ const {o,m}=pontosDoItem(rw); return m?Math.round(o/m*1000)/100:null; })():null,
+    repescagem:graves.length?[dias(pr.criado,3),dias(pr.criado,10)]:[]};
+  S.historico=ordenarHistorico([reg,...S.historico.filter(h=>h.id!==reg.id)]);
+  salvar("sessoes",reg.id,reg);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   9. PAINEL — placar por etapa, escada e repescagem
+   ══════════════════════════════════════════════════════════════ */
+function painel(){
+  const H=S.historico, porEtapa={}, porArea={};
+  for(const h of H){
+    for(const [e,v] of Object.entries(h.etapas||{})){ porEtapa[e]=porEtapa[e]||{o:0,m:0}; porEtapa[e].o+=v.o; porEtapa[e].m+=v.m; }
+    if(h.area){ porArea[h.area]=porArea[h.area]||{s:0,n:0}; porArea[h.area].s+=Number(h.nota)||0; porArea[h.area].n++; }
+  }
+  const etapas=Object.entries(porEtapa).map(([k,v])=>({k,pc:v.m?v.o/v.m*100:0})).sort((a,b)=>a.pc-b.pc);
+  const areas=Object.entries(porArea).map(([k,v])=>({k,med:v.s/v.n,n:v.n})).sort((a,b)=>a.med-b.med);
+  /* a repescagem fecha quando o mesmo tema volta, depois da data, sem erro grave */
+  const graves=[], d0=hoje();
+  for(const h of H) for(const g of h.graves||[]) for(const d of h.repescagem||[]){
+    const cumprida=H.some(x=>x.id!==h.id&&x.tema===h.tema&&(x.criado||"")>=d&&!(x.graves||[]).length);
+    if(!cumprida) graves.push({erro:g,quando:d,tema:h.tema,area:h.area,nivel:h.nivel,formato:h.formato,dificuldade:h.dificuldade,vencida:d<=d0});
+  }
+  graves.sort((a,b)=>a.quando.localeCompare(b.quando));
+  const temaNivel={}; let escada=null;
+  for(const h of H){ const k=`${h.tema}|${h.nivel}`; (temaNivel[k]=temaNivel[k]||[]).push(h); }
+  for(const arr of Object.values(temaNivel)){
+    const u=arr.slice(0,2); if(u.length<2)continue;
+    if(u.every(x=>Number(x.nota)>=8)) escada={dir:"sobe",tema:u[0].tema,nivel:u[0].nivel,de:u[0].dificuldade};
+    else if(u.every(x=>Number(x.nota)<5)) escada={dir:"desce",tema:u[0].tema,nivel:u[0].nivel,de:u[0].dificuldade};
+  }
+  const media=H.length?H.reduce((a,h)=>a+(Number(h.nota)||0),0)/H.length:null;
+  return {etapas,areas,graves,escada,media,n:H.length,piorEtapa:etapas[0]||null,piorArea:areas[0]||null};
+}
+function aplicarSugestao(){
+  const P=painel(), p=S.params;
+  if(P.piorArea&&AREAS_CLIN.concat(AREAS_BAS).includes(P.piorArea.k)){
+    p.area=P.piorArea.k;
+    if(AREAS_BAS.includes(p.area)&&p.nivel!=="básico") p.nivel="básico";
+    if(AREAS_CLIN.includes(p.area)&&p.nivel==="básico") p.nivel="clínico";
+  }
+  const daArea=S.historico.filter(h=>h.area===p.area);
+  if(daArea.length){
+    const t={}; for(const h of daArea){ t[h.tema]=t[h.tema]||{s:0,n:0}; t[h.tema].s+=Number(h.nota)||0; t[h.tema].n++; }
+    const pior=Object.entries(t).map(([k,v])=>({k,m:v.s/v.n})).sort((a,b)=>a.m-b.m)[0];
+    if(pior)p.tema=pior.k;
+  }
+  if(P.escada) p.dificuldade=Math.min(5,Math.max(1,P.escada.de+(P.escada.dir==="sobe"?1:-1)));
+  p.botoes=autoBotoes(p.dificuldade,p.formato,p.nivel);
+  const e=P.piorEtapa&&P.piorEtapa.k;
+  p.foco=e?`a etapa em que mais perco ponto: ${e}`:"";
+  if(e&&COM_PACIENTE(p.formato)){
+    const alvo=e.includes("conduta")?"Modificador de conduta":e.includes("diagnóstico")?"Diferencial":e.includes("interpret")?"Interpretação":e.includes("seguimento")?"Evolução":e.includes("comunica")?"Dimensão humana":null;
+    const b=alvo&&BOT_PAC.find(x=>x.n===alvo);
+    if(b&&!p.botoes.includes(alvo)&&permitido(b,p.nivel)) p.botoes=[alvo,...p.botoes].slice(0,Math.max(quantos(p.dificuldade),1));
+  }
+  S.view="montar"; render();
+}
+function montarRepescagem(g){
+  const p=S.params;
+  if(NIVEIS.includes(g.nivel))p.nivel=g.nivel;
+  if(AREAS_CLIN.concat(AREAS_BAS).includes(g.area))p.area=g.area;
+  if(FORMATOS.includes(g.formato))p.formato=g.formato;
+  p.tema=g.tema; p.dificuldade=g.dificuldade||p.dificuldade;
+  p.foco=`repescagem: ${COM_PACIENTE(p.formato)?"outro paciente":"outra situação"} em que esteja em jogo a mesma decisão deste erro grave que cometi — «${g.erro}»`;
+  p.botoes=autoBotoes(p.dificuldade,p.formato,p.nivel);
+  S.quantidade=1; S.view="montar"; render();
+}
+
+/* ══════════════════════════════════════════════════════════════
+   10. RENDER
+   ══════════════════════════════════════════════════════════════ */
+const ABAS=[["montar","Montar"],["prova","Questão"],["painel","Painel"],["banco","Banco"]];
+function renderTabs(){
+  document.getElementById("tabs").replaceChildren(...ABAS.map(([k,t])=>el("button",{role:"tab","aria-selected":String(S.view===k),
+    onclick:()=>{ S.view=k; S.remover=null; render(); }},t+(k==="banco"&&S.banco.length?` ${S.banco.length}`:""))));
+  document.getElementById("modo-kicker").textContent=S.responder&&S.view==="prova"?"respondendo · espelho lacrado":"gerar, ver e exportar";
+}
+function renderBanner(){
+  const host=document.getElementById("banner"); if(!host)return;
+  const avisos=[];
+  if(S.sampleOk===false) avisos.push(el("div",{cls:"alerta bad"},"O Claude não respondeu nesta visualização, então a página não consegue gerar nem corrigir aqui. O exemplo, o espelho e o prompt único continuam disponíveis: copie o prompt na tela Montar e rode numa conversa."));
+  if(!S.podeEscrever) avisos.push(el("div",{cls:"alerta"},"Visualização sem permissão de escrita: a prova funciona, mas o painel e o banco não guardam nada."));
+  host.replaceChildren(...avisos.map(a=>el("div",{style:"margin-bottom:14px"},a)));
+}
+let _tela="";
+/* redesenha a tela preservando o foco, a seleção e os detalhes abertos */
+function render(){
+  const a=document.activeElement, fid=a&&a.id&&(a.tagName==="TEXTAREA"||a.tagName==="INPUT")?a.id:null;
+  let ss=0,se=0; if(fid){ try{ ss=a.selectionStart; se=a.selectionEnd; }catch(e){} }
+  const abertos=[...document.querySelectorAll("details[open][id]")].map(d=>d.id);
+  renderTabs(); renderBanner();
+  const v={montar:vMontar,prova:vProva,painel:vPainel,banco:vBanco}[S.view]||vMontar;
+  document.getElementById("app").replaceChildren(...v().filter(Boolean));
+  if(_tela!==S.view){ if(_tela)window.scrollTo(0,0); _tela=S.view; }
+  for(const id of abertos){ const d=document.getElementById(id); if(d)d.open=true; }
+  if(fid){ const n=document.getElementById(fid); if(n&&!n.disabled&&n!==document.activeElement){ n.focus({preventScroll:true}); try{ n.setSelectionRange(ss,se); }catch(e){} } }
+  pintarEsteira(); pintarMedidor();
+  if(S.view==="prova"){ pintarValidacao(); pintarVivo(); }
+}
+function pintarMedidor(){
+  const h=document.getElementById("medidor"); if(!h)return; const u=S.uso;
+  h.textContent=u.n?`nesta visita: ${u.n} ${u.n===1?"chamada":"chamadas"} · cerca de ${mil(u.ent+u.sai)} tokens (${mil(u.ent)} de entrada, ${mil(u.sai)} de saída), estimados pelo tamanho do texto`:"";
+  const t=document.getElementById("medidor-tab"); if(!t)return;
+  t.replaceChildren(el("tr",{},el("th",{txt:"etapa"}),el("th",{txt:"modelo"}),el("th",{cls:"num",txt:"entrada"}),el("th",{cls:"num",txt:"saída"}),el("th",{cls:"num",txt:"tempo"})),
+    ...(u.itens.length?u.itens.map(i=>el("tr",{},el("td",{txt:i.rotulo+(i.falhou?" (falhou)":"")}),el("td",{cls:"mono",txt:i.tier}),el("td",{cls:"num",txt:mil(i.ent)}),el("td",{cls:"num",txt:mil(i.sai)}),el("td",{cls:"num",txt:i.s+" s"})))
+      :[el("tr",{},el("td",{colspan:"5",txt:"Nenhuma chamada nesta visita ainda."}))]));
+}
+
+/* ── MONTAR ──────────────────────────────────── */
+function vMontar(){
+  const p=S.params;
+  const areas=p.nivel==="básico"?AREAS_BAS:AREAS_CLIN;
+  if(!areas.includes(p.area))p.area=areas[0];
+  const pool=poolDe(p.formato);
+  const avisos=conferirBotoes(p.botoes,p.dificuldade,p.formato,p.nivel);
+  const campo=(rot,node,largo)=>el("label",{cls:"f"+(largo?" largo":"")},el("span",{txt:rot}),node);
+  const sel=(id,val,ops,on)=>el("select",{id,onchange:e=>on(e.target.value)},...ops.map(o=>el("option",{value:o,selected:o===val||null},o)));
+
+  const trocarNivel=v=>{
+    p.nivel=v;
+    if(v==="básico"&&COM_PACIENTE(p.formato)) p.formato="mecanismo";
+    const as=v==="básico"?AREAS_BAS:AREAS_CLIN;
+    if(!as.includes(p.area)) p.area=as[0];
+    p.botoes=autoBotoes(p.dificuldade,p.formato,v);
+    render();
+  };
+  const subniveis=ehFaculdade(p.nivel)?FACUL:RESID;
+  const alvo=el("section",{cls:"card"},
+    el("div",{cls:"eyebrow",txt:"para que prova"}),
+    el("div",{cls:"dial gr",style:"margin:12px 0 10px;max-width:26rem"},
+      ...[["Faculdade",FACUL],["Residência",RESID]].map(([rot,ns])=>
+        el("button",{"aria-pressed":String(ns.includes(p.nivel)),onclick:()=>{ if(!ns.includes(p.nivel)) trocarNivel(ns[ns===FACUL?2:0]); }},rot))),
+    el("div",{cls:"acoes"},...subniveis.map(n=>
+      el("button",{cls:"ghost sm","aria-pressed":String(n===p.nivel),onclick:()=>trocarNivel(n)},ROTULO_NIVEL[n]||n))),
+    el("p",{cls:"hint tight",style:"margin-top:10px"},
+      p.nivel==="básico" ? "Básico: mecanismo, comparação e previsão. Não cobra conduta nem dose, e a maioria das questões não tem paciente."
+      : p.nivel==="clínico" ? "Ciclo clínico: síntese, hipóteses e investigação. Conduta só por classe de fármaco e com o porquê, sem dose."
+      : p.nivel==="internato" ? "Internato: conduta, prioridade e cenário real, quase sempre em caso clínico."
+      : p.nivel==="residência (acesso)" ? "Acesso direto: tudo do internato, mais exceção à regra, evolução e recurso limitado."
+      : "Especialidade: a decisão do especialista — falha da primeira linha, exceção e a evidência que sustenta a escolha."),
+    (p.nivel==="básico"&&COM_PACIENTE(p.formato))
+      ? el("div",{cls:"alerta",style:"margin-top:10px"},"Você deixou o formato em caso clínico no básico. Com paciente, a pergunta escorrega para conduta, que o ciclo básico não cobra. Prefira mecanismo, comparação ou previsão.")
+      : null
+  );
+
+  const params=el("section",{cls:"card"},
+    el("div",{cls:"eyebrow",txt:"parâmetros"}),
+    el("div",{cls:"grid",style:"margin-top:12px"},
+      campo("grande área",sel("f-area",p.area,areas,v=>{ p.area=v; })),
+      campo("tema",el("input",{type:"text",id:"f-tema",value:p.tema,placeholder:"ex.: sepse, pré-eclâmpsia",oninput:e=>{ p.tema=e.target.value; }}),true),
+      campo("recorte (opcional)",el("input",{type:"text",id:"f-foco",value:p.foco||"",placeholder:"ex.: gestante; foco no potássio",oninput:e=>{ p.foco=e.target.value; }})),
+      campo("formato",sel("f-formato",p.formato,FORMATOS,v=>{ p.formato=v; p.botoes=autoBotoes(p.dificuldade,v,p.nivel); render(); })),
+      COM_PACIENTE(p.formato)?campo("cenário",sel("f-cenario",p.cenario,CENARIOS,v=>{ p.cenario=v; })):null,
+      campo("linhas por item",sel("f-limite",String(p.limite),["5","10","15","20"],v=>{ p.limite=Number(v); render(); })),
+      campo("itens",sel("f-itens",String(p.itens),["2","3","4"],v=>{ p.itens=Number(v); })),
+      campo("dificuldade",el("div",{cls:"dial"},...[1,2,3,4,5].map(d=>el("button",{"aria-pressed":String(d===p.dificuldade),
+        onclick:()=>{ p.dificuldade=d; p.botoes=autoBotoes(d,p.formato,p.nivel); render(); }},String(d)))))
+    ),
+    COM_PACIENTE(p.formato)?null:el("label",{cls:"chk",style:"margin-top:12px"},
+      el("input",{type:"checkbox",id:"f-sem-pessoas",checked:p.semPessoas||null,onchange:e=>{ p.semPessoas=e.target.checked; }}),
+      "sem pessoas no enunciado: dados de bancada, curva ou amostra, nenhum indivíduo"),
+    avisoLinhas(p),
+    fonteDaVerdade(p)
+  );
+
+  const botoes=el("section",{cls:"card"},
+    el("div",{cls:"eyebrow",txt:`botões no alto — dificuldade ${p.dificuldade} pede ${p.dificuldade===5?"5 ou mais":quantos(p.dificuldade)}`}),
+    el("p",{cls:"hint",style:"margin:8px 0 12px"},"Dificuldade é combinação de botões, não adjetivo. Clique para subir ou descer cada um. O que fica no baixo também vai para o modelo, para a questão não sair mais difícil do que você pediu."),
+    el("div",{cls:"botoes"},...pool.map(b=>{
+      const on=p.botoes.includes(b.n), ok=permitido(b,p.nivel);
+      const obr=obrigatorios(p.dificuldade,p.formato).some(g=>g.includes(b.n));
+      return el("button",{cls:"btn-sw"+(ok?"":" off"),"data-on":on?"1":"0","aria-pressed":String(on),disabled:!ok||null,
+        onclick:()=>{ p.botoes=on?p.botoes.filter(x=>x!==b.n):[...p.botoes,b.n]; render(); }},
+        el("b",{},b.n,obr?el("span",{cls:"pin",txt:"central"}):null),
+        el("small",{txt:on?"alto · "+b.a:"baixo · "+b.b}));
+    })),
+    ...avisos.map(a=>el("div",{cls:"alerta",style:"margin-top:10px"},a)),
+    avisos.length?null:el("div",{cls:"alerta ok",style:"margin-top:10px"},"Combinação coerente com a tabela de dificuldade.")
+  );
+
+  const V=VELOCIDADES[S.velocidade], M=motor(), n=S.quantidade, escrita=n===1?1:2, total=escrita+n*(V.c-1);
+  const esteira=el("section",{cls:"card"},
+    el("div",{cls:"eyebrow",txt:"esteira"}),
+    el("div",{cls:"grid",style:"margin-top:12px"},
+      el("div",{},
+        el("div",{cls:"dial txt"},...Object.entries(VELOCIDADES).map(([k,v])=>
+          el("button",{"aria-pressed":String(k===S.velocidade),onclick:()=>{ S.velocidade=k; guardarPrefs(); render(); }},v.n))),
+        el("p",{cls:"hint tight",style:"margin-top:8px"},V.d)),
+      el("div",{},
+        el("div",{cls:"dial txt"},...Object.entries(MOTORES).map(([k,v])=>
+          el("button",{"aria-pressed":String(k===S.motor),onclick:()=>{ S.motor=k; guardarPrefs(); render(); }},v.n))),
+        el("p",{cls:"hint tight",style:"margin-top:8px"},M.d))),
+    el("p",{cls:"hint tight",style:"margin:12px 0"},
+      el("b",{cls:"mono",txt:`${total} ${total===1?"chamada":"chamadas"}`}),
+      n>1?` para ${n} questões: ${escrita} de escrita${V.c>1?` e ${n*(V.c-1)} de conferência`:""}.`:".",
+      " Só a escrita segura a tela, e o enunciado aparece enquanto o espelho ainda está sendo escrito. Reprovou, você decide se vale o conserto: a esteira não refaz nada sozinha."),
+    el("div",{cls:"esteira",id:"esteira"}),
+    el("div",{cls:"acoes",style:"margin-top:14px"},
+      el("div",{cls:"dial",style:"min-width:11rem"},...[1,2,3,4,5].map(k=>
+        el("button",{"aria-pressed":String(k===S.quantidade),title:`${k} ${k===1?"questão":"questões"} de uma vez`,
+          onclick:()=>{ S.quantidade=k; render(); }},String(k)))),
+      el("button",{cls:"go",id:"bt-gerar",disabled:S.rodando||null,onclick:gerarTudo},
+        S.rodando?"gerando…":(n>1?`Gerar ${n} questões`:"Gerar questão")),
+      S.rodando?el("button",{cls:"ghost",onclick:parar},"Parar"):null,
+      el("span",{cls:"hint tight",txt:"a questão abre para ler e exportar; responder é um botão lá dentro."})),
+    S.log.length?el("div",{style:"margin-top:12px"},...S.log.map(l=>el("div",{cls:"alerta",style:"margin-top:6px"},l))):null,
+    el("div",{cls:"medidor",id:"medidor",style:"margin-top:12px"}),
+    el("details",{id:"d-uso",style:"margin-top:12px"},el("summary",{txt:"o que cada chamada gastou"}),
+      el("div",{cls:"body rolavel"},el("table",{cls:"val",id:"medidor-tab"}),
+        el("p",{cls:"hint tight",style:"margin-top:8px"},"Estimativa: a página conta os caracteres que mandou e recebeu. O que o modelo pensa antes de escrever não aparece aqui."))),
+    el("details",{id:"d-regra"},el("summary",{txt:"a regra de decisão que esta página aplica"}),
+      el("div",{cls:"body"},el("div",{cls:"rolavel"},el("table",{cls:"val"},
+        el("tr",{},el("th",{txt:"sinal"}),el("th",{txt:"ação"})),
+        ...[["Revisor dá 2 ou menos em verossimilhança, correção ou segurança","descartar"],
+            ["Forte abaixo de 8 com leitura divergente","reescrever o comando"],
+            ["Forte abaixo de 8 sem divergência","ajustar só o espelho"],
+            ["Mediano com 8 ou mais e dificuldade 3 ou mais","subir mais um botão"],
+            ["Decoreba com 7 ou mais","reforçar o item de raciocínio"],
+            ["Forte menos mediano abaixo de 2 (dificuldade até 3) ou de 3 (4 e 5)","aumentar o peso do raciocínio"],
+            ["Qualquer nota do revisor abaixo de 4","conserto pontual"],
+            ["Nenhum dos acima","aprovar"]].map(([a,b])=>el("tr",{},el("td",{txt:a}),el("td",{txt:b}))))),
+        el("p",{cls:"hint tight",style:"margin-top:10px"},"No modo Seguro, as quatro linhas que dependem dos candidatos simulados não se aplicam: sem as três provas não há nota de forte nem discriminação, e quem decide é o revisor. ",
+          el("b",{txt:"Reprovar não refaz nada sozinho:"})," a questão continua na tela com o motivo escrito, e o conserto é um botão que reescreve só os blocos apontados."))),
+    el("details",{id:"d-prompt"},el("summary",{txt:"prompt único, para rodar numa conversa"}),
+      el("div",{cls:"body"},
+        el("div",{cls:"acoes",style:"margin-bottom:8px"},
+          el("button",{cls:"ghost sm",onclick:e=>copiar(PROMPT_UNICO,e.target)},"Copiar prompt"),
+          el("span",{cls:"hint tight",txt:"o mesmo método numa conversa só: mais prático, com checagem mais fraca e o espelho à vista."})),
+        el("div",{cls:"sel-dark",txt:PROMPT_UNICO})))
+  );
+  return [alvo,params,botoes,esteira];
+}
+/* o limite de linhas tem de comportar a resposta nota máxima — senão o espelho cobra o que não cabe */
+function avisoLinhas(p){
+  const elos=p.botoes.includes("Elos causais"), minimo=elos?8:(p.dificuldade>=4?8:5);
+  if(p.limite>=minimo) return null;
+  return el("div",{cls:"alerta",style:"margin-top:12px"},
+    elos ? `Elos causais no alto pede uma cadeia de 4 ou mais passos, e ${p.limite} linhas não comportam isso. Suba para ${minimo} linhas ou tire esse botão do alto.`
+         : `Dificuldade ${p.dificuldade} com ${p.limite} linhas por item costuma não comportar a resposta nota máxima. Suba para ${minimo} ou corte um item.`);
+}
+/* de onde a questão tira a verdade: a diretriz vigente ou o material da sua disciplina */
+function fonteDaVerdade(p){
+  const curso=p.fonte==="curso";
+  const campo=(rot,node)=>el("label",{cls:"f"},el("span",{txt:rot}),node);
+  return el("div",{style:"margin-top:16px"},
+    el("div",{cls:"eyebrow",txt:"de onde sai a verdade"}),
+    el("div",{cls:"dial txt",style:"margin:10px 0;max-width:26rem"},
+      el("button",{"aria-pressed":String(!curso),onclick:()=>{ p.fonte="diretriz"; render(); }},"Diretriz vigente"),
+      el("button",{"aria-pressed":String(curso),onclick:()=>{ p.fonte="curso"; render(); }},"Material do meu curso")),
+    curso
+      ? el("div",{style:"display:flex;flex-direction:column;gap:10px"},
+          el("p",{cls:"hint tight"},"A questão cobre só o que o material sustenta, no recorte dele, e o espelho cita o material. Se ele divergir da diretriz, ele ganha, e a divergência fica registrada para conferência."),
+          campo("nome da fonte, para o espelho citar",el("input",{type:"text",id:"f-ref",value:p.referencia,
+            placeholder:"ex.: Aula 7 — Insuficiência cardíaca, 2026",oninput:e=>{ p.referencia=e.target.value; }})),
+          campo("conteúdo",el("textarea",{rows:"7",id:"f-material",value:p.material||"",
+            placeholder:"cole aqui o conteúdo da aula, o resumo da disciplina ou uma prova antiga: a questão sai daqui",
+            oninput:e=>{ p.material=e.target.value; const c=document.getElementById("mat-conta"); if(c)c.textContent=contaMaterial(); }})),
+          el("div",{cls:"conta",id:"mat-conta",txt:contaMaterial()}))
+      : campo("referência (opcional)",el("input",{type:"text",id:"f-ref",value:p.referencia,
+          placeholder:"vazio usa a diretriz vigente mais aceita, citada com nome e ano",
+          oninput:e=>{ p.referencia=e.target.value; }})));
+}
+function contaMaterial(){
+  const n=(S.params.material||"").length;
+  return n?`${n.toLocaleString("pt-BR")} caracteres, cerca de ${mil(TOK(Math.min(n,14000)))} tokens por chamada de escrita${n>14000?" · só os primeiros 14.000 caracteres entram":""}`:"nada colado ainda";
+}
+function copiar(txt,btn){
+  const antes=btn.textContent, volta=ms=>setTimeout(()=>{ btn.textContent=antes; },ms);
+  const falhou=()=>{ btn.textContent="não deu para copiar aqui"; volta(2200); };
+  try{ navigator.clipboard.writeText(txt).then(()=>{ btn.textContent="copiado"; volta(1600); },falhou); }catch(e){ falhou(); }
+}
+
+/* ── QUESTÃO ─────────────────────────────────── */
+function vProva(){
+  const q=S.questao;
+  if(!q) return [el("section",{cls:"card"},el("div",{cls:"vazio"},
+    el("p",{style:"font-weight:600;margin-bottom:6px"},"Nenhuma questão na mesa."),
+    el("p",{},"Escolha os parâmetros em Montar e clique em gerar. A questão de exemplo que acompanha a página fica no Banco.")))];
+  const pr=S.prova||(S.prova=provaDe(q)), out=[];
+  if(q.exemplo) out.push(el("section",{cls:"card fino"},
+    el("div",{cls:"alerta"},"Esta é a questão de exemplo que acompanha a página: internato, clínica médica. Ela não veio dos seus parâmetros. Para gerar a sua, volte a Montar.")));
+  if(S.lote.length>1) out.push(barraLote(q));
+  out.push(cabecalho(q,pr));
+  if(S.log.length) out.push(el("section",{cls:"card fino"},...S.log.map(l=>el("div",{cls:"alerta",style:"margin:4px 0"},l))));
+  out.push(...cartoesEnunciado(q,pr));
+  if(S.responder&&!pr.entregue&&!q.gerando&&q.enunciado.itens.length) out.push(el("section",{cls:"card"},
+    el("div",{cls:"acoes"},
+      el("button",{cls:"go",id:"bt-entregar",disabled:pr.entregando||null,onclick:entregar},pr.entregando?"corrigindo…":"Entregar a prova"),
+      el("span",{cls:"hint tight",txt:"uma chamada corrige quesito a quesito e já devolve a pista de cada item. O espelho continua lacrado até você reescrever o item mais fraco."})),
+    pr.falha?el("div",{cls:"alerta bad",style:"margin-top:10px"},pr.falha):null));
+  if(pr.correcao) out.push(...blocoCorrecao(q,pr));
+  out.push(blocoEspelho(q,pr));
+  return out;
+}
+function barraLote(q){
+  const i=S.lote.indexOf(q), prontas=S.lote.filter(x=>!x.gerando&&utilizavel(x));
+  return el("section",{cls:"card fino"},
+    el("div",{cls:"acoes"},
+      el("span",{cls:"kicker",txt:`lote · ${i<0?"fora do lote":`questão ${i+1} de ${S.lote.length}`}`}),
+      ...S.lote.map((x,j)=>el("button",{cls:"ghost sm","aria-pressed":String(j===i),title:x.params.tema,
+        onclick:()=>abrirQuestao(x)},String(j+1)+(x.gerando?" …":respondida(x)?" ✓":""))),
+      el("span",{cls:"sep"}),
+      el("button",{cls:"ghost sm",id:"dl-lote",disabled:prontas.length?null:true,
+        onclick:()=>baixarArquivo(`lote-${slug(q.params.tema)}-${prontas.length}q.txt`,
+          txtPacote(prontas,`Lote · ${prontas.length} questões · ${q.params.area}`),"dl-lote")},"Baixar o lote em TXT"),
+      el("button",{cls:"ghost sm",disabled:prontas.length?null:true,onclick:e=>copiar(txtPacote(prontas,`Lote · ${prontas.length} questões`),e.target)},"Copiar")));
+}
+function cabecalho(q,pr){
+  const p=q.params, pronto=!q.gerando&&utilizavel(q), noBanco=S.banco.some(x=>x.id===q.id);
+  return el("section",{cls:"card"},
+    el("div",{cls:"cab"},
+      el("div",{cls:"cab-t"},
+        el("div",{cls:"kicker",txt:`${p.nivel} · ${p.area} · ${p.formato}${COM_PACIENTE(p.formato)?" · "+p.cenario:""} · dificuldade ${p.dificuldade}`}),
+        el("h2",{txt:p.tema}),
+        el("div",{cls:"hint tight",style:"margin-top:4px",txt:(p.botoes||[]).map(b=>"↑ "+b).join("  ")})),
+      el("div",{id:"val-carimbo"})),
+    el("div",{id:"vivo"}),
+    el("div",{cls:"acoes barra-acoes"},
+      el("button",{cls:"go",id:"dl-q",disabled:pronto?null:true,
+        onclick:()=>baixarArquivo(`${slug(p.tema)}-d${p.dificuldade}.txt`,txtPacote([q],`${p.tema} · ${p.nivel}`),"dl-q")},"Baixar TXT"),
+      el("button",{cls:"ghost",disabled:pronto?null:true,onclick:e=>copiar(txtPacote([q],`${p.tema} · ${p.nivel}`),e.target)},"Copiar TXT"),
+      el("span",{cls:"sep"}),
+      (pronto&&!q.exemplo&&_db&&S.podeEscrever)?el("button",{cls:"ghost",disabled:noBanco||null,onclick:()=>guardarNoBanco(q)},noBanco?"No banco":"Guardar no banco"):null,
+      (pr.entregue||!q.enunciado.itens.length)?null:el("button",{cls:"ghost",id:"bt-responder",onclick:()=>modoResponder(!S.responder)},
+        S.responder?"Voltar a só ver":"Responder esta")),
+    el("div",{id:"val-strip"}));
+}
+function cartoesEnunciado(q,pr){
+  const out=[], en=q.enunciado, ms=en.momentos;
+  if(!ms.length){
+    out.push(el("section",{cls:"card"},el("div",{cls:"eyebrow",txt:"enunciado"}),
+      q.parcial ? el("div",{cls:"prova",id:"vivo-mom",style:"margin-top:10px",html:destacarValores(q.parcial.txt)+CARET})
+                : el("div",{cls:"trava",style:"margin-top:10px"},q.gerando?"O caso está sendo planejado. O enunciado aparece aqui assim que começar a ser escrito, antes do espelho.":"Esta questão veio sem enunciado.")));
+    return out;
+  }
+  for(const m of ms){
+    const itens=en.itens.filter(i=>(i.momento||1)===m.momento);
+    if(S.responder&&m.momento>pr.momento){
+      out.push(el("section",{cls:"card"},el("div",{cls:"trava"},`Momento ${m.momento} lacrado enquanto você responde: ele traz dados que entregariam o anterior. Responda o momento ${m.momento-1} e libere. Para só ler ou exportar, saia do modo responder.`)));
+      continue;
+    }
+    const temProximo=ms.some(x=>x.momento===m.momento+1);
+    const faltam=itens.filter(i=>!(pr.respostas[i.item]||"").trim()).length;
+    out.push(el("section",{cls:"card"},
+      ms.length>1?el("div",{cls:"momento"},el("div",{cls:"mh",txt:`momento ${m.momento}`})):el("div",{cls:"eyebrow",txt:"enunciado"}),
+      el("div",{cls:"prova",style:"margin-top:10px",html:destacarValores(m.texto)}),
+      ...itens.map(i=>S.responder?itemProva(i,pr,q):itemSo(i,q)),
+      (S.responder&&temProximo&&m.momento===pr.momento&&!pr.entregue)?el("div",{cls:"acoes barra-acoes"},
+        el("button",{cls:"ghost",disabled:faltam?true:null,onclick:()=>{ pr.momento=m.momento+1; render(); guardarMesa(); }},`Liberar momento ${m.momento+1}`),
+        el("span",{cls:"hint tight",txt:faltam?`responda ${faltam===1?"o item que falta":`os ${faltam} itens`} deste momento primeiro.`:"depois de liberar, este momento continua editável, mas o próximo já mostra a evolução."})):null));
+  }
+  if(q.gerando&&q.parcial&&!S.responder&&!ms.some(m=>m.momento===q.parcial.n)) out.push(el("section",{cls:"card"},
+    el("div",{cls:"momento"},el("div",{cls:"mh",txt:`momento ${q.parcial.n}`})),
+    el("div",{cls:"prova",id:"vivo-mom",style:"margin-top:10px",html:destacarValores(q.parcial.txt)+CARET})));
+  return out;
+}
+/* só o comando, sem campo de resposta: o estado em que a questão abre */
+function itemSo(i,q){
+  return el("div",{cls:"item"},
+    el("div",{cls:"cmd"},el("span",{cls:"letra",txt:i.item+")"}),el("div",{cls:"prova",txt:i.comando})),
+    el("div",{cls:"meta"},
+      el("span",{cls:"tag ac",txt:i.etapa_raciocinio||"—"}),
+      el("span",{cls:"conta",txt:`até ${i.limite_linhas||q.params.limite} linhas`})));
+}
+function itemProva(i,pr,q){
+  const txt=pr.respostas[i.item]||"", lim=i.limite_linhas||q.params.limite||10, n=linhas(txt);
+  const conta=el("span",{cls:"conta","data-over":n>lim?"1":"0",txt:`${n}/${lim} linhas`});
+  return el("div",{cls:"item"},
+    el("div",{cls:"cmd"},el("span",{cls:"letra",txt:i.item+")"}),el("div",{cls:"prova",txt:i.comando})),
+    el("div",{cls:"meta"},el("span",{cls:"tag ac",txt:i.etapa_raciocinio||"—"}),conta),
+    el("textarea",{rows:"6",id:"r-"+i.item,value:txt,disabled:(pr.entregue||pr.entregando)||null,"aria-label":"Resposta do item "+i.item,
+      placeholder:"Sua resposta. O que passar do limite o corretor desconsidera.",
+      oninput:e=>{ pr.respostas[i.item]=e.target.value; const k=linhas(e.target.value);
+        conta.textContent=`${k}/${lim} linhas`; conta.dataset.over=k>lim?"1":"0"; agendarMesa(); }}));
+}
+function destacarValores(t){
+  const esc=String(t||"").replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+  return esc
+    .replace(/\[((?:VR|ref\.?|referência)[^\]]{1,90})\]/gi,'<span class="vr">[$1]</span>')
+    .replace(/(\d+[\d.,]*\s?(?:\/\s?\d+[\d.,]*)?\s?(?:mmHg|bpm|irpm|ipm|mg\/dL|g\/dL|mEq\/L|mmol\/L|mOsm\/kg|ng\/mL|pg\/mL|UI\/L|U\/L|mL\/min|L\/min|°C|%|cm|mm|kg|mL|µg|mcg|UI|s\b|segundos))/g,'<span class="vit">$1</span>')
+    .split(/\n{2,}/).map(p=>`<p>${p.replace(/\n/g,"<br>")}</p>`).join("");
+}
+function blocoPreceptor(prec){
+  const crit=prec.criterios||[], achados=prec.achados||[];
+  const pior=achados.length?[]:crit.filter(c=>Number(c.nota)<=3&&c.justificativa);
+  return el("div",{style:"margin-top:12px"},
+    ...achados.map(a=>{ const ka=semAcento(a.criterio).replace(/[^a-z]/g,"").slice(0,5);
+      const c=ka?crit.find(c=>(c.k||"").startsWith(ka)||semAcento(c.criterio).replace(/[^a-z]/g,"").startsWith(ka)):null;
+      return el("div",{cls:"alerta"+(c&&c.nota<=2?" bad":""),style:"margin-bottom:6px"},
+        el("b",{txt:`${c?c.criterio:a.criterio}${c?` ${c.nota}/5`:""}: `}),a.defeito,a.conserto?el("span",{cls:"hint tight",style:"display:block;margin-top:2px",txt:"Conserto: "+a.conserto}):null); }),
+    ...pior.map(c=>el("div",{cls:"alerta"+(Number(c.nota)<=2?" bad":""),style:"margin-bottom:6px"},el("b",{txt:`${c.criterio} ${c.nota}/5: `}),c.justificativa)),
+    el("details",{id:"d-crit",style:"margin-top:4px"},el("summary",{txt:`notas do revisor (${crit.length} critérios)`}),
+      el("div",{cls:"body rolavel"},el("table",{cls:"val"},...crit.map(c=>
+        el("tr",{},el("td",{txt:c.criterio}),el("td",{cls:"num",txt:String(c.nota)+"/5"}),el("td",{txt:c.justificativa||""})))))),
+    (!achados.length&&prec.o_que_mudar)?el("p",{cls:"hint tight",style:"margin-top:8px"},el("b",{txt:"O que mudar: "}),prec.o_que_mudar):null);
+}
+function tabelaValidacao(q){
+  const v=q.validacao, lim=q.params.dificuldade>=4?3:2, det=v.detalhe||{};
+  const linha=(r,k)=>el("tr",{},el("td",{},r,det[k]&&det[k].faltou?el("span",{cls:"hint tight",style:"display:block",txt:"faltou: "+det[k].faltou}):null),el("td",{cls:"num",txt:fmt(v.notas[k])}));
+  return el("div",{style:"margin-top:14px"},
+    el("div",{cls:"eyebrow",txt:"candidatos simulados"}),
+    el("table",{cls:"val",style:"margin-top:8px"},
+      el("tr",{},el("th",{txt:"perfil"}),el("th",{cls:"num",txt:"nota /10"})),
+      linha("residente forte","forte"),linha("interno mediano","mediano"),linha("decoreba","decoreba")),
+    el("div",{cls:"acoes",style:"margin-top:10px"},
+      el("span",{cls:"tag"+(v.discriminacao!=null&&v.discriminacao>=lim?" ac":" gv"),txt:`discriminação ${fmt(v.discriminacao)} · mínimo ${lim}`}),
+      el("div",{cls:"barra",style:"max-width:14rem"},el("i",{style:`width:${Math.max(0,Math.min(100,(v.discriminacao||0)/5*100))}%`}))),
+    v.preceptor?blocoPreceptor(v.preceptor):null);
+}
+/* a faixa do carimbo é repintada sozinha quando a conferência chega, sem redesenhar a prova nem tirar o cursor de onde você escreve */
+function faixaValidacao(q){
+  if(q.gerando) return [];
+  const n=[], V=q.veredito||{}, lint=q.lint||[], conf=q.nucleo.conferir||[];
+  n.push(el("p",{cls:"hint",style:"margin-top:10px"},
+    q.consertando?"Consertando só os blocos apontados. O resto da questão fica como está."
+    :q.conferindo?"Um revisor está conferindo em segundo plano. Pode ler ou responder: o carimbo chega sozinho.":(V.por||"")));
+  if(q.conferindo||q.consertando) n.push(el("div",{cls:"esteira",id:"esteira",style:"margin-top:10px"}));
+  if(lint.length) n.push(el("ul",{cls:"lint"},...lint.map(a=>el("li",{"data-n":a.n},a.t))));
+  if(conf.length&&S.espelhoAberto) n.push(el("div",{cls:"alerta",style:"margin-top:10px"},el("b",{txt:"O autor pede conferência humana: "}),conf.join(" · ")));
+  if(q.validacao&&q.validacao.modo==="auditoria"&&q.validacao.notas&&q.validacao.notas.forte!=null) n.push(tabelaValidacao(q));
+  else if(q.validacao&&q.validacao.preceptor) n.push(blocoPreceptor(q.validacao.preceptor));
+  if(q.ajuste) n.push(el("div",{cls:"alerta ok",style:"margin-top:10px"},"Consertada sem recomeçar: "+q.ajuste));
+  if(q.exemplo||q.conferindo||q.consertando) return n;
+  const def=defeitos(q), reprovada=V.v==="REESCREVER"||V.v==="DESCARTAR", acoes=[];
+  if(def.length) acoes.push(
+    el("button",{cls:reprovada?"go":"ghost",id:"bt-conserto",onclick:consertar},reprovada?"Aplicar o conserto":"Aplicar os retoques"),
+    el("span",{cls:"hint tight",txt:`uma chamada: o modelo reescreve só ${def.length===1?"o ponto apontado":`os ${def.length} pontos apontados`} e o resto fica de pé${V.v==="DESCARTAR"?". Como o defeito é clínico, confira o resultado ou gere outra":""}.`}));
+  if(!q.validacao&&S.sampleOk!==false) acoes.push(
+    el("button",{cls:"ghost sm",onclick:()=>conferir(q,{modo:"seguro"})},"Revisar esta (1 chamada)"),
+    el("button",{cls:"ghost sm",onclick:()=>conferir(q,{modo:"auditoria"})},"Auditar com candidatos (3 chamadas)"));
+  if(acoes.length) n.push(el("div",{cls:"acoes",style:"margin-top:12px"},...acoes));
+  return n;
+}
+function pintarValidacao(){
+  const q=S.questao; if(!q)return;
+  const c=document.getElementById("val-carimbo"), v=q.gerando?"ESCREVENDO":q.conferindo?"CONFERINDO":(q.veredito||{}).v||"SEM CARIMBO";
+  if(c)c.replaceChildren(el("span",{cls:"carimbo","data-v":v,txt:v.toLowerCase()}));
+  const s=document.getElementById("val-strip");
+  if(s){ const abertos=[...s.querySelectorAll("details[open][id]")].map(d=>d.id); s.replaceChildren(...faixaValidacao(q));
+    for(const id of abertos){ const d=document.getElementById(id); if(d)d.open=true; } }
+  pintarEsteira();
+}
+function cartaoItemCorrigido(i,revela){
+  const {o,m}=pontosDoItem(i), graves=i.erros_graves_cometidos||[];
+  return el("div",{cls:"esp-item"},
+    el("div",{cls:"esp-cab"},
+      el("b",{txt:i.item+")"}),
+      el("span",{cls:"tag ac",txt:i.etapa_raciocinio||"—"}),
+      el("span",{cls:"mono hint tight",txt:`${fmt(o)} de ${fmt(m)}`}),
+      i.fora_do_espelho?el("span",{cls:"tag",txt:"fora do espelho"}):null,
+      graves.length?el("span",{cls:"tag gv",txt:"erro grave"}):null),
+    el("ul",{cls:"q"},...(i.quesitos||[]).map(x=>el("li",{"data-r":x.resultado},
+      el("span",{cls:"pts",txt:`${fmt(x.pontos_obtidos)}/${fmt(x.pontos_max)}`}),
+      el("span",{},(revela||x.resultado==="integral")?x.descricao:el("span",{cls:"vel",txt:"quesito ainda não cumprido — o texto aparece depois da reescrita"}),
+        x.motivo?el("span",{cls:"mot",txt:x.motivo}):null)))),
+    i.dado_do_caso_ignorado?el("div",{cls:"alerta",style:"margin-top:8px"},el("b",{txt:"Pista: "}),i.dado_do_caso_ignorado):null,
+    graves.length?el("div",{cls:"alerta bad",style:"margin-top:8px"},el("b",{txt:"Erro grave, item zerado: "}),graves.join(" · ")):null,
+    i.fora_do_espelho?el("div",{cls:"alerta",style:"margin-top:8px"},"Aceito fora do espelho: "+i.fora_do_espelho_motivo+". O espelho talvez precise prever essa resposta."):null);
+}
+function blocoCorrecao(q,pr){
+  const out=[], cor=pr.correcao, nota=notaDaCorrecao(cor), revela=S.espelhoAberto, pac=COM_PACIENTE(q.params.formato);
+  out.push(el("section",{cls:"card"},
+    el("div",{cls:"eyebrow",txt:pr.entregando?"correção — chegando item a item":"correção"}),
+    el("div",{cls:"linha-nota",style:"margin:12px 0 4px"},
+      el("div",{cls:"nota"},fmt(nota),el("small",{txt:" /10"})),
+      el("div",{cls:"barra"},el("i",{style:`width:${Math.max(0,Math.min(100,(nota||0)*10))}%`}))),
+    cor.interpretacao_divergente?el("div",{cls:"alerta",style:"margin-top:10px"},"Você leu o enunciado de outro jeito: "+cor.interpretacao_divergente):null,
+    el("div",{style:"margin-top:14px"},...(cor.itens||[]).map(i=>cartaoItemCorrigido(i,revela)))));
+  if(cor.paciente) out.push(el("section",{cls:"card"},
+    el("div",{cls:"eyebrow",txt:pac?"se a sua resposta virasse conduta":"aonde esse raciocínio levaria"}),
+    el("p",{cls:"feedback",style:"margin-top:10px",txt:cor.paciente})));
+  if(pr.entregue&&pr.fase===1&&pr.reescrita&&!pr.pulou){
+    const it=q.enunciado.itens.find(i=>i.item===pr.reescrita.item), lim=(it&&it.limite_linhas)||q.params.limite, k0=linhas(pr.reescrita.texto);
+    const conta=el("span",{cls:"conta","data-over":k0>lim?"1":"0",txt:`${k0}/${lim} linhas`});
+    out.push(el("section",{cls:"card"},
+      el("div",{cls:"eyebrow",txt:`desafio — reescreva o item ${pr.reescrita.item}`}),
+      it?el("p",{cls:"prova",style:"margin-top:10px;font-size:15px",txt:it.comando}):null,
+      el("div",{cls:"item",style:"border-top:0;margin-top:0;padding-top:4px"},
+        el("div",{cls:"meta"},el("span",{cls:"tag",txt:"item mais fraco"}),conta),
+        el("textarea",{rows:"6",id:"rw",value:pr.reescrita.texto||"",disabled:pr.entregando||null,"aria-label":"Reescrita do item "+pr.reescrita.item,
+          placeholder:"Reescreva com as pistas, antes de ver o gabarito: é isso que fixa.",
+          oninput:e=>{ pr.reescrita.texto=e.target.value; const k=linhas(e.target.value); conta.textContent=`${k}/${lim} linhas`; conta.dataset.over=k>lim?"1":"0"; agendarMesa(); }})),
+      el("div",{cls:"acoes",style:"margin-top:10px"},
+        el("button",{cls:"go",id:"bt-reescrita",disabled:pr.entregando||null,onclick:entregarReescrita},pr.entregando?"corrigindo…":"Entregar a reescrita"),
+        el("button",{cls:"ghost",disabled:pr.entregando||null,onclick:abrirEspelho},"Pular e abrir o espelho"),
+        el("span",{cls:"hint tight",txt:"uma chamada corrige a reescrita e fecha com o raciocínio passo a passo."})),
+      pr.falha?el("div",{cls:"alerta bad",style:"margin-top:10px"},pr.falha):null));
+  }
+  if(pr.entregue&&pr.fase>=2&&!pr.reescrita) out.push(el("section",{cls:"card"},
+    el("div",{cls:"alerta ok"},"Nota cheia em todos os itens: nada a reescrever. O espelho está aberto abaixo."),
+    el("div",{cls:"acoes",style:"margin-top:12px"},el("button",{cls:"ghost",onclick:aplicarSugestao},"Montar a próxima pelo meu ponto fraco"))));
+  if(pr.reescrita&&pr.reescrita.correcao){
+    const it=pr.reescrita.correcao.itens[0], fb=pr.fb2||{};
+    out.push(el("section",{cls:"card"},
+      el("div",{cls:"eyebrow",txt:`reescrita do item ${pr.reescrita.item}`}),
+      el("div",{style:"margin-top:12px"},cartaoItemCorrigido(it,true)),
+      el("div",{cls:"sel-dark",style:"margin-top:10px",txt:pr.reescrita.texto}),
+      fb.melhora?el("p",{cls:"feedback",style:"margin-top:12px",txt:fb.melhora}):null));
+    if((fb.passos||[]).length||fb.licao) out.push(el("section",{cls:"card"},
+      el("div",{cls:"eyebrow",txt:"o raciocínio, passo a passo"}),
+      (fb.passos||[]).length?el("ol",{cls:"passos"},...fb.passos.map(s=>el("li",{txt:s}))):null,
+      fb.licao?el("div",{cls:"alerta ok",style:"margin-top:12px"},el("b",{txt:"Para o próximo paciente: "}),fb.licao):null,
+      el("p",{cls:"hint tight",style:"margin-top:10px"},"A resposta modelo de cada item está no espelho, logo abaixo."),
+      el("div",{cls:"acoes",style:"margin-top:12px"},
+        el("button",{cls:"ghost",onclick:()=>{ S.view="painel"; render(); }},"Ver o painel"),
+        el("button",{cls:"ghost",onclick:aplicarSugestao},"Montar a próxima pelo meu ponto fraco"))));
+  }
+  return out;
+}
+function blocoEspelho(q,pr){
+  const n=q.nucleo, esp=n.espelho||{itens:[]};
+  if(!S.espelhoAberto){
+    const pos=pr&&pr.entregue;
+    return el("section",{cls:"card"},
+      el("div",{cls:"lacre"},
+        el("span",{cls:"sel",txt:"▼ espelho do corretor"}),
+        el("p",{},pos?"Lacrado até a reescrita. Reescrever antes de ver o gabarito é o que fixa; se preferir, abra agora."
+                     :"Lacrado enquanto você responde. Numa conversa, o espelho fica escrito logo abaixo do enunciado e basta rolar a tela para queimar o treino; aqui ele só abre depois da entrega."),
+        el("button",{cls:"ghost sm",onclick:abrirEspelho},pos?"Pular a reescrita e abrir":"Abrir mesmo assim")));
+  }
+  const po=n.paciente_oculto;
+  return el("section",{cls:"card"},
+    el("div",{cls:"eyebrow",txt:"espelho do corretor"}),
+    el("p",{cls:"hint",style:"margin:8px 0 14px"},(esp.itens||[]).length?["Total ",el("b",{cls:"mono",txt:fmt(somaMax(esp.itens))})," pontos. "]:null,
+      q.gerando?"O espelho ainda está sendo escrito; os itens aparecem aqui um a um."
+      :q.exemplo?"Exemplo embutido: confira na diretriz antes de usar como gabarito."
+      :"Conferência humana por amostragem continua valendo, sobretudo em dose, valor de corte e conduta alterada há pouco."),
+    el("div",{},...(esp.itens||[]).map(i=>el("div",{cls:"esp-item"},
+      el("div",{cls:"esp-cab"},
+        el("b",{txt:i.item+")"}),
+        el("span",{cls:"tag ac",txt:i.etapa_raciocinio||"—"}),
+        el("span",{cls:"hint tight",txt:i.pergunta_alvo||""})),
+      i.resposta_nota_maxima?el("p",{cls:"prova",style:"margin-top:8px;font-size:15px",txt:i.resposta_nota_maxima}):null,
+      el("ul",{cls:"q"},...(i.quesitos||[]).map(x=>el("li",{},
+        el("span",{cls:"pts",txt:fmt(x.pontos)}),
+        el("span",{},x.descricao||"",x.exige_justificativa?el("span",{cls:"mot",txt:"exige justificativa com dados do caso; sem ela, no máximo metade"}):null)))),
+      (i.alternativas_aceitas||[]).length?el("div",{cls:"hint tight",style:"margin-top:8px"},"Aceito também: ",
+        i.alternativas_aceitas.map(a=>`${a.resposta}${a.condicao?` (${a.condicao})`:""}`).join(" · ")):null,
+      (i.erros_comuns||[]).length?el("div",{cls:"hint tight",style:"margin-top:6px"},"Erros comuns: ",
+        i.erros_comuns.map(e=>typeof e==="string"?e:(e&&e.erro)||"").filter(Boolean).join(" · ")):null,
+      ...(i.erros_graves||[]).map(g=>el("div",{cls:"alerta bad",style:"margin-top:8px"},
+        el("b",{txt:(g.tipo||"erro grave")+": "}),g.erro,g.consequencia_para_o_paciente?` → ${g.consequencia_para_o_paciente}`:""," (",g.penalidade||"zera o item",")"))))),
+    n.anti?el("div",{cls:"alerta",style:"margin-top:14px"},el("b",{txt:"Contra a resposta decorada: "}),n.anti):null,
+    (n.referencia||(esp.itens[0]&&esp.itens[0].referencia))?el("div",{cls:"hint tight mono",style:"margin-top:10px;font-size:11.5px",txt:"fonte: "+(n.referencia||esp.itens[0].referencia)}):null,
+    el("details",{id:"d-nucleo",style:"margin-top:16px"},el("summary",{txt:"plano do caso e ponte clínica"}),
+      el("div",{cls:"body"},
+        n.ponte_clinica?el("p",{cls:"prova",style:"margin-bottom:10px;font-size:15.5px",txt:"Ponte clínica: "+n.ponte_clinica}):null,
+        po?el("div",{cls:"sel-dark",txt:[po.resumo,(po.diagnosticos||[]).length?"Diagnóstico: "+po.diagnosticos.join(", "):"",po.fisiopatologia_central?"Fisiopatologia: "+po.fisiopatologia_central:"",
+          (po.o_que_o_aluno_nao_ve||po.dados_completos)?"O que o aluno não vê: "+(po.o_que_o_aluno_nao_ve||po.dados_completos):"",evolucaoDe(po)?"Evolução — "+evolucaoDe(po):""].filter(Boolean).join("\n\n")}):null,
+        (n.cadeia_causal||[]).length?el("div",{cls:"sel-dark"},n.cadeia_causal.map(e=>`${e.elo}. ${e.de} → ${e.para}${e.por_que?`  (${e.por_que})`:""}`).join("\n")):null,
+        (n.botoes_aplicados||[]).length?el("div",{cls:"hint tight",style:"margin-top:10px"},"Botões aplicados: ",
+          n.botoes_aplicados.map(b=>`${b.botao} — ${b.onde_aparece}`).join(" · ")):null)),
+    q.gerando?null:el("div",{cls:"acoes",style:"margin-top:14px"},
+      el("button",{cls:"ghost sm",onclick:e=>copiar(markdownQuestao(q),e.target)},"Copiar Markdown"),
+      el("button",{cls:"ghost sm",id:"dl-md",onclick:()=>baixarArquivo(`${slug(q.params.tema)}-d${q.params.dificuldade}.md`,markdownQuestao(q),"dl-md")},"Baixar .md")));
+}
+
+/* ── TXT: texto puro em 78 colunas, prova primeiro e espelho no fim ─── */
+const REGUA="=".repeat(78);
+function quebra(t,w=78){
+  return String(t==null?"":t).split("\n").map(par=>{
+    if(par.length<=w) return par;
+    const ind=(par.match(/^\s*/)||[""])[0], lim=Math.max(24,w-ind.length), out=[]; let l="";
+    for(const pal of par.slice(ind.length).split(/\s+/)){
+      if(!l){ l=pal; continue; }
+      if((l+" "+pal).length<=lim) l+=" "+pal; else { out.push(ind+l); l=pal; }
+    }
+    if(l) out.push(ind+l);
+    return out.join("\n");
+  }).join("\n");
+}
+function slug(s,max=46){
+  return semAcento(s||"questao").replace(/[^a-z0-9 ]/g,"").trim().slice(0,max).replace(/\s+/g,"-")||"questao";
+}
+function txtProva(q,n){
+  const L=[];
+  if(q.exemplo) L.push("[EXEMPLO QUE ACOMPANHA A PÁGINA — não foi gerado pelos seus parâmetros]","");
+  L.push(`QUESTÃO ${n||1} — ${String(q.params.tema||"").toUpperCase()}`,
+    `${q.params.nivel} · ${q.params.area} · ${q.params.formato}${COM_PACIENTE(q.params.formato)?" · "+q.params.cenario:""} · dificuldade ${q.params.dificuldade}`,"");
+  const ms=q.enunciado.momentos||[];
+  for(const m of ms){
+    if(ms.length>1)L.push(`[MOMENTO ${m.momento}]`);
+    L.push(quebra(m.texto),"");
+    for(const i of (q.enunciado.itens||[]).filter(i=>(i.momento||1)===m.momento))
+      L.push(quebra(`${i.item}) ${i.comando}`),`   (até ${i.limite_linhas||q.params.limite} linhas)`,"");
+  }
+  return L.join("\n").replace(/\n{3,}/g,"\n\n");
+}
+function txtEspelho(q,n){
+  const esp=q.nucleo.espelho||{itens:[]};
+  const L=[`ESPELHO DA QUESTÃO ${n||1} — ${q.params.tema} · ${fmt(somaMax(esp.itens))} pontos`,`veredito: ${(q.veredito||{}).v||"SEM CARIMBO"}`,""];
+  if(q.nucleo.ponte_clinica) L.push(quebra("Ponte clínica: "+q.nucleo.ponte_clinica),"");
+  for(const i of esp.itens||[]){
+    L.push(`${i.item}) ${i.etapa_raciocinio||""}`);
+    if(i.resposta_nota_maxima) L.push(quebra("   "+i.resposta_nota_maxima));
+    for(const x of i.quesitos||[])
+      L.push(quebra(`   [${fmt(x.pontos)}] ${x.descricao||""}${x.exige_justificativa?" — exige justificativa com dados do caso":""}`));
+    const alt=(i.alternativas_aceitas||[]).map(a=>`${a.resposta}${a.condicao?" ("+a.condicao+")":""}`).filter(Boolean);
+    if(alt.length) L.push(quebra("   Aceito também: "+alt.join("; ")));
+    for(const g of i.erros_graves||[])
+      L.push(quebra(`   ERRO GRAVE (${g.tipo||"grave"}): ${g.erro}${g.consequencia_para_o_paciente?" -> "+g.consequencia_para_o_paciente:""} [${g.penalidade||"zera o item"}]`));
+    L.push("");
+  }
+  if(q.nucleo.anti) L.push(quebra("Contra a resposta decorada: "+q.nucleo.anti),"");
+  if((q.nucleo.conferir||[]).length) L.push(quebra("Para conferência humana: "+q.nucleo.conferir.join("; ")),"");
+  const ref=q.nucleo.referencia||((esp.itens||[])[0]||{}).referencia;
+  if(ref) L.push(quebra("Fonte: "+ref),"");
+  return L.join("\n");
+}
+function txtPacote(qs,titulo){
+  const L=[REGUA,titulo||`DISCURSIVAS — ${qs.length} ${qs.length===1?"questão":"questões"}`,`gerado em ${hoje()}`,REGUA,""];
+  qs.forEach((q,i)=>L.push(txtProva(q,i+1),REGUA,""));
+  L.push("","ESPELHO DO CORRETOR — não leia antes de responder","");
+  qs.forEach((q,i)=>L.push(txtEspelho(q,i+1),REGUA,""));
+  return L.join("\n");
+}
+async function baixarArquivo(nome,conteudo,btnId){
+  const d=_dl||(_dl=await cap("downloads")), b=btnId&&document.getElementById(btnId), antes=b&&b.textContent;
+  const diz=t=>{ if(b){ b.textContent=t; setTimeout(()=>{ if(b.isConnected)b.textContent=antes; },2000); } };
+  if(!d){ diz("download indisponível aqui"); return; }
+  try{ await d.save({filename:nome,data:conteudo}); diz("baixado"); }
+  catch(e){ diz(e&&e.code==="declined"?"download recusado":"não deu para baixar"); }
+}
+function markdownQuestao(q){
+  const esp=q.nucleo.espelho||{itens:[]}, n=q.nucleo, ref=n.referencia||((esp.itens||[])[0]||{}).referencia;
+  return `# ${q.params.tema} — ${q.params.formato} (dificuldade ${q.params.dificuldade})
+
+> ${q.params.nivel} · ${q.params.area}${COM_PACIENTE(q.params.formato)?" · "+q.params.cenario:""} · botões no alto: ${(q.params.botoes||[]).join(", ")}
+> veredito: ${(q.veredito||{}).v||"SEM CARIMBO"} — ${(q.veredito||{}).por||""}
+
+## Enunciado
+
+${textoEnunciado(q.enunciado)}
+
+## Espelho (${fmt(somaMax(esp.itens))} pontos)
+
+${(esp.itens||[]).map(i=>[`### ${i.item}) ${i.etapa_raciocinio||""}`,i.resposta_nota_maxima||"","",
+  (i.quesitos||[]).map(x=>`- **${fmt(x.pontos)}** ${x.descricao}${x.exige_justificativa?" _(exige justificativa)_":""}`).join("\n"),
+  (i.alternativas_aceitas||[]).length?`\nAceito também: ${i.alternativas_aceitas.map(a=>`${a.resposta}${a.condicao?` (${a.condicao})`:""}`).join("; ")}`:null,
+  (i.erros_graves||[]).length?`\n**Erros graves (zeram o item):** ${i.erros_graves.map(g=>`${g.erro}${g.consequencia_para_o_paciente?` → ${g.consequencia_para_o_paciente}`:""}`).join("; ")}`:null
+ ].filter(x=>x!=null).join("\n")).join("\n\n")}
+
+## Ponte clínica
+
+${n.ponte_clinica||""}
+${n.anti?`\n**Contra a resposta decorada:** ${n.anti}\n`:""}${(n.conferir||[]).length?`\n**Para conferência humana:** ${n.conferir.join("; ")}\n`:""}${ref?`\nFonte: ${ref}\n`:""}`;
+}
+
+/* ── PAINEL ──────────────────────────────────── */
+function vPainel(){
+  const P=painel(), out=[];
+  out.push(el("section",{cls:"card"},
+    el("div",{cls:"eyebrow",txt:"painel do aluno"}),
+    el("p",{cls:"hint",style:"margin:8px 0 14px"},"Mostra como você raciocina, não só quanto você sabe: o placar é por etapa do raciocínio, e o erro grave volta em 3 e em 10 dias, com outro paciente."),
+    el("div",{cls:"tiles"},
+      el("div",{cls:"tile"},el("div",{cls:"k",txt:"provas entregues"}),el("div",{cls:"v",txt:String(P.n)})),
+      el("div",{cls:"tile"},el("div",{cls:"k",txt:"média geral"}),el("div",{cls:"v",txt:fmt(P.media)})),
+      el("div",{cls:"tile"},el("div",{cls:"k",txt:"etapa mais fraca"}),el("div",{cls:"v txt",txt:P.piorEtapa?P.piorEtapa.k:"—"})),
+      el("div",{cls:"tile"},el("div",{cls:"k",txt:"repescagens abertas"}),el("div",{cls:"v",txt:String(P.graves.length)})))));
+  if(!P.n){
+    out.push(el("section",{cls:"card"},el("div",{cls:"vazio"},
+      S.dbPronto?"Nenhuma prova entregue ainda. Abra uma questão, clique em Responder esta e entregue: o placar por etapa, a escada de dificuldade e a fila de repescagem aparecem aqui.":"Carregando o histórico…")));
+  }else{
+    out.push(el("section",{cls:"card"},
+      el("div",{cls:"eyebrow",txt:"placar por etapa do raciocínio"}),
+      el("div",{cls:"placar",style:"margin-top:12px"},...P.etapas.map(e=>el("div",{cls:"pl-row"},
+        el("span",{txt:e.k}),
+        el("div",{cls:"bar"},el("i",{style:`width:${e.pc.toFixed(0)}%;background:${e.pc>=80?"var(--ok)":e.pc>=50?"var(--warn)":"var(--bad)"}`})),
+        el("span",{cls:"v",txt:e.pc.toFixed(0)+"%"})))),
+      el("div",{cls:"eyebrow",style:"margin-top:18px",txt:"média por grande área"}),
+      el("div",{cls:"placar",style:"margin-top:12px"},...P.areas.map(a=>el("div",{cls:"pl-row"},
+        el("span",{txt:a.k}),
+        el("div",{cls:"bar"},el("i",{style:`width:${(a.med*10).toFixed(0)}%;background:var(--accent)`})),
+        el("span",{cls:"v",txt:fmt(a.med)}))))));
+  }
+  if(P.escada) out.push(el("section",{cls:"card"},el("div",{cls:"alerta ok"},
+    `Escada: duas notas ${P.escada.dir==="sobe"?"de 8 ou mais":"abaixo de 5"} em ${P.escada.tema} (${P.escada.nivel}). A próxima vai para dificuldade ${Math.min(5,Math.max(1,P.escada.de+(P.escada.dir==="sobe"?1:-1)))}.`)));
+  if(P.graves.length) out.push(el("section",{cls:"card"},
+    el("div",{cls:"eyebrow",txt:"repescagem de erro grave"}),
+    el("p",{cls:"hint tight",style:"margin-top:8px"},"Cada erro grave volta duas vezes. A repescagem fecha quando você entrega outra questão do mesmo tema, depois da data, sem erro grave."),
+    el("div",{cls:"lista",style:"margin-top:12px"},...P.graves.slice(0,12).map(g=>el("div",{cls:"reg"},
+      el("span",{cls:"tag"+(g.vencida?" gv":""),txt:g.vencida?"para hoje":"agendada"}),
+      el("span",{cls:"t"},g.erro,el("span",{cls:"mot",txt:`${g.tema} · ${g.quando}`})),
+      el("button",{cls:"ghost sm",onclick:()=>montarRepescagem(g)},"Montar a repescagem"))))));
+  out.push(el("section",{cls:"card"},
+    el("div",{cls:"acoes"},
+      el("button",{cls:"go",disabled:P.n?null:true,onclick:aplicarSugestao},"Montar a próxima pelo ponto fraco"),
+      el("span",{cls:"hint tight",txt:"leva para Montar o tema de pior média, a etapa mais fraca como recorte e a escada de dificuldade. Gerar continua sendo um clique seu."})),
+    S.historico.length?el("details",{id:"d-hist",style:"margin-top:14px"},el("summary",{txt:"histórico"}),
+      el("div",{cls:"body rolavel"},el("table",{cls:"val"},
+        el("tr",{},el("th",{txt:"data"}),el("th",{txt:"tema"}),el("th",{cls:"num",txt:"nota"}),el("th",{cls:"num",txt:"reescrita"})),
+        ...S.historico.slice(0,25).map(h=>el("tr",{},el("td",{cls:"mono",txt:h.criado}),el("td",{txt:`${h.tema} · d${h.dificuldade}`}),
+          el("td",{cls:"num",txt:fmt(h.nota)}),el("td",{cls:"num",txt:fmt(h.reescrita_nota)})))))):null,
+    (S.dbPronto&&!_db)?el("div",{cls:"alerta",style:"margin-top:12px"},"Sem armazenamento nesta visualização: o painel vale só para esta visita."):null));
+  return out;
+}
+
+/* ── BANCO ───────────────────────────────────── */
+function vBanco(){
+  const todas=[...S.banco,EXEMPLO].filter((q,i,a)=>a.findIndex(x=>x.id===q.id)===i);
+  return [el("section",{cls:"card"},
+    el("div",{cls:"eyebrow",txt:"banco"}),
+    el("p",{cls:"hint",style:"margin:8px 0 12px"},"Entram aqui as questões que o revisor aprovou e as que você guardar à mão; o carimbo de cada uma diz por onde ela passou. O exemplo que acompanha a página fica marcado como exemplo."),
+    el("div",{cls:"acoes",style:"margin-bottom:14px"},
+      el("button",{cls:"ghost sm",id:"dl-banco",onclick:()=>baixarArquivo(`banco-discursivas-${todas.length}q-${hoje()}.txt`,
+        txtPacote(todas,`Banco · ${todas.length} ${todas.length===1?"questão":"questões"}`),"dl-banco")},"Baixar o banco em TXT"),
+      el("span",{cls:"hint tight",txt:"todas as questões primeiro, os espelhos no fim do arquivo."})),
+    el("div",{cls:"lista"},...todas.map(q=>el("div",{cls:"reg"},
+      el("span",{cls:"carimbo mini","data-v":(q.veredito||{}).v||"SEM CARIMBO",txt:((q.veredito||{}).v||"SEM CARIMBO").toLowerCase()}),
+      el("span",{cls:"t"},q.params.tema,el("span",{cls:"mot",txt:`${q.params.nivel} · ${q.params.area} · ${q.params.formato} · d${q.params.dificuldade}`})),
+      el("span",{cls:"d",txt:q.criado}),
+      el("button",{cls:"ghost sm",id:"dl-q-"+q.id,
+        onclick:()=>baixarArquivo(`${slug(q.params.tema)}-d${q.params.dificuldade}.txt`,txtPacote([q],q.params.tema),"dl-q-"+q.id)},"TXT"),
+      el("button",{cls:"ghost sm",onclick:()=>abrirQuestao(q)},"Abrir"),
+      (q.exemplo||!S.podeEscrever)?null:el("button",{cls:"ghost sm",onclick:()=>removerDoBanco(q.id)},S.remover===q.id?"Confirmar remoção":"Remover")))))];
+}
+
+/* ══════════════════════════════════════════════════════════════
+   11. ARRANQUE
+   ══════════════════════════════════════════════════════════════ */
+document.getElementById("theme").addEventListener("click",()=>{
+  const r=document.documentElement;
+  const escuro=r.getAttribute("data-theme")==="dark"||(!r.getAttribute("data-theme")&&matchMedia("(prefers-color-scheme: dark)").matches);
+  r.setAttribute("data-theme",escuro?"light":"dark");
+  try{ localStorage.setItem("disc-tema",escuro?"light":"dark"); }catch(e){}
+});
+try{ const t=localStorage.getItem("disc-tema"); if(t)document.documentElement.setAttribute("data-theme",t); }catch(e){}
+EXEMPLO.lint=checar(EXEMPLO);
+restaurarPrefs();
+restaurarMesa();
+render();
+iniciarDb();
+cap("sample").then(s=>{ _sample=s; S.sampleOk=!!s; renderBanner(); if(S.view==="prova")pintarValidacao(); });
+</script>
