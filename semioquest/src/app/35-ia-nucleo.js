@@ -35,31 +35,48 @@ class mo extends Error {
     super(o), (this.code = e);
   }
 }
+// Traduz o erro do sample (contrato do artefato) para uma mensagem em português e um código interno.
+// "aborted" é o código interno de cancelamento: quem chama não mostra erro nesse caso.
+const MSG_IA = {
+  not_granted: "A IA do Claude não foi autorizada nesta página.",
+  sampling_disabled: "A IA do Claude está desligada para esta conta ou organização.",
+  capability_disabled: "A IA do Claude está desligada para esta conta ou organização.",
+  not_declared: "Esta página não foi publicada com acesso à IA.",
+  session_expired: "Sua sessão expirou. Recarregue a página e entre de novo.",
+  rate_limited: "Muitas perguntas seguidas. Espere meio minuto e tente de novo.",
+  refused: "O Claude não pôde responder a este pedido. Reformule e tente de novo.",
+  prompt_too_large: "O conteúdo ficou grande demais para uma só pergunta. Encerre a estação ou comece uma nova.",
+  empty_completion: "O Claude não devolveu resposta. Tente de novo.",
+  invalid_json: "O Claude respondeu num formato inesperado. Tente de novo.",
+  tools_unavailable: "A busca na biblioteca não está disponível nesta tela.",
+  upstream_error: "A conexão com o Claude falhou. Tente de novo em instantes.",
+};
 function Bf(a) {
+  if (a instanceof mo) return a;
   const e = (a == null ? void 0 : a.code) || "erro";
-  return e === "not_granted"
-    ? (kf("negado"), new mo(e, "A IA do Claude não foi autorizada nesta página."))
-    : e === "rate_limited"
-      ? ((Lf = Date.now() + 3e4), new mo(e, "Muitas perguntas seguidas. Espere meio minuto e tente de novo."))
-      : (a == null ? void 0 : a.name) === "AbortError" || e === "aborted"
-        ? new mo("aborted", "Cancelado.")
-        : a instanceof mo
-          ? a
-          : new mo(e, "Não consegui falar com o Claude agora. Tente de novo em instantes.");
+  if (e === "cancelled" || e === "aborted" || (a == null ? void 0 : a.name) === "AbortError") return new mo("aborted", "Cancelado.");
+  if (e === "not_granted" || e === "sampling_disabled" || e === "capability_disabled" || e === "not_declared") kf("negado");
+  if (e === "rate_limited") Lf = Date.now() + 3e4;
+  const o = new mo(e, MSG_IA[e] || "Não consegui falar com o Claude agora. Tente de novo em instantes.");
+  return (o.parcial = (a == null ? void 0 : a.text) || ""), o;
 }
 function wf() {
   if (!Ol || Gc !== "pronto") throw new mo("ausente", "A IA não está disponível aqui.");
   if (Date.now() < Lf) throw new mo("rate_limited", "Muitas perguntas seguidas. Espere alguns segundos.");
   return Ol;
 }
+// Texto livre (com streaming). e: { nivel, signal, onText, tools }
 async function Vf(a, e = {}) {
-  const o = wf();
+  const o = wf(),
+    i = { modelTier: e.nivel || "default", cache: !1, signal: e.signal, onText: e.onText ? ({ text: r }) => e.onText(r) : void 0 };
+  e.tools && e.tools.length && (i.tools = e.tools);
   try {
-    return (await o(a, { modelTier: e.nivel || "default", cache: !1, signal: e.signal, onText: e.onText ? ({ text: r }) => e.onText(r) : void 0 })).text;
-  } catch (i) {
-    throw Bf(i);
+    return (await o(a, i)).text;
+  } catch (r) {
+    throw Bf(r);
   }
 }
+// JSON validado. Uma única nova tentativa, só quando o formato veio errado.
 async function To(a, e = {}) {
   const o = wf();
   let i = null;
@@ -71,7 +88,7 @@ async function To(a, e = {}) {
       i = new mo("formato", "O Claude respondeu num formato inesperado. Tente de novo.");
     } catch (t) {
       const n = Bf(t);
-      if (n.code !== "erro" && n.code !== "unavailable") throw n;
+      if (n.code !== "invalid_json" && n.code !== "empty_completion") throw n;
       i = n;
     }
   throw i;
@@ -157,11 +174,13 @@ function va(a, e = 6e3) {
 }
 const tx = `Você é o Claude atuando como preceptor de semiologia médica para um estudante brasileiro de medicina dentro do app SemioQuest.
 Regras:
-- Responda em português do Brasil, com terminologia semiológica correta e didática; frases curtas.
-- Baseie-se no conteúdo do app fornecido abaixo. Se algo for além dele, diga que é complemento e seja conservador; não invente números, estudos ou epônimos.
-- Foque em semiologia (anamnese, inspeção, palpação, percussão, ausculta, manobras, raciocínio sindrômico). Evite condutas terapêuticas detalhadas e doses.
-- Use markdown simples (negrito, listas curtas). Sem tabelas largas. No máximo ~180 palavras, salvo pedido explícito.
-- Se o estudante pedir algo fora do tema ou perigoso, redirecione gentilmente para o estudo.`;
+- Responda em português do Brasil, com terminologia semiológica correta (referências: Porto, Bates, McGee) e frases curtas.
+- Baseie-se no conteúdo do app fornecido. Se algo for além dele, diga que é complemento e seja conservador: não invente números, estudos, epônimos nem razões de verossimilhança.
+- Foque em semiologia: anamnese, inspeção, palpação, percussão, ausculta, manobras, registro e raciocínio sindrômico. Não dê doses nem esquemas terapêuticos.
+- Ensine como preceptor: explique o porquê (mecanismo), diga como se faz à beira do leito, aponte a armadilha mais comum e, quando couber, termine com uma pergunta curta que faça o estudante aplicar o que leu.
+- Se o estudante errar um conceito, corrija com clareza e sem rodeios.
+- Use markdown simples (negrito, listas curtas). Sem tabelas largas. No máximo cerca de 180 palavras, salvo pedido explícito.
+- Se pedirem algo fora do tema ou perigoso, redirecione para o estudo.`;
 let Lt = { modo: "conectando" };
 const Ll = new Set(),
   ho = (a) => {

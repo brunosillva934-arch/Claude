@@ -238,9 +238,11 @@ Cada questão:
 - "pergunta": curta e inequívoca.
 - "alternativas": exatamente 4, curtas, homogêneas e plausíveis; só uma correta; sem "todas/nenhuma das anteriores".
 - "correta": índice 0–3 da correta.
-- "explicacao": 2–3 frases: por que a correta está certa e qual o erro típico nas outras.
+- "explicacao": 3–4 frases: por que a correta está certa e, para cada alternativa errada, em poucas palavras, o que a afasta.
 - "alvo": o código (da lista ALVOS) do item que a questão testa, ou "".
-Varie o que é cobrado (reconhecer achado, técnica/interpretação de manobra, diferenciar entidades parecidas, raciocínio sindrômico) e não repita alvo se houver outros.
+Varie o que é cobrado (reconhecer achado, técnica ou interpretação de manobra, diferenciar entidades parecidas, raciocínio sindrômico, o próximo passo do exame) e não repita alvo se houver outros.
+Padrão de prova: o enunciado deve permitir responder antes de ler as alternativas; distratores são erros que estudantes realmente cometem, do mesmo tipo e tamanho da correta; nada de pistas gramaticais, de "sempre" e "nunca", nem de alternativa visivelmente mais longa. Nível básico = reconhecimento direto; intermediário = aplicar a um caso; avançado = dois passos de raciocínio (achado → síndrome → causa ou manobra que discrimina), com um dado que distrai.
+Antes de responder, confira cada questão: há exatamente uma alternativa correta e ela decorre do CONTEÚDO.
 
 ALVOS:
 ${
@@ -255,7 +257,7 @@ Responda APENAS com JSON: {"questoes": [{"caso": "", "pergunta": "", "alternativ
     try {
       const P = await To(C, {
           signal: g.current.signal,
-          nivel: "default",
+          nivel: l === "avançado" ? "complex" : "default",
           validar: (A) => {
             const I = (Array.isArray(A == null ? void 0 : A.questoes) ? A.questoes : Array.isArray(A) ? A : []).filter(
               (R) =>

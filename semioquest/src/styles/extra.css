@@ -249,3 +249,13 @@
   margin-left: 6px;
   vertical-align: middle;
 }
+
+.input.mini {
+  width: auto;
+  padding: 3px 8px;
+  font-size: 0.9em;
+  min-height: 0;
+}
+.iconbtn.mic {
+  flex: none;
+}

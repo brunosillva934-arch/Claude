@@ -255,7 +255,7 @@ function zu() {
     ],
   });
 }
-const Xf = "1.3";
+const Xf = "2.0";
 function Xo({ titulo: a, questoes: e, limiteSeg: o, onFim: i, sairHref: r = "#/jogar", icone: t = "search", novo: n }) {
   const [l, c] = S.useState(0),
     [d, u] = S.useState(null),

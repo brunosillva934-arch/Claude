@@ -343,10 +343,15 @@ function yf(a) {
     });
     const t = (r.stats[a.sistema] = r.stats[a.sistema] || {}),
       n = (t[a.modo] = t[a.modo] || { n: 0, soma: 0, melhor: 0 });
-    (n.n += 1),
-      (n.soma += a.nota),
-      (n.melhor = Math.max(n.melhor, a.nota)),
-      (i.ia = r),
+    (n.n += 1), (n.soma += a.nota), (n.melhor = Math.max(n.melhor, a.nota));
+    const cp = (a.avaliacao && a.avaliacao.competencias) || {};
+    r.comp = r.comp || {};
+    for (const k of Object.keys(cp)) {
+      if (typeof cp[k] != "number") continue;
+      const c0 = r.comp[k] || { n: 0, soma: 0, ult: [] };
+      (c0.n += 1), (c0.soma += cp[k]), (c0.ult = [...(c0.ult || []), cp[k]].slice(-8)), (r.comp[k] = c0);
+    }
+    (i.ia = r),
       (i.contadores.estacoes = (i.contadores.estacoes || 0) + 1),
       ne(Math.round(a.nota * 3) + 5, i);
     const l = i.stats[a.sistema] || { c: 0, t: 0, ema: 0.5 },

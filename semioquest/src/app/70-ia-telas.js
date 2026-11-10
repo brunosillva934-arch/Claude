@@ -65,6 +65,23 @@ function Rx() {
                     sub: `Última: ${(c = De.get(o[0].modo)) == null ? void 0 : c.nome} · nota ${Bo(o[0].nota)}`,
                   }),
                 }),
+              s.jsx("div", {
+                className: "pad-x",
+                children: s.jsxs("a", {
+                  className: "clin-banner",
+                  href: "#/ia/preceptor",
+                  children: [
+                    s.jsx("span", { className: "ia-ic big", children: s.jsx(q, { n: "grad", size: 24 }) }),
+                    s.jsxs("span", {
+                      children: [
+                        s.jsx("b", { children: "Preceptor" }),
+                        s.jsx("small", { children: "Tire dúvidas, peça para ser testado ou aprenda no modo socrático, com as fontes da biblioteca" }),
+                      ],
+                    }),
+                    s.jsx(q, { n: "right", size: 18 }),
+                  ],
+                }),
+              }),
               s.jsx(w, {
                 title: "Escolha o sistema",
                 children: s.jsx("div", {
@@ -171,6 +188,7 @@ function Ox({ id: a }) {
                         className: "seg full",
                         children: Nx.map((d) => s.jsx("button", { className: t === d ? "on" : "", onClick: () => l(d), children: d }, d)),
                       }),
+                      s.jsx(SugestaoNivel, { sis: a, nivel: t, setNivel: l }),
                       s.jsxs("label", {
                         className: "toggle mt",
                         children: [
@@ -187,7 +205,9 @@ function Ox({ id: a }) {
                         title: d.nome,
                         children: [
                           s.jsx("p", { className: "muted small pad-x sec-desc", children: d.desc }),
-                          Xc.filter((u) => u.grupo === d.id).map((u) => {
+                          modosDoSistema(o)
+                            .filter((u) => u.grupo === d.id)
+                            .map((u) => {
                             const m = i == null ? void 0 : i[u.id];
                             return s.jsx(
                               B,
@@ -308,11 +328,12 @@ function eg({ sis: a, modo: e, item0: o, circuito: i }) {
     [D, I] = S.useState(null),
     [R, N] = S.useState(null),
     [y, $] = S.useState(0),
+    [perfil, setPerfil] = S.useState(""),
     U = S.useRef(null);
   S.useEffect(
     () => () => {
       var G;
-      return (G = U.current) == null ? void 0 : G.abort();
+      return pararDitado(), (G = U.current) == null ? void 0 : G.abort();
     },
     [],
   ),
@@ -347,6 +368,7 @@ function eg({ sis: a, modo: e, item0: o, circuito: i }) {
             ga,
             $a.map((so) => so.titulo),
             U.current.signal,
+            perfil,
           ),
           Ga = (G = he.oculto) == null ? void 0 : G.abertura;
         z(he),
@@ -383,6 +405,7 @@ function eg({ sis: a, modo: e, item0: o, circuito: i }) {
           nivel: l,
           item: b.item,
           enunciado: b.enunciado.slice(0, 3e3),
+          som: b.som,
           resposta: n.tipo === "resposta" ? g.slice(0, 3e3) : void 0,
           conclusao: j ? j.slice(0, 1200) : void 0,
           falas: n.tipo !== "resposta" ? v.slice(-30).map((he) => ({ ...he, txt: he.txt.slice(0, 400) })) : void 0,
@@ -502,10 +525,27 @@ function eg({ sis: a, modo: e, item0: o, circuito: i }) {
                   }),
                 ],
               }),
+            n.papel &&
+              ["paciente", "comunicacao"].includes(n.papel("anamnese")) &&
+              s.jsxs(s.Fragment, {
+                children: [
+                  s.jsx("h3", { className: "sub-h", children: "Perfil do paciente" }),
+                  s.jsx("div", {
+                    className: "chips wrap",
+                    children: PERFIS_PACIENTE.map((J) =>
+                      s.jsx(
+                        "button",
+                        { className: "chip " + (perfil === J.id ? "sel" : ""), disabled: d === "gerando", onClick: () => setPerfil(J.id), children: J.nome },
+                        J.id || "sorteio",
+                      ),
+                    ),
+                  }),
+                ],
+              }),
             D && s.jsx("div", { className: "ia-erro", children: D }),
             d === "gerando"
               ? s.jsx(Tn, {
-                  frases: Iu,
+                  frases: n.local ? ["Escolhendo o som…"] : Iu,
                   onCancelar: () => {
                     var J;
                     return (J = U.current) == null ? void 0 : J.abort();
@@ -548,7 +588,16 @@ function eg({ sis: a, modo: e, item0: o, circuito: i }) {
                   className: "pad",
                   children: [
                     s.jsx("div", { className: "card enunciado-ia prose", dangerouslySetInnerHTML: { __html: me(b.enunciado) } }),
-                    s.jsx("textarea", { className: "resposta-ia", rows: 11, value: g, placeholder: n.placeholder, onChange: (G) => x(G.target.value) }),
+                    b.som && s.jsx("div", { className: "card ausculta-card", children: s.jsx($i, { id: b.som, label: "Tocar o som", mostrarNome: !1 }) }),
+                    s.jsx("textarea", {
+                      className: "resposta-ia",
+                      id: "sq-resposta",
+                      rows: 11,
+                      value: g,
+                      placeholder: n.placeholder,
+                      onChange: (G) => x(G.target.value),
+                    }),
+                    s.jsx(DitadoLinha, { onTexto: (G) => x((J) => (J ? J + G : G.replace(/^\s+/, ""))) }),
                     D && s.jsx("div", { className: "ia-erro", children: D }),
                     s.jsx("button", { className: "btn", disabled: g.trim().length < 15, onClick: _, children: "Enviar para correção" }),
                     s.jsx("button", { className: "btn ghost mt", onClick: _, children: "Não sei — mostrar a resposta-modelo" }),
@@ -586,6 +635,7 @@ function eg({ sis: a, modo: e, item0: o, circuito: i }) {
                                 onChange: (G) => A(G.target.value),
                                 placeholder: "Ex.: Síndrome de … Hipótese principal: … porque …",
                               }),
+                              s.jsx(DitadoLinha, { onTexto: (G) => A((J) => (J ? J + G : G.replace(/^\s+/, ""))) }),
                             ],
                           })
                         : s.jsx("p", { children: "Pronto para a correção? O preceptor vai ler toda a conversa." }),
@@ -640,7 +690,7 @@ function Lx({ rotulo: a, m: e, s: o, cen: i, falas: r, setFalas: t, fase: n, set
   S.useEffect(
     () => () => {
       var y;
-      return (y = P.current) == null ? void 0 : y.abort();
+      return pararDitado(), calarVoz(), (y = P.current) == null ? void 0 : y.abort();
     },
     [],
   ),
@@ -649,17 +699,18 @@ function Lx({ rotulo: a, m: e, s: o, cen: i, falas: r, setFalas: t, fase: n, set
       (y = E.current) == null || y.scrollIntoView({ block: "end", behavior: "smooth" });
     }, [r.length, f === null]);
   const j = e.papel(n),
+    rot = ROTULO_PAPEL[j] || ROTULO_PAPEL.paciente,
     A = f !== null,
     D = e.tipo === "completo" ? r.filter((y) => (y.fase || "anamnese") === n) : r,
     I = async (y) => {
       const $ = y.trim();
       if (!$ || A) return;
-      z(null), p(""), h(""), C(!1);
+      z(null), p(""), h(""), C(!1), pararDitado(), calarVoz();
       const U = r;
       t([...U, { de: "eu", txt: $, fase: n }]), (P.current = new AbortController());
       try {
         const xa = await Sx(e, o, i, U, n, $, h, P.current.signal);
-        t(($a) => [...$a, { de: "ia", txt: xa.trim(), fase: n }]);
+        t(($a) => [...$a, { de: "ia", txt: xa.trim(), fase: n }]), Ya().settings.ouvir && j !== "examinador" && falar(xa, Ya().settings.vozIA);
       } catch (xa) {
         t(U), xa.code !== "aborted" && (z(xa.message), p($));
       } finally {
@@ -717,7 +768,7 @@ function Lx({ rotulo: a, m: e, s: o, cen: i, falas: r, setFalas: t, fase: n, set
                 !A &&
                 s.jsx("p", {
                   className: "muted small center",
-                  children: j === "examinador" ? "Comece pelo preparo e diga o que você faz, uma etapa por vez." : "Comece a conversa.",
+                  children: rot.inicio,
                 }),
               D.map((y, $) =>
                 y.de === "eu"
@@ -725,9 +776,9 @@ function Lx({ rotulo: a, m: e, s: o, cen: i, falas: r, setFalas: t, fase: n, set
                   : s.jsxs(
                       "div",
                       {
-                        className: "bubble " + (j === "examinador" ? "achado" : "pac"),
+                        className: "bubble " + (rot.rot ? "achado" : "pac"),
                         children: [
-                          j === "examinador" && s.jsx("small", { className: "rot", children: "Achado" }),
+                          rot.rot && s.jsx("small", { className: "rot", children: rot.rot }),
                           s.jsx("span", { dangerouslySetInnerHTML: { __html: me(y.txt) } }),
                         ],
                       },
@@ -736,7 +787,7 @@ function Lx({ rotulo: a, m: e, s: o, cen: i, falas: r, setFalas: t, fase: n, set
               ),
               A &&
                 s.jsx("div", {
-                  className: "bubble " + (j === "examinador" ? "achado" : "pac"),
+                  className: "bubble " + (rot.rot ? "achado" : "pac"),
                   children: f
                     ? s.jsx("span", { dangerouslySetInnerHTML: { __html: me(f) } })
                     : s.jsxs("span", { className: "digitando", children: [s.jsx("i", {}), s.jsx("i", {}), s.jsx("i", {})] }),
@@ -765,6 +816,7 @@ function Lx({ rotulo: a, m: e, s: o, cen: i, falas: r, setFalas: t, fase: n, set
                   }),
               ],
             }),
+          s.jsx(VozBarra, { rotulo: j === "examinador" ? "Ouvir as respostas (só nas conversas)" : "Ouvir as respostas em voz alta" }),
           s.jsxs("form", {
             className: "ia-form chatbar",
             onSubmit: (y) => {
@@ -774,12 +826,13 @@ function Lx({ rotulo: a, m: e, s: o, cen: i, falas: r, setFalas: t, fase: n, set
               s.jsx("textarea", {
                 value: m,
                 rows: 2,
-                placeholder: D.length < 2 ? e.placeholder : j === "examinador" ? "Próxima etapa ou manobra…" : "Sua próxima fala…",
+                placeholder: D.length < 2 ? e.placeholder : rot.proxima,
                 onChange: (y) => p(y.target.value),
                 onKeyDown: (y) => {
                   y.key === "Enter" && !y.shiftKey && (y.preventDefault(), I(m));
                 },
               }),
+              s.jsx(MicBtn, { disabled: A, onTexto: (y) => p(($) => ($ ? $ + y : y.replace(/^\s+/, ""))) }),
               A
                 ? s.jsx("button", {
                     type: "button",
@@ -857,7 +910,7 @@ ${a.resposta ? `Resposta do estudante: ${a.resposta.slice(0, 2e3)}` : ""}
 ${
   a.falas
     ? `Conversa: ${a.falas
-        .map((f) => `${f.de === "eu" ? "Estudante" : "Paciente/simulador"}: ${f.txt}`)
+        .map((f) => `${f.de === "eu" ? "Estudante" : "Interlocutor"}: ${f.txt}`)
         .join(" | ")
         .slice(0, 3e3)}`
     : ""
@@ -887,6 +940,18 @@ Correção: nota ${r.nota}; ${r.resumo}; diagnóstico: ${r.diagnostico || "-"}; 
             ],
           }),
           r.resumo && s.jsx("p", { children: r.resumo }),
+          r.criticos &&
+            r.criticos.length > 0 &&
+            s.jsxs("div", {
+              className: "critico-box",
+              children: [s.jsx("b", { children: "Erros críticos" }), s.jsx("ul", { children: r.criticos.map((f, h) => s.jsx("li", { children: f }, h)) })],
+            }),
+          r.competencias &&
+            Object.keys(r.competencias).length > 0 &&
+            s.jsxs(s.Fragment, {
+              children: [s.jsx("h3", { className: "sub-h", children: "Competências nesta estação" }), s.jsx(CompBarras, { valores: r.competencias })],
+            }),
+          a.som && s.jsx("div", { className: "card ausculta-card", children: s.jsx($i, { id: a.som, label: "Ouvir de novo", mostrarNome: !0 }) }),
           r.diagnostico &&
             s.jsxs("div", {
               className: "card dx-ia",
@@ -912,6 +977,19 @@ Correção: nota ${r.nota}; ${r.resumo}; diagnóstico: ${r.diagnostico || "-"}; 
               ),
             ),
           }),
+          r.momentos &&
+            r.momentos.length > 0 &&
+            s.jsxs(s.Fragment, {
+              children: [
+                s.jsx("h3", { className: "sub-h", children: "Momentos-chave" }),
+                s.jsx("div", {
+                  className: "momentos",
+                  children: r.momentos.map((f, h) =>
+                    s.jsxs("div", { className: "momento " + f.tipo, children: [s.jsx("q", { children: f.trecho }), s.jsx("small", { children: f.comentario })] }, h),
+                  ),
+                }),
+              ],
+            }),
           r.fortes.length > 0 &&
             s.jsxs(s.Fragment, {
               children: [
@@ -974,6 +1052,15 @@ Correção: nota ${r.nota}; ${r.resumo}; diagnóstico: ${r.diagnostico || "-"}; 
               titulo: "Discutir esta estação com o Claude",
               contexto: p,
               sugestoes: ["Por que perdi pontos?", "Explique a resposta-modelo", "Como treinar isso para a prova prática?"],
+            }),
+          i &&
+            r.proximo &&
+            De.get(r.proximo.modo) &&
+            s.jsx(B, {
+              href: `#/ia/e/${a.sistema}/${r.proximo.modo}`,
+              icon: s.jsx(q, { n: De.get(r.proximo.modo).icone }),
+              title: `Próximo treino sugerido: ${De.get(r.proximo.modo).nome}`,
+              sub: r.proximo.porque,
             }),
           s.jsxs("div", {
             className: "btns",

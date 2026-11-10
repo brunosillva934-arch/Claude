@@ -553,6 +553,7 @@ function a1() {
               ),
             }),
           }),
+          s.jsx(w, { title: "Competências na Clínica IA", children: s.jsx(CompPerfil, {}) }),
           s.jsxs(w, {
             title: "Mapa de domínio",
             children: [

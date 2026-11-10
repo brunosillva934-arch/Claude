@@ -205,23 +205,157 @@ HDA: Paciente refere que há …`,
         'Perguntou o que o paciente já sabe/quer saber; explicou achados e hipótese sem jargão (ou traduzindo termos); transmitiu os "pontos_chave"; acolheu cada preocupação com empatia; foi honesto sem alarmismo; verificou entendimento (pediu para o paciente repetir); combinou próximos passos e abriu espaço para dúvidas; frases curtas.',
       modelo: "exemplo de fala ideal do estudante (8–12 linhas)",
     },
+    {
+      id: "erro",
+      nome: "Ache o erro",
+      desc: "Leia o relato de um exame malfeito e aponte cada erro de técnica, sequência e interpretação",
+      grupo: "exame",
+      icone: "search",
+      tipo: "resposta",
+      escolha: (a) => ({ rotulo: "Técnica em foco", opcoes: a.tecnicas }),
+      avalia: ["Erros de técnica e de sequência", "Erros de interpretação e de terminologia", "Comunicação e segurança", "Sem apontar como erro o que está certo"],
+      placeholder: `Frase 3: percutiu antes de auscultar — o correto é…
+Frase 7: …`,
+      gerar: (a, e) => `Crie uma estação "ACHE O ERRO". ${ei(e, "Técnica ou exame em foco")}
+"enunciado": relato em terceira pessoa, com 10 a 16 frases NUMERADAS (uma por linha), de um estudante examinando um paciente deste sistema: preparo, comunicação, posicionamento, técnica, sequência, interpretação e registro. Insira de 5 a 7 ERROS plausíveis e de tipos variados (técnica, sequência, posicionamento, interpretação do achado, terminologia, comunicação ou segurança), misturados a condutas corretas. Não sinalize os erros. Termine com: "Aponte cada erro pelo número da frase, explique por que está errado e diga o correto."
+"oculto": {"erros": [{"frase": número, "erro": "o que está errado", "porque": "…", "correto": "como seria o certo", "tipo": "tecnica|sequencia|posicionamento|interpretacao|terminologia|comunicacao|seguranca"}], "corretas_que_parecem_erro": ["1–2 condutas corretas que um estudante poderia marcar por engano, com o número da frase"]}.`,
+      rubrica:
+        'Um item de checklist por erro da ficha: identificou (ok), identificou sem explicar ou sem corrigir (parcial) ou não viu (faltou). Penalize falsos-positivos: apontar como erro uma conduta correta, sobretudo as de "corretas_que_parecem_erro". Valorize a explicação do porquê e a forma correta.',
+      modelo: "lista numerada dos erros, cada um com o porquê e a forma correta",
+    },
+    {
+      id: "ausculta",
+      nome: "Ausculta às cegas",
+      desc: "Ouça um som do banco, descreva como no prontuário e diga o que é e o que significa",
+      grupo: "exame",
+      icone: "ear",
+      tipo: "resposta",
+      sistemas: ["cardiovascular", "respiratorio"],
+      avalia: ["Descrição técnica do som", "Identificação correta", "Significado clínico"],
+      placeholder: `Descrição: ritmo regular em 3 tempos, com ruído grave logo após B2…
+É: …
+Significa: …`,
+      local: (a) => {
+        const e = a.id === "cardiovascular" ? "cardiaco" : "pulmonar",
+          o = O.sons.filter((r) => r.categoria === e),
+          i = X(o)[0];
+        return {
+          titulo: "Ausculta às cegas",
+          som: i.id,
+          item: i.id,
+          enunciado: `**Ouça o som** quantas vezes quiser, de preferência com fones.
+
+Local da ausculta: ${i.onde}.
+
+Descreva como no prontuário: ${
+            e === "cardiaco"
+              ? "ritmo, número de tempos, bulhas, ruídos adicionais e sopros (fase do ciclo, configuração e timbre)"
+              : "tipo de som, se é contínuo ou descontínuo, fase do ciclo respiratório e timbre"
+          }. Depois diga **qual é o som** e **o que ele significa**.`,
+          oculto: {
+            som: i.nome,
+            descricao: va(i.descricao, 700),
+            significado: va(i.significado, 700),
+            onde: i.onde,
+            outros_sons_do_banco: o.filter((r) => r.id !== i.id).map((r) => r.nome),
+          },
+        };
+      },
+      gerar: () => "",
+      rubrica:
+        'Descrição técnica do que se ouve (cardíaco: ritmo, número de tempos, posição do ruído em relação a B1 e B2, timbre e configuração; pulmonar: contínuo ou descontínuo, fase inspiratória ou expiratória, timbre); identificação do som ("som" da ficha; aceite sinônimos consagrados); significado clínico correto; não confundiu com som parecido. O estudante ouviu um som SINTETIZADO: não exija intensidade em cruzes nem irradiação.',
+      modelo: "descrição ideal do som como no prontuário, o nome do som, o significado e como diferenciá-lo do som mais parecido",
+    },
+    {
+      id: "progressivo",
+      nome: "Caso em etapas",
+      desc: "Os dados chegam aos poucos: a cada etapa, resuma, ordene hipóteses e diga o que quer saber",
+      grupo: "raciocinio",
+      icone: "layers",
+      tipo: "conversa",
+      osceMin: 12,
+      escolha: (a) => ({ rotulo: "Queixa do paciente", opcoes: a.queixas }),
+      avalia: ["Frase-resumo com qualificadores", "Hipóteses amplas e bem ordenadas", "Pedidos de dados dirigidos por hipóteses", "Atualização a cada etapa, sem ancorar"],
+      placeholder: `Resumo: mulher jovem com dispneia súbita e dor pleurítica…
+Hipóteses: 1) … 2) … 3) …
+Quero saber: …`,
+      conclusao: "Diagnóstico sindrômico, hipótese principal, dois diferenciais e o dado que mais pesou.",
+      gerar: (a, e) => `Crie um CASO EM ETAPAS para treinar raciocínio clínico neste sistema. ${ei(e, "Queixa principal (linguagem leiga)")}
+"enunciado": só a ETAPA 1: cenário, identificação e queixa principal em 2–3 frases. Depois: "Antes de receber mais dados, escreva: (1) sua frase-resumo; (2) três hipóteses em ordem; (3) o que você quer saber agora."
+"oculto": {"etapas": [{"n": 2, "titulo": "História", "dados": "HDA detalhada, antecedentes e hábitos pertinentes"}, {"n": 3, "titulo": "Exame físico", "dados": "sinais vitais e achados, normais e alterados"}, {"n": 4, "titulo": "Dado decisivo", "dados": "um achado, manobra ou evolução que fecha o diagnóstico"}], "pistas_falsas": ["1–2 dados verdadeiros do caso que induzem a uma hipótese errada plausível"], "sindrome", "diagnostico", "diferenciais": [{"dx", "o_que_afasta"}], "raciocinio_ideal": "como as hipóteses deveriam mudar a cada etapa"}.`,
+      papel: () => "tutor",
+      rubrica:
+        'Frase-resumo com idade, tempo e qualificadores semânticos; hipóteses iniciais amplas e plausíveis, incluindo o que não pode passar; pedidos de dados dirigidos pelas hipóteses (não em rede de arrastão); atualizou as hipóteses a cada etapa (abandonou o que foi afastado, não ancorou nas "pistas_falsas"); chegou ao diagnóstico sindrômico antes do etiológico; conclusão correta e justificada com os dados; reconheceu a incerteza quando cabia.',
+      modelo: "raciocínio ideal etapa por etapa (resumo, hipóteses e o dado que muda a probabilidade), em tópicos",
+    },
+    {
+      id: "apresentacao",
+      nome: "Apresente o caso",
+      desc: "Organize anotações bagunçadas numa apresentação de visita e responda à arguição do preceptor",
+      grupo: "prova",
+      icone: "grad",
+      tipo: "conversa",
+      osceMin: 8,
+      escolha: (a) => ({ rotulo: "Queixa do paciente", opcoes: a.queixas }),
+      avalia: ["Estrutura e ordem", "Seleção: o pertinente entra, o irrelevante sai", "Resumo com a síndrome e hipóteses", "Respostas à arguição"],
+      placeholder: "Seu Antônio, 64 anos, tabagista, com febre e tosse produtiva há 4 dias…",
+      gerar: (a, e) => `Crie uma estação "APRESENTAÇÃO DE CASO" deste sistema. ${ei(e, "Queixa principal (linguagem leiga)")}
+"enunciado": as ANOTAÇÕES BRUTAS de um atendimento, como um estudante as teria rabiscado: 18 a 26 itens curtos em lista, FORA DE ORDEM, misturando identificação, queixa, dados da HDA, antecedentes, hábitos, exame físico (normais e alterados) e 2–3 dados irrelevantes. Depois: "Apresente este caso ao preceptor como numa visita, em até 2 minutos de fala: abertura, HDA organizada, dados pertinentes, exame dirigido, resumo com a síndrome, hipóteses e plano inicial. Depois ele fará perguntas."
+"oculto": {"apresentacao_modelo": "texto de 120–160 palavras", "frase_resumo", "sindrome", "diagnostico", "diferenciais": ["…"], "irrelevantes": ["dados que não deveriam entrar"], "negativos_pertinentes": ["…"], "perguntas": ["4 perguntas de arguição em dificuldade crescente sobre o caso: achado → mecanismo → diferencial → próximo passo"]}.`,
+      papel: () => "preceptor",
+      rubrica:
+        'Estrutura (abertura com identificação e queixa com duração; HDA cronológica; antecedentes pertinentes; exame com estado geral e sinais vitais, positivos e negativos pertinentes; resumo; hipóteses; plano); seleção (omitiu os "irrelevantes", incluiu os "negativos_pertinentes"); frase-resumo com a síndrome; hipóteses ordenadas e justificadas; concisão; linguagem técnica; descreveu achados em vez de interpretá-los no relato; qualidade das respostas às perguntas do preceptor.',
+      modelo: "apresentação-modelo em texto corrido e a frase-resumo",
+    },
+    {
+      id: "oral",
+      nome: "Prova oral",
+      desc: "Uma banca faz seis perguntas em dificuldade crescente, sem dar feedback até o fim",
+      grupo: "prova",
+      icone: "target",
+      tipo: "conversa",
+      osceMin: 10,
+      escolha: (a) => ({ rotulo: "Tema da arguição", opcoes: [...a.tecnicas.slice(0, 5), ...a.sindromes.slice(0, 5)] }),
+      avalia: ["Técnica de exame", "Interpretação e mecanismo", "Diferencial à beira do leito", "Precisão e objetividade"],
+      placeholder: "Responda de forma direta, como numa prova oral…",
+      gerar: (a, e) => `Crie o roteiro de uma PROVA ORAL (arguição de banca) de semiologia deste sistema. ${ei(e, "Tema")}
+"enunciado": 2–3 frases com o tema e as regras ("A banca fará 6 perguntas, uma por vez, da mais simples à mais difícil. Responda de forma direta. Não há feedback durante a prova.") e, em seguida, a PERGUNTA 1 em negrito ("**Pergunta 1/6.** …").
+"oculto": {"tema", "perguntas": [{"n": 1, "pergunta", "resposta_esperada": "itens que a resposta precisa ter", "nivel": "basico|intermediario|avancado"}] (exatamente 6: 2 de técnica de exame, 2 de interpretação de achados ou mecanismo, 1 de diagnóstico diferencial à beira do leito e 1 de armadilha ou evidência; a pergunta 1 é a mesma do enunciado)}.`,
+      papel: () => "banca",
+      rubrica:
+        'Um item de checklist por pergunta do roteiro: resposta correta (ok), incompleta (parcial) ou errada ou ausente (faltou), frente à "resposta_esperada", dizendo o que faltou. Avalie também precisão terminológica, objetividade e segurança. Reconhecer que não sabe vale mais do que inventar.',
+      modelo: "gabarito comentado das 6 perguntas, numerado e conciso",
+    },
   ],
   De = new Map(Xc.map((a) => [a.id, a])),
   qx = [
     { id: "anamnese", nome: "Anamnese", desc: "Entrevista, caracterização de sintomas e registro" },
     { id: "exame", nome: "Exame físico", desc: "Técnica, achados e descrição em prontuário" },
-    { id: "raciocinio", nome: "Raciocínio e comunicação", desc: "Casos completos, diferenciais e conversa com o paciente" },
+    { id: "raciocinio", nome: "Raciocínio e comunicação", desc: "Casos completos, casos em etapas, diferenciais e conversa com o paciente" },
+    { id: "prova", nome: "Prova e apresentação", desc: "Arguição de banca e apresentação de caso com perguntas do preceptor" },
   ],
   Ax = (
     a,
     e,
   ) => `Você prepara estações de treino de semiologia médica para estudantes brasileiros (referência: Porto, Bates/Bickley). Use português do Brasil e terminologia correta.
-Sistema: ${a.nome}. Nível: ${e} (Básico = apresentação clássica e achados evidentes; Intermediário = exige discriminar hipóteses próximas; Avançado = achados sutis, comorbidades ou apresentação atípica plausível).
+Sistema: ${a.nome}. Nível: ${e} (Básico = apresentação clássica e achados evidentes; Intermediário = exige discriminar hipóteses próximas e inclui um dado que distrai; Avançado = achados sutis, comorbidades, apresentação atípica plausível ou diagnóstico que não é o mais óbvio para a queixa).
+Padrão de qualidade: cada cenário precisa ter um ponto de aprendizagem claro, achados com lado, topografia e graduação, e negativos pertinentes; evite sempre a mesma doença para a mesma queixa.
 REFERÊNCIA DO APP (base; não contradiga):
 ${Wc(a)}
 `;
-async function Px(a, e, o, i, r, t) {
-  const n = `${Ax(e, o)}
+const PERFIS_PACIENTE = [
+  { id: "", nome: "Sorteio", prompt: "" },
+  { id: "colaborativo", nome: "Colaborativo", prompt: "colaborativo e objetivo" },
+  { id: "prolixo", nome: "Prolixo", prompt: "prolixo: conta histórias paralelas, foge do assunto e precisa ser redirecionado com delicadeza" },
+  { id: "laconico", nome: "Lacônico", prompt: "lacônico: responde com poucas palavras e só detalha quando a pergunta é específica" },
+  { id: "ansioso", nome: "Ansioso", prompt: "muito ansioso: interrompe para perguntar se é grave, tem medo de um diagnóstico específico e precisa ser acolhido" },
+  { id: "desconfiado", nome: "Desconfiado", prompt: "desconfiado e um pouco irritado com a espera: questiona por que tantas perguntas e só colabora quando se sente respeitado" },
+  { id: "idoso", nome: "Idoso com acompanhante", prompt: "idoso com audição reduzida, acompanhado de um familiar que tende a responder por ele; as falas do acompanhante aparecem entre colchetes" },
+];
+async function Px(a, e, o, i, r, t, perfil) {
+  if (a.local) return a.local(e);
+  const pf = perfil && PERFIS_PACIENTE.find((x) => x.id === perfil),
+    n = `${Ax(e, o)}${pf && pf.prompt ? `Perfil de comunicação do paciente: ${pf.prompt}. Reflita isso em "paciente.jeito" e na "abertura".\n` : ""}
 ${
   r.length
     ? `Não repita estes cenários recentes: ${r.slice(0, 12).join("; ")}.
@@ -234,7 +368,7 @@ Regras gerais: coerência clínica total; dados realistas para o Brasil; nada de
 Responda APENAS com JSON: {"titulo": "…", "enunciado": "…", "oculto": {…}}`;
   return To(n, {
     signal: t,
-    nivel: a.tipo === "completo" ? "complex" : "default",
+    nivel: a.tipo === "completo" || a.id === "progressivo" || o === "Avançado" ? "complex" : "default",
     validar: (l) =>
       l && typeof l.titulo == "string" && typeof l.enunciado == "string" && l.enunciado.trim() && l.oculto && typeof l.oculto == "object"
         ? { titulo: l.titulo.trim().slice(0, 90), enunciado: l.enunciado.trim().slice(0, 4e3), oculto: l.oculto, item: i }
@@ -255,7 +389,7 @@ const zn = (a, e) => {
     paciente: (a) => `Você interpreta o PACIENTE de uma consulta simulada para estudantes de medicina. Mantenha o papel o tempo todo.
 FICHA (segredo; única fonte de fatos): ${zn(a, ["paciente", "abertura", "historia", "sinais_vitais"])}
 Regras:
-1. Fale como o paciente descrito (jeito, escolaridade): português do Brasil, primeira pessoa, linguagem leiga, 1 a 3 frases.
+1. Fale como o paciente descrito (jeito, escolaridade): português do Brasil, primeira pessoa, linguagem leiga, 1 a 3 frases. Mantenha o "jeito" da ficha do começo ao fim: se for prolixo, desvie do assunto; se for lacônico, economize palavras; se for ansioso ou desconfiado, só relaxe quando for acolhido.
 2. Responda só o que foi perguntado; não despeje a história. Detalhes aparecem quando o estudante pergunta especificamente. Pergunta aberta pode render um pouco mais.
 3. Use só fatos da ficha. Se perguntarem algo que não está nela, responda de forma neutra e coerente (nega, não sabe), sem criar fatos relevantes.
 4. Não use termos técnicos nem nomes de doenças que o paciente não conheceria; nunca revele ou sugira o diagnóstico; não sabe números de exames físicos.
@@ -280,19 +414,86 @@ Responda só com o achado (ou a correção da técnica).`,
 FICHA (segredo): ${zn(a, ["paciente", "preocupacoes", "abertura"])}
 Regras: fale como o paciente (jeito, escolaridade), 1–3 frases; traga as "preocupacoes" aos poucos, uma por vez, ao longo da conversa; se ouvir jargão, demonstre confusão e peça explicação; se for acolhido, mostre alívio; não facilite: faça perguntas que um paciente real faria ("é grave?", "vou precisar operar?"). Nunca saia do papel. Responda só com a fala do paciente.`,
   };
+Object.assign(En, {
+  tutor: (a) => `Você é o TUTOR de um caso clínico em etapas. O estudante raciocina em voz alta e você libera os dados aos poucos.
+FICHA (segredo): ${zn(a)}
+Regras:
+1. A cada fala do estudante: em 1–2 frases, faça uma pergunta socrática curta OU um comentário neutro sobre o raciocínio (sem dizer se a hipótese está certa, sem citar o diagnóstico). Depois libere a PRÓXIMA etapa ainda não liberada, com o título em negrito ("**Etapa 2 — História**") e os dados da ficha. Termine pedindo: frase-resumo atualizada, hipóteses reordenadas e o que ele quer saber em seguida.
+2. Libere UMA etapa por vez, na ordem, sem pular. Confira na conversa quais etapas já foram liberadas.
+3. Se o estudante pedir um dado que não está na ficha, responda com um dado normal e coerente, em uma frase.
+4. Depois da última etapa, diga que não há mais dados e peça que ele encerre a estação e escreva a conclusão.
+5. Não avalie, não dê nota, não revele "pistas_falsas", "sindrome", "diagnostico" nem "raciocinio_ideal".
+Responda só com sua fala de tutor.`,
+  preceptor: (a) => `Você é o PRECEPTOR de uma visita de enfermaria, ouvindo a apresentação de caso de um estudante. Exigente, objetivo e respeitoso.
+FICHA (segredo): ${zn(a, ["frase_resumo", "sindrome", "diagnostico", "diferenciais", "perguntas", "negativos_pertinentes"])}
+Regras:
+1. A primeira fala do estudante é a apresentação. Não a corrija nem elogie: responda com UMA pergunta de arguição (use as "perguntas" da ficha, na ordem; adapte a primeira à lacuna mais evidente da apresentação).
+2. A cada resposta, reaja em no máximo uma frase neutra ("Certo." ou "Explique melhor o mecanismo.") e faça a próxima pergunta. Uma pergunta por vez. Não dê a resposta.
+3. Depois de 4 perguntas respondidas, diga: "É isso. Pode encerrar a estação para receber a avaliação."
+4. Se pedirem dica ou a resposta, diga que a discussão vem depois da avaliação.
+Responda só com sua fala.`,
+  banca: (a) => `Você é a BANCA de uma prova oral de semiologia. Formal, neutra, sem feedback.
+ROTEIRO (segredo): ${zn(a)}
+Regras:
+1. O estudante responde à pergunta atual. Não diga se acertou. Responda com "Próxima." e a pergunta seguinte do roteiro, em negrito e numerada ("**Pergunta 3/6.** …"). Confira na conversa em que pergunta a prova está.
+2. Se a resposta for vaga, você pode fazer UMA repergunta curta de aprofundamento antes de avançar ("Seja específico: em que posição?"), no máximo duas vezes na prova.
+3. Depois da resposta à pergunta 6, diga: "Prova encerrada. Encerre a estação para receber a nota."
+4. Não dê dicas, não responda dúvidas de conteúdo, não saia do papel.
+Responda só com a fala da banca.`,
+});
+// Como cada papel aparece na conversa e na transcrição enviada ao avaliador.
+const ROTULO_PAPEL = {
+  paciente: { nome: "Paciente", rot: "", inicio: "Comece a conversa.", proxima: "Sua próxima fala…" },
+  comunicacao: { nome: "Paciente", rot: "", inicio: "Comece a conversa.", proxima: "Sua próxima fala…" },
+  examinador: { nome: "Simulador", rot: "Achado", inicio: "Comece pelo preparo e diga o que você faz, uma etapa por vez.", proxima: "Próxima etapa ou manobra…" },
+  tutor: { nome: "Tutor", rot: "Tutor", inicio: "Escreva seu resumo, suas hipóteses e o que quer saber.", proxima: "Resumo atualizado, hipóteses e o que quer saber…" },
+  preceptor: { nome: "Preceptor", rot: "Preceptor", inicio: "Apresente o caso. Use o microfone, se quiser treinar a fala.", proxima: "Sua resposta…" },
+  banca: { nome: "Banca", rot: "Banca", inicio: "Responda à pergunta 1 do cenário.", proxima: "Sua resposta…" },
+};
 async function Sx(a, e, o, i, r, t, n, l) {
   const c = a.papel(r),
-    u = `${c === "examinador" ? En.examinador(o, e) : c === "comunicacao" ? En.comunicacao(o) : En.paciente(o)}
+    d = ROTULO_PAPEL[c] || ROTULO_PAPEL.paciente,
+    u = `${(En[c] || En.paciente)(o, e)}
 
-CONTEXTO VISTO PELO ESTUDANTE: ${o.enunciado.slice(0, 800)}
+CONTEXTO VISTO PELO ESTUDANTE: ${o.enunciado.slice(0, c === "preceptor" ? 2500 : 900)}
 ${c === "examinador" ? "ETAPAS JÁ REALIZADAS:" : "CONVERSA ATÉ AGORA:"}
-${Fr(i, a.tipo === "completo" ? r : void 0, "Estudante", c === "examinador" ? "Simulador" : "Paciente") || "(início)"}
+${Fr(i, a.tipo === "completo" ? r : void 0, "Estudante", d.nome) || "(início)"}
 
-NOVA FALA DO ESTUDANTE: """${t.slice(0, 800)}"""`;
+NOVA FALA DO ESTUDANTE: """${t.slice(0, c === "preceptor" || c === "tutor" ? 2500 : 800)}"""`;
   return Vf(u, { onText: n, signal: l, nivel: "default" });
 }
+// Competências avaliadas em cada modo de estação (o preceptor dá uma nota de 0 a 10 para cada uma).
+const COMPETENCIAS = [
+    ["coleta", "Coleta de dados"],
+    ["tecnica", "Técnica de exame"],
+    ["interpretacao", "Interpretação de achados"],
+    ["raciocinio", "Raciocínio diagnóstico"],
+    ["comunicacao", "Comunicação"],
+    ["registro", "Registro e terminologia"],
+  ],
+  COMP_NOME = Object.fromEntries(COMPETENCIAS),
+  COMP_MODO = {
+    entrevista: ["coleta", "comunicacao", "raciocinio"],
+    sintoma: ["coleta", "raciocinio"],
+    hda: ["registro", "coleta"],
+    isda: ["coleta", "comunicacao"],
+    exame: ["tecnica", "interpretacao", "raciocinio"],
+    tecnica: ["tecnica", "comunicacao"],
+    interpretar: ["interpretacao", "raciocinio"],
+    descrever: ["registro", "interpretacao"],
+    erro: ["tecnica", "interpretacao"],
+    ausculta: ["interpretacao", "registro"],
+    completo: ["coleta", "tecnica", "interpretacao", "raciocinio", "comunicacao"],
+    diferencial: ["raciocinio", "interpretacao"],
+    progressivo: ["raciocinio", "coleta"],
+    comunicar: ["comunicacao"],
+    apresentacao: ["registro", "raciocinio", "comunicacao"],
+    oral: ["tecnica", "interpretacao", "raciocinio"],
+  },
+  modosDoSistema = (a) => Xc.filter((e) => !e.sistemas || e.sistemas.includes(a.id));
 async function jx(a, e, o, i, r, t) {
   const n = a.tipo !== "resposta",
+    pap = n ? ROTULO_PAPEL[a.papel("anamnese")] || ROTULO_PAPEL.paciente : null,
     l = n
       ? a.tipo === "completo"
         ? `ANAMNESE:
@@ -300,24 +501,37 @@ ${Fr(r.falas || [], "anamnese", "Estudante", "Paciente") || "(não fez)"}
 
 EXAME FÍSICO:
 ${Fr(r.falas || [], "exame", "Estudante", "Simulador") || "(não fez)"}`
-        : Fr(r.falas || [], void 0, "Estudante", a.papel("anamnese") === "examinador" ? "Simulador" : "Paciente")
+        : Fr(r.falas || [], void 0, "Estudante", pap.nome)
       : "",
-    c = `Você é preceptor de semiologia avaliando um estudante de medicina numa estação "${a.nome}" — ${e.nome}. Nível: ${o}.
-FICHA DA ESTAÇÃO (gabarito, o estudante não via): ${JSON.stringify(i.oculto).slice(0, 9e3)}
+    comps = COMP_MODO[a.id] || ["raciocinio"],
+    outros = modosDoSistema(e)
+      .filter((u) => u.id !== a.id)
+      .map((u) => `${u.id} (${u.nome})`)
+      .join(", "),
+    c = `Você é preceptor de semiologia avaliando um estudante de medicina na estação "${a.nome}" — ${e.nome}. Nível: ${o}.
+FICHA DA ESTAÇÃO (gabarito; o estudante não via): ${JSON.stringify(i.oculto).slice(0, 9e3)}
 ENUNCIADO QUE O ESTUDANTE RECEBEU: ${i.enunciado.slice(0, 2500)}
 ${
   n
     ? `TRANSCRIÇÃO:
 ${l || "(vazia)"}`
     : `RESPOSTA DO ESTUDANTE:
-"""${(r.resposta || "").slice(0, 5e3) || "(em branco — mostre a resposta-modelo)"}"""`
+"""${(r.resposta || "").slice(0, 5e3) || "(em branco — dê nota 0 e mostre a resposta-modelo)"}"""`
 }
 ${r.conclusao !== void 0 ? `CONCLUSÃO FINAL DO ESTUDANTE: """${r.conclusao.slice(0, 1500) || "(não escreveu)"}"""` : ""}
 ${r.minutos ? `Modo OSCE: usou ${r.minutos} min de ${a.osceMin}.` : ""}
 CRITÉRIOS: ${a.rubrica}
-Avalie com rigor de prova prática e tom de preceptor encorajador. Seja específico: cite o que ele disse ou fez. Não invente coisas que ele não fez.
+
+COMO AVALIAR
+- Rigor de prova prática, tom de preceptor que quer ver o estudante melhorar. Seja específico: cite o que ele disse ou fez. Nunca atribua a ele algo que não está na transcrição ou na resposta.
+- Âncoras da nota: 9–10 = desempenho de residente, sem lacuna relevante; 7–8 = seguro, com lacunas pequenas; 5–6 = limítrofe, lacunas importantes; 3–4 = insuficiente; 0–2 = quase nada aproveitável. Não dê 7 ou mais se faltou item essencial da ficha ou se houve erro crítico. Não arredonde para cima por simpatia.
+- Erro crítico = o que reprovaria numa prova prática ou poria o paciente em risco (examinar sem consentimento, técnica que invalida o achado, ignorar sinal de alarme, afirmar achado que não pesquisou, conclusão perigosa).
+- "competencias": nota de 0 a 10 para cada uma, coerente com a nota geral e com o checklist.
+- "momentos": de 3 a 5 trechos LITERAIS e curtos (até 15 palavras) do que o estudante disse ou escreveu, com o comentário do preceptor. Se a resposta estiver em branco, use [].
+- "proximo": o treino que mais ajudaria agora, escolhido entre: ${outros}; ou "${a.id}" para repetir este.
+
 Responda APENAS com JSON:
-{"nota": 0–10 (meio ponto), "resumo": "2 frases", ${n || a.id === "interpretar" || a.id === "diferencial" ? '"diagnostico": "o diagnóstico/síndrome do caso + 1 frase de por quê", ' : ""}"checklist": [{"item": "…", "status": "ok|parcial|faltou", "comentario": "curto"}] (6–14 itens tirados do gabarito e dos critérios), "fortes": ["até 3"], "melhorar": ["até 4, acionáveis"], "modelo": "${a.modelo} — markdown simples, até 230 palavras", "dica": "1 dica de ouro para a próxima"}`,
+{"nota": 0–10 (meio ponto), "resumo": "2 frases", ${n || a.id === "interpretar" || a.id === "diferencial" ? '"diagnostico": "o diagnóstico ou a síndrome do caso + 1 frase de por quê", ' : ""}"competencias": {${comps.map((u) => `"${u}": 0–10`).join(", ")}}, "criticos": ["erros críticos; [] se não houve"], "checklist": [{"item": "…", "status": "ok|parcial|faltou", "comentario": "curto"}] (6–14 itens tirados do gabarito e dos critérios), "momentos": [{"trecho": "…", "tipo": "bom|melhorar|critico", "comentario": "…"}], "fortes": ["até 3"], "melhorar": ["até 4, acionáveis: o que fazer diferente na próxima"], "modelo": "${a.modelo} — markdown simples, até 230 palavras", "dica": "1 dica de ouro para a próxima", "proximo": {"modo": "id", "porque": "1 frase"}}`,
     d = (u, m) =>
       Array.isArray(u)
         ? u
@@ -327,27 +541,44 @@ Responda APENAS com JSON:
         : [];
   return To(c, {
     signal: t,
-    nivel: "default",
-    validar: (u) =>
-      !u || typeof u.nota != "number" || !Array.isArray(u.checklist)
-        ? null
-        : {
-            nota: Math.max(0, Math.min(10, Math.round(u.nota * 2) / 2)),
-            resumo: String(u.resumo || "").slice(0, 600),
-            diagnostico: u.diagnostico ? String(u.diagnostico).slice(0, 500) : void 0,
-            checklist: u.checklist
-              .filter((m) => m && m.item)
-              .slice(0, 16)
-              .map((m) => ({
-                item: String(m.item).slice(0, 200),
-                status: ["ok", "parcial", "faltou"].includes(m.status) ? m.status : "faltou",
-                comentario: m.comentario ? String(m.comentario).slice(0, 300) : "",
-              })),
-            fortes: d(u.fortes, 3),
-            melhorar: d(u.melhorar, 4),
-            modelo: String(u.modelo || "").slice(0, 3500),
-            dica: u.dica ? String(u.dica).slice(0, 400) : void 0,
-          },
+    nivel: "complex",
+    validar: (u) => {
+      if (!u || typeof u.nota != "number" || !Array.isArray(u.checklist)) return null;
+      const m = {};
+      for (const p of comps) {
+        const f = u.competencias && Number(u.competencias[p]);
+        Number.isFinite(f) && (m[p] = Math.max(0, Math.min(10, Math.round(f * 2) / 2)));
+      }
+      const px = u.proximo && De.get(String(u.proximo.modo || "")) ? { modo: String(u.proximo.modo), porque: String(u.proximo.porque || "").slice(0, 240) } : void 0;
+      return {
+        nota: Math.max(0, Math.min(10, Math.round(u.nota * 2) / 2)),
+        resumo: String(u.resumo || "").slice(0, 600),
+        diagnostico: u.diagnostico ? String(u.diagnostico).slice(0, 500) : void 0,
+        competencias: m,
+        criticos: d(u.criticos, 4),
+        checklist: u.checklist
+          .filter((p) => p && p.item)
+          .slice(0, 16)
+          .map((p) => ({
+            item: String(p.item).slice(0, 200),
+            status: ["ok", "parcial", "faltou"].includes(p.status) ? p.status : "faltou",
+            comentario: p.comentario ? String(p.comentario).slice(0, 300) : "",
+          })),
+        momentos: (Array.isArray(u.momentos) ? u.momentos : [])
+          .filter((p) => p && typeof p.trecho == "string" && p.trecho.trim() && p.comentario)
+          .slice(0, 5)
+          .map((p) => ({
+            trecho: p.trecho.trim().slice(0, 160),
+            tipo: ["bom", "melhorar", "critico"].includes(p.tipo) ? p.tipo : "melhorar",
+            comentario: String(p.comentario).slice(0, 300),
+          })),
+        fortes: d(u.fortes, 3),
+        melhorar: d(u.melhorar, 4),
+        modelo: String(u.modelo || "").slice(0, 3500),
+        dica: u.dica ? String(u.dica).slice(0, 400) : void 0,
+        proximo: px,
+      };
+    },
   });
 }
 async function zx(a, e, o, i) {
@@ -371,7 +602,7 @@ const Hr = (a) => String(Math.round(a * 10) / 10).replace(".", ","),
   In = (a) => (a >= 8 ? "ok" : a >= 6 ? "warn" : "bad");
 function Dn(a) {
   const e = a ? [a, a, a, a] : X(Ks.map((i) => i.id)).slice(0, 4);
-  return ["entrevista", "exame", "tecnica", X(["interpretar", "diferencial", "comunicar", "descrever"])[0]].map((i, r) => ({ sis: e[r], modo: i }));
+  return ["entrevista", "exame", "tecnica", X(["interpretar", "diferencial", "comunicar", "descrever", "erro"])[0]].map((i, r) => ({ sis: e[r], modo: i }));
 }
 function Ex({ sis: a }) {
   var d;

@@ -70,6 +70,7 @@ function R1(a) {
       }
       return { el: s.jsx(Du, {}), tab: "jogar" };
     case "ia":
+      if (i[1] === "preceptor") return { el: s.jsx(Preceptor, { q0: r.get("q") || "" }), tab: "ia" };
       return i[1] === "s"
         ? { el: s.jsx(Ox, { id: i[2] }, i[2]), tab: "ia" }
         : i[1] === "e"
