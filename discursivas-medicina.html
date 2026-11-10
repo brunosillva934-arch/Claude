@@ -279,7 +279,7 @@ const COM_PACIENTE = f => f==="caso clínico" || f==="caso evolutivo";
 const CENARIOS   = ["UBS","UPA","pronto-socorro","enfermaria","UTI","ambulatório","centro obstétrico"];
 const ETAPAS = ["mecanismo","comparação","previsão","interpretação","síntese","diagnóstico diferencial","investigação","conduta","seguimento","comunicação e ética"];
 const poolDe = f => COM_PACIENTE(f)?BOT_PAC:BOT_SEM;
-/* faculdade sem caso clínico: pergunta direta de conteúdo, como em prova de disciplina */
+/* faculdade sem caso clínico: o método é o mesmo; só não pode haver paciente, história clínica nem prontuário no enunciado */
 const diretaOn = p => !!p && ehFaculdade(p.nivel) && p.direta===true && !COM_PACIENTE(p.formato);
 const formatosPara = p => (ehFaculdade(p.nivel)&&p.direta) ? FORMATOS.filter(f=>!COM_PACIENTE(f)) : FORMATOS;
 
@@ -510,7 +510,7 @@ const PRONTUARIO=/(\b(homem|mulher|menin[oa]|lactente|gestante|idos[oa]|paciente
 function checar(q){
   const A=[], p=q.params, en=q.enunciado, esp=q.nucleo.espelho.itens, lim=p.limite||10;
   if(diretaOn(p)){ const m=PRONTUARIO.exec(textoEnunciado(en));
-    if(m) A.push({n:"warn",t:`O enunciado parece caso clínico («${m[0].trim()}»), e o pedido era pergunta direta de conteúdo.`,conserto:"O pedido é pergunta direta de conteúdo: reescreva o enunciado sem paciente, história clínica, sinais vitais nem exame físico, em 1 a 3 frases, mantendo o que os itens cobram."}); }
+    if(m) A.push({n:"warn",t:`O enunciado parece caso clínico («${m[0].trim()}»), e o pedido era questão sem caso clínico.`,conserto:"O pedido é questão sem caso clínico: reescreva o enunciado sem paciente, história clínica, sinais vitais nem exame físico, mantendo o que os itens cobram e a mesma dificuldade."}); }
   const faltam=en.itens.filter(i=>!esp.some(e=>e.item===i.item)).map(i=>i.item);
   if(faltam.length) A.push({n:"bad",t:`Espelho incompleto: falta o item ${faltam.join(", ")}.`,conserto:`Falta o espelho do item ${faltam.join(", ")}: escreva-o, mantendo a soma da questão em 10.`});
   if(p.itens&&en.itens.length&&en.itens.length!==p.itens) A.push({n:"info",t:`${p.itens===1?"Foi pedido 1 item":`Foram pedidos ${p.itens} itens`} e ${en.itens.length===1?"veio 1":`vieram ${en.itens.length}`}.`});
@@ -580,8 +580,6 @@ function textoNucleo(q,curto){
    3. PROMPTS — só entra o que vale para o formato e o nível pedidos
    ══════════════════════════════════════════════════════════════ */
 const P_BASE="Você é preceptor e membro de banca de medicina no Brasil. Só cobra o que explica ou muda o cuidado de um paciente; a dificuldade vem do raciocínio, nunca de detalhe obscuro. Português do Brasil, linguagem de prova, sem pegadinha de português. Não invente: na dúvida sobre dose, valor de corte ou recomendação, troque o recorte ou registre a dúvida.";
-const P_BASE_DIRETA="Você é professor e membro de banca de uma faculdade de medicina no Brasil. Cobra o conteúdo que a disciplina ensina, pelo raciocínio (por quê, como, o que aconteceria se), nunca por detalhe obscuro nem por lista decorada. Português do Brasil, linguagem de prova, sem pegadinha de português. Não invente: na dúvida sobre um dado, um valor ou uma recomendação, troque o recorte ou registre a dúvida.";
-const pBase = p => diretaOn(p)?P_BASE_DIRETA:P_BASE;
 
 function regraNivel(p){
   const pac=COM_PACIENTE(p.formato), dir=diretaOn(p);
@@ -609,14 +607,14 @@ function blocoParams(p,ctx,n){
   const foco=(p.foco||"").trim(), mat=p.fonte==="curso"?String(p.material||"").replace(/[ \t]+/g," ").replace(/\n{3,}/g,"\n\n").trim().slice(0,14000):"";
   const L=[`- Nível: ${p.nivel} — ${regraNivel(p)}`,`- Área e tema: ${p.area} · ${p.tema}`];
   if(foco) L.push(`- Recorte pedido (manda sobre qualquer sugestão): ${foco}`);
-  L.push(`- Formato: ${p.formato}${pac?`, cenário ${p.cenario}`:""}${dir?" — pergunta direta de conteúdo, sem caso clínico":""}`);
+  L.push(`- Formato: ${p.formato}${pac?`, cenário ${p.cenario}`:""}${dir?" — sem caso clínico nem prontuário":""}`);
   L.push(`- ${p.itens===1?"1 item":`${p.itens} itens`}; cada resposta em até ${p.limite} linhas (1 linha ≈ 12 palavras)`);
   L.push(`- Dificuldade ${p.dificuldade} = ${altos.length?"estes botões no alto, cada um pesando na resposta:":"nenhum botão no alto."}`);
-  for(const b of altos) L.push(`  · ${b.n}: ${dir?b.a.replace(", do molecular ao sinal clínico",", do primeiro passo do mecanismo ao fenômeno cobrado"):b.a}`);
+  for(const b of altos) L.push(`  · ${b.n}: ${b.a}`);
   if(baixos.length) L.push(`  Os demais ficam no baixo e não sobem por conta própria: ${baixos.map(b=>`${b.n.toLowerCase()} (${b.b})`).join("; ")}.`);
-  if(!pac&&p.semPessoas&&!dir) L.push('- Sem pessoas no enunciado: nada de paciente, indivíduo, idade ou sexo. Apresente os dados como preparação experimental, amostra, curva, traçado ou valores de bancada ("em cardiomiócitos isolados", "a curva abaixo"). A ponte clínica continua obrigatória, mas só no plano.');
+  if(!pac&&p.semPessoas) L.push('- Sem pessoas no enunciado: nada de paciente, indivíduo, idade ou sexo. Apresente os dados como preparação experimental, amostra, curva, traçado ou valores de bancada ("em cardiomiócitos isolados", "a curva abaixo"). A ponte clínica continua obrigatória, mas só no plano.');
   if(mat) L.push(`- MATERIAL DO CURSO — fonte de verdade desta questão, acima de qualquer diretriz. Cubra só o que ele sustenta, no recorte e na ênfase dele. Se ele contrariar a diretriz vigente, siga o material e registre a divergência em "conferir". Em "ref", cite: ${p.referencia||"material do curso"}.\n"""\n${mat}\n"""`);
-  else L.push(`- Fonte: ${p.referencia||(dir||p.nivel==="básico"?"o livro-texto de referência da disciplina; em tema clínico, a diretriz brasileira vigente mais aceita":"a diretriz brasileira vigente mais aceita; sem diretriz brasileira, a internacional de referência")}`);
+  else L.push(`- Fonte: ${p.referencia||(p.nivel==="básico"?"o livro-texto de referência da disciplina; em tema clínico, a diretriz brasileira vigente mais aceita":"a diretriz brasileira vigente mais aceita; sem diretriz brasileira, a internacional de referência")}`);
   if(ctx&&ctx.evitar&&ctx.evitar.length) L.push(`- Já gerados neste tema; mude ${pac?"o paciente":"a situação"} e o ângulo: ${ctx.evitar.map(s=>`«${s}»`).join("; ")}`);
   if(ctx&&ctx.angulos&&ctx.angulos.length) L.push(`- Ângulos sugeridos, um por questão e nesta ordem${foco?", dentro do recorte pedido":""} (adapte ao formato): ${ctx.angulos.slice(0,n).join("; ")}`);
   return L.join("\n");
@@ -625,26 +623,23 @@ function blocoParams(p,ctx,n){
 /* a escrita: plano, depois enunciado, depois espelho. O enunciado sai cedo e a página já o mostra. */
 function pGerar(p,n,ctx){
   const pac=COM_PACIENTE(p.formato), dir=diretaOn(p), evo=p.formato==="caso evolutivo", bas=p.nivel==="básico", k=n>1?'"k":1,':"";
-  const comum=`"ponte":"${dir?"o que este conteúdo sustenta adiante na formação":"por que isso muda o cuidado de alguém"}","botoes":[["botão","onde ele aparece"]],"alvos":[["a","etapa","o que só responde quem raciocina",4]],"anti":"item X: o que a resposta decorada diria e por que perde ponto","conferir":["dose, valor de corte ou recomendação que um humano deve conferir"],"ref":"fonte, ano"}`;
+  const comum=`"ponte":"por que isso muda o cuidado de alguém","botoes":[["botão","onde ele aparece"]],"alvos":[["a","etapa","o que só responde quem raciocina",4]],"anti":"item X: o que a resposta decorada diria e por que perde ponto","conferir":["dose, valor de corte ou recomendação que um humano deve conferir"],"ref":"fonte, ano"}`;
   const plano=pac
     ? `{"t":"plano",${k}"caso":"paciente oculto em 2 a 3 frases","dx":["diagnóstico"],"fisio":"fisiopatologia central","oculto":"o que o aluno não vê e precisa inferir","evol":"sem tratamento: …; com a conduta correta: …",${comum}`
     : `{"t":"plano",${k}"cadeia":[["de","para","por quê"]],${comum}`;
-  return [pBase(p),"",
+  return [P_BASE,"",
     n>1?`TAREFA: escrever ${n} questões discursivas diferentes entre si — ${pac?"paciente":"situação"}, ângulo do tema e etapa dominante do raciocínio não se repetem —, todas com os parâmetros abaixo.`
        :"TAREFA: escrever uma questão discursiva com os parâmetros abaixo.",
     "","PARÂMETROS",blocoParams(p,ctx,n),"",
     "MÉTODO — nesta ordem: o enunciado nasce do que se quer avaliar, e o espelho tem de ser fiel ao que o enunciado mostra.",
     `1. PLANO. ${pac
       ?"Paciente oculto verossímil: idade, sexo, contexto de vida, comorbidades e medicações, sinais vitais, exame físico e exames coerentes entre si, com a doença e com o tempo de evolução; epidemiologia brasileira e SUS quando fizer sentido."
-      :dir?"Cadeia causal completa do conteúdo cobrado, sem pular elo; ela não precisa terminar em sinal clínico."
-      :"Cadeia causal completa, do nível molecular ou celular ao sinal clínico, sem pular elo."} ${dir
-      ?"A ponte clínica fica só no plano — o que este conteúdo sustenta adiante na formação — e não aparece no enunciado nem muda o recorte."
-      :"A ponte clínica: sem uma razão convincente de por que isso muda o cuidado de alguém, troque o recorte."} E o alvo de cada item: uma etapa do raciocínio e os pontos (total 10; raciocinar pesa mais que lembrar).`,
+      :"Cadeia causal completa, do nível molecular ou celular ao sinal clínico, sem pular elo."} A ponte clínica: sem uma razão convincente de por que isso muda o cuidado de alguém, troque o recorte. E o alvo de cada item: uma etapa do raciocínio e os pontos (total 10; raciocinar pesa mais que lembrar).`,
     "2. ENUNCIADO, a partir do plano.",
     "3. ESPELHO, item a item.","",
     "ENUNCIADO",
     pac?"- Só o que o médico teria naquele momento, na ordem em que surgiria: queixa e duração, história, antecedentes e medicações, sinais vitais e exame físico, exames disponíveis no cenário."
-    :dir?"- Pergunta direta de conteúdo, como em prova de disciplina. Proibido caso clínico, paciente, prontuário, história clínica, queixa, sinais vitais, exame físico ou evolução. O enunciado tem de 1 a 3 frases: afirma um fato, descreve um processo, uma estrutura ou uma observação de laboratório (lâmina, curva, experimento), sem entregar a explicação que o comando pede. Só o estilo, em outro tema — enunciado: «As plaquetas aderem ao endotélio lesionado, são ativadas e liberam mediadores antes de se agregarem.»; comando: «Se a ativação for bloqueada logo após a adesão, explique qual etapa da hemostasia primária fica comprometida e por que a adesão isolada não contém o sangramento.»"
+    :dir?"- Sem caso clínico: proibido paciente, prontuário, história clínica, queixa, sinais vitais, exame físico ou evolução de um indivíduo. No lugar do caso, monte a situação que exija o raciocínio pedido pelos botões: um fenômeno, um experimento descrito, uma preparação, uma curva ou tabela com valores, uma lâmina, dois estados para comparar, uma intervenção hipotética, um achado que parece contradizer a regra. Não entregue o mecanismo nem a conclusão: descreva a situação por completo e peça que o aluno construa o raciocínio. A ponte clínica continua obrigatória, mas fica no plano, nunca no enunciado."
     :"- Não entregue o mecanismo nem a conclusão: descreva por completo a situação, a curva, o exame ou o experimento, e peça que o aluno construa o raciocínio.",
     pac?"- Dado cru, nunca rótulo: descreva o achado (o sopro, o traçado, o valor), não o nome da síndrome nem o diagnóstico; nenhum adjetivo que interprete. Fármacos pelo nome genérico.":null,
     "- "+regraVR(p),
@@ -657,19 +652,19 @@ function pGerar(p,n,ctx){
     `- "q": 2 a 4 quesitos por item, cada um observável e independente («identifica X e relaciona a Y»), sem sobreposição, em múltiplos de 0,5; a questão soma 10. Marque justificativa exigida quando nomear sem justificar com dado ${pac?"do caso":"do enunciado"} só valer metade.${pac?"":" Pontue elos e relações explicados, não palavras-chave."}`,
     `- "anti": pelo menos um item em que a resposta decorada (${pac?"a conduta padrão recitada sem olhar este paciente":"o parágrafo do livro, sem encadear os elos"}) perde ponto.`,
     `- "alt": respostas igualmente corretas, com a condição em que valem.`,
-    `- "graves": zeram o item. ${bas&&dir?"Erro conceitual plausível que inverte o mecanismo ou troca o conceito central pelo vizinho, do tipo que sustentaria um raciocínio clínico errado mais adiante.":bas?"Todo erro conceitual plausível que, na prática, levaria a uma conduta errada.":"Toda conduta plausível que causaria dano e todo erro conceitual que levaria a uma conduta errada."} Só o que um aluno deste nível de fato escreveria; se não houver, [].`,
+    `- "graves": zeram o item. ${bas?"Todo erro conceitual plausível que, na prática, levaria a uma conduta errada.":"Toda conduta plausível que causaria dano e todo erro conceitual que levaria a uma conduta errada."} Só o que um aluno deste nível de fato escreveria; se não houver, [].`,
     `- "comuns": 1 ou 2, em frase curta.`,
     `- "ref": só fonte que você tem certeza de que existe, com nome e ano, sem página nem seção. "conferir": toda dose, valor de corte ou recomendação recente de que você não tenha certeza absoluta; se não houver, [].`,"",
     `SAÍDA — só objetos JSON, um por linha, nesta ordem, sem texto fora deles e sem cerca de código${n>1?`. Todo objeto leva "k" com o número da questão (1 a ${n}); termine a questão 1 inteira (plano, mom, esp) antes de começar a 2`:""}:`,
     plano,
     `{"t":"mom",${k}"n":1,"txt":"o que o aluno lê","itens":[["a","comando do item"]]}`,
-    `{"t":"esp",${k}"i":"a","max":"resposta nota máxima","q":[["quesito observável",1.5,1]],"alt":[["resposta também correta","condição em que vale"]],"comuns":["erro comum"],"graves":[["erro",${dir?'"conceito","o que esse erro compromete"':'"conduta","consequência para o paciente"'}]]}`,
+    `{"t":"esp",${k}"i":"a","max":"resposta nota máxima","q":[["quesito observável",1.5,1]],"alt":[["resposta também correta","condição em que vale"]],"comuns":["erro comum"],"graves":[["erro","conduta","consequência para o paciente"]]}`,
     `Um "mom" por momento${evo?"":" (aqui, um só)"}, com os itens dele; um "esp" por item. Em "alvos": [letra, etapa, alvo, pontos do item], e etapa é uma de: ${ETAPAS.join(" | ")}. Em "q": [quesito, pontos, 1 se exige justificativa senão 0]. Em "graves": [erro, "conduta" ou "conceito", consequência]. Lista sem conteúdo vai vazia: [].`
   ].filter(x=>x!=null).join("\n");
 }
 
 function linhaParams(p){
-  return `${p.nivel} · ${p.area} · ${p.tema} · ${p.formato}${COM_PACIENTE(p.formato)?" · "+p.cenario:""}${diretaOn(p)?" · pergunta direta, sem caso clínico":""} · dificuldade ${p.dificuldade} · botões no alto: ${(p.botoes||[]).join(", ")||"nenhum"} · até ${p.limite} linhas por resposta`;
+  return `${p.nivel} · ${p.area} · ${p.tema} · ${p.formato}${COM_PACIENTE(p.formato)?" · "+p.cenario:""}${diretaOn(p)?" · sem caso clínico nem prontuário":""} · dificuldade ${p.dificuldade} · botões no alto: ${(p.botoes||[]).join(", ")||"nenhum"} · até ${p.limite} linhas por resposta`;
 }
 function blocoQuestao(q){
   return `[PLANO — o aluno não vê]\n${textoNucleo(q)}\n\n[ENUNCIADO]\n${textoEnunciado(q.enunciado)}\n\n[ESPELHO]\n${textoEspelho(q.nucleo.espelho)}`;
@@ -678,7 +673,7 @@ function blocoQuestao(q){
 /* o conserto: o modelo devolve só os blocos que mudam, e a página encaixa */
 function pConserto(q,defeitos){
   const p=q.params;
-  return `${pBase(p)}
+  return `${P_BASE}
 
 TAREFA: consertar a questão abaixo mexendo o mínimo possível. Devolva só o que muda.
 
@@ -694,7 +689,7 @@ REGRAS
 - O que não foi criticado fica como está: mesmo ${COM_PACIENTE(p.formato)?"paciente":"recorte"}, mesmos itens, mesmas letras; os pontos continuam somando 10.
 - Não afrouxe o que protege o paciente: erro grave continua zerando o item e justificativa exigida continua exigida.
 - ${regraVR(p)}
-- Cada resposta nota máxima cabe em ${p.limite} linhas (≈ ${p.limite*12} palavras).${diretaOn(p)?"\n- Continua pergunta direta de conteúdo: enunciado de 1 a 3 frases, sem paciente, história clínica nem prontuário.":""}
+- Cada resposta nota máxima cabe em ${p.limite} linhas (≈ ${p.limite*12} palavras).${diretaOn(p)?"\n- Continua sem caso clínico: nada de paciente, história clínica nem prontuário no enunciado. A dificuldade não cai por isso.":""}
 
 SAÍDA — só objetos JSON, um por linha, apenas dos blocos que mudaram, cada um inteiro:
 {"t":"mom","n":1,"txt":"momento reescrito","itens":[["a","comando"]]}
@@ -730,7 +725,7 @@ function pRevisor(q,trio){
 
 QUESTÃO: ${linhaParams(p)}
 Nível ${p.nivel}: ${regraNivel(p)}
-Regra de valores: ${regraVR(p)}${diretaOn(p)?"\nExigência do pedido: pergunta direta de conteúdo, como em prova de disciplina. Caso clínico, paciente, história clínica ou prontuário no enunciado é defeito: aponte em clareza.":""}${p.fonte==="curso"?"\nFonte de verdade: o material do curso do aluno, que não está aqui. Divergência da diretriz registrada pelo autor não é erro.":""}
+Regra de valores: ${regraVR(p)}${diretaOn(p)?"\nExigência do pedido: questão sem caso clínico. Paciente, história clínica ou prontuário no enunciado é defeito: aponte em clareza. A falta de paciente não é desculpa para questão fácil: julgue a dificuldade pelos botões.":""}${p.fonte==="curso"?"\nFonte de verdade: o material do curso do aluno, que não está aqui. Divergência da diretriz registrada pelo autor não é erro.":""}
 
 ${blocoQuestao(q)}
 ${trio?`
@@ -764,7 +759,7 @@ const REGRAS_CORRECAO=(p,pac)=>`1. Dê os pontos de cada quesito na ordem do esp
 5. Não premie extensão, termo técnico solto nem lista genérica${pac?"":"; pontue elos e relações explicados, não palavra-chave"}. Ignore o que passar de ${p.limite} linhas (1 linha ≈ 12 palavras).
 6. Motivo de cada quesito sem ponto cheio: até 12 palavras, dizendo o que faltou sem dar a resposta. Ponto cheio: motivo vazio.`;
 function pCorrigir(q,respostas){
-  const p=q.params, pac=COM_PACIENTE(p.formato), dir=diretaOn(p);
+  const p=q.params, pac=COM_PACIENTE(p.formato);
   return `Você é corretor de banca de medicina e o preceptor que devolve a prova a um aluno de ${p.nivel}. Corrija estritamente pelo espelho, com o rigor de quem sabe que um paciente depende disso. O aluno ainda vai reescrever um item: oriente sem entregar a resposta.
 
 [ENUNCIADO]
@@ -786,7 +781,7 @@ ${REGRAS_CORRECAO(p,pac)}
 SAÍDA — só objetos JSON, um por linha:
 {"t":"cor","i":"a","q":[[1.5,""],[0.5,"motivo"]],"grave":"","fora":"","dica":""}
 (um "cor" por item, na ordem; em "q", um par [pontos, motivo] por quesito)
-{"t":"fim","paciente":"${pac?"o que aconteceria com este paciente se a resposta do aluno virasse conduta: concreto e plausível, em 2 a 4 frases; se estava certa, diga por quê":dir?"o que estes erros de conceito atrapalham adiante — que raciocínio ou decisão deixa de funcionar —, em 2 a 3 frases; se acertou, diga o que esse domínio sustenta":"a que conduta errada os erros do aluno levariam na prática, pela ponte clínica, em 2 a 4 frases; se acertou, diga o que isso garante ao paciente"}","fraco":"letra do item que mais vale reescrever","diverg":"se o aluno leu o enunciado de outro jeito plausível, qual; senão vazio"}`;
+{"t":"fim","paciente":"${pac?"o que aconteceria com este paciente se a resposta do aluno virasse conduta: concreto e plausível, em 2 a 4 frases; se estava certa, diga por quê":"a que conduta errada os erros do aluno levariam na prática, pela ponte clínica, em 2 a 4 frases; se acertou, diga o que isso garante ao paciente"}","fraco":"letra do item que mais vale reescrever","diverg":"se o aluno leu o enunciado de outro jeito plausível, qual; senão vazio"}`;
 }
 /* a reescrita e o fecho, juntos. A resposta modelo não é pedida: a página mostra a do espelho. */
 function pReescrita(q,pr){
@@ -831,7 +826,7 @@ Pergunte tudo de uma vez, com o padrão entre parênteses:
 4. Dificuldade de 1 a 5 (padrão: 3)
 5. Modo: TREINO (eu respondo e você corrige) | BANCO (só questão e espelho) (padrão: TREINO)
 6. Referência: diretriz ou material meu (opcional)
-Se eu responder só parte, use os padrões e siga. Na faculdade (básico, clínico e internato), o padrão é pergunta direta de conteúdo, como em prova de disciplina: enunciado de 1 a 3 frases, sem paciente, história clínica nem prontuário; só use caso clínico se eu pedir. No básico, nunca cobre conduta nem dose; no clínico, conduta só por classe de fármaco e com o porquê. Na residência, quase sempre caso clínico, com dose só quando ela muda a decisão.
+Se eu responder só parte, use os padrões e siga. Na faculdade (básico, clínico e internato), o padrão é questão sem caso clínico: nada de paciente, história clínica nem prontuário no enunciado, a menos que eu peça. A dificuldade continua vindo dos botões (elos causais, conceitos vizinhos, previsão, achado contraintuitivo, dado bruto), montados sobre um fenômeno, um experimento, uma curva ou uma comparação. No básico, nunca cobre conduta nem dose; no clínico, conduta só por classe de fármaco e com o porquê. Na residência, quase sempre caso clínico, com dose só quando ela muda a decisão.
 
 == 2. DIFICULDADE = NÚMERO DE BOTÕES NO ALTO (1 a 5) ==
 Com paciente: apresentação atípica · diferencial entre diagnósticos de condutas opostas · modificador de conduta · prioridade e tempo · ruído · dado bruto para interpretar · recurso limitado · evolução depois da conduta · dimensão humana.
@@ -1565,14 +1560,14 @@ function vMontar(){
       p.nivel==="básico" ? "Básico: mecanismo, comparação e previsão. Não cobra conduta nem dose, e a maioria das questões não tem paciente."
       : p.nivel==="clínico" ? (dir?"Ciclo clínico: fisiopatologia, critérios diagnósticos, leitura de exame e o racional de cada classe de tratamento, sem dose."
           :"Ciclo clínico: síntese, hipóteses e investigação. Conduta só por classe de fármaco e com o porquê, sem dose.")
-      : p.nivel==="internato" ? (dir?"Internato: o porquê das condutas — indicação, contraindicação e prioridade —, em pergunta direta."
+      : p.nivel==="internato" ? (dir?"Internato: o porquê das condutas — indicação, contraindicação e prioridade —, sem caso clínico."
           :"Internato: conduta, prioridade e cenário real, em caso clínico.")
       : p.nivel==="residência (acesso)" ? "Acesso direto: tudo do internato, mais exceção à regra, evolução e recurso limitado."
       : "Especialidade: a decisão do especialista — falha da primeira linha, exceção e a evidência que sustenta a escolha."),
     ehFaculdade(p.nivel)?el("button",{cls:"btn-sw",id:"bt-direta","data-on":p.direta?"1":"0","aria-pressed":String(!!p.direta),style:"margin-top:12px;width:100%;max-width:36rem",
       onclick:()=>{ p.direta=!p.direta; if(p.direta&&COM_PACIENTE(p.formato)) p.formato="mecanismo"; p.botoes=autoBotoes(p.dificuldade,p.formato,p.nivel); guardarPrefs(); render(); }},
       el("b",{},"Sem caso clínico nem prontuário"),
-      el("small",{txt:p.direta?"ligado · pergunta direta de conteúdo, como em prova de disciplina: enunciado curto, sem paciente e sem história clínica. Os formatos de caso ficam bloqueados."
+      el("small",{txt:p.direta?"ligado · nenhum paciente, história clínica ou prontuário no enunciado. A dificuldade, os botões e a forma de cobrar continuam os mesmos; só os formatos de caso ficam bloqueados."
                                :"desligado · o formato pode ser caso clínico, com história, exame físico e exames."})):null,
     (p.nivel==="básico"&&COM_PACIENTE(p.formato))
       ? el("div",{cls:"alerta",style:"margin-top:10px"},"Você deixou o formato em caso clínico no básico. Com paciente, a pergunta escorrega para conduta, que o ciclo básico não cobra. Prefira mecanismo, comparação ou previsão.")
@@ -1592,7 +1587,7 @@ function vMontar(){
       campo("dificuldade",el("div",{cls:"dial"},...[1,2,3,4,5].map(d=>el("button",{"aria-pressed":String(d===p.dificuldade),
         onclick:()=>{ p.dificuldade=d; p.botoes=autoBotoes(d,p.formato,p.nivel); render(); }},String(d)))))
     ),
-    (COM_PACIENTE(p.formato)||dir)?null:el("label",{cls:"chk",style:"margin-top:12px"},
+    COM_PACIENTE(p.formato)?null:el("label",{cls:"chk",style:"margin-top:12px"},
       el("input",{type:"checkbox",id:"f-sem-pessoas",checked:p.semPessoas||null,onchange:e=>{ p.semPessoas=e.target.checked; }}),
       "sem pessoas no enunciado: dados de bancada, curva ou amostra, nenhum indivíduo"),
     avisoLinhas(p),
@@ -1746,7 +1741,7 @@ function cabecalho(q,pr){
   return el("section",{cls:"card"},
     el("div",{cls:"cab"},
       el("div",{cls:"cab-t"},
-        el("div",{cls:"kicker",txt:`${p.nivel} · ${p.area} · ${p.formato}${COM_PACIENTE(p.formato)?" · "+p.cenario:""}${diretaOn(p)?" · pergunta direta":""} · dificuldade ${p.dificuldade}`}),
+        el("div",{cls:"kicker",txt:`${p.nivel} · ${p.area} · ${p.formato}${COM_PACIENTE(p.formato)?" · "+p.cenario:""}${diretaOn(p)?" · sem caso clínico":""} · dificuldade ${p.dificuldade}`}),
         el("h2",{txt:p.tema}),
         el("div",{cls:"hint tight",style:"margin-top:4px",txt:(p.botoes||[]).map(b=>"↑ "+b).join("  ")})),
       el("div",{id:"val-carimbo"})),
