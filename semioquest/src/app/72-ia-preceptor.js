@@ -34,7 +34,7 @@ const PREC_MODOS = [
     "Paralisia facial central ou periférica?",
   ],
   PREC_STOP = new Set(
-    "a o as os um uma uns umas de da do das dos e ou em no na nos nas que como qual quais para por com sem ser sao foi era me se eu voce ele ela isso esse essa este esta quando onde porque sobre mais menos entre qual diferenca diferencas diferenciar explique explica explicar faz fazer feito pesquisa pesquisar pesquiso tem ter pode posso devo deve quero saber ajuda ajude dica dicas melhor forma jeito".split(
+    "a o as os um uma uns umas de da do das dos e ou em no na nos nas que como qual quais para por com sem ser sao foi era me se eu voce ele ela isso esse essa este esta quando onde porque sobre mais menos entre qual diferenca diferencas diferenciar explique explica explicar faz fazer feito pesquisa pesquisar pesquiso tem ter pode posso devo deve quero saber ajuda ajude dica dicas melhor forma jeito achado achados afasta afastam confirma confirmam indica indicam sugere sugerem".split(
       " ",
     ),
   );
@@ -93,7 +93,9 @@ function precBuscar(pergunta, anterior) {
   let termos = precTermos(pergunta);
   termos.length < 2 && anterior && (termos = [...termos, ...precTermos(anterior)]);
   if (!termos.length) return [];
-  const hits = hb(termos.join(" ")).filter((h) => h.tipo !== "Caso"),
+  const hits = hb(termos.join(" "))
+      .filter((h) => h.tipo !== "Caso")
+      .slice(0, 9),
     cota = { Tópico: 2, Sinal: 2, Tabela: 1, Quadro: 1, Som: 1, Glossário: 1 },
     out = [];
   for (const h of hits) {
