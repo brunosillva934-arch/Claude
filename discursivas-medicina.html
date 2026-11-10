@@ -82,6 +82,7 @@ select:focus-visible,input:focus-visible,textarea:focus-visible,button:focus-vis
 .dial button{flex:1;border:1px solid var(--rule-strong);background:var(--surface);border-radius:3px;padding:6px 0;font-family:var(--mono);font-size:14px}
 .dial button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
 .dial.txt button{font-family:var(--body);font-size:13px;font-weight:500}
+.dial button.largo{flex:2.6;font-family:var(--body);font-size:12.5px;font-weight:500}
 .dial.gr button{font-family:var(--body);font-size:14.5px;font-weight:600;padding:11px 0}
 
 /* ── botões de dificuldade ───────────────────── */
@@ -279,6 +280,9 @@ const COM_PACIENTE = f => f==="caso clínico" || f==="caso evolutivo";
 const CENARIOS   = ["UBS","UPA","pronto-socorro","enfermaria","UTI","ambulatório","centro obstétrico"];
 const ETAPAS = ["mecanismo","comparação","previsão","interpretação","síntese","diagnóstico diferencial","investigação","conduta","seguimento","comunicação e ética"];
 const poolDe = f => COM_PACIENTE(f)?BOT_PAC:BOT_SEM;
+/* nível 0 = aprendizagem: para quem acabou de ver a aula e está fixando */
+const rotuloDif = d => Number(d)===0?"aprendizagem":`dificuldade ${d}`;
+const tagDif = d => Number(d)===0?"aprendizagem":"d"+d;
 /* faculdade sem caso clínico: o método é o mesmo; só não pode haver paciente, história clínica nem prontuário no enunciado */
 const diretaOn = p => !!p && ehFaculdade(p.nivel) && p.direta===true && !COM_PACIENTE(p.formato);
 const formatosPara = p => (ehFaculdade(p.nivel)&&p.direta) ? FORMATOS.filter(f=>!COM_PACIENTE(f)) : FORMATOS;
@@ -311,7 +315,8 @@ function autoBotoes(d,formato,nivel){
 function conferirBotoes(sel,d,formato,nivel){
   const avisos=[], alvo=quantos(d);
   const pool=poolDe(formato).filter(b=>permitido(b,nivel));
-  if(d<5 && sel.length!==alvo) avisos.push(`Dificuldade ${d} pede ${alvo} ${alvo===1?"botão":"botões"} no alto; estão ${sel.length}.`);
+  if(d===0){ if(sel.length) avisos.push(`Aprendizagem não pede botão no alto, e ${sel.length===1?"há 1":`há ${sel.length}`}. Com botão no alto a questão deixa de ser de fixação.`); }
+  else if(d<5 && sel.length!==alvo) avisos.push(`Dificuldade ${d} pede ${alvo} ${alvo===1?"botão":"botões"} no alto; estão ${sel.length}.`);
   if(d===5 && sel.length<5)    avisos.push(`Dificuldade 5 pede 5 ou mais botões no alto; estão ${sel.length}.`);
   for(const grupo of obrigatorios(d,formato)){
     if(!grupo.some(g=>sel.includes(g))) avisos.push(`Falta obrigatório: ${grupo.join(" ou ")}.`);
@@ -330,7 +335,7 @@ function decidir({notas,divergencia,preceptor,dificuldade}){
   const seg=["veross","correcao","seguranca"].map(de).filter(v=>v!=null);
   const minSeg=seg.length?Math.min(...seg):null;
   const minCrit=crit.length?Math.min(...crit.map(c=>c.nota)):null;
-  const gap=(nf!=null&&nm!=null)?nf-nm:null, limGap=dificuldade>=4?3:2;
+  const gap=(nf!=null&&nm!=null)?nf-nm:null, limGap=dificuldade>=4?3:2, apr=dificuldade===0;
 
   if(minSeg!=null && minSeg<=2) return {v:"DESCARTAR",por:"O revisor deu 2 ou menos em verossimilhança, correção ou segurança: há erro clínico ou conceitual.",
     instr:"Há erro clínico ou conceitual: corrija-o na raiz, no caso e no espelho, sem deixar resto."};
@@ -340,9 +345,9 @@ function decidir({notas,divergencia,preceptor,dificuldade}){
     instr:"Um ótimo candidato não chegou a 8. Ajuste só o espelho: quesito que nem ele cumpriria, resposta correta que o espelho não previa, ponto mal distribuído."};
   if(nm!=null && nm>=8 && dificuldade>=3) return {v:"REESCREVER",por:"O candidato mediano chegou a 8 com dificuldade 3 ou mais: fácil demais para o que foi pedido.",maisBotao:true,
     instr:"Um candidato mediano chegou a 8: a questão está fácil demais para a dificuldade pedida."};
-  if(nd!=null && nd>=7) return {v:"REESCREVER",por:"O decoreba chegou a 7: dá para resolver só de memória.",
+  if(!apr && nd!=null && nd>=7) return {v:"REESCREVER",por:"O decoreba chegou a 7: dá para resolver só de memória.",
     instr:"A resposta decorada chegou a 7: reforce o item que exige raciocinar, de modo que recitar a regra não baste."};
-  if(gap!=null && gap<limGap) return {v:"REESCREVER",por:`Discriminação ${gap.toFixed(1).replace(".",",")}, abaixo de ${limGap}: a questão não separa quem sabe de quem não sabe.`,
+  if(!apr && gap!=null && gap<limGap) return {v:"REESCREVER",por:`Discriminação ${gap.toFixed(1).replace(".",",")}, abaixo de ${limGap}: a questão não separa quem sabe de quem não sabe.`,
     instr:"Forte e mediano tiraram notas próximas: aumente o peso do raciocínio no espelho ou acrescente o dado que separa os dois."};
   if(minCrit!=null && minCrit<4){
     const pior=crit.filter(c=>c.nota===minCrit).map(c=>c.criterio).join(", ");
@@ -524,8 +529,8 @@ function checar(q){
   const pronta=/(compat[ií]ve(l|is) com|sugestiv[oa]s? de|caracter[ií]stic[oa]s? de|t[ií]pic[oa]s? de|patognom[oô]nic)/i.exec(textoEnunciado(en));
   if(pronta) A.push({n:"warn",t:`Leitura pronta no enunciado: «${pronta[0]}». Interpretar o dado é tarefa do aluno.`,conserto:`O enunciado traz leitura pronta («${pronta[0]}»): troque pela descrição crua do achado.`});
   if(!faltam.length&&esp.length){
-    if(!q.nucleo.anti&&!q.exemplo&&q.nucleo.alvos&&Object.keys(q.nucleo.alvos).length) A.push({n:"info",t:"O plano não diz em que item a resposta decorada perde ponto."});
-    if(COM_PACIENTE(p.formato)&&ORDEM_NIVEL(p.nivel)>=2&&!esp.some(e=>(e.erros_graves||[]).length)) A.push({n:"warn",t:"Nenhum erro grave listado num caso que cobra conduta.",conserto:"Liste em cada item que cobra conduta os erros graves plausíveis (conduta que causaria dano), que zeram o item."});
+    if(p.dificuldade!==0&&!q.nucleo.anti&&!q.exemplo&&q.nucleo.alvos&&Object.keys(q.nucleo.alvos).length) A.push({n:"info",t:"O plano não diz em que item a resposta decorada perde ponto."});
+    if(p.dificuldade!==0&&COM_PACIENTE(p.formato)&&ORDEM_NIVEL(p.nivel)>=2&&!esp.some(e=>(e.erros_graves||[]).length)) A.push({n:"warn",t:"Nenhum erro grave listado num caso que cobra conduta.",conserto:"Liste em cada item que cobra conduta os erros graves plausíveis (conduta que causaria dano), que zeram o item."});
   }
   if(!A.some(a=>a.n==="warn"||a.n==="bad")&&esp.length&&!faltam.length)
     A.unshift({n:"ok",t:"Checagem automática da página: os pontos somam 10, as respostas cabem no limite de linhas e o enunciado não cita o diagnóstico."});
@@ -609,7 +614,9 @@ function blocoParams(p,ctx,n){
   if(foco) L.push(`- Recorte pedido (manda sobre qualquer sugestão): ${foco}`);
   L.push(`- Formato: ${p.formato}${pac?`, cenário ${p.cenario}`:""}${dir?" — sem caso clínico nem prontuário":""}`);
   L.push(`- ${p.itens===1?"1 item":`${p.itens} itens`}; cada resposta em até ${p.limite} linhas (1 linha ≈ 12 palavras)`);
-  L.push(`- Dificuldade ${p.dificuldade} = ${altos.length?"estes botões no alto, cada um pesando na resposta:":"nenhum botão no alto."}`);
+  L.push(p.dificuldade===0
+    ?`- Nível de aprendizagem: o aluno acabou de ver a aula e está fixando o conteúdo. ${altos.length?"Mesmo assim, estes botões sobem:":"Nenhum botão no alto."}`
+    :`- Dificuldade ${p.dificuldade} = ${altos.length?"estes botões no alto, cada um pesando na resposta:":"nenhum botão no alto."}`);
   for(const b of altos) L.push(`  · ${b.n}: ${b.a}`);
   if(baixos.length) L.push(`  Os demais ficam no baixo e não sobem por conta própria: ${baixos.map(b=>`${b.n.toLowerCase()} (${b.b})`).join("; ")}.`);
   if(!pac&&p.semPessoas) L.push('- Sem pessoas no enunciado: nada de paciente, indivíduo, idade ou sexo. Apresente os dados como preparação experimental, amostra, curva, traçado ou valores de bancada ("em cardiomiócitos isolados", "a curva abaixo"). A ponte clínica continua obrigatória, mas só no plano.');
@@ -623,7 +630,8 @@ function blocoParams(p,ctx,n){
 /* a escrita: plano, depois enunciado, depois espelho. O enunciado sai cedo e a página já o mostra. */
 function pGerar(p,n,ctx){
   const pac=COM_PACIENTE(p.formato), dir=diretaOn(p), evo=p.formato==="caso evolutivo", bas=p.nivel==="básico", k=n>1?'"k":1,':"";
-  const comum=`"ponte":"por que isso muda o cuidado de alguém","botoes":[["botão","onde ele aparece"]],"alvos":[["a","etapa","o que só responde quem raciocina",4]],"anti":"item X: o que a resposta decorada diria e por que perde ponto","conferir":["dose, valor de corte ou recomendação que um humano deve conferir"],"ref":"fonte, ano"}`;
+  const apr=p.dificuldade===0;
+  const comum=`"ponte":"por que isso muda o cuidado de alguém","botoes":[["botão","onde ele aparece"]],"alvos":[["a","etapa","${apr?"a ideia central que o item fixa":"o que só responde quem raciocina"}",4]],"anti":"${apr?"":"item X: o que a resposta decorada diria e por que perde ponto"}","conferir":["dose, valor de corte ou recomendação que um humano deve conferir"],"ref":"fonte, ano"}`;
   const plano=pac
     ? `{"t":"plano",${k}"caso":"paciente oculto em 2 a 3 frases","dx":["diagnóstico"],"fisio":"fisiopatologia central","oculto":"o que o aluno não vê e precisa inferir","evol":"sem tratamento: …; com a conduta correta: …",${comum}`
     : `{"t":"plano",${k}"cadeia":[["de","para","por quê"]],${comum}`;
@@ -634,26 +642,38 @@ function pGerar(p,n,ctx){
     "MÉTODO — nesta ordem: o enunciado nasce do que se quer avaliar, e o espelho tem de ser fiel ao que o enunciado mostra.",
     `1. PLANO. ${pac
       ?"Paciente oculto verossímil: idade, sexo, contexto de vida, comorbidades e medicações, sinais vitais, exame físico e exames coerentes entre si, com a doença e com o tempo de evolução; epidemiologia brasileira e SUS quando fizer sentido."
-      :"Cadeia causal completa, do nível molecular ou celular ao sinal clínico, sem pular elo."} A ponte clínica: sem uma razão convincente de por que isso muda o cuidado de alguém, troque o recorte. E o alvo de cada item: uma etapa do raciocínio e os pontos (total 10; raciocinar pesa mais que lembrar).`,
+      :apr?"Cadeia causal do tema, na ordem, com os elos que uma boa aula ensina."
+      :"Cadeia causal completa, do nível molecular ou celular ao sinal clínico, sem pular elo."} A ponte clínica: sem uma razão convincente de por que isso muda o cuidado de alguém, troque o recorte. E o alvo de cada item: uma etapa do raciocínio e os pontos (total 10; ${apr?"repartidos pelas ideias centrais":"raciocinar pesa mais que lembrar"}).`,
     "2. ENUNCIADO, a partir do plano.",
     "3. ESPELHO, item a item.","",
+    apr?"NÍVEL DE APRENDIZAGEM — a questão serve para fixar a aula, não para separar candidatos:":null,
+    apr?"- Cobre só as ideias centrais do tema, as que organizam o resto. Nada de exceção, raridade, número difícil de guardar ou detalhe de rodapé.":null,
+    apr?"- Uma ideia por item, em degraus: o que é; como ou por que acontece, em 1 ou 2 elos; uma aplicação direta e esperada. Todo item se resolve só com o conteúdo de uma boa aula sobre o tema.":null,
+    apr?"- O enunciado pode dar o contexto e os termos. A tarefa do aluno é explicar o como e o porquê com as próprias palavras: é explicar que fixa, então peça explicação, nunca lista para recitar.":null,
+    apr?"- Sem distrator, sem pegadinha, sem achado contraintuitivo e sem dado que exija leitura fina. Comando curto, com uma pergunta só.":null,
+    apr?"":null,
     "ENUNCIADO",
     pac?"- Só o que o médico teria naquele momento, na ordem em que surgiria: queixa e duração, história, antecedentes e medicações, sinais vitais e exame físico, exames disponíveis no cenário."
+    :(dir&&apr)?"- Sem caso clínico: proibido paciente, prontuário, história clínica, queixa, sinais vitais, exame físico ou evolução de um indivíduo. O enunciado apresenta de forma direta o fenômeno, a estrutura ou o processo, e só não entrega a explicação que o comando pede. A ponte clínica continua obrigatória, mas fica no plano, nunca no enunciado."
+    :apr?"- Apresente de forma direta o fenômeno, a estrutura ou o processo; só não entregue a explicação que o comando pede."
     :dir?"- Sem caso clínico: proibido paciente, prontuário, história clínica, queixa, sinais vitais, exame físico ou evolução de um indivíduo. No lugar do caso, monte a situação que exija o raciocínio pedido pelos botões: um fenômeno, um experimento descrito, uma preparação, uma curva ou tabela com valores, uma lâmina, dois estados para comparar, uma intervenção hipotética, um achado que parece contradizer a regra. Não entregue o mecanismo nem a conclusão: descreva a situação por completo e peça que o aluno construa o raciocínio. A ponte clínica continua obrigatória, mas fica no plano, nunca no enunciado."
     :"- Não entregue o mecanismo nem a conclusão: descreva por completo a situação, a curva, o exame ou o experimento, e peça que o aluno construa o raciocínio.",
     pac?"- Dado cru, nunca rótulo: descreva o achado (o sopro, o traçado, o valor), não o nome da síndrome nem o diagnóstico; nenhum adjetivo que interprete. Fármacos pelo nome genérico.":null,
     "- "+regraVR(p),
-    "- Cada dado tem função: sustenta a resposta, separa o diferencial ou é o distrator que um botão pede. O resto sai.",
+    apr?"- Cada dado do enunciado sustenta a resposta. O resto sai.":"- Cada dado tem função: sustenta a resposta, separa o diferencial ou é o distrator que um botão pede. O resto sai.",
     evo?"- Caso evolutivo: 2 ou 3 momentos, com os itens distribuídos entre eles. Cada momento novo traz evolução ou resultado e pode revelar o que o anterior perguntava (a página só o libera depois da resposta); dentro de um mesmo momento, nenhum dado responde os itens dele.":null,
     "- Comando de cada item: um verbo de tarefa (cite, interprete, justifique, compare, explique, preveja, priorize, indique), quantos elementos se esperam e o que vale como justificativa. Nunca «comente», «discorra» ou «fale sobre». Não escreva o limite de linhas: a página mostra.",
     "- Nenhum item entrega a resposta de outro do mesmo momento. Se (b) depende de acertar (a), o espelho de (b) diz quanto vale a resposta coerente com um (a) errado.","",
     "ESPELHO",
     `- "max": a resposta de um ótimo candidato, completa e dentro de ${p.limite} linhas (≈ ${p.limite*12} palavras). Não coube? Corte quesito ou estreite o comando.`,
-    `- "q": 2 a 4 quesitos por item, cada um observável e independente («identifica X e relaciona a Y»), sem sobreposição, em múltiplos de 0,5; a questão soma 10. Marque justificativa exigida quando nomear sem justificar com dado ${pac?"do caso":"do enunciado"} só valer metade.${pac?"":" Pontue elos e relações explicados, não palavras-chave."}`,
-    `- "anti": pelo menos um item em que a resposta decorada (${pac?"a conduta padrão recitada sem olhar este paciente":"o parágrafo do livro, sem encadear os elos"}) perde ponto.`,
-    `- "alt": respostas igualmente corretas, com a condição em que valem.`,
-    `- "graves": zeram o item. ${bas?"Todo erro conceitual plausível que, na prática, levaria a uma conduta errada.":"Toda conduta plausível que causaria dano e todo erro conceitual que levaria a uma conduta errada."} Só o que um aluno deste nível de fato escreveria; se não houver, [].`,
-    `- "comuns": 1 ou 2, em frase curta.`,
+    `- "q": 2 a 4 quesitos por item, cada um observável e independente («identifica X e relaciona a Y»), sem sobreposição, em múltiplos de 0,5; a questão soma 10.${apr?" Aqui os quesitos são os pontos essenciais que quem entendeu a aula diria.":""} Marque justificativa exigida quando nomear sem justificar com dado ${pac?"do caso":"do enunciado"} só valer metade.${pac?"":" Pontue elos e relações explicados, não palavras-chave."}`,
+    apr?`- "anti": fica vazio neste nível. A explicação do livro, bem dada, vale nota máxima.`
+       :`- "anti": pelo menos um item em que a resposta decorada (${pac?"a conduta padrão recitada sem olhar este paciente":"o parágrafo do livro, sem encadear os elos"}) perde ponto.`,
+    apr?`- "alt": formulações equivalentes, ditas com palavras próprias, que valem o mesmo.`
+       :`- "alt": respostas igualmente corretas, com a condição em que valem.`,
+    apr?`- "graves": só a inversão do conceito central, que zera o item; na dúvida, [].`
+       :`- "graves": zeram o item. ${bas?"Todo erro conceitual plausível que, na prática, levaria a uma conduta errada.":"Toda conduta plausível que causaria dano e todo erro conceitual que levaria a uma conduta errada."} Só o que um aluno deste nível de fato escreveria; se não houver, [].`,
+    `- "comuns": ${apr?"1 ou 2 confusões típicas de quem acabou de aprender":"1 ou 2"}, em frase curta.`,
     `- "ref": só fonte que você tem certeza de que existe, com nome e ano, sem página nem seção. "conferir": toda dose, valor de corte ou recomendação recente de que você não tenha certeza absoluta; se não houver, [].`,"",
     `SAÍDA — só objetos JSON, um por linha, nesta ordem, sem texto fora deles e sem cerca de código${n>1?`. Todo objeto leva "k" com o número da questão (1 a ${n}); termine a questão 1 inteira (plano, mom, esp) antes de começar a 2`:""}:`,
     plano,
@@ -664,7 +684,7 @@ function pGerar(p,n,ctx){
 }
 
 function linhaParams(p){
-  return `${p.nivel} · ${p.area} · ${p.tema} · ${p.formato}${COM_PACIENTE(p.formato)?" · "+p.cenario:""}${diretaOn(p)?" · sem caso clínico nem prontuário":""} · dificuldade ${p.dificuldade} · botões no alto: ${(p.botoes||[]).join(", ")||"nenhum"} · até ${p.limite} linhas por resposta`;
+  return `${p.nivel} · ${p.area} · ${p.tema} · ${p.formato}${COM_PACIENTE(p.formato)?" · "+p.cenario:""}${diretaOn(p)?" · sem caso clínico nem prontuário":""} · ${rotuloDif(p.dificuldade)} · botões no alto: ${(p.botoes||[]).join(", ")||"nenhum"} · até ${p.limite} linhas por resposta`;
 }
 function blocoQuestao(q){
   return `[PLANO — o aluno não vê]\n${textoNucleo(q)}\n\n[ENUNCIADO]\n${textoEnunciado(q.enunciado)}\n\n[ESPELHO]\n${textoEspelho(q.nucleo.espelho)}`;
@@ -689,7 +709,7 @@ REGRAS
 - O que não foi criticado fica como está: mesmo ${COM_PACIENTE(p.formato)?"paciente":"recorte"}, mesmos itens, mesmas letras; os pontos continuam somando 10.
 - Não afrouxe o que protege o paciente: erro grave continua zerando o item e justificativa exigida continua exigida.
 - ${regraVR(p)}
-- Cada resposta nota máxima cabe em ${p.limite} linhas (≈ ${p.limite*12} palavras).${diretaOn(p)?"\n- Continua sem caso clínico: nada de paciente, história clínica nem prontuário no enunciado. A dificuldade não cai por isso.":""}
+- Cada resposta nota máxima cabe em ${p.limite} linhas (≈ ${p.limite*12} palavras).${diretaOn(p)?"\n- Continua sem caso clínico: nada de paciente, história clínica nem prontuário no enunciado. A dificuldade não cai por isso.":""}${p.dificuldade===0?"\n- Continua no nível de aprendizagem: só ideias centrais, uma por item, sem exceção, distrator nem pegadinha.":""}
 
 SAÍDA — só objetos JSON, um por linha, apenas dos blocos que mudaram, cada um inteiro:
 {"t":"mom","n":1,"txt":"momento reescrito","itens":[["a","comando"]]}
@@ -741,7 +761,7 @@ REVISE a questão.`} Dê de 1 a 5 a cada critério (5 = nada a consertar; 4 = re
 - clareza: comando com duas leituras; valor sem referência que o aluno deste nível não sabe de cor
 - vazamento: o enunciado entrega diagnóstico ou conduta; um item responde outro
 - relevancia: isto importa para o nível ${p.nivel}?
-- dificuldade: os botões no alto pesam na resposta? a resposta decorada tiraria nota máxima?
+- dificuldade: ${p.dificuldade===0?"é nível de aprendizagem, para quem acabou de ver a aula: a questão cobra só ideias centrais, uma por item, em 1 ou 2 elos? exceção, detalhe obscuro, distrator ou item difícil demais é defeito aqui; a explicação do livro valer nota máxima não é":"os botões no alto pesam na resposta? a resposta decorada tiraria nota máxima?"}
 - espelho: quesito inobservável, sobreposto ou que nem um ótimo candidato cumpriria; resposta correta não prevista; resposta máxima que não cabe em ${p.limite} linhas
 
 SAÍDA — só objetos JSON, um por linha:
@@ -754,7 +774,7 @@ Em "achados" só entra critério com nota abaixo de 5; sem nada a consertar, a l
 /* a correção do aluno e a primeira devolutiva, juntas: uma chamada em vez de duas */
 const REGRAS_CORRECAO=(p,pac)=>`1. Dê os pontos de cada quesito na ordem do espelho (q1, q2…), de 0 ao máximo do quesito, em passos de 0,25.
 2. Certo sem a justificativa exigida vale no máximo metade do quesito; a justificativa precisa usar dados ${pac?"deste caso":"do enunciado"}.
-3. Aceite as alternativas do espelho e respostas clinicamente equivalentes. Se aceitar algo que o espelho não previa, diga o quê em "fora".
+3. Aceite as alternativas do espelho e respostas clinicamente equivalentes.${p.dificuldade===0?" O aluno acabou de ver a aula: aceite a ideia certa dita com palavras próprias, mesmo sem o termo técnico.":""} Se aceitar algo que o espelho não previa, diga o quê em "fora".
 4. Erro grave do espelho cometido vai em "grave", e a página zera o item.
 5. Não premie extensão, termo técnico solto nem lista genérica${pac?"":"; pontue elos e relações explicados, não palavra-chave"}. Ignore o que passar de ${p.limite} linhas (1 linha ≈ 12 palavras).
 6. Motivo de cada quesito sem ponto cheio: até 12 palavras, dizendo o que faltou sem dar a resposta. Ponto cheio: motivo vazio.`;
@@ -823,7 +843,7 @@ Pergunte tudo de uma vez, com o padrão entre parênteses:
 1. Nível: básico (1º–2º ano) | clínico (3º–4º) | internato (5º–6º) | residência
 2. Grande área e tema
 3. Formato: caso clínico | caso evolutivo | mecanismo | comparação | interpretação de dado | previsão | integração (padrão: você escolhe pelo nível)
-4. Dificuldade de 1 a 5 (padrão: 3)
+4. Dificuldade: aprendizagem (acabei de ver a aula e quero fixar) ou de 1 a 5 (padrão: 3)
 5. Modo: TREINO (eu respondo e você corrige) | BANCO (só questão e espelho) (padrão: TREINO)
 6. Referência: diretriz ou material meu (opcional)
 Se eu responder só parte, use os padrões e siga. Na faculdade (básico, clínico e internato), o padrão é questão sem caso clínico: nada de paciente, história clínica nem prontuário no enunciado, a menos que eu peça. A dificuldade continua vindo dos botões (elos causais, conceitos vizinhos, previsão, achado contraintuitivo, dado bruto), montados sobre um fenômeno, um experimento, uma curva ou uma comparação. No básico, nunca cobre conduta nem dose; no clínico, conduta só por classe de fármaco e com o porquê. Na residência, quase sempre caso clínico, com dose só quando ela muda a decisão.
@@ -832,6 +852,7 @@ Se eu responder só parte, use os padrões e siga. Na faculdade (básico, clíni
 Com paciente: apresentação atípica · diferencial entre diagnósticos de condutas opostas · modificador de conduta · prioridade e tempo · ruído · dado bruto para interpretar · recurso limitado · evolução depois da conduta · dimensão humana.
 Sem paciente: 4 ou mais elos causais · conceitos vizinhos · previsão de situação nova · achado contraintuitivo · integração de disciplinas · dado bruto.
 A partir de 3, um botão central: diferencial ou modificador de conduta (com paciente); elos causais ou comparação (sem paciente). Os botões que não subiram ficam no baixo.
+APRENDIZAGEM = nenhum botão no alto, para fixar a aula: só as ideias centrais do tema, uma por item, em degraus (o que é; como ou por que acontece, em 1 ou 2 elos; uma aplicação direta). O enunciado pode dar o contexto, e eu explico com as minhas palavras. Sem exceção, distrator ou pegadinha; a explicação do livro, bem dada, vale nota máxima, e o teste do decoreba não se aplica.
 
 == 3. COMO ESCREVER (faça tudo antes de mostrar; não mostre as etapas) ==
 A. PLANO: paciente oculto coerente, ou cadeia causal completa; a ponte clínica; e o alvo de cada item — uma etapa do raciocínio e os pontos (total 10; raciocinar pesa mais que lembrar).
@@ -848,7 +869,7 @@ a) Mostre só o enunciado (caso evolutivo: um momento por vez). Guarde o espelho
 b) CORREÇÃO: pontos por quesito, motivo em uma linha. Certo sem a justificativa exigida vale no máximo metade; a justificativa usa dados deste caso; erro grave zera o item; não premie extensão.
 c) DEVOLUTIVA 1: o que aconteceria com o paciente; em cada item com perda, o dado ou o elo que faltou, sem dar a resposta. Peça a reescrita do item mais fraco.
 d) DEVOLUTIVA 2, depois da reescrita: quanto melhorou, o raciocínio passo a passo, a resposta modelo e a lição em uma frase.
-e) PRÓXIMA: proponha pelo meu ponto fraco. Suba a dificuldade após 2 notas de 8 ou mais; desça após 2 notas abaixo de 5; erro grave volta em outro paciente depois de alguns dias.
+e) PRÓXIMA: proponha pelo meu ponto fraco. Suba a dificuldade após 2 notas de 8 ou mais; desça após 2 notas abaixo de 5, até a aprendizagem; erro grave volta em outro paciente depois de alguns dias.
 
 Seja exigente e respeitoso, como um bom preceptor. Comece agora pela primeira mensagem.`;
 
@@ -967,6 +988,7 @@ function evitarPara(p){
   return [...set].slice(-5);
 }
 function angulosPara(p){
+  if(p.dificuldade===0) return ["o que é e qual a sua função","como acontece, em sequência","por que acontece: a causa imediata","o que se observa quando falta ou falha","como se reconhece: o achado típico","para que isso serve na prática"];
   if(!COM_PACIENTE(p.formato)||p.nivel==="básico") return ["o mecanismo do sinal ou sintoma central","a comparação com o estado ou conceito vizinho","a previsão do efeito de uma intervenção","um achado que parece contradizer a regra","a leitura de uma curva, exame ou experimento","a integração com outra disciplina"];
   if(p.nivel==="clínico") return ["apresentação e diagnóstico diferencial","interpretação do exame-chave","que exame pedir e por quê","fator precipitante ou etiologia","complicação ou evolução desfavorável","população especial"];
   return ["apresentação e diagnóstico diferencial","interpretação do exame-chave","conduta inicial e prioridade","complicação ou falha da primeira conduta","população especial ou contraindicação","seguimento, alta e prevenção"];
@@ -1465,14 +1487,14 @@ function aplicarSugestao(){
     const pior=Object.entries(t).map(([k,v])=>({k,m:v.s/v.n})).sort((a,b)=>a.m-b.m)[0];
     if(pior)p.tema=pior.k;
   }
-  if(P.escada) p.dificuldade=Math.min(5,Math.max(1,P.escada.de+(P.escada.dir==="sobe"?1:-1)));
+  if(P.escada) p.dificuldade=Math.min(5,Math.max(0,(Number(P.escada.de)||0)+(P.escada.dir==="sobe"?1:-1)));
   p.botoes=autoBotoes(p.dificuldade,p.formato,p.nivel);
   const e=P.piorEtapa&&P.piorEtapa.k;
   p.foco=e?`a etapa em que mais perco ponto: ${e}`:"";
   if(e&&COM_PACIENTE(p.formato)){
     const alvo=e.includes("conduta")?"Modificador de conduta":e.includes("diagnóstico")?"Diferencial":e.includes("interpret")?"Interpretação":e.includes("seguimento")?"Evolução":e.includes("comunica")?"Dimensão humana":null;
     const b=alvo&&BOT_PAC.find(x=>x.n===alvo);
-    if(b&&!p.botoes.includes(alvo)&&permitido(b,p.nivel)) p.botoes=[alvo,...p.botoes].slice(0,Math.max(quantos(p.dificuldade),1));
+    if(p.dificuldade>0&&b&&!p.botoes.includes(alvo)&&permitido(b,p.nivel)) p.botoes=[alvo,...p.botoes].slice(0,Math.max(quantos(p.dificuldade),1));
   }
   S.view="montar"; render();
 }
@@ -1481,7 +1503,7 @@ function montarRepescagem(g){
   if(NIVEIS.includes(g.nivel))p.nivel=g.nivel;
   if(AREAS_CLIN.concat(AREAS_BAS).includes(g.area))p.area=g.area;
   if(FORMATOS.includes(g.formato))p.formato=g.formato;
-  p.tema=g.tema; p.dificuldade=g.dificuldade||p.dificuldade;
+  p.tema=g.tema; if(g.dificuldade!=null)p.dificuldade=g.dificuldade;
   p.foco=`repescagem: ${COM_PACIENTE(p.formato)?"outro paciente":"outra situação"} em que esteja em jogo a mesma decisão deste erro grave que cometi — «${g.erro}»`;
   p.botoes=autoBotoes(p.dificuldade,p.formato,p.nivel);
   S.quantidade=1; S.view="montar"; render();
@@ -1584,8 +1606,9 @@ function vMontar(){
       COM_PACIENTE(p.formato)?campo("cenário",sel("f-cenario",p.cenario,CENARIOS,v=>{ p.cenario=v; })):null,
       campo("linhas por item",sel("f-limite",String(p.limite),["5","10","15","20"],v=>{ p.limite=Number(v); render(); })),
       campo("itens",sel("f-itens",String(p.itens),["1","2","3","4"],v=>{ p.itens=Number(v); })),
-      campo("dificuldade",el("div",{cls:"dial"},...[1,2,3,4,5].map(d=>el("button",{"aria-pressed":String(d===p.dificuldade),
-        onclick:()=>{ p.dificuldade=d; p.botoes=autoBotoes(d,p.formato,p.nivel); render(); }},String(d)))))
+      campo("dificuldade",el("div",{cls:"dial",id:"f-dif"},...[0,1,2,3,4,5].map(d=>el("button",{cls:d?null:"largo","aria-pressed":String(d===p.dificuldade),
+        title:d?`dificuldade ${d}`:"aprendizagem: para quem acabou de ver a aula e precisa fixar",
+        onclick:()=>{ p.dificuldade=d; p.botoes=autoBotoes(d,p.formato,p.nivel); render(); }},d?String(d):"aprender"))))
     ),
     COM_PACIENTE(p.formato)?null:el("label",{cls:"chk",style:"margin-top:12px"},
       el("input",{type:"checkbox",id:"f-sem-pessoas",checked:p.semPessoas||null,onchange:e=>{ p.semPessoas=e.target.checked; }}),
@@ -1595,7 +1618,8 @@ function vMontar(){
   );
 
   const botoes=el("section",{cls:"card"},
-    el("div",{cls:"eyebrow",txt:`botões no alto — dificuldade ${p.dificuldade} pede ${p.dificuldade===5?"5 ou mais":quantos(p.dificuldade)}`}),
+    el("div",{cls:"eyebrow",txt:p.dificuldade===0?"botões no alto — a aprendizagem não pede nenhum":`botões no alto — dificuldade ${p.dificuldade} pede ${p.dificuldade===5?"5 ou mais":quantos(p.dificuldade)}`}),
+    p.dificuldade===0?el("div",{cls:"alerta ok",style:"margin-top:10px"},el("b",{txt:"Nível de aprendizagem. "}),"Para quem acabou de ver a aula e precisa fixar. A questão cobra só as ideias centrais do tema, uma por item, em degraus: o que é, como ou por que acontece, e uma aplicação direta. O enunciado pode dar o contexto, sem exceção, distrator ou pegadinha. A explicação do livro, bem dada, vale nota máxima, e a correção aceita a ideia certa dita com as suas palavras."):null,
     el("p",{cls:"hint",style:"margin:8px 0 12px"},"Dificuldade é combinação de botões, não adjetivo. Clique para subir ou descer cada um. O que fica no baixo também vai para o modelo, para a questão não sair mais difícil do que você pediu."),
     el("div",{cls:"botoes"},...pool.map(b=>{
       const on=p.botoes.includes(b.n), ok=permitido(b,p.nivel);
@@ -1606,7 +1630,7 @@ function vMontar(){
         el("small",{txt:on?"alto · "+b.a:"baixo · "+b.b}));
     })),
     ...avisos.map(a=>el("div",{cls:"alerta",style:"margin-top:10px"},a)),
-    avisos.length?null:el("div",{cls:"alerta ok",style:"margin-top:10px"},"Combinação coerente com a tabela de dificuldade.")
+    (avisos.length||p.dificuldade===0)?null:el("div",{cls:"alerta ok",style:"margin-top:10px"},"Combinação coerente com a tabela de dificuldade.")
   );
 
   const V=VELOCIDADES[S.velocidade], M=motor(), n=S.quantidade, escrita=n===1?1:2, total=escrita+n*(V.c-1);
@@ -1650,6 +1674,7 @@ function vMontar(){
             ["Forte menos mediano abaixo de 2 (dificuldade até 3) ou de 3 (4 e 5)","aumentar o peso do raciocínio"],
             ["Qualquer nota do revisor abaixo de 4","conserto pontual"],
             ["Nenhum dos acima","aprovar"]].map(([a,b])=>el("tr",{},el("td",{txt:a}),el("td",{txt:b}))))),
+        el("p",{cls:"hint tight",style:"margin-top:10px"},"No nível de aprendizagem, as linhas do decoreba e da discriminação não se aplicam: ali a explicação do livro vale nota máxima e o objetivo é fixar, não separar candidatos. O revisor passa a reprovar o contrário, a questão difícil demais."),
         el("p",{cls:"hint tight",style:"margin-top:10px"},"No modo Seguro, as quatro linhas que dependem dos candidatos simulados não se aplicam: sem as três provas não há nota de forte nem discriminação, e quem decide é o revisor. ",
           el("b",{txt:"Reprovar não refaz nada sozinho:"})," a questão continua na tela com o motivo escrito, e o conserto é um botão que reescreve só os blocos apontados."))),
     el("details",{id:"d-prompt"},el("summary",{txt:"prompt único, para rodar numa conversa"}),
@@ -1741,14 +1766,14 @@ function cabecalho(q,pr){
   return el("section",{cls:"card"},
     el("div",{cls:"cab"},
       el("div",{cls:"cab-t"},
-        el("div",{cls:"kicker",txt:`${p.nivel} · ${p.area} · ${p.formato}${COM_PACIENTE(p.formato)?" · "+p.cenario:""}${diretaOn(p)?" · sem caso clínico":""} · dificuldade ${p.dificuldade}`}),
+        el("div",{cls:"kicker",txt:`${p.nivel} · ${p.area} · ${p.formato}${COM_PACIENTE(p.formato)?" · "+p.cenario:""}${diretaOn(p)?" · sem caso clínico":""} · ${rotuloDif(p.dificuldade)}`}),
         el("h2",{txt:p.tema}),
         el("div",{cls:"hint tight",style:"margin-top:4px",txt:(p.botoes||[]).map(b=>"↑ "+b).join("  ")})),
       el("div",{id:"val-carimbo"})),
     el("div",{id:"vivo"}),
     el("div",{cls:"acoes barra-acoes"},
       el("button",{cls:"go",id:"dl-q",disabled:pronto?null:true,
-        onclick:()=>baixarArquivo(`${slug(p.tema)}-d${p.dificuldade}.txt`,txtPacote([q],`${p.tema} · ${p.nivel}`),"dl-q")},"Baixar TXT"),
+        onclick:()=>baixarArquivo(`${slug(p.tema)}-${tagDif(p.dificuldade)}.txt`,txtPacote([q],`${p.tema} · ${p.nivel}`),"dl-q")},"Baixar TXT"),
       el("button",{cls:"ghost",disabled:pronto?null:true,onclick:e=>copiar(txtPacote([q],`${p.tema} · ${p.nivel}`),e.target)},"Copiar TXT"),
       el("span",{cls:"sep"}),
       (pronto&&!q.exemplo&&_db&&S.podeEscrever)?el("button",{cls:"ghost",disabled:noBanco||null,onclick:()=>guardarNoBanco(q)},noBanco?"No banco":"Guardar no banco"):null,
@@ -1826,7 +1851,7 @@ function blocoPreceptor(prec){
     (!achados.length&&prec.o_que_mudar)?el("p",{cls:"hint tight",style:"margin-top:8px"},el("b",{txt:"O que mudar: "}),prec.o_que_mudar):null);
 }
 function tabelaValidacao(q){
-  const v=q.validacao, lim=q.params.dificuldade>=4?3:2, det=v.detalhe||{};
+  const v=q.validacao, lim=q.params.dificuldade>=4?3:2, det=v.detalhe||{}, apr=q.params.dificuldade===0;
   const linha=(r,k)=>el("tr",{},el("td",{},r,det[k]&&det[k].faltou?el("span",{cls:"hint tight",style:"display:block",txt:"faltou: "+det[k].faltou}):null),el("td",{cls:"num",txt:fmt(v.notas[k])}));
   return el("div",{style:"margin-top:14px"},
     el("div",{cls:"eyebrow",txt:"candidatos simulados"}),
@@ -1834,7 +1859,7 @@ function tabelaValidacao(q){
       el("tr",{},el("th",{txt:"perfil"}),el("th",{cls:"num",txt:"nota /10"})),
       linha("residente forte","forte"),linha("interno mediano","mediano"),linha("decoreba","decoreba")),
     el("div",{cls:"acoes",style:"margin-top:10px"},
-      el("span",{cls:"tag"+(v.discriminacao!=null&&v.discriminacao>=lim?" ac":" gv"),txt:`discriminação ${fmt(v.discriminacao)} · mínimo ${lim}`}),
+      el("span",{cls:"tag"+(apr?"":(v.discriminacao!=null&&v.discriminacao>=lim?" ac":" gv")),txt:apr?`discriminação ${fmt(v.discriminacao)} · não conta na aprendizagem`:`discriminação ${fmt(v.discriminacao)} · mínimo ${lim}`}),
       el("div",{cls:"barra",style:"max-width:14rem"},el("i",{style:`width:${Math.max(0,Math.min(100,(v.discriminacao||0)/5*100))}%`}))),
     v.preceptor?blocoPreceptor(v.preceptor):null);
 }
@@ -1983,7 +2008,7 @@ function blocoEspelho(q,pr){
           n.botoes_aplicados.map(b=>`${b.botao} — ${b.onde_aparece}`).join(" · ")):null)),
     q.gerando?null:el("div",{cls:"acoes",style:"margin-top:14px"},
       el("button",{cls:"ghost sm",onclick:e=>copiar(markdownQuestao(q),e.target)},"Copiar Markdown"),
-      el("button",{cls:"ghost sm",id:"dl-md",onclick:()=>baixarArquivo(`${slug(q.params.tema)}-d${q.params.dificuldade}.md`,markdownQuestao(q),"dl-md")},"Baixar .md")));
+      el("button",{cls:"ghost sm",id:"dl-md",onclick:()=>baixarArquivo(`${slug(q.params.tema)}-${tagDif(q.params.dificuldade)}.md`,markdownQuestao(q),"dl-md")},"Baixar .md")));
 }
 
 /* ── TXT: texto puro em 78 colunas, prova primeiro e espelho no fim ─── */
@@ -2007,7 +2032,7 @@ function txtProva(q,n){
   const L=[];
   if(q.exemplo) L.push("[EXEMPLO QUE ACOMPANHA A PÁGINA — não foi gerado pelos seus parâmetros]","");
   L.push(`QUESTÃO ${n||1} — ${String(q.params.tema||"").toUpperCase()}`,
-    `${q.params.nivel} · ${q.params.area} · ${q.params.formato}${COM_PACIENTE(q.params.formato)?" · "+q.params.cenario:""} · dificuldade ${q.params.dificuldade}`,"");
+    `${q.params.nivel} · ${q.params.area} · ${q.params.formato}${COM_PACIENTE(q.params.formato)?" · "+q.params.cenario:""} · ${rotuloDif(q.params.dificuldade)}`,"");
   const ms=q.enunciado.momentos||[];
   for(const m of ms){
     if(ms.length>1)L.push(`[MOMENTO ${m.momento}]`);
@@ -2054,7 +2079,7 @@ async function baixarArquivo(nome,conteudo,btnId){
 }
 function markdownQuestao(q){
   const esp=q.nucleo.espelho||{itens:[]}, n=q.nucleo, ref=n.referencia||((esp.itens||[])[0]||{}).referencia;
-  return `# ${q.params.tema} — ${q.params.formato} (dificuldade ${q.params.dificuldade})
+  return `# ${q.params.tema} — ${q.params.formato} (${rotuloDif(q.params.dificuldade)})
 
 > ${q.params.nivel} · ${q.params.area}${COM_PACIENTE(q.params.formato)?" · "+q.params.cenario:""} · botões no alto: ${(q.params.botoes||[]).join(", ")}
 > veredito: ${(q.veredito||{}).v||"SEM CARIMBO"} — ${(q.veredito||{}).por||""}
@@ -2105,7 +2130,7 @@ function vPainel(){
         el("span",{cls:"v",txt:fmt(a.med)}))))));
   }
   if(P.escada) out.push(el("section",{cls:"card"},el("div",{cls:"alerta ok"},
-    `Escada: duas notas ${P.escada.dir==="sobe"?"de 8 ou mais":"abaixo de 5"} em ${P.escada.tema} (${P.escada.nivel}). A próxima vai para dificuldade ${Math.min(5,Math.max(1,P.escada.de+(P.escada.dir==="sobe"?1:-1)))}.`)));
+    `Escada: duas notas ${P.escada.dir==="sobe"?"de 8 ou mais":"abaixo de 5"} em ${P.escada.tema} (${P.escada.nivel}). A próxima vai para ${rotuloDif(Math.min(5,Math.max(0,(Number(P.escada.de)||0)+(P.escada.dir==="sobe"?1:-1))))}.`)));
   if(P.graves.length) out.push(el("section",{cls:"card"},
     el("div",{cls:"eyebrow",txt:"repescagem de erro grave"}),
     el("p",{cls:"hint tight",style:"margin-top:8px"},"Cada erro grave volta duas vezes. A repescagem fecha quando você entrega outra questão do mesmo tema, depois da data, sem erro grave."),
@@ -2120,7 +2145,7 @@ function vPainel(){
     S.historico.length?el("details",{id:"d-hist",style:"margin-top:14px"},el("summary",{txt:"histórico"}),
       el("div",{cls:"body rolavel"},el("table",{cls:"val"},
         el("tr",{},el("th",{txt:"data"}),el("th",{txt:"tema"}),el("th",{cls:"num",txt:"nota"}),el("th",{cls:"num",txt:"reescrita"})),
-        ...S.historico.slice(0,25).map(h=>el("tr",{},el("td",{cls:"mono",txt:h.criado}),el("td",{txt:`${h.tema} · d${h.dificuldade}`}),
+        ...S.historico.slice(0,25).map(h=>el("tr",{},el("td",{cls:"mono",txt:h.criado}),el("td",{txt:`${h.tema} · ${tagDif(h.dificuldade)}`}),
           el("td",{cls:"num",txt:fmt(h.nota)}),el("td",{cls:"num",txt:fmt(h.reescrita_nota)})))))):null,
     (S.dbPronto&&!_db)?el("div",{cls:"alerta",style:"margin-top:12px"},"Sem armazenamento nesta visualização: o painel vale só para esta visita."):null));
   return out;
@@ -2138,10 +2163,10 @@ function vBanco(){
       el("span",{cls:"hint tight",txt:"todas as questões primeiro, os espelhos no fim do arquivo."})),
     el("div",{cls:"lista"},...todas.map(q=>el("div",{cls:"reg"},
       el("span",{cls:"carimbo mini","data-v":(q.veredito||{}).v||"SEM CARIMBO",txt:((q.veredito||{}).v||"SEM CARIMBO").toLowerCase()}),
-      el("span",{cls:"t"},q.params.tema,el("span",{cls:"mot",txt:`${q.params.nivel} · ${q.params.area} · ${q.params.formato} · d${q.params.dificuldade}`})),
+      el("span",{cls:"t"},q.params.tema,el("span",{cls:"mot",txt:`${q.params.nivel} · ${q.params.area} · ${q.params.formato} · ${tagDif(q.params.dificuldade)}`})),
       el("span",{cls:"d",txt:q.criado}),
       el("button",{cls:"ghost sm",id:"dl-q-"+q.id,
-        onclick:()=>baixarArquivo(`${slug(q.params.tema)}-d${q.params.dificuldade}.txt`,txtPacote([q],q.params.tema),"dl-q-"+q.id)},"TXT"),
+        onclick:()=>baixarArquivo(`${slug(q.params.tema)}-${tagDif(q.params.dificuldade)}.txt`,txtPacote([q],q.params.tema),"dl-q-"+q.id)},"TXT"),
       el("button",{cls:"ghost sm",onclick:()=>abrirQuestao(q)},"Abrir"),
       (q.exemplo||!S.podeEscrever)?null:el("button",{cls:"ghost sm",onclick:()=>removerDoBanco(q.id)},S.remover===q.id?"Confirmar remoção":"Remover")))))];
 }
