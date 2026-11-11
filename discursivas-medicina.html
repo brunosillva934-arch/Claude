@@ -301,8 +301,13 @@ function obrigatorios(d,formato){
   return [];
 }
 function permitido(bot,nivel){ return ORDEM_MIN(bot.min) <= ORDEM_NIVEL(nivel); }
+/* dificuldade 1: um degrau acima da aprendizagem. Sobe o botão mais leve que faz sentido no formato —
+   ler um dado bruto num caso típico, ou aplicar o mecanismo a uma situação nova — e não o mais pesado da lista. */
+const BOTAO_LEVE={"caso clínico":"Interpretação","caso evolutivo":"Interpretação","mecanismo":"Previsão","comparação":"Comparação",
+  "interpretação de dado":"Interpretação","previsão":"Previsão","integração":"Integração"};
 function autoBotoes(d,formato,nivel){
   const pool = poolDe(formato).filter(b=>permitido(b,nivel));
+  if(d===1){ const b=pool.find(x=>x.n===BOTAO_LEVE[formato])||pool.find(x=>x.n==="Interpretação")||pool[0]; return b?[b.n]:[]; }
   const alvo = Math.min(quantos(d), pool.length);
   const sel = [];
   for(const grupo of obrigatorios(d,formato)){
@@ -803,6 +808,39 @@ SAÍDA — só objetos JSON, um por linha:
 (um "cor" por item, na ordem; em "q", um par [pontos, motivo] por quesito)
 {"t":"fim","paciente":"${pac?"o que aconteceria com este paciente se a resposta do aluno virasse conduta: concreto e plausível, em 2 a 4 frases; se estava certa, diga por quê":"a que conduta errada os erros do aluno levariam na prática, pela ponte clínica, em 2 a 4 frases; se acertou, diga o que isso garante ao paciente"}","fraco":"letra do item que mais vale reescrever","diverg":"se o aluno leu o enunciado de outro jeito plausível, qual; senão vazio"}`;
 }
+/* o recurso: um segundo examinador rejulga um item com o argumento do aluno. Chamada curta: só o item contestado viaja. */
+function pRecurso(q,pr,item,argumento){
+  const p=q.params, pac=COM_PACIENTE(p.formato), l=item.item, grave=(item.erros_graves_cometidos||[])[0];
+  return `Você é o segundo examinador de uma banca de medicina e julga o recurso de um aluno de ${p.nivel} contra a correção de um item. Julgue de novo, com independência: não defenda o primeiro corretor e não ceda por insistência.
+
+[ENUNCIADO]
+${textoEnunciado(q.enunciado)}
+
+[ESPELHO DO ITEM ${l}]
+${textoEspelho(q.nucleo.espelho,l)}
+
+[RESPOSTA DO ALUNO AO ITEM ${l}]
+${(pr.respostas[l]||"").trim()||"(em branco)"}
+
+[CORREÇÃO CONTESTADA]
+${item.quesitos.map((x,k)=>`q${k+1}: ${num(x.pontos_obtidos)} de ${num(x.pontos_max)}${x.motivo?` — ${x.motivo}`:""}`).join("\n")}${grave?`\nerro grave apontado, que zerou o item: ${grave}`:""}
+
+[ARGUMENTO DO ALUNO]
+${argumento}
+
+REGRAS DO RECURSO
+- Vale o que está escrito na resposta. O argumento serve para mostrar onde a resposta cumpre o quesito, ou por que uma resposta correta não estava prevista. Conteúdo novo, que só aparece no argumento, não pontua.
+- Resposta correta e equivalente que o espelho não previa pontua. Se o espelho estiver errado ou incompleto, diga em "espelho" o que precisa mudar nele.
+- O erro grave só se mantém se a resposta de fato o comete.
+- Em "porque", explique a decisão sem entregar a resposta que ainda falta.
+
+REGRAS DE CORREÇÃO
+${REGRAS_CORRECAO(p,pac)}
+
+SAÍDA — só objetos JSON, um por linha:
+{"t":"cor","i":"${l}","q":[[1.5,""],[0.5,"motivo"]],"grave":"","fora":"","dica":""}
+{"t":"rec","porque":"a razão da decisão, em 1 ou 2 frases","espelho":"o que o espelho precisa mudar, ou vazio"}`;
+}
 /* a reescrita e o fecho, juntos. A resposta modelo não é pedida: a página mostra a do espelho. */
 function pReescrita(q,pr){
   const p=q.params, pac=COM_PACIENTE(p.formato), l=pr.reescrita.item;
@@ -851,7 +889,7 @@ Se eu responder só parte, use os padrões e siga. Na faculdade (básico, clíni
 == 2. DIFICULDADE = NÚMERO DE BOTÕES NO ALTO (1 a 5) ==
 Com paciente: apresentação atípica · diferencial entre diagnósticos de condutas opostas · modificador de conduta · prioridade e tempo · ruído · dado bruto para interpretar · recurso limitado · evolução depois da conduta · dimensão humana.
 Sem paciente: 4 ou mais elos causais · conceitos vizinhos · previsão de situação nova · achado contraintuitivo · integração de disciplinas · dado bruto.
-A partir de 3, um botão central: diferencial ou modificador de conduta (com paciente); elos causais ou comparação (sem paciente). Os botões que não subiram ficam no baixo.
+No 1, suba o botão mais leve: ler um dado bruto num caso típico, ou aplicar o mecanismo a uma situação nova. A partir de 3, um botão central: diferencial ou modificador de conduta (com paciente); elos causais ou comparação (sem paciente). Os botões que não subiram ficam no baixo.
 APRENDIZAGEM = nenhum botão no alto, para fixar a aula: só as ideias centrais do tema, uma por item, em degraus (o que é; como ou por que acontece, em 1 ou 2 elos; uma aplicação direta). O enunciado pode dar o contexto, e eu explico com as minhas palavras. Sem exceção, distrator ou pegadinha; a explicação do livro, bem dada, vale nota máxima, e o teste do decoreba não se aplica.
 
 == 3. COMO ESCREVER (faça tudo antes de mostrar; não mostre as etapas) ==
@@ -963,7 +1001,7 @@ function notaDaCorrecao(c){
   let o=0,m=0; for(const i of c.itens||[]) for(const q of i.quesitos||[]){ o+=Number(q.pontos_obtidos)||0; m+=Number(q.pontos_max)||0; }
   return m?Math.round(o/m*1000)/100:(typeof c.nota_total==="number"?c.nota_total:null);
 }
-const TRANSITORIOS=new Set(["gerando","conferindo","consertando","abortConf","parcial","vez","temPlano","entregando","falha","material"]);
+const TRANSITORIOS=new Set(["gerando","conferindo","consertando","abortConf","parcial","vez","temPlano","entregando","falha","material","recursoAberto","recursoEnviando","falhaRecurso"]);
 const limpa=o=>JSON.parse(JSON.stringify(o,(k,v)=>TRANSITORIOS.has(k)?undefined:v));
 function embaralhar(a){ const b=[...a]; for(let i=b.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [b[i],b[j]]=[b[j],b[i]]; } return b; }
 const guardar=(k,v)=>{ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} };
@@ -1331,6 +1369,7 @@ async function conferir(q,{modo="seguro",trio=null}={}){
 function defeitos(q){
   const L=[], v=q.veredito||{}, prec=q.validacao&&q.validacao.preceptor;
   for(const a of q.lint||[]) if(a.conserto) L.push(a.conserto);
+  for(const f of q.falhasEspelho||[]) L.push(`[espelho, item ${f.item}] Falha apontada no recurso de um aluno: ${f.texto}`);
   if((v.v==="REESCREVER"||v.v==="DESCARTAR")&&v.instr) L.push(v.instr);
   for(const a of (prec&&prec.achados)||[]) L.push(`${a.criterio?`[${a.criterio}] `:""}${a.defeito}${a.conserto?` → ${a.conserto}`:""}`);
   return L;
@@ -1350,7 +1389,7 @@ async function consertar(){
     let mudou=0, fim=null;
     for(const r of regs){ if(r.t==="fim"||r.mudei){ fim=r; continue; } if(["plano","mom","esp"].includes(r.t)){ aplicar(q,r); mudou++; } }
     if(!mudou) throw {code:"gen",message:"o conserto não devolveu nenhum bloco."};
-    q.reescalado=null; finalizar(q);
+    q.reescalado=null; q.falhasEspelho=[]; finalizar(q);
     q.ajuste=limpo(fim&&fim.mudei)||`${mudou} ${mudou===1?"bloco reescrito":"blocos reescritos"}`;
     q.consertos=(q.consertos||0)+1;
     const mesmoEnunciado=textoEnunciado(q.enunciado)===antes, trio=mesmoEnunciado&&q.validacao&&q.validacao.trio||null, modo=(q.validacao&&q.validacao.modo)||S.velocidade;
@@ -1412,6 +1451,46 @@ async function entregar(){
     pr.correcao=pr.entregue?pr.correcao:null;
     pr.falha=["not_granted","sampling_disabled"].includes(e&&e.code)?"O Claude não está liberado nesta visualização. Abra o espelho abaixo e corrija você mesmo, quesito a quesito.":erroLegivel(e);
   }finally{ pr.entregando=false; render(); guardarMesa(); }
+}
+/* se o item da reescrita ficou com nota cheia depois de um recurso, o desafio muda de alvo ou deixa de existir */
+function reverReescrita(pr){
+  if(pr.fase!==1||!pr.reescrita||pr.reescrita.correcao)return;
+  const perdas=pr.correcao.itens.map(i=>({i:i.item,...pontosDoItem(i)})).filter(x=>x.m-x.o>0.001);
+  if(!perdas.length){ pr.fase=2; pr.reescrita=null; S.espelhoAberto=true; return; }
+  if(!perdas.some(x=>x.i===pr.reescrita.item)) pr.reescrita={item:perdas.sort((a,b)=>(b.m-b.o)-(a.m-a.o))[0].i,texto:"",correcao:null};
+}
+/* recurso: um por item; a nota pode subir, nunca descer */
+async function enviarRecurso(l){
+  const q=S.questao, pr=S.prova; if(!q||!pr||!pr.correcao||pr.recursoEnviando)return;
+  const k=pr.correcao.itens.findIndex(x=>x.item===l), velho=pr.correcao.itens[k]; if(!velho||velho.recurso)return;
+  const arg=((pr.recursoTexto||{})[l]||"").trim();
+  if(arg.length<15){ pr.falhaRecurso="Escreva o seu argumento: onde a sua resposta cumpre o quesito, ou por que ela também está certa."; render(); return; }
+  pr.recursoEnviando=l; pr.falhaRecurso=""; render();
+  try{
+    const regs=await pedirRegistros(pRecurso(q,pr,velho,arg),{tier:motor().corrige,rotulo:"recurso do item "+l});
+    const rc=regs.find(r=>r.t==="cor"||Array.isArray(r.q)), rec=regs.find(r=>r.t==="rec"||r.porque!=null)||{};
+    const novo=rc&&itemCorrigido(q,{...rc,i:l});
+    if(!novo) throw {code:"gen",message:"o recurso voltou sem a nova correção."};
+    const tinhaGrave=(velho.erros_graves_cometidos||[]).length>0, mantemGrave=tinhaGrave&&(novo.erros_graves_cometidos||[]).length>0;
+    const quesitos=velho.quesitos.map((x,j)=>{
+      const n=novo.quesitos[j]; if(mantemGrave||!n)return x;
+      const sobe=tinhaGrave||n.pontos_obtidos>x.pontos_obtidos, o=sobe?n.pontos_obtidos:x.pontos_obtidos;
+      return {...x,pontos_obtidos:o,resultado:o>=x.pontos_max&&x.pontos_max>0?"integral":o>0?"parcial":"zero",motivo:sobe?n.motivo:x.motivo};
+    });
+    const antes=pontosDoItem(velho).o, falha=limpo(rec.espelho);
+    const item={...velho,quesitos,erros_graves_cometidos:mantemGrave?velho.erros_graves_cometidos:[],
+      fora_do_espelho:velho.fora_do_espelho||novo.fora_do_espelho,fora_do_espelho_motivo:velho.fora_do_espelho_motivo||novo.fora_do_espelho_motivo};
+    const depois=pontosDoItem(item);
+    if(depois.m-depois.o<=0.001) item.dado_do_caso_ignorado="";
+    item.recurso={argumento:arg,antes,depois:depois.o,porque:limpo(rec.porque),espelho:falha};
+    pr.correcao.itens[k]=item; pr.correcao.nota_total=notaDaCorrecao(pr.correcao);
+    if(falha){
+      q.falhasEspelho=[...(q.falhasEspelho||[]).filter(f=>f.item!==l),{item:l,texto:falha}];
+      if(S.banco.some(x=>x.id===q.id)) guardarNoBanco(q,true);
+    }
+    reverReescrita(pr); pr.recursoAberto=null; registrar();
+  }catch(e){ pr.falhaRecurso=erroLegivel(e); }
+  finally{ pr.recursoEnviando=null; render(); guardarMesa(); }
 }
 async function entregarReescrita(){
   const q=S.questao, pr=S.prova; if(!q||!pr||!pr.reescrita||pr.entregando)return;
@@ -1896,7 +1975,31 @@ function pintarValidacao(){
     for(const id of abertos){ const d=document.getElementById(id); if(d)d.open=true; } }
   pintarEsteira();
 }
-function cartaoItemCorrigido(i,revela){
+function blocoRecurso(i,pr,revela){
+  const {o,m}=pontosDoItem(i);
+  if(i.recurso){
+    const r=i.recurso, ganhou=r.depois>r.antes+0.001;
+    return el("div",{cls:"alerta"+(ganhou?" ok":""),style:"margin-top:8px"},
+      el("b",{txt:ganhou?`Recurso acolhido${m-o>0.001?" em parte":""}: de ${fmt(r.antes)} para ${fmt(r.depois)}. `:"Recurso negado. "}),r.porque||"",
+      r.espelho?el("span",{cls:"hint tight",style:"display:block;margin-top:4px",txt:(revela||m-o<=0.001)?"O espelho ficou marcado para conserto: "+r.espelho:"O espelho ficou marcado para conserto; o detalhe aparece quando ele abrir."}):null);
+  }
+  if(!pr||!pr.entregue||pr.entregando||m-o<=0.001) return null;
+  if(pr.recursoAberto!==i.item) return el("div",{cls:"acoes",style:"margin-top:8px"},
+    el("button",{cls:"ghost sm",id:"bt-rec-"+i.item,disabled:pr.recursoEnviando?true:null,
+      onclick:()=>{ pr.recursoAberto=i.item; pr.falhaRecurso=""; render(); const t=document.getElementById("rc-"+i.item); if(t)t.focus(); }},"Discordo desta correção"));
+  const enviando=pr.recursoEnviando===i.item;
+  return el("div",{style:"margin-top:10px"},
+    el("label",{cls:"f"},el("span",{txt:`recurso do item ${i.item}`}),
+      el("textarea",{rows:"3",id:"rc-"+i.item,value:(pr.recursoTexto||{})[i.item]||"",disabled:enviando||null,
+        placeholder:"Mostre onde a sua resposta cumpre o quesito, ou por que ela também está certa. O que não estava na resposta não conta.",
+        oninput:e=>{ (pr.recursoTexto||(pr.recursoTexto={}))[i.item]=e.target.value; agendarMesa(); }})),
+    el("div",{cls:"acoes",style:"margin-top:8px"},
+      el("button",{cls:"go",id:"bt-rec-enviar",disabled:enviando||null,onclick:()=>enviarRecurso(i.item)},enviando?"julgando…":"Enviar recurso"),
+      el("button",{cls:"ghost",disabled:enviando||null,onclick:()=>{ pr.recursoAberto=null; render(); }},"Cancelar"),
+      el("span",{cls:"hint tight",txt:"uma chamada curta, um recurso por item. Um segundo examinador rejulga o item: a nota pode subir, nunca descer."})),
+    pr.falhaRecurso?el("div",{cls:"alerta bad",style:"margin-top:8px"},pr.falhaRecurso):null);
+}
+function cartaoItemCorrigido(i,revela,pr){
   const {o,m}=pontosDoItem(i), graves=i.erros_graves_cometidos||[];
   return el("div",{cls:"esp-item"},
     el("div",{cls:"esp-cab"},
@@ -1911,7 +2014,8 @@ function cartaoItemCorrigido(i,revela){
         x.motivo?el("span",{cls:"mot",txt:x.motivo}):null)))),
     i.dado_do_caso_ignorado?el("div",{cls:"alerta",style:"margin-top:8px"},el("b",{txt:"Pista: "}),i.dado_do_caso_ignorado):null,
     graves.length?el("div",{cls:"alerta bad",style:"margin-top:8px"},el("b",{txt:"Erro grave, item zerado: "}),graves.join(" · ")):null,
-    i.fora_do_espelho?el("div",{cls:"alerta",style:"margin-top:8px"},"Aceito fora do espelho: "+i.fora_do_espelho_motivo+". O espelho talvez precise prever essa resposta."):null);
+    i.fora_do_espelho?el("div",{cls:"alerta",style:"margin-top:8px"},"Aceito fora do espelho: "+i.fora_do_espelho_motivo+". O espelho talvez precise prever essa resposta."):null,
+    blocoRecurso(i,pr,revela));
 }
 function blocoCorrecao(q,pr){
   const out=[], cor=pr.correcao, nota=notaDaCorrecao(cor), revela=S.espelhoAberto, pac=COM_PACIENTE(q.params.formato);
@@ -1921,7 +2025,7 @@ function blocoCorrecao(q,pr){
       el("div",{cls:"nota"},fmt(nota),el("small",{txt:" /10"})),
       el("div",{cls:"barra"},el("i",{style:`width:${Math.max(0,Math.min(100,(nota||0)*10))}%`}))),
     cor.interpretacao_divergente?el("div",{cls:"alerta",style:"margin-top:10px"},"Você leu o enunciado de outro jeito: "+cor.interpretacao_divergente):null,
-    el("div",{style:"margin-top:14px"},...(cor.itens||[]).map(i=>cartaoItemCorrigido(i,revela)))));
+    el("div",{style:"margin-top:14px"},...(cor.itens||[]).map(i=>cartaoItemCorrigido(i,revela,pr)))));
   if(cor.paciente) out.push(el("section",{cls:"card"},
     el("div",{cls:"eyebrow",txt:pac?"se a sua resposta virasse conduta":"aonde esse raciocínio levaria"}),
     el("p",{cls:"feedback",style:"margin-top:10px",txt:cor.paciente})));
@@ -1987,6 +2091,7 @@ function blocoEspelho(q,pr){
         el("span",{cls:"tag ac",txt:i.etapa_raciocinio||"—"}),
         el("span",{cls:"hint tight",txt:i.pergunta_alvo||""})),
       i.resposta_nota_maxima?el("p",{cls:"prova",style:"margin-top:8px;font-size:15px",txt:i.resposta_nota_maxima}):null,
+      ...(q.falhasEspelho||[]).filter(f=>f.item===i.item).map(f=>el("div",{cls:"alerta",style:"margin-top:8px"},el("b",{txt:"Falha apontada em recurso: "}),f.texto)),
       el("ul",{cls:"q"},...(i.quesitos||[]).map(x=>el("li",{},
         el("span",{cls:"pts",txt:fmt(x.pontos)}),
         el("span",{},x.descricao||"",x.exige_justificativa?el("span",{cls:"mot",txt:"exige justificativa com dados do caso; sem ela, no máximo metade"}):null)))),
