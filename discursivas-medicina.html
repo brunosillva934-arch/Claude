@@ -221,6 +221,16 @@ details summary{cursor:pointer;font-family:var(--mono);font-size:11px;letter-spa
 details[open] summary{color:var(--accent)}
 details .body{padding-top:10px}
 .off{opacity:.55}
+/* ── árvore do tema ──────────────────────────── */
+.arvore{display:flex;flex-direction:column;margin-top:10px;border-top:1px solid var(--rule)}
+.no{display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:5px 0 5px calc(var(--prof,0)*18px);border-bottom:1px dotted var(--rule);min-width:0}
+.no .tog{flex:none;width:22px;height:24px;border:0;background:none;color:var(--ink-3);padding:0;font-size:12px}
+.no .no-t{flex:1;min-width:9rem;text-align:left;background:none;border:1px solid transparent;border-radius:3px;padding:3px 7px;font-size:13.5px;line-height:1.35}
+.no .no-t:hover{border-color:var(--rule-strong)}
+.no .no-t[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-ink);font-weight:500}
+.no[data-sel="h"] .no-t{color:var(--accent-ink)}
+.no .conta{min-width:2.6em;text-align:right}
+.no .conta[data-z="1"]{color:var(--rule-strong)}
 @media (prefers-reduced-motion:reduce){.et .t,.vivo .pt,.caret,.carimbo{animation:none!important}}
 </style>
 
@@ -652,6 +662,9 @@ function blocoParams(p,ctx,n){
   const altos=pool.filter(b=>p.botoes.includes(b.n)), baixos=pool.filter(b=>!p.botoes.includes(b.n));
   const foco=(p.foco||"").trim(), mat=p.fonte==="curso"?String(p.material||"").replace(/[ \t]+/g," ").replace(/\n{3,}/g,"\n\n").trim().slice(0,14000):"";
   const L=[`- Nível: ${p.nivel} — ${regraNivel(p)}`,`- Área e tema: ${p.area} · ${p.tema}`];
+  const nos=(ctx&&ctx.nos||[]).filter(Boolean);
+  if(nos.length) L.push(n>1?`- Assunto de cada questão, nesta ordem. Cada questão fica dentro do seu assunto e não invade os dos outros: ${nos.map((c,i)=>`${i+1}) ${c}`).join("; ")}`
+                         :`- Assunto desta questão: ${nos[0]}. A questão fica dentro dele.`);
   if(foco) L.push(`- Recorte pedido (manda sobre qualquer sugestão): ${foco}`);
   L.push(`- Formato: ${p.formato}${pac?`, cenário ${p.cenario}`:""}${dir?" — sem caso clínico nem prontuário":""}`);
   L.push(`- ${p.itens===1?"1 item":`${p.itens} itens`}; cada resposta em até ${p.limite} linhas (1 linha ≈ 12 palavras)`);
@@ -663,8 +676,8 @@ function blocoParams(p,ctx,n){
   if(!pac&&p.semPessoas) L.push('- Sem pessoas no enunciado: nada de paciente, indivíduo, idade ou sexo. Apresente os dados como preparação experimental, amostra, curva, traçado ou valores de bancada ("em cardiomiócitos isolados", "a curva abaixo"). A ponte clínica continua obrigatória, mas só no plano.');
   if(mat) L.push(`- MATERIAL DO CURSO — fonte de verdade desta questão, acima de qualquer diretriz. Cubra só o que ele sustenta, no recorte e na ênfase dele. Se ele contrariar a diretriz vigente, siga o material e registre a divergência em "conferir". Em "ref", cite: ${p.referencia||"material do curso"}.\n"""\n${mat}\n"""`);
   else L.push(`- Fonte: ${p.referencia||(p.nivel==="básico"?"o livro-texto de referência da disciplina; em tema clínico, a diretriz brasileira vigente mais aceita":"a diretriz brasileira vigente mais aceita; sem diretriz brasileira, a internacional de referência")}`);
-  if(ctx&&ctx.evitar&&ctx.evitar.length) L.push(`- Já gerados neste tema; mude ${pac?"o paciente":"a situação"} e o ângulo, sem sair do que é central no tema (melhor repetir um ponto central com outra situação do que ir para um detalhe periférico): ${ctx.evitar.map(s=>`«${s}»`).join("; ")}`);
-  if(ctx&&ctx.angulos&&ctx.angulos.length) L.push(`- Ângulos sugeridos, um por questão e nesta ordem${foco?", dentro do recorte pedido":""} (adapte ao formato): ${ctx.angulos.slice(0,n).join("; ")}`);
+  if(ctx&&ctx.evitar&&ctx.evitar.length) L.push(`- Já cobrado em questões anteriores ${nos.length?"destes assuntos":"deste tema"}: ${ctx.evitar.map(x=>`«${x}»`).join("; ")}. Não repita nenhum desses pontos, nem com outra roupagem: cobre outros pontos ${nos.length?"do mesmo assunto":"do tema, os seguintes em importância"}, com outra situação.`);
+  if(!nos.length&&ctx&&ctx.angulos&&ctx.angulos.length) L.push(`- Ângulos sugeridos, um por questão e nesta ordem${foco?", dentro do recorte pedido":""} (adapte ao formato): ${ctx.angulos.slice(0,n).join("; ")}`);
   return L.join("\n");
 }
 
@@ -742,7 +755,7 @@ function pGerar(p,n,ctx){
 }
 
 function linhaParams(p){
-  return `${p.nivel} · ${p.area} · ${p.tema} · ${p.formato}${COM_PACIENTE(p.formato)?" · "+p.cenario:""}${diretaOn(p)?" · sem caso clínico nem prontuário":""} · ${rotuloDif(p.dificuldade)} · botões no alto: ${(p.botoes||[]).join(", ")||"nenhum"} · até ${p.limite} linhas por resposta`;
+  return `${p.nivel} · ${p.area} · ${p.tema} · ${p.formato}${COM_PACIENTE(p.formato)?" · "+p.cenario:""}${p.no&&p.no.caminho?` · assunto: ${p.no.caminho}`:""}${diretaOn(p)?" · sem caso clínico nem prontuário":""} · ${rotuloDif(p.dificuldade)} · botões no alto: ${(p.botoes||[]).join(", ")||"nenhum"} · até ${p.limite} linhas por resposta`;
 }
 function blocoQuestao(q){
   return `[PLANO — o aluno não vê]\n${textoNucleo(q)}\n\n[ENUNCIADO]\n${textoEnunciado(q.enunciado)}\n\n[ESPELHO]\n${textoEspelho(q.nucleo.espelho)}`;
@@ -1011,6 +1024,7 @@ const S={
   esteira:[], rodando:false, abort:null, t0:0, log:[],
   questao:null, prova:null, espelhoAberto:false, remover:null,
   historico:[], banco:[], dbPronto:false, podeEscrever:true, sampleOk:null,
+  arvores:{}, arvoreOcupado:null, arvoreAdd:null, arvoreErro:"",
   uso:{n:0,ent:0,sai:0,itens:[]}
 };
 S.params.botoes=autoBotoes(3,S.params.formato,S.params.nivel);
@@ -1067,21 +1081,111 @@ const ler=(k,pad)=>{ try{ const v=JSON.parse(localStorage.getItem(k)||"null"); r
 
 /* variedade: o que já saiu neste tema viaja em uma linha, para o modelo não repetir o mesmo paciente */
 const chaveTema=t=>semAcento(t).replace(/[^a-z0-9]+/g," ").trim();
-function resumoCurto(q){
-  const n=q.nucleo, base=(n.paciente_oculto&&n.paciente_oculto.resumo)||Object.values(n.alvos||{}).map(a=>a.alvo).filter(Boolean).join("; ")||"";
-  return base.split(/\s+/).slice(0,22).join(" ");
+/* o que uma questão cobrou, em uma linha: é isso que as próximas não podem repetir */
+function pontosDe(q){
+  const n=q.nucleo, al=Object.values(n.alvos||{}).map(a=>a.alvo).filter(Boolean), dx=((n.paciente_oculto&&n.paciente_oculto.diagnosticos)||[])[0];
+  const base=(dx?dx+": ":"")+(al.length?al.join("; "):(n.espelho.itens||[]).map(i=>i.pergunta_alvo).filter(Boolean).join("; ")||(n.paciente_oculto&&n.paciente_oculto.resumo)||"");
+  return base.split(/\s+/).slice(0,28).join(" ");
 }
 function lembrar(q){
-  const s=resumoCurto(q); if(!s)return;
+  const s=pontosDe(q); if(!s)return;
   const o=ler("disc-vistos",{}), k=chaveTema(q.params.tema);
-  o[k]=[...(o[k]||[]).filter(x=>x!==s),s].slice(-6);
+  o[k]=[...(o[k]||[]).filter(x=>x!==s),s].slice(-12);
   const ks=Object.keys(o); if(ks.length>60) delete o[ks[0]];
   guardar("disc-vistos",o);
 }
 function evitarPara(p){
-  const k=chaveTema(p.tema), set=new Set(ler("disc-vistos",{})[k]||[]);
-  for(const q of S.banco) if(chaveTema(q.params.tema)===k){ const s=resumoCurto(q); if(s)set.add(s); }
-  return [...set].slice(-5);
+  const k=chaveTema(p.tema), vistos=ler("disc-vistos",{})[k]||[], antigos=[];
+  for(const q of [...S.banco,...S.lote]) if(q&&!q.gerando&&chaveTema(q.params.tema)===k){ const s=pontosDe(q); if(s&&!vistos.includes(s)&&!antigos.includes(s))antigos.push(s); }
+  /* os mais recentes têm preferência; o que veio do banco e da sessão completa a lista */
+  return [...antigos,...vistos].slice(-8);
+}
+
+/* ══ ÁRVORE DO TEMA — o tema dividido em assuntos, que você aprofunda conforme precisa.
+   Cada questão sai de um assunto, o menos cobrado primeiro: é isso que impede a repetição. ══ */
+const chaveArvore=p=>slug(p.area,40)+"--"+slug(p.tema,80);
+const arvoreDe=p=>((p.tema||"").trim()&&S.arvores[chaveArvore(p)])||null;
+const noDe=(arv,id)=>arv.nos.find(n=>n.id===id)||null;
+const filhosDe=(arv,pai)=>arv.nos.filter(n=>(n.pai||null)===(pai||null));
+function descendentes(arv,id){ const out=[], pilha=[id]; while(pilha.length){ const x=pilha.pop(); for(const f of filhosDe(arv,x)){ out.push(f); pilha.push(f.id); } } return out; }
+function caminhoDe(arv,id){ const partes=[]; let n=noDe(arv,id), guarda=0; while(n&&guarda++<12){ partes.unshift(n.t); n=n.pai?noDe(arv,n.pai):null; } return partes.join(" › "); }
+function folhasDe(arv,id){ const base=id?[noDe(arv,id),...descendentes(arv,id)].filter(Boolean):arv.nos; return base.filter(n=>!arv.nos.some(x=>x.pai===n.id)); }
+const contaNo=(arv,n)=>(n.n||0)+descendentes(arv,n.id).reduce((t,x)=>t+(x.n||0),0);
+function folhasAlvo(arv){
+  const sel=(arv.sel||[]).filter(id=>noDe(arv,id));
+  return sel.length?[...new Set(sel.flatMap(id=>folhasDe(arv,id)))]:folhasDe(arv,null);
+}
+/* n questões: cada uma vai para a folha menos cobrada até ali, contando as desta mesma leva */
+function alvosDaArvore(arv,n){
+  if(!arv||!arv.nos.length)return [];
+  const ordem=arv.nos.map(x=>x.id), fila=folhasAlvo(arv).map(f=>({f,c:f.n||0})), out=[];
+  if(!fila.length)return [];
+  for(let i=0;i<n;i++){ fila.sort((a,b)=>a.c-b.c||ordem.indexOf(a.f.id)-ordem.indexOf(b.f.id)); out.push(fila[0].f); fila[0].c++; }
+  return out;
+}
+const _arvT={}, _arvFila={};
+function salvarArvore(arv){
+  arv.atualizado=Date.now(); guardar("disc-arvores",S.arvores);
+  if(!_db||!S.podeEscrever)return;
+  clearTimeout(_arvT[arv.id]);
+  _arvT[arv.id]=setTimeout(()=>{ const copia=JSON.parse(JSON.stringify(arv));
+    _arvFila[arv.id]=(_arvFila[arv.id]||Promise.resolve()).then(()=>_db.doc("arvores/"+arv.id).set(copia)).catch(()=>{}); },700);
+}
+function pArvore(p,arv,no){
+  const irmaos=no?filhosDe(arv,no.pai).filter(x=>x.id!==no.id).map(x=>x.t):[], ja=filhosDe(arv,no?no.id:null).map(x=>x.t);
+  return `Você organiza o conteúdo de medicina em árvore de assuntos para estudo, como um bom programa de disciplina faria no Brasil.
+
+Área: ${p.area}. Nível do aluno: ${p.nivel}. Tema: ${p.tema}.
+${no?`Subdivida o assunto «${caminhoDe(arv,no.id)}».`:"Divida o tema nos seus assuntos principais."}
+
+REGRAS
+- ${no?"De 3 a 7":"De 6 a 10"} assuntos que, juntos, cobrem ${no?"esse assunto":"o tema"} inteiro, sem sobreposição entre si${irmaos.length?` nem com os assuntos vizinhos (${irmaos.join("; ")})`:""}.
+- Do mais central para o mais periférico. Só o que se cobra em prova neste nível; nada de curiosidade.
+- Cada assunto em até 8 palavras, específico o bastante para render uma questão diferente das dos outros.${ja.length?`\n- Já existem: ${ja.join("; ")}. Não repita nenhum; devolva só os que faltam para cobrir tudo.`:""}
+
+SAÍDA — só um objeto JSON: {"nos":["assunto","assunto"]}`;
+}
+async function montarArvore(noId){
+  if(S.arvoreOcupado)return;
+  const p={...S.params,tema:(S.params.tema||"").trim()}; if(!p.tema)return;
+  const arv=arvoreDe(p)||{id:chaveArvore(p),area:p.area,tema:p.tema,nivel:p.nivel,criado:hoje(),nos:[],sel:[]}, no=noId?noDe(arv,noId):null;
+  S.arvoreOcupado=noId||"raiz"; S.arvoreErro=""; render();
+  try{
+    const regs=await pedirRegistros(pArvore(p,arv,no),{tier:"default",rotulo:no?"aprofundar um assunto":"árvore do tema",cache:false});
+    const bruto=(regs.find(r=>Array.isArray(r.nos))||{}).nos||[];
+    const titulos=bruto.map(x=>limpo(typeof x==="string"?x:(x&&(x.t||x.titulo||x.assunto)))).filter(Boolean);
+    const tem=new Set(filhosDe(arv,noId||null).map(x=>chaveTema(x.t))); let novos=0;
+    for(const t of titulos){ const k=chaveTema(t); if(!k||tem.has(k))continue; tem.add(k);
+      arv.nos.push({id:"n"+(arv.nos.reduce((m,x)=>Math.max(m,Number(String(x.id).slice(1))||0),0)+1),pai:noId||null,t:t.slice(0,110),n:0}); novos++; }
+    if(!novos) throw {code:"gen",message:titulos.length?"não veio nenhum assunto novo.":"a lista de assuntos veio vazia."};
+    if(no)no.f=false;
+    S.arvores[arv.id]=arv; salvarArvore(arv);
+  }catch(e){ S.arvoreErro=erroLegivel(e); }
+  finally{ S.arvoreOcupado=null; render(); }
+}
+function alternarNo(arv,id){ const sel=new Set(arv.sel||[]); if(sel.has(id))sel.delete(id); else sel.add(id); arv.sel=[...sel]; salvarArvore(arv); render(); }
+function removerNo(arv,id){
+  if(S.remover!=="no:"+id){ S.remover="no:"+id; render(); return; }
+  S.remover=null; const fora=new Set([id,...descendentes(arv,id).map(x=>x.id)]);
+  arv.nos=arv.nos.filter(n=>!fora.has(n.id)); arv.sel=(arv.sel||[]).filter(x=>!fora.has(x));
+  salvarArvore(arv); render();
+}
+function adicionarNo(arv,pai,texto){
+  const t=limpo(texto); if(!t)return;
+  arv.nos.push({id:"n"+(arv.nos.reduce((m,x)=>Math.max(m,Number(String(x.id).slice(1))||0),0)+1),pai:pai||null,t:t.slice(0,110),n:0});
+  const pn=pai&&noDe(arv,pai); if(pn)pn.f=false;
+  S.arvoreAdd=null; salvarArvore(arv); render();
+}
+async function apagarArvore(arv){
+  if(S.remover!=="arv:"+arv.id){ S.remover="arv:"+arv.id; render(); return; }
+  S.remover=null; delete S.arvores[arv.id]; guardar("disc-arvores",S.arvores); render();
+  if(_db&&S.podeEscrever){ try{ await _db.doc("arvores/"+arv.id).delete(); }catch(e){} }
+}
+function abrirArvore(arv){
+  const p=S.params; p.tema=arv.tema;
+  const basica=AREAS_BAS.includes(arv.area);
+  if(basica&&p.nivel!=="básico")p.nivel="básico"; else if(!basica&&p.nivel==="básico")p.nivel=NIVEIS.includes(arv.nivel)&&arv.nivel!=="básico"?arv.nivel:"clínico";
+  p.area=arv.area; p.fonte="diretriz"; p.botoes=autoBotoes(p.dificuldade,p.formato,p.nivel); render();
 }
 function angulosPara(p){
   if(p.dificuldade===0) return ["o que é e qual a sua função","como acontece, em sequência","por que acontece: a causa imediata","o que se observa quando falta ou falha","como se reconhece: o achado típico","para que isso serve na prática"];
@@ -1156,12 +1260,13 @@ async function iniciarDb(){
   if(!_db){ S.dbPronto=true; render(); return; }
   const t=setTimeout(()=>{ if(!S.dbPronto){ S.dbPronto=true; render(); } },10000);
   try{
-    const [ses,qs]=await Promise.all([
+    const docs=s=>((s&&s.docs)||[]).map(d=>d.data()).filter(Boolean).map(x=>JSON.parse(JSON.stringify(x)));
+    const [,ses,qs]=await Promise.all([
+      _db.collection("arvores").limit(80).get().then(a=>{ for(const t of docs(a)){ if(!t.id||!Array.isArray(t.nos))continue; const loc=S.arvores[t.id]; if(!loc||(t.atualizado||0)>(loc.atualizado||0))S.arvores[t.id]=t; } guardar("disc-arvores",S.arvores); }).catch(()=>{}),
       _db.collection("sessoes").orderBy("criado","desc").limit(120).get(),
       _db.collection("questoes").orderBy("criado","desc").limit(60).get()
     ]);
     /* os documentos chegam congelados: a página trabalha em cópias */
-    const docs=s=>((s&&s.docs)||[]).map(d=>d.data()).filter(Boolean).map(x=>JSON.parse(JSON.stringify(x)));
     S.historico=ordenarHistorico(docs(ses));
     const vindas=docs(qs).filter(q=>q.id&&q.params&&q.nucleo&&q.enunciado);
     S.banco=[...S.banco.filter(q=>!vindas.some(v=>v.id===q.id)),...vindas];
@@ -1263,7 +1368,9 @@ async function gerarTudo(){
   if(!p.tema){ S.log=["Escreva um tema antes de gerar."]; render(); return; }
   if(p.fonte==="curso"&&!(p.material||"").trim()){ S.log=["Você escolheu o material do curso como fonte, mas não colou nada. Cole o conteúdo ou volte para a diretriz vigente."]; render(); return; }
   const n=S.quantidade, base=Date.now(), guardado=limpa(p);
-  const qs=Array.from({length:n},(_,i)=>{ const q=esqueleto({...guardado,botoes:[...p.botoes]},"q"+(base+i)); q.gerando=true; return q; });
+  const arv=p.fonte!=="curso"?arvoreDe(p):null, alvosNo=alvosDaArvore(arv,n);
+  const qs=Array.from({length:n},(_,i)=>{ const no=alvosNo[i];
+    const q=esqueleto({...guardado,botoes:[...p.botoes],...(no?{no:{id:no.id,caminho:caminhoDe(arv,no.id)}}:{})},"q"+(base+i)); q.gerando=true; return q; });
   /* blocos de até 3 questões por chamada; a fila roda duas chamadas por vez */
   const nb=n===1?1:Math.max(2,Math.ceil(n/3)), blocos=Array.from({length:nb},()=>[]);
   qs.forEach((q,i)=>blocos[i%nb].push(q));
@@ -1277,9 +1384,16 @@ async function gerarTudo(){
   render();
   const tique=setInterval(pintarVivo,1000), sig=S.abort.signal;
   const evitar=evitarPara(p), ang=n>1?embaralhar(angulosPara(p)):[];
+  /* com árvore, cada bloco leva os assuntos das suas questões e o que já foi cobrado neles; sem árvore, o que já foi cobrado no tema */
+  const contexto=b=>{
+    if(!arv||!alvosNo.length) return {evitar,angulos:n>1?b.map(angulo):[]};
+    const ids=[...new Set(b.map(q=>q.params.no&&q.params.no.id).filter(Boolean))];
+    return {nos:b.map(q=>q.params.no&&q.params.no.caminho),angulos:[],
+      evitar:ids.flatMap(id=>{ const no=noDe(arv,id); return ((no&&no.v)||[]).slice(-4).map(v=>ids.length>1?`${no.t}: ${v}`:v); }).slice(-10)};
+  };
   const angulo=q=>{ const k=qs.indexOf(q); return ang[k%ang.length]+(k>=ang.length?" (outra situação e outro ponto do tema)":""); };
   const falhas=(await Promise.all(blocos.map(b=>
-    gerarBloco(p,b,{evitar,angulos:n>1?b.map(angulo):[]},sig).then(()=>null,e=>e||{code:"gen"})))).filter(Boolean);
+    gerarBloco(p,b,contexto(b),sig).then(()=>null,e=>e||{code:"gen"})))).filter(Boolean);
   clearInterval(tique);
   S.rodando=false; S.abort=null;
   for(const q of qs){ q.gerando=false; q.parcial=null; }
@@ -1294,7 +1408,10 @@ async function gerarTudo(){
     falharEsteira(parou?"interrompido":"falhou"); render(); return;
   }
   if(prontas.length<n) S.log.push(parou?`Interrompido: ${prontas.length} de ${n} ficaram prontas.`:`${n-prontas.length} de ${n} não vieram. ${erroLegivel(falhas[0]||{code:"gen"})}`);
-  for(const q of prontas){ finalizar(q); lembrar(q); }
+  for(const q of prontas){ finalizar(q); lembrar(q);
+    const no=arv&&q.params.no&&noDe(arv,q.params.no.id);
+    if(no){ no.n=(no.n||0)+1; const v=pontosDe(q); if(v)no.v=[...(no.v||[]),v].slice(-6); } }
+  if(arv&&prontas.some(q=>q.params.no)) salvarArvore(arv);
   if(!prontas.includes(S.questao)){ S.questao=prontas[0]; S.prova=provaDe(prontas[0]); }
   marca("questao","ok",n>1?`${prontas.length} de ${n} prontas`:`${prontas[0].nucleo.espelho.itens.length} itens · ${fmt(somaMax(prontas[0].nucleo.espelho.itens))} pontos`);
   render(); guardarMesa();
@@ -1768,7 +1885,7 @@ function vMontar(){
     el("div",{cls:"eyebrow",txt:"parâmetros"}),
     el("div",{cls:"grid",style:"margin-top:12px"},
       campo("grande área",sel("f-area",p.area,areas,v=>{ p.area=v; })),
-      campo("tema",el("input",{type:"text",id:"f-tema",value:p.tema,placeholder:"ex.: sepse, pré-eclâmpsia",oninput:e=>{ p.tema=e.target.value; }}),true),
+      campo("tema",el("input",{type:"text",id:"f-tema",value:p.tema,placeholder:"ex.: sepse, pré-eclâmpsia",oninput:e=>{ p.tema=e.target.value; },onchange:()=>render()}),true),
       campo("recorte (opcional)",el("input",{type:"text",id:"f-foco",value:p.foco||"",placeholder:"ex.: gestante; foco no potássio",oninput:e=>{ p.foco=e.target.value; }})),
       campo("formato",sel("f-formato",p.formato,formatosPara(p),v=>{ p.formato=v; p.botoes=autoBotoes(p.dificuldade,v,p.nivel); render(); })),
       COM_PACIENTE(p.formato)?campo("cenário",sel("f-cenario",p.cenario,CENARIOS,v=>{ p.cenario=v; })):null,
@@ -1885,9 +2002,60 @@ function fonteDaVerdade(p){
             placeholder:"cole aqui o conteúdo da aula, o resumo da disciplina ou uma prova antiga: a questão sai daqui",
             oninput:e=>{ p.material=e.target.value; const c=document.getElementById("mat-conta"); if(c)c.textContent=contaMaterial(); }})),
           el("div",{cls:"conta",id:"mat-conta",txt:contaMaterial()}))
-      : campo("referência (opcional)",el("input",{type:"text",id:"f-ref",value:p.referencia,
+      : [campo("referência (opcional)",el("input",{type:"text",id:"f-ref",value:p.referencia,
           placeholder:"vazio usa a diretriz vigente mais aceita, citada com nome e ano",
-          oninput:e=>{ p.referencia=e.target.value; }})));
+          oninput:e=>{ p.referencia=e.target.value; }})),blocoArvore(p)]);
+}
+/* a árvore do tema: assuntos que você aprofunda conforme precisa; fica salva com a contagem de questões */
+function blocoArvore(p){
+  const tema=(p.tema||"").trim(), arv=arvoreDe(p), oc=S.arvoreOcupado;
+  const salvas=Object.values(S.arvores).filter(a=>a&&a.nos&&a.nos.length).sort((a,b)=>(b.atualizado||0)-(a.atualizado||0));
+  const outras=salvas.filter(a=>a!==arv);
+  const chips=outras.length?el("div",{cls:"acoes",style:"margin-top:10px"},el("span",{cls:"hint tight",txt:"árvores salvas:"}),
+    ...outras.slice(0,12).map(a=>el("button",{cls:"ghost sm",title:`${a.area} · ${a.nos.length} assuntos`,onclick:()=>abrirArvore(a)},a.tema))):null;
+  const erro=S.arvoreErro?el("div",{cls:"alerta bad",style:"margin-top:8px"},S.arvoreErro):null;
+  const campoAdd=(pai,prof)=>el("div",{cls:"no",style:`--prof:${prof}`},el("span",{cls:"tog"}),
+    el("input",{type:"text",id:"f-no-novo",placeholder:"novo assunto, com as suas palavras",style:"flex:1;min-width:9rem",
+      onkeydown:e=>{ if(e.key==="Enter"){ e.preventDefault(); adicionarNo(arv,pai,e.target.value); } }}),
+    el("button",{cls:"ghost sm",onclick:()=>adicionarNo(arv,pai,(document.getElementById("f-no-novo")||{}).value)},"Acrescentar"),
+    el("button",{cls:"ghost sm",onclick:()=>{ S.arvoreAdd=null; render(); }},"Cancelar"));
+  if(!arv) return el("div",{style:"margin-top:16px"},
+    el("div",{cls:"eyebrow",txt:"árvore do tema"}),
+    el("p",{cls:"hint tight",style:"margin:8px 0"},"Divida o tema em assuntos e aprofunde só os que precisar. Com a árvore, cada questão sai de um assunto diferente, o menos cobrado primeiro, e nada se repete. Ela fica salva, com a contagem de questões por assunto."),
+    el("div",{cls:"acoes"},
+      el("button",{cls:"ghost",id:"bt-arvore",disabled:(!tema||oc)?true:null,onclick:()=>montarArvore(null)},oc==="raiz"?"montando…":"Montar a árvore deste tema"),
+      el("span",{cls:"hint tight",txt:tema?"uma chamada curta.":"escreva o tema primeiro."})),
+    erro,chips);
+  const sel=arv.sel||[], linhas=[], alvo=folhasAlvo(arv), n=S.quantidade;
+  const andar=(pai,prof,herda)=>{ for(const no of filhosDe(arv,pai)){
+    const fs=filhosDe(arv,no.id), marcado=sel.includes(no.id), c=contaNo(arv,no);
+    linhas.push(el("div",{cls:"no",style:`--prof:${prof}`,"data-sel":marcado?"1":herda?"h":"0"},
+      fs.length?el("button",{cls:"tog","aria-expanded":String(!no.f),"aria-label":no.f?"abrir":"fechar",onclick:()=>{ no.f=!no.f; salvarArvore(arv); render(); }},no.f?"▸":"▾"):el("span",{cls:"tog"}),
+      el("button",{cls:"no-t","aria-pressed":String(marcado),title:"marcar ou desmarcar: as próximas questões saem dos assuntos marcados",onclick:()=>alternarNo(arv,no.id)},no.t),
+      el("span",{cls:"conta","data-z":c?"0":"1",title:"questões já geradas neste assunto",txt:`${c} q`}),
+      el("button",{cls:"ghost sm",disabled:oc?true:null,onclick:()=>montarArvore(no.id)},oc===no.id?"aprofundando…":(fs.length?"Aprofundar mais":"Aprofundar")),
+      el("button",{cls:"ghost sm",title:"acrescentar um assunto abaixo deste, à mão","aria-label":"acrescentar assunto abaixo de "+no.t,onclick:()=>{ S.arvoreAdd=S.arvoreAdd===no.id?null:no.id; render(); const c=document.getElementById("f-no-novo"); if(c)c.focus(); }},"＋"),
+      el("button",{cls:"ghost sm",title:"remover este assunto e o que está abaixo dele","aria-label":"remover "+no.t,onclick:()=>removerNo(arv,no.id)},S.remover==="no:"+no.id?"Confirmar":"✕")));
+    if(S.arvoreAdd===no.id) linhas.push(campoAdd(no.id,prof+1));
+    if(!no.f) andar(no.id,prof+1,herda||marcado);
+  } };
+  andar(null,0,false);
+  if(S.arvoreAdd==="raiz") linhas.push(campoAdd(null,0));
+  const total=arv.nos.reduce((t,x)=>t+(x.n||0),0);
+  return el("div",{style:"margin-top:16px"},
+    el("div",{cls:"eyebrow",txt:`árvore do tema — ${arv.nos.length} assuntos · ${total} ${total===1?"questão":"questões"}`}),
+    el("p",{cls:"hint tight",style:"margin-top:8px"},sel.length
+      ?`As próximas questões saem só dos ${sel.length===1?"assunto marcado":`${sel.length} assuntos marcados`} e do que estiver abaixo: ${alvo.length} ${alvo.length===1?"folha":"folhas"}, a menos cobrada primeiro.`
+      :`Nada marcado: as próximas questões percorrem as ${alvo.length} folhas da árvore, a menos cobrada primeiro. Clique num assunto para concentrar nele.`),
+    (alvo.length&&n>alvo.length*2)?el("div",{cls:"alerta",style:"margin-top:8px"},`São ${n} questões para ${alvo.length} ${alvo.length===1?"assunto":"assuntos"}: elas tendem a se repetir. Aprofunde o assunto ou marque mais assuntos.`):null,
+    el("div",{cls:"arvore"},...linhas),
+    el("div",{cls:"acoes",style:"margin-top:10px"},
+      el("button",{cls:"ghost sm",disabled:oc?true:null,onclick:()=>montarArvore(null)},oc==="raiz"?"procurando…":"Procurar assuntos que faltam"),
+      el("button",{cls:"ghost sm",onclick:()=>{ S.arvoreAdd=S.arvoreAdd==="raiz"?null:"raiz"; render(); const c=document.getElementById("f-no-novo"); if(c)c.focus(); }},"＋ assunto"),
+      sel.length?el("button",{cls:"ghost sm",onclick:()=>{ arv.sel=[]; salvarArvore(arv); render(); }},"Desmarcar todos"):null,
+      el("span",{cls:"sep"}),
+      el("button",{cls:"ghost sm",onclick:()=>apagarArvore(arv)},S.remover==="arv:"+arv.id?"Confirmar: apagar a árvore":"Apagar a árvore")),
+    erro,chips);
 }
 function contaMaterial(){
   const n=(S.params.material||"").length;
@@ -1942,6 +2110,7 @@ function cabecalho(q,pr){
       el("div",{cls:"cab-t"},
         el("div",{cls:"kicker",txt:`${p.nivel} · ${p.area} · ${p.formato}${COM_PACIENTE(p.formato)?" · "+p.cenario:""}${diretaOn(p)?" · sem caso clínico":""} · ${rotuloDif(p.dificuldade)}`}),
         el("h2",{txt:p.tema}),
+        p.no&&p.no.caminho?el("div",{cls:"hint tight",style:"margin-top:2px",txt:"assunto: "+p.no.caminho}):null,
         el("div",{cls:"hint tight",style:"margin-top:4px",txt:(p.botoes||[]).map(b=>"↑ "+b).join("  ")})),
       el("div",{id:"val-carimbo"})),
     el("div",{id:"vivo"}),
@@ -2232,7 +2401,9 @@ function txtProva(q,n){
   const L=[];
   if(q.exemplo) L.push("[EXEMPLO QUE ACOMPANHA A PÁGINA — não foi gerado pelos seus parâmetros]","");
   L.push(`QUESTÃO ${n||1} — ${String(q.params.tema||"").toUpperCase()}`,
-    `${q.params.nivel} · ${q.params.area} · ${q.params.formato}${COM_PACIENTE(q.params.formato)?" · "+q.params.cenario:""} · ${rotuloDif(q.params.dificuldade)}`,"");
+    `${q.params.nivel} · ${q.params.area} · ${q.params.formato}${COM_PACIENTE(q.params.formato)?" · "+q.params.cenario:""} · ${rotuloDif(q.params.dificuldade)}`);
+  if(q.params.no&&q.params.no.caminho) L.push(quebra("assunto: "+q.params.no.caminho));
+  L.push("");
   const ms=q.enunciado.momentos||[];
   for(const m of ms){
     if(ms.length>1)L.push(`[MOMENTO ${m.momento}]`);
@@ -2393,6 +2564,7 @@ try{ const t=localStorage.getItem("disc-tema"); if(t)document.documentElement.se
 EXEMPLO.lint=checar(EXEMPLO);
 restaurarPrefs();
 restaurarMesa();
+{ const a=ler("disc-arvores",{}); if(a&&typeof a==="object") for(const [k,t] of Object.entries(a)) if(t&&t.id===k&&Array.isArray(t.nos)) S.arvores[k]=t; }
 render();
 iniciarDb();
 cap("sample").then(s=>{ _sample=s; S.sampleOk=!!s; renderBanner(); if(S.view==="prova")pintarValidacao(); });
