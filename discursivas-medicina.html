@@ -221,6 +221,18 @@ details summary{cursor:pointer;font-family:var(--mono);font-size:11px;letter-spa
 details[open] summary{color:var(--accent)}
 details .body{padding-top:10px}
 .off{opacity:.55}
+/* ── objetiva: alternativas ──────────────────── */
+.pergunta{font-family:var(--display);font-size:16.5px;line-height:1.55;font-weight:600;margin-top:14px;max-width:46rem}
+.alts{display:flex;flex-direction:column;gap:6px;margin-top:12px;max-width:46rem}
+.alt{display:flex;gap:10px;align-items:baseline;text-align:left;width:100%;background:var(--surface);border:1px solid var(--rule-strong);border-radius:3px;padding:9px 11px;font-family:var(--display);font-size:16px;line-height:1.5;color:var(--ink)}
+.alt .l{font-family:var(--mono);font-size:13px;font-weight:500;color:var(--accent);flex:none}
+.alt .tx{flex:1;min-width:0}
+.alt .por{display:block;font-family:var(--body);font-size:12.5px;line-height:1.45;color:var(--ink-2);margin-top:4px}
+button.alt:not([disabled]):hover{border-color:var(--accent)}
+.alt[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent)}
+.alt[data-e="certa"]{border-color:var(--ok);background:var(--ok-soft)}
+.alt[data-e="errada"]{border-color:var(--bad);background:var(--bad-soft)}
+.alt[disabled]{cursor:default;opacity:1}
 /* ── árvore do tema ──────────────────────────── */
 .arvore{display:flex;flex-direction:column;margin-top:10px;border-top:1px solid var(--rule)}
 .no{display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:5px 0 5px calc(var(--prof,0)*18px);border-bottom:1px dotted var(--rule);min-width:0}
@@ -305,12 +317,16 @@ const COM_PACIENTE = f => f==="caso clínico" || f==="caso evolutivo";
 const CENARIOS   = ["UBS","UPA","pronto-socorro","enfermaria","UTI","ambulatório","centro obstétrico"];
 const ETAPAS = ["mecanismo","comparação","previsão","interpretação","síntese","diagnóstico diferencial","investigação","conduta","seguimento","comunicação e ética"];
 const poolDe = f => COM_PACIENTE(f)?BOT_PAC:BOT_SEM;
+/* questão objetiva: mesma esteira, com alternativas no lugar do espelho */
+const ehObj = q => !!(q&&q.params&&q.params.tipo==="objetiva");
+const LETRAS = "ABCDE";
+const nAlt = p => (p&&Number(p.alternativas)===5)?5:4;
 /* nível 0 = aprendizagem: para quem acabou de ver a aula e está fixando */
 const rotuloDif = d => Number(d)===0?"aprendizagem":`dificuldade ${d}`;
 const tagDif = d => Number(d)===0?"aprendizagem":"d"+d;
 /* faculdade sem caso clínico: o método é o mesmo; só não pode haver paciente, história clínica nem prontuário no enunciado */
 const diretaOn = p => !!p && ehFaculdade(p.nivel) && p.direta===true && !COM_PACIENTE(p.formato);
-const formatosPara = p => (ehFaculdade(p.nivel)&&p.direta) ? FORMATOS.filter(f=>!COM_PACIENTE(f)) : FORMATOS;
+const formatosPara = p => FORMATOS.filter(f=>!(ehFaculdade(p.nivel)&&p.direta&&COM_PACIENTE(f)) && !(p.tipo==="objetiva"&&f==="caso evolutivo"));
 
 /* quantos botões no alto, e quais são obrigatórios */
 function quantos(d){ return d; }
@@ -361,7 +377,7 @@ function conferirBotoes(sel,d,formato,nivel){
 /* REGRA DE DECISÃO — a primeira linha que se aplicar decide (a página decide, não o modelo) */
 const CRITERIOS = {veross:"verossimilhança e precisão",correcao:"correção e atualidade",seguranca:"segurança",
   clareza:"clareza do comando",vazamento:"vazamento",relevancia:"relevância",dificuldade:"dificuldade real",espelho:"espelho justo"};
-function decidir({notas,divergencia,preceptor,dificuldade}){
+function decidir({notas,divergencia,preceptor,dificuldade,objetiva}){
   const nf=notas.forte, nm=notas.mediano, nd=notas.decoreba;
   const crit=(preceptor&&preceptor.criterios)||[];
   const de=k=>{ const c=crit.find(c=>c.k===k); return c?c.nota:null; };
@@ -372,6 +388,17 @@ function decidir({notas,divergencia,preceptor,dificuldade}){
 
   if(minSeg!=null && minSeg<=2) return {v:"DESCARTAR",por:"O revisor deu 2 ou menos em verossimilhança, correção ou segurança: há erro clínico ou conceitual.",
     instr:"Há erro clínico ou conceitual: corrija-o na raiz, no caso e no espelho, sem deixar resto."};
+  if(objetiva){
+    if(nf!=null && nf<8) return {v:"REESCREVER",por:"O candidato forte errou: o gabarito está ambíguo ou errado, ou a pergunta admite outra leitura.",
+      instr:`Um ótimo candidato marcou outra alternativa${divergencia?` (${divergencia})`:""}. Deixe uma única melhor resposta: corrija o gabarito, o distrator defensável ou a pergunta.`};
+    if(dificuldade>=3 && nd!=null && nd>=8) return {v:"REESCREVER",por:"O decoreba acertou: dá para marcar a correta só de memória.",
+      instr:"A resposta decorada acerta a questão: faça o distrator do decoreba ser tentador e a correta depender do raciocínio sobre esta situação."};
+    if(minCrit!=null && minCrit<4){
+      const pior=crit.filter(c=>c.nota===minCrit).map(c=>c.criterio).join(", ");
+      return {v:"REESCREVER",por:`O revisor deu ${minCrit} em ${pior}: defeito pontual, que o conserto resolve sem recomeçar.`,instr:""};
+    }
+    return {v:"APROVAR",por:nf!=null?"O forte acertou e o revisor não achou defeito que prejudique o uso.":"O revisor não achou erro clínico nem defeito que prejudique o uso."};
+  }
   if(nf!=null && nf<8 && divergencia) return {v:"REESCREVER",por:"O candidato forte ficou abaixo de 8 e leu o enunciado de outro jeito: o comando está ambíguo.",
     instr:`O enunciado admite outra leitura («${divergencia}»): reescreva o comando ambíguo.`};
   if(nf!=null && nf<8) return {v:"REESCREVER",por:"O candidato forte ficou abaixo de 8 sem ler errado: o espelho está exigente demais ou errado. O conserto mexe só no espelho.",
@@ -500,6 +527,12 @@ function aplicar(q,r){
       }
       en.itens.sort((a,b)=>a.item.localeCompare(b.item));
     }
+  }else if(r.t==="alt"){
+    const alts=q.alternativas||(q.alternativas=[]), txt=String(r.txt||"").trim(); if(!txt)return;
+    const nova={txt,ok:r.ok===true||Number(r.ok)===1||/^(s|t|y|v)/i.test(String(r.ok)),por:String(r.por||"").trim(),grave:limpo(r.grave)};
+    const L=String(r.i||"").trim().toUpperCase().slice(0,1), k=L?alts.findIndex(a=>a.l===L):-1;
+    if(k>=0){ alts[k]={...nova,l:L}; if(nova.ok) alts.forEach((a,j)=>{ if(j!==k)a.ok=false; }); }   /* conserto: troca a alternativa daquela letra */
+    else alts.push({...nova,l:""});
   }else if(r.t==="esp"){
     const l=letra(r.i); if(!l)return;
     const a=n.alvos[l]||{}, velho=n.espelho.itens.find(e=>e.item===l)||{};
@@ -517,8 +550,9 @@ function aplicar(q,r){
     n.espelho.itens.sort((a,b)=>a.item.localeCompare(b.item));
   }
 }
-const utilizavel=q=>!!(q&&q.enunciado.itens.length&&q.nucleo.espelho.itens.length);
+const utilizavel=q=>!!(q&&q.enunciado.itens.length&&(ehObj(q)?((q.alternativas||[]).length>=3&&q.alternativas.some(a=>a.ok)):q.nucleo.espelho.itens.length));
 function espelhoCompleto(q){
+  if(ehObj(q)) return (q.alternativas||[]).length>=nAlt(q.params)&&q.alternativas.some(a=>a.ok)&&q.enunciado.itens.length>0;
   const en=q.enunciado.itens, esp=q.nucleo.espelho.itens;
   const previstos=Math.max(en.length,Object.keys(q.nucleo.alvos||{}).length);
   return en.length>0 && esp.length>=previstos && en.every(i=>esp.some(e=>e.item===i.item));
@@ -560,7 +594,34 @@ function subiuDoBaixo(q){
     if(nv>=5) A.push({n:"warn",t:`O enunciado traz ${nv} valores para o aluno ler, e o botão Interpretação está no baixo.`,conserto:"O botão Interpretação está no baixo: troque os valores crus do enunciado por resultados descritos em palavras, já lidos."}); }
   return A;
 }
+/* OBJETIVA — defeitos de construção que a página enxerga sozinha, sem gastar chamada */
+function checarObj(q){
+  const A=[], p=q.params, alts=q.alternativas||[], certas=alts.filter(a=>a.ok), erradas=alts.filter(a=>!a.ok), na=nAlt(p);
+  const texto=textoEnunciado(q.enunciado), norm=t=>semAcento(t).replace(/[^a-z0-9]+/g," ").trim();
+  if(!q.exemplo) A.push(...subiuDoBaixo(q));
+  if(diretaOn(p)){ const m=PRONTUARIO.exec(texto);
+    if(m) A.push({n:"warn",t:`O enunciado parece caso clínico («${m[0].trim()}»), e o pedido era questão sem caso clínico.`,conserto:"O pedido é questão sem caso clínico: reescreva o enunciado sem paciente, história clínica, sinais vitais nem exame físico, mantendo o que a questão testa e a mesma dificuldade."}); }
+  if(certas.length!==1) A.push({n:"bad",t:certas.length?`Há ${certas.length} alternativas marcadas como corretas.`:"Nenhuma alternativa está marcada como correta.",conserto:"A questão precisa de exatamente uma alternativa correta: reescreva as alternativas, deixando uma única melhor resposta."});
+  if(alts.length!==na) A.push({n:alts.length<na?"warn":"info",t:`Foram pedidas ${na} alternativas e vieram ${alts.length}.`,conserto:alts.length<na?`Faltam alternativas: a questão precisa de ${na}. Escreva as que faltam, como distratores plausíveis.`:undefined});
+  const pegadinha=alts.find(a=>/\b(todas|nenhuma) (as |das )?(alternativas|anteriores|opcoes)|\bn\.?d\.?a\b|\b(i|ii|iii|iv) e (i|ii|iii|iv)\b/.test(semAcento(a.txt)));
+  if(pegadinha) A.push({n:"warn",t:`A alternativa ${pegadinha.l} é do tipo «todas / nenhuma das anteriores» ou combinação.`,conserto:`Troque a alternativa ${pegadinha.l} por um distrator próprio: nada de «todas as anteriores», «nenhuma das anteriores» ou combinações.`});
+  if(/\b(EXCETO|INCORRETA|INCORRETO|ERRADA|FALSA)\b|\bN[ÃA]O\b/.test(texto)||/\b(exceto|incorreta|incorreto)\b/i.test((q.enunciado.itens[0]||{}).comando||""))
+    A.push({n:"warn",t:"A pergunta é negativa (exceto, incorreta, NÃO): mede leitura atenta, não raciocínio.",conserto:"Reescreva a pergunta na forma positiva (qual é a melhor resposta), sem EXCETO, INCORRETA ou NÃO, ajustando as alternativas."});
+  if(certas.length===1&&erradas.length>=2){
+    const media=erradas.reduce((t,a)=>t+a.txt.length,0)/erradas.length, c=certas[0];
+    if(c.txt.length>media*1.45&&c.txt.length-media>25) A.push({n:"warn",t:`A alternativa correta (${c.l||"—"}) é bem mais longa que as outras: é pista.`,conserto:"A alternativa correta é a mais longa: iguale o tamanho e o grau de detalhe das alternativas, encurtando a correta ou encorpando os distratores."});
+    const abs=/\b(sempre|nunca|jamais|somente|apenas|exclusivamente|todos os|todas as|nenhum|nenhuma)\b/;
+    const comAbs=erradas.filter(a=>abs.test(semAcento(a.txt)));
+    if(comAbs.length>=2&&!abs.test(semAcento(c.txt))) A.push({n:"warn",t:`Termos absolutos (sempre, nunca, apenas) só nos distratores ${comAbs.map(a=>a.l).join(", ")}: denunciam que estão errados.`,conserto:`Tire os termos absolutos dos distratores ${comAbs.map(a=>a.l).join(", ")}: eles denunciam o erro.`});
+  }
+  const vistos=new Map(); for(const a of alts){ const k=norm(a.txt); if(vistos.has(k)) A.push({n:"warn",t:`As alternativas ${vistos.get(k)} e ${a.l} dizem a mesma coisa.`,conserto:`As alternativas ${vistos.get(k)} e ${a.l} são iguais: troque uma delas por outro distrator plausível.`}); else vistos.set(k,a.l); }
+  const semPor=alts.filter(a=>!a.por).map(a=>a.l); if(semPor.length&&alts.length) A.push({n:"info",t:`Sem comentário: ${semPor.join(", ")}.`});
+  if(!A.some(a=>a.n==="warn"||a.n==="bad")&&alts.length)
+    A.unshift({n:"ok",t:"Checagem automática da página: uma única correta, sem «todas / nenhuma das anteriores», sem pergunta negativa, e a correta não é a mais longa."});
+  return A;
+}
 function checar(q){
+  if(ehObj(q)) return checarObj(q);
   const A=[], p=q.params, en=q.enunciado, esp=q.nucleo.espelho.itens, lim=p.limite||10;
   if(!q.exemplo) A.push(...subiuDoBaixo(q));
   if(diretaOn(p)){ const m=PRONTUARIO.exec(textoEnunciado(en));
@@ -586,6 +647,16 @@ function checar(q){
   return A;
 }
 function finalizar(q){
+  if(ehObj(q)){
+    /* o modelo escreve a correta primeiro; a página põe em ordem (numérica, se forem números; senão, sorteio) e só então dá as letras */
+    const alts=q.alternativas||[];
+    if(!q.embaralhada&&alts.length&&(espelhoCompleto(q)||!q.gerando)){
+      const v=alts.map(a=>parseFloat(String(a.txt).replace(/\.(?=\d{3})/g,"").replace(",",".")));
+      const ordem=(v.every(x=>!isNaN(x))&&new Set(v).size===alts.length)?alts.map((a,k)=>({a,x:v[k]})).sort((m,n)=>m.x-n.x).map(o=>o.a):embaralhar(alts);
+      q.alternativas=ordem.map((a,k)=>({...a,l:LETRAS[k]||String(k+1)})); q.embaralhada=true;
+    }else if(q.embaralhada){ const usadas=new Set(alts.map(a=>a.l).filter(Boolean)); for(const a of alts) if(!a.l){ a.l=[...LETRAS].find(x=>!usadas.has(x))||"?"; usadas.add(a.l); } alts.sort((a,b)=>a.l.localeCompare(b.l)); }
+    q.lint=checar(q); return;
+  }
   if(espelhoCompleto(q)){ const antes=normalizarPontos(q); if(antes!=null)q.reescalado=antes; }
   q.lint=checar(q);
 }
@@ -599,6 +670,11 @@ function textoEnunciado(e){
   return `${m}\n\n${i}`.trim();
 }
 const num=n=>String(Math.round((Number(n)||0)*100)/100);
+const gabaritoDe=q=>((q.alternativas||[]).find(a=>a.ok)||{}).l||"";
+const textoEnunObj=q=>`${(q.enunciado.momentos||[]).map(m=>m.texto).join("\n\n")}\n\n${((q.enunciado.itens||[])[0]||{}).comando||""}`.trim();
+function textoAlternativas(q,comGabarito){
+  return (q.alternativas||[]).map(a=>`${a.l}) ${a.txt}${comGabarito?`${a.ok?"  [CORRETA]":""}${a.por?` — ${a.por}`:""}`:""}`).join("\n");
+}
 function textoEspelho(esp,soItem){
   return ((esp&&esp.itens)||[]).filter(i=>!soItem||i.item===soItem).map(i=>{
     const L=[`${i.item}) [${i.etapa_raciocinio||"—"}] resposta nota máxima: ${i.resposta_nota_maxima||"—"}`];
@@ -667,7 +743,8 @@ function blocoParams(p,ctx,n){
                          :`- Assunto desta questão: ${nos[0]}. A questão fica dentro dele.`);
   if(foco) L.push(`- Recorte pedido (manda sobre qualquer sugestão): ${foco}`);
   L.push(`- Formato: ${p.formato}${pac?`, cenário ${p.cenario}`:""}${dir?" — sem caso clínico nem prontuário":""}`);
-  L.push(`- ${p.itens===1?"1 item":`${p.itens} itens`}; cada resposta em até ${p.limite} linhas (1 linha ≈ 12 palavras)`);
+  L.push(p.tipo==="objetiva"?`- Objetiva de múltipla escolha: ${nAlt(p)} alternativas, uma única melhor resposta`
+    :`- ${p.itens===1?"1 item":`${p.itens} itens`}; cada resposta em até ${p.limite} linhas (1 linha ≈ 12 palavras)`);
   L.push(p.dificuldade===0
     ?`- Nível de aprendizagem: o aluno acabou de ver a aula e está fixando o conteúdo. ${altos.length?"Mesmo assim, estes botões sobem:":"Nenhum botão no alto."}`
     :`- Dificuldade ${p.dificuldade} = ${altos.length?"estes botões no alto, cada um pesando na resposta:":"nenhum botão no alto."}`);
@@ -691,33 +768,38 @@ const TETO={
 function pGerar(p,n,ctx){
   const pac=COM_PACIENTE(p.formato), dir=diretaOn(p), evo=p.formato==="caso evolutivo", bas=p.nivel==="básico", k=n>1?'"k":1,':"";
   const apr=p.dificuldade===0, leve=p.dificuldade===1||p.dificuldade===2, teto=TETO[p.dificuldade], interp=(p.botoes||[]).includes("Interpretação");
+  const obj=p.tipo==="objetiva", na=nAlt(p), vizinho=pac?"Diferencial":"Comparação";
   const baixosN=poolDe(p.formato).filter(b=>!(p.botoes||[]).includes(b.n)).map(b=>b.n).join(", ");
   const recursos="valores, curvas ou lâminas cruas com Interpretação; dois modelos ou estados lado a lado com Comparação; intervenção hipotética com Previsão; achado que contraria a regra com Contraintuitivo";
-  const comum=`"ponte":"por que isso muda o cuidado de alguém","botoes":[["botão","onde ele aparece"]],"alvos":[["a","etapa","${apr?"a ideia central que o item fixa":"o que só responde quem raciocina"}",4]],"anti":"${apr?"":"item X: o que a resposta decorada diria e por que perde ponto"}","conferir":["dose, valor de corte ou recomendação que um humano deve conferir"],"ref":"fonte, ano"}`;
+  const comum=`"ponte":"por que isso muda o cuidado de alguém","botoes":[["botão","onde ele aparece"]],"alvos":[["a","etapa","${obj?"o que a questão testa, em uma frase":apr?"a ideia central que o item fixa":"o que só responde quem raciocina"}",${obj?10:4}]],"anti":"${apr?"":obj?"qual distrator é a resposta decorada e por que não serve aqui":"item X: o que a resposta decorada diria e por que perde ponto"}","conferir":["dose, valor de corte ou recomendação que um humano deve conferir"],"ref":"fonte, ano"}`;
   const plano=pac
     ? `{"t":"plano",${k}"caso":"paciente oculto em 2 a 3 frases","dx":["diagnóstico"],"fisio":"fisiopatologia central","oculto":"o que o aluno não vê e precisa inferir","evol":"sem tratamento: …; com a conduta correta: …",${comum}`
     : `{"t":"plano",${k}"cadeia":[["de","para","por quê"]],${comum}`;
   return [P_BASE,"",
-    n>1?`TAREFA: escrever ${n} questões discursivas diferentes entre si — ${pac?"paciente":"situação"}, ângulo do tema e etapa dominante do raciocínio não se repetem —, todas com os parâmetros abaixo.`
-       :"TAREFA: escrever uma questão discursiva com os parâmetros abaixo.",
+    n>1?`TAREFA: escrever ${n} questões ${obj?`objetivas de múltipla escolha, cada uma com ${na} alternativas e uma única melhor resposta,`:"discursivas"} diferentes entre si — ${pac?"paciente":"situação"}, ângulo do tema e etapa dominante do raciocínio não se repetem —, todas com os parâmetros abaixo.`
+       :`TAREFA: escrever uma questão ${obj?`objetiva de múltipla escolha, com ${na} alternativas e uma única melhor resposta,`:"discursiva"} com os parâmetros abaixo.`,
     "","PARÂMETROS",blocoParams(p,ctx,n),"",
-    "MÉTODO — nesta ordem: o enunciado nasce do que se quer avaliar, e o espelho tem de ser fiel ao que o enunciado mostra.",
+    obj?"MÉTODO — nesta ordem: o enunciado nasce do que se quer avaliar, e cada alternativa nasce de um raciocínio: o certo ou um erro específico."
+       :"MÉTODO — nesta ordem: o enunciado nasce do que se quer avaliar, e o espelho tem de ser fiel ao que o enunciado mostra.",
     `1. PLANO. ${pac
       ?"Paciente oculto verossímil: idade, sexo, contexto de vida, comorbidades e medicações, sinais vitais, exame físico e exames coerentes entre si, com a doença e com o tempo de evolução; epidemiologia brasileira e SUS quando fizer sentido."
       :apr?"Cadeia causal do tema, na ordem, com os elos que uma boa aula ensina."
-      :"Cadeia causal completa, do nível molecular ou celular ao sinal clínico, sem pular elo."} A ponte clínica: sem uma razão convincente de por que isso muda o cuidado de alguém, troque o recorte. E o alvo de cada item: uma etapa do raciocínio e os pontos (total 10; ${apr?"repartidos pelas ideias centrais":"raciocinar pesa mais que lembrar"}).`,
-    "2. ENUNCIADO, a partir do plano.",
-    "3. ESPELHO, item a item.","",
+      :"Cadeia causal completa, do nível molecular ou celular ao sinal clínico, sem pular elo."} A ponte clínica: sem uma razão convincente de por que isso muda o cuidado de alguém, troque o recorte. ${obj?"E o alvo da questão: a etapa do raciocínio que ela testa.":`E o alvo de cada item: uma etapa do raciocínio e os pontos (total 10; ${apr?"repartidos pelas ideias centrais":"raciocinar pesa mais que lembrar"}).`}`,
+    obj?"2. ENUNCIADO e PERGUNTA, a partir do plano.":"2. ENUNCIADO, a partir do plano.",
+    obj?"3. ALTERNATIVAS: a correta e, para cada distrator, o erro de raciocínio que leva a ele.":"3. ESPELHO, item a item.","",
     apr?null:`TETO DA DIFICULDADE ${p.dificuldade} — a questão sai com a dificuldade pedida, nem mais nem menos:`,
-    apr?null:"- Só os botões no alto pesam. Botão no baixo fica no baixo no enunciado, nos comandos e no espelho: o que cada um proíbe está nos parâmetros.",
-    teto?`- Carga de leitura: no máximo ${teto.dados} achados ou valores no enunciado, todos usados na resposta. ${teto.pede}`:null,
-    leve?"- A explicação correta do livro vale pelo menos metade de cada item; a nota cheia vem do passo que o botão no alto pede.":null,
+    apr?null:`- Só os botões no alto pesam. Botão no baixo fica no baixo no enunciado, ${obj?"na pergunta e nas alternativas":"nos comandos e no espelho"}: o que cada um proíbe está nos parâmetros.`,
+    teto?`- Carga de leitura: no máximo ${teto.dados} achados ou valores no enunciado, todos usados na resposta. ${obj?"A pergunta pede uma coisa só.":teto.pede}`:null,
+    leve?(obj?"- Os distratores são erros claros, de ideias bem diferentes da correta: quem entendeu a aula acerta.":"- A explicação correta do livro vale pelo menos metade de cada item; a nota cheia vem do passo que o botão no alto pede."):null,
     apr?null:"",
     apr?"NÍVEL DE APRENDIZAGEM — a questão serve para fixar a aula, não para separar candidatos:":null,
     apr?"- Cobre só as ideias centrais do tema, as que organizam o resto. Nada de exceção, raridade, número difícil de guardar ou detalhe de rodapé.":null,
-    apr?"- Uma ideia por item, em degraus: o que é; como ou por que acontece, em 1 ou 2 elos; uma aplicação direta e esperada. Todo item se resolve só com o conteúdo de uma boa aula sobre o tema.":null,
-    apr?"- O enunciado pode dar o contexto e os termos. A tarefa do aluno é explicar o como e o porquê com as próprias palavras: é explicar que fixa, então peça explicação, nunca lista para recitar.":null,
-    apr?"- Sem distrator, sem pegadinha, sem achado contraintuitivo e sem dado que exija leitura fina. Comando curto, com uma pergunta só.":null,
+    apr?(obj?"- A questão cobra uma ideia central, com pergunta direta sobre o que é, como ou por que acontece. Resolve-se só com o conteúdo de uma boa aula sobre o tema."
+            :"- Uma ideia por item, em degraus: o que é; como ou por que acontece, em 1 ou 2 elos; uma aplicação direta e esperada. Todo item se resolve só com o conteúdo de uma boa aula sobre o tema."):null,
+    apr?(obj?"- O enunciado pode dar o contexto e os termos. A correta é a explicação do livro; cada distrator é uma confusão típica de quem acabou de aprender, claramente errada para quem entendeu."
+            :"- O enunciado pode dar o contexto e os termos. A tarefa do aluno é explicar o como e o porquê com as próprias palavras: é explicar que fixa, então peça explicação, nunca lista para recitar."):null,
+    apr?(obj?"- Sem pegadinha, sem achado contraintuitivo, sem dado posto para confundir e sem dado que exija leitura fina."
+            :"- Sem distrator, sem pegadinha, sem achado contraintuitivo e sem dado que exija leitura fina. Comando curto, com uma pergunta só."):null,
     apr?"":null,
     "ENUNCIADO",
     pac?"- Só o que o médico teria naquele momento, na ordem em que surgiria: queixa e duração, história, antecedentes e medicações, sinais vitais e exame físico, exames disponíveis no cenário."
@@ -730,8 +812,29 @@ function pGerar(p,n,ctx){
     "- "+regraVR(p),
     apr?"- Cada dado do enunciado sustenta a resposta. O resto sai.":"- Cada dado tem função: sustenta a resposta, separa o diferencial ou é o distrator que um botão pede. O resto sai.",
     evo?"- Caso evolutivo: 2 ou 3 momentos, com os itens distribuídos entre eles. Cada momento novo traz evolução ou resultado e pode revelar o que o anterior perguntava (a página só o libera depois da resposta); dentro de um mesmo momento, nenhum dado responde os itens dele.":null,
-    "- Comando de cada item: um verbo de tarefa (cite, interprete, justifique, compare, explique, preveja, priorize, indique), quantos elementos se esperam e o que vale como justificativa. Nunca «comente», «discorra» ou «fale sobre». Não escreva o limite de linhas: a página mostra.",
-    "- Nenhum item entrega a resposta de outro do mesmo momento. Se (b) depende de acertar (a), o espelho de (b) diz quanto vale a resposta coerente com um (a) errado.","",
+    obj?"- A pergunta: uma frase só, terminada em «?», que um bom aluno responde sem olhar as alternativas. Nunca negativa (EXCETO, INCORRETA, NÃO)."
+       :"- Comando de cada item: um verbo de tarefa (cite, interprete, justifique, compare, explique, preveja, priorize, indique), quantos elementos se esperam e o que vale como justificativa. Nunca «comente», «discorra» ou «fale sobre». Não escreva o limite de linhas: a página mostra.",
+    obj?null:"- Nenhum item entrega a resposta de outro do mesmo momento. Se (b) depende de acertar (a), o espelho de (b) diz quanto vale a resposta coerente com um (a) errado.","",
+    ...(obj?[
+    "ALTERNATIVAS",
+    `- Exatamente ${na}, com uma única melhor resposta. A correta é inequivocamente a melhor; cada distrator é inequivocamente pior, mas tentador para quem cometeu um erro específico.`,
+    `- Cada distrator nasce de um erro de raciocínio real ${pac?"(aplicar a conduta padrão sem olhar este paciente, ler mal o dado, ignorar o que muda a decisão)":"(pular um elo, confundir com o conceito vizinho, inverter causa e efeito)"}. Diga qual em "por".`,
+    "- Homogêneas e paralelas: todas da mesma categoria (todas diagnósticos, ou todas condutas, ou todas mecanismos), mesma forma gramatical e tamanho parecido. A correta não é a mais longa nem a mais detalhada.",
+    "- Proibido: «todas as anteriores», «nenhuma das anteriores», combinações (I e II), termo absoluto que denuncie o distrator (sempre, nunca, apenas), pista gramatical e palavra do enunciado repetida só na correta.",
+    apr?null:leve?"- Neste nível os distratores são de ideias bem diferentes da correta.":`- A proximidade dos distratores segue os botões: vizinhos da correta só com ${vizinho} no alto; com o botão no baixo, ficam mais distantes.`,
+    apr?`- "anti": fica vazio neste nível.`
+       :leve?`- "anti": vazio, ou o distrator que atrai quem só decorou.`
+       :`- "anti": qual distrator é a resposta decorada (${pac?"a conduta padrão, que não serve a este paciente":"a frase do livro, verdadeira em geral, que não responde a esta pergunta"}) e por que não serve aqui. Tem de haver um.`,
+    `- "por": na correta, por que é a melhor, em 1 ou 2 frases, com o raciocínio; em cada distrator, por que está errado e que erro leva a ele, em 1 frase.`,
+    `- "grave": só no distrator que, escolhido na prática, ${bas?"inverte o conceito central":"causaria dano ao paciente"}: diga a consequência em poucas palavras. Nos outros, vazio.`,
+    `- "ref": só fonte que você tem certeza de que existe, com nome e ano, sem página nem seção. "conferir": toda dose, valor de corte ou recomendação recente de que você não tenha certeza absoluta; se não houver, [].`,"",
+    `SAÍDA — só objetos JSON, um por linha, nesta ordem, sem texto fora deles e sem cerca de código${n>1?`. Todo objeto leva "k" com o número da questão (1 a ${n}); termine a questão 1 inteira (plano, mom, alternativas) antes de começar a 2`:""}:`,
+    plano,
+    `{"t":"mom",${k}"n":1,"txt":"o enunciado","itens":[["a","a pergunta, terminada em ?"]]}`,
+    `{"t":"alt",${k}"ok":1,"txt":"a alternativa correta","por":"por que é a melhor","grave":""}`,
+    `{"t":"alt",${k}"ok":0,"txt":"um distrator","por":"por que está errado e que erro leva a ele","grave":""}`,
+    `Um "mom" só, com a pergunta; ${na} objetos "alt", a correta primeiro. Não escreva letras nem ordene: a página embaralha as alternativas e dá as letras. Em "alvos": ["a", etapa, o que a questão testa, 10], e etapa é uma de: ${ETAPAS.join(" | ")}. Lista sem conteúdo vai vazia: [].`
+    ]:[
     "ESPELHO",
     `- "max": a resposta de um ótimo candidato, completa e dentro de ${p.limite} linhas (≈ ${p.limite*12} palavras). Não coube? Corte quesito ou estreite o comando.`,
     `- "q": ${leve?"2 ou 3":"2 a 4"} quesitos por item, cada um observável e independente («identifica X e relaciona a Y»), sem sobreposição, em múltiplos de 0,5; a questão soma 10.${apr?" Aqui os quesitos são os pontos essenciais que quem entendeu a aula diria.":""} Marque justificativa exigida quando ${pac?"nomear sem justificar com dado do caso":"afirmar sem explicar o porquê"} só valer metade.${pac?"":" Pontue elos e relações explicados, não palavras-chave."}`,
@@ -749,21 +852,24 @@ function pGerar(p,n,ctx){
     plano,
     `{"t":"mom",${k}"n":1,"txt":"o que o aluno lê","itens":[["a","comando do item"]]}`,
     `{"t":"esp",${k}"i":"a","max":"resposta nota máxima","q":[["quesito observável",1.5,1]],"alt":[["resposta também correta","condição em que vale"]],"comuns":["erro comum"],"graves":[["erro","conduta","consequência para o paciente"]]}`,
-    `Um "mom" por momento${evo?"":" (aqui, um só)"}, com os itens dele; um "esp" por item. Em "alvos": [letra, etapa, alvo, pontos do item], e etapa é uma de: ${ETAPAS.join(" | ")}. Em "q": [quesito, pontos, 1 se exige justificativa senão 0]. Em "graves": [erro, "conduta" ou "conceito", consequência]. Lista sem conteúdo vai vazia: [].`,
-    baixosN?`Antes de responder, confira cada comando e cada quesito contra a lista do baixo (${baixosN}): o que um botão no baixo proíbe não pode aparecer, nem como subitem.${teto?" Confira também a carga de leitura.":""}`:null
+    `Um "mom" por momento${evo?"":" (aqui, um só)"}, com os itens dele; um "esp" por item. Em "alvos": [letra, etapa, alvo, pontos do item], e etapa é uma de: ${ETAPAS.join(" | ")}. Em "q": [quesito, pontos, 1 se exige justificativa senão 0]. Em "graves": [erro, "conduta" ou "conceito", consequência]. Lista sem conteúdo vai vazia: [].`
+    ]),
+    obj?`Antes de responder, confira as alternativas: uma só correta, mesma categoria, tamanhos parecidos, nenhuma pista.${baixosN?` E confira o enunciado, a pergunta e as alternativas contra a lista do baixo (${baixosN}): o que um botão no baixo proíbe não pode aparecer.`:""}`
+    :baixosN?`Antes de responder, confira cada comando e cada quesito contra a lista do baixo (${baixosN}): o que um botão no baixo proíbe não pode aparecer, nem como subitem.${teto?" Confira também a carga de leitura.":""}`:null
   ].filter(x=>x!=null).join("\n");
 }
 
 function linhaParams(p){
-  return `${p.nivel} · ${p.area} · ${p.tema} · ${p.formato}${COM_PACIENTE(p.formato)?" · "+p.cenario:""}${p.no&&p.no.caminho?` · assunto: ${p.no.caminho}`:""}${diretaOn(p)?" · sem caso clínico nem prontuário":""} · ${rotuloDif(p.dificuldade)} · botões no alto: ${(p.botoes||[]).join(", ")||"nenhum"} · até ${p.limite} linhas por resposta`;
+  return `${p.nivel} · ${p.area} · ${p.tema} · ${p.formato}${COM_PACIENTE(p.formato)?" · "+p.cenario:""}${p.no&&p.no.caminho?` · assunto: ${p.no.caminho}`:""}${diretaOn(p)?" · sem caso clínico nem prontuário":""} · ${rotuloDif(p.dificuldade)} · botões no alto: ${(p.botoes||[]).join(", ")||"nenhum"} · ${p.tipo==="objetiva"?`objetiva de ${nAlt(p)} alternativas`:`até ${p.limite} linhas por resposta`}`;
 }
 function blocoQuestao(q){
+  if(ehObj(q)) return `[PLANO — o aluno não vê]\n${textoNucleo(q)}\n\n[ENUNCIADO E PERGUNTA]\n${textoEnunObj(q)}\n\n[ALTERNATIVAS, com o gabarito e o comentário de cada uma]\n${textoAlternativas(q,true)}`;
   return `[PLANO — o aluno não vê]\n${textoNucleo(q)}\n\n[ENUNCIADO]\n${textoEnunciado(q.enunciado)}\n\n[ESPELHO]\n${textoEspelho(q.nucleo.espelho)}`;
 }
 
 /* o conserto: o modelo devolve só os blocos que mudam, e a página encaixa */
 function pConserto(q,defeitos){
-  const p=q.params;
+  const p=q.params, obj=ehObj(q);
   return `${P_BASE}
 
 TAREFA: consertar a questão abaixo mexendo o mínimo possível. Devolva só o que muda.
@@ -777,17 +883,24 @@ DEFEITOS A CONSERTAR
 ${defeitos.map(d=>"- "+d).join("\n")}
 
 REGRAS
-- O que não foi criticado fica como está: mesmo ${COM_PACIENTE(p.formato)?"paciente":"recorte"}, mesmos itens, mesmas letras; os pontos continuam somando 10.
-- Não afrouxe o que protege o paciente: erro grave continua zerando o item e justificativa exigida continua exigida.
+- ${obj?`O que não foi criticado fica como está: mesmo ${COM_PACIENTE(p.formato)?"paciente":"recorte"}, mesma pergunta, mesmas letras. A questão continua com ${nAlt(p)} alternativas e uma única melhor resposta.`
+        :`O que não foi criticado fica como está: mesmo ${COM_PACIENTE(p.formato)?"paciente":"recorte"}, mesmos itens, mesmas letras; os pontos continuam somando 10.`}
+- ${obj?"As alternativas seguem da mesma categoria, com tamanho parecido e sem pista; nada de «todas / nenhuma das anteriores» nem de pergunta negativa."
+        :"Não afrouxe o que protege o paciente: erro grave continua zerando o item e justificativa exigida continua exigida."}
 - ${regraVR(p)}
-- Cada resposta nota máxima cabe em ${p.limite} linhas (≈ ${p.limite*12} palavras).${diretaOn(p)?"\n- Continua sem caso clínico: nada de paciente, história clínica nem prontuário no enunciado. A dificuldade não cai por isso.":""}${p.dificuldade===0?"\n- Continua no nível de aprendizagem: só ideias centrais, uma por item, sem exceção, distrator nem pegadinha.":`\n- A dificuldade ${p.dificuldade} não sobe com o conserto: botão no baixo continua no baixo (${poolDe(p.formato).filter(b=>!(p.botoes||[]).includes(b.n)).map(b=>b.n).join(", ")||"nenhum"}).`}
+- ${obj?"Cada alternativa reescrita leva o seu comentário: por que é a melhor, ou por que está errada e que erro leva a ela.":`Cada resposta nota máxima cabe em ${p.limite} linhas (≈ ${p.limite*12} palavras).`}${diretaOn(p)?"\n- Continua sem caso clínico: nada de paciente, história clínica nem prontuário no enunciado. A dificuldade não cai por isso.":""}${p.dificuldade===0?"\n- Continua no nível de aprendizagem: só ideias centrais, uma por item, sem exceção, distrator nem pegadinha.":`\n- A dificuldade ${p.dificuldade} não sobe com o conserto: botão no baixo continua no baixo (${poolDe(p.formato).filter(b=>!(p.botoes||[]).includes(b.n)).map(b=>b.n).join(", ")||"nenhum"}).`}
 
 SAÍDA — só objetos JSON, um por linha, apenas dos blocos que mudaram, cada um inteiro:
-{"t":"mom","n":1,"txt":"momento reescrito","itens":[["a","comando"]]}
+${obj?`{"t":"mom","n":1,"txt":"enunciado reescrito","itens":[["a","a pergunta"]]}
+{"t":"alt","i":"C","ok":0,"txt":"alternativa reescrita","por":"comentário","grave":""}
+{"t":"plano","…":"só as chaves do plano que mudaram (caso, dx, fisio, oculto, evol, cadeia, ponte, botoes, alvos, anti, conferir, ref)"}
+{"t":"fim","mudei":"uma linha dizendo o que mudou"}
+Cada "alt" leva em "i" a letra que a alternativa tem hoje. Se o gabarito mudar, devolva a nova correta com "ok":1: as outras deixam de ser. Alternativa nova, que falta, vai sem "i".`
+:`{"t":"mom","n":1,"txt":"momento reescrito","itens":[["a","comando"]]}
 {"t":"esp","i":"a","max":"resposta nota máxima","q":[["quesito",1.5,1]],"alt":[["resposta","condição"]],"comuns":["erro comum"],"graves":[["erro","conduta ou conceito","consequência"]]}
 {"t":"plano","…":"só as chaves do plano que mudaram (caso, dx, fisio, oculto, evol, cadeia, ponte, botoes, alvos, anti, conferir, ref)"}
 {"t":"fim","mudei":"uma linha dizendo o que mudou"}
-Em "q": [quesito, pontos, 1 se exige justificativa senão 0]. Um "mom" reescrito leva todos os itens dele.`;
+Em "q": [quesito, pontos, 1 se exige justificativa senão 0]. Um "mom" reescrito leva todos os itens dele.`}`;
 }
 
 const PERFIS={
@@ -797,6 +910,18 @@ const PERFIS={
 };
 function pCandidatos(perfis,q){
   const p=q.params;
+  if(ehObj(q)) return `Simule ${perfis.length===1?"um candidato":"candidatos"} respondendo a uma questão objetiva de medicina como responderia${perfis.length===1?"":"m"} de verdade, inclusive errando onde erraria${perfis.length===1?"":"m"}. Não comente os perfis.
+
+PERFIS
+${perfis.map(k=>`- ${k}: ${PERFIS[k](p.area)}`).join("\n")}
+
+[QUESTÃO]
+${textoEnunObj(q)}
+
+${textoAlternativas(q,false)}
+
+SAÍDA — só objetos JSON, um por linha, um por perfil:
+{"t":"prova","perfil":"${perfis[0]}","r":{"a":"a letra marcada"},"porque":"o raciocínio que levou a ela, em uma frase"}`;
   return `Simule ${perfis.length===1?"um candidato":"candidatos"} respondendo a uma prova discursiva de medicina como responderia${perfis.length===1?"":"m"} de verdade, inclusive errando onde erraria${perfis.length===1?"":"m"}. Cada resposta em até ${p.limite} linhas (1 linha ≈ 12 palavras). Não comente os perfis.
 
 PERFIS
@@ -811,6 +936,7 @@ SAÍDA — só objetos JSON, um por linha, um por perfil:
 
 /* o revisor. Na auditoria, a mesma chamada corrige as três provas simuladas: uma chamada a menos, e o espelho viaja uma vez só. */
 function pRevisor(q,trio,consertados){
+  const obj=ehObj(q), gab=gabaritoDe(q);
   const p=q.params, baixos=poolDe(p.formato).filter(b=>!(p.botoes||[]).includes(b.n));
   return `Você é o revisor final de uma banca de medicina. Sua função é achar erro antes que a questão chegue ao aluno: é melhor reprovar uma questão boa do que aprovar uma com erro clínico ou conceitual. Fora disso, não reprove por gosto: nota abaixo de 4 exige defeito concreto, com o trecho, que prejudique o aluno. Não reescreva a questão; aponte o defeito e o conserto.
 
@@ -820,7 +946,12 @@ Nível ${p.nivel}: ${regraNivel(p)}
 Regra de valores: ${regraVR(p)}${diretaOn(p)?"\nExigência do pedido: questão sem caso clínico. Paciente, história clínica ou prontuário no enunciado é defeito: aponte em clareza. A falta de paciente não é desculpa para questão fácil: julgue a dificuldade pelos botões.":""}${p.fonte==="curso"?"\nFonte de verdade: o material do curso do aluno, que não está aqui. Divergência da diretriz registrada pelo autor não é erro.":""}
 
 ${blocoQuestao(q)}
-${trio?`
+${trio&&obj?`
+[RESPOSTAS SIMULADAS — marcadas sem ver o gabarito]
+${trio.map(c=>{ const l=(String((c.respostas||{}).a||"").toUpperCase().match(/[A-E]/)||["?"])[0]; return `${c.perfil}: marcou ${l} (${l===gab?"certo":"errado"})${c.porque?` — ${c.porque}`:""}`; }).join("\n")}
+Use-as como evidência: se o candidato forte marcou outra alternativa com raciocínio defensável, o gabarito é ambíguo.
+
+REVISE a questão.`:trio?`
 [PROVAS SIMULADAS — escritas sem ver o espelho]
 ${trio.map(c=>`### ${c.perfil}\n${Object.entries(c.respostas||{}).map(([i,t])=>`[${i}] ${t||"(em branco)"}`).join("\n")}`).join("\n\n")}
 
@@ -833,17 +964,19 @@ Confirme se cada um foi resolvido. Fora deles, só aponte defeito novo se for de
 `:""} Dê de 1 a 5 a cada critério (5 = nada a consertar; 4 = dá para usar como está, retoque opcional; 3 = defeito que prejudica o uso; 1 ou 2 = erro que invalida):
 - veross: dados coerentes entre si, com a doença, com a idade e com o tempo; cadeia causal sem elo pulado
 - correcao: fármaco, dose, critério, valor de corte, classificação ou fonte errados ou desatualizados
-- seguranca: conduta perigosa plausível que ficou fora dos erros graves; resposta nota máxima que causaria dano
-- clareza: comando com duas leituras; valor sem referência que o aluno deste nível não sabe de cor
-- vazamento: o enunciado entrega diagnóstico ou conduta; um item responde outro
+- seguranca: ${obj?"a alternativa correta causaria dano? um distrator perigoso ficou sem a marca de grave?":"conduta perigosa plausível que ficou fora dos erros graves; resposta nota máxima que causaria dano"}
+- clareza: ${obj?"pergunta com duas leituras, ou que não se responde sem olhar as alternativas; valor sem referência que o aluno deste nível não sabe de cor":"comando com duas leituras; valor sem referência que o aluno deste nível não sabe de cor"}
+- vazamento: ${obj?"o enunciado ou a forma das alternativas entrega a resposta: correta mais longa ou mais detalhada, termo absoluto só nos distratores, pista gramatical, palavra do enunciado repetida só na correta":"o enunciado entrega diagnóstico ou conduta; um item responde outro"}
 - relevancia: isto importa para o nível ${p.nivel}?
-- dificuldade: ${p.dificuldade===0?"é nível de aprendizagem, para quem acabou de ver a aula: a questão cobra só ideias centrais, uma por item, em 1 ou 2 elos? exceção, detalhe obscuro, distrator ou item difícil demais é defeito aqui; a explicação do livro valer nota máxima não é":`a questão saiu com a dificuldade ${p.dificuldade}, nem mais nem menos? os botões no alto pesam na resposta? algum botão no baixo subiu por conta própria (dado bruto, cadeia longa, previsão, comparação de vizinhos, distrator)? isso é defeito. ${p.dificuldade>=3?"A resposta decorada tiraria nota máxima?":"Neste nível a explicação correta do livro tem de valer pelo menos metade de cada item."}`}
-- espelho: quesito inobservável, sobreposto ou que nem um ótimo candidato cumpriria; resposta correta não prevista; resposta máxima que não cabe em ${p.limite} linhas
+- dificuldade: ${obj?(p.dificuldade===0?"é nível de aprendizagem: ideia central, pergunta direta, distratores que são confusões típicas de quem acabou de aprender. Exceção, detalhe obscuro ou distrator vizinho demais é defeito aqui"
+    :`a questão saiu com a dificuldade ${p.dificuldade}, nem mais nem menos? os botões no alto pesam na resposta? algum botão no baixo subiu por conta própria (dado bruto, cadeia longa, distrator vizinho demais)? isso é defeito. ${p.dificuldade>=3?"O distrator do decoreba existe, é tentador e está errado aqui?":"Neste nível os distratores têm de ser de ideias bem diferentes da correta."}`)
+  :p.dificuldade===0?"é nível de aprendizagem, para quem acabou de ver a aula: a questão cobra só ideias centrais, uma por item, em 1 ou 2 elos? exceção, detalhe obscuro, distrator ou item difícil demais é defeito aqui; a explicação do livro valer nota máxima não é":`a questão saiu com a dificuldade ${p.dificuldade}, nem mais nem menos? os botões no alto pesam na resposta? algum botão no baixo subiu por conta própria (dado bruto, cadeia longa, previsão, comparação de vizinhos, distrator)? isso é defeito. ${p.dificuldade>=3?"A resposta decorada tiraria nota máxima?":"Neste nível a explicação correta do livro tem de valer pelo menos metade de cada item."}`}
+- espelho: ${obj?"gabarito e alternativas — há uma única melhor resposta? algum distrator também é defensável? distrator implausível, de outra categoria ou que ninguém marcaria? comentário de alternativa errado?":`quesito inobservável, sobreposto ou que nem um ótimo candidato cumpriria; resposta correta não prevista; resposta máxima que não cabe em ${p.limite} linhas`}
 
 SAÍDA — só objetos JSON, um por linha:
-${trio?`{"t":"nota","perfil":"forte","itens":{"a":0,"b":0},"faltou":"até 12 palavras","grave":"erro grave cometido, ou vazio","fora":"resposta correta aceita fora do espelho, ou vazio","diverg":"leitura diferente e plausível do enunciado, ou vazio"}
+${trio&&!obj?`{"t":"nota","perfil":"forte","itens":{"a":0,"b":0},"faltou":"até 12 palavras","grave":"erro grave cometido, ou vazio","fora":"resposta correta aceita fora do espelho, ou vazio","diverg":"leitura diferente e plausível do enunciado, ou vazio"}
 (um "nota" por prova; em "itens", os pontos obtidos em cada item)
-`:""}{"t":"rev","notas":{"veross":5,"correcao":5,"seguranca":5,"clareza":5,"vazamento":5,"relevancia":5,"dificuldade":5,"espelho":5},"achados":[["critério","defeito concreto, com o trecho","conserto em uma frase"]],"onde":"enunciado | espelho | caso"}
+`:""}{"t":"rev","notas":{"veross":5,"correcao":5,"seguranca":5,"clareza":5,"vazamento":5,"relevancia":5,"dificuldade":5,"espelho":5},"achados":[["critério","defeito concreto, com o trecho","conserto em uma frase"]],"onde":"enunciado | ${obj?"alternativas":"espelho"} | caso"}
 Em "achados" só entra critério com nota abaixo de 5; sem nada a consertar, a lista vai vazia. Nota abaixo de 4 sem achado correspondente não vale.`;
 }
 
@@ -912,6 +1045,27 @@ SAÍDA — só objetos JSON, um por linha:
 {"t":"cor","i":"${l}","q":[[1.5,""],[0.5,"motivo"]],"grave":"","fora":"","dica":""}
 {"t":"rec","porque":"a razão da decisão, em 1 ou 2 frases","espelho":"o que o espelho precisa mudar, ou vazio"}`;
 }
+/* recurso contra o gabarito de uma objetiva: um segundo examinador decide se ele se mantém */
+function pRecursoObj(q,marcada,argumento){
+  const p=q.params;
+  return `Você é o segundo examinador de uma banca de medicina e julga o recurso de um aluno de ${p.nivel} contra o gabarito de uma questão objetiva. Julgue com independência: não defenda o gabarito por ser o gabarito e não ceda por insistência.
+
+${blocoQuestao(q)}
+
+O aluno marcou ${marcada}.
+
+[ARGUMENTO DO ALUNO]
+${argumento}
+
+DECIDA
+- "mantido": o gabarito é a única melhor resposta.
+- "trocado": outra alternativa é a melhor resposta; diga qual em "correta".
+- "anulado": há mais de uma resposta defensável, ou nenhuma, ou o enunciado não permite decidir.
+Se o gabarito cair, diga em "espelho" o que precisa mudar na questão.
+
+SAÍDA — só um objeto JSON:
+{"t":"rec","decisao":"mantido | trocado | anulado","correta":"a letra, se trocado","porque":"a razão da decisão, em 1 ou 2 frases","espelho":"o que precisa mudar na questão, ou vazio"}`;
+}
 /* a reescrita e o fecho, juntos. A resposta modelo não é pedida: a página mostra a do espelho. */
 function pReescrita(q,pr){
   const p=q.params, pac=COM_PACIENTE(p.formato), l=pr.reescrita.item;
@@ -953,6 +1107,7 @@ Pergunte tudo de uma vez, com o padrão entre parênteses:
 2. Grande área e tema
 3. Formato: caso clínico | caso evolutivo | mecanismo | comparação | interpretação de dado | previsão | integração (padrão: você escolhe pelo nível)
 4. Dificuldade: aprendizagem (acabei de ver a aula e quero fixar) ou de 1 a 5 (padrão: 3)
+4b. Tipo: discursiva ou objetiva (padrão: discursiva). Na objetiva: uma única melhor resposta; a pergunta se responde sem olhar as alternativas; alternativas da mesma categoria e de tamanho parecido; cada distrator nasce de um erro de raciocínio; nada de "todas / nenhuma das anteriores" nem pergunta negativa; gabarito comentado alternativa por alternativa, mostrado só depois que eu marcar.
 5. Modo: TREINO (eu respondo e você corrige) | BANCO (só questão e espelho) (padrão: TREINO)
 6. Referência: diretriz ou material meu (opcional)
 Se eu responder só parte, use os padrões e siga. Na faculdade (básico, clínico e internato), o padrão é questão sem caso clínico: nada de paciente, história clínica nem prontuário no enunciado, a menos que eu peça. A dificuldade continua vindo dos botões (elos causais, conceitos vizinhos, previsão, achado contraintuitivo, dado bruto), montados sobre um fenômeno, um experimento, uma curva ou uma comparação. No básico, nunca cobre conduta nem dose; no clínico, conduta só por classe de fármaco e com o porquê. Na residência, quase sempre caso clínico, com dose só quando ela muda a decisão.
@@ -1019,7 +1174,7 @@ const EXEMPLO = {
 
 const S={
   view:"montar", responder:false,
-  params:{nivel:"internato",direta:true,area:"clínica médica",tema:"insuficiência cardíaca descompensada",foco:"",formato:"mecanismo",dificuldade:3,cenario:"pronto-socorro",limite:10,itens:3,referencia:"",fonte:"diretriz",material:"",semPessoas:false,botoes:[]},
+  params:{tipo:"discursiva",alternativas:4,nivel:"internato",direta:true,area:"clínica médica",tema:"insuficiência cardíaca descompensada",foco:"",formato:"mecanismo",dificuldade:3,cenario:"pronto-socorro",limite:10,itens:3,referencia:"",fonte:"diretriz",material:"",semPessoas:false,botoes:[]},
   quantidade:1, lote:[], provas:{}, velocidade:"seguro", motor:"maximo",
   esteira:[], rodando:false, abort:null, t0:0, log:[],
   questao:null, prova:null, espelhoAberto:false, remover:null,
@@ -1372,7 +1527,7 @@ async function gerarTudo(){
   const qs=Array.from({length:n},(_,i)=>{ const no=alvosNo[i];
     const q=esqueleto({...guardado,botoes:[...p.botoes],...(no?{no:{id:no.id,caminho:caminhoDe(arv,no.id)}}:{})},"q"+(base+i)); q.gerando=true; return q; });
   /* blocos de até 3 questões por chamada; a fila roda duas chamadas por vez */
-  const nb=n===1?1:Math.max(2,Math.ceil(n/3)), blocos=Array.from({length:nb},()=>[]);
+  const nb=n===1?1:Math.max(2,Math.ceil(n/(p.tipo==="objetiva"?5:3))), blocos=Array.from({length:nb},()=>[]);
   qs.forEach((q,i)=>blocos[i%nb].push(q));
   for(const b of blocos) b.forEach((q,i)=>{ q.vez=i?"fila":"espera"; });
   guardarPrefs();
@@ -1413,7 +1568,7 @@ async function gerarTudo(){
     if(no){ no.n=(no.n||0)+1; const v=pontosDe(q); if(v)no.v=[...(no.v||[]),v].slice(-6); } }
   if(arv&&prontas.some(q=>q.params.no)) salvarArvore(arv);
   if(!prontas.includes(S.questao)){ S.questao=prontas[0]; S.prova=provaDe(prontas[0]); }
-  marca("questao","ok",n>1?`${prontas.length} de ${n} prontas`:`${prontas[0].nucleo.espelho.itens.length} itens · ${fmt(somaMax(prontas[0].nucleo.espelho.itens))} pontos`);
+  marca("questao","ok",n>1?`${prontas.length} de ${n} prontas`:ehObj(prontas[0])?`${prontas[0].alternativas.length} alternativas`:`${prontas[0].nucleo.espelho.itens.length} itens · ${fmt(somaMax(prontas[0].nucleo.espelho.itens))} pontos`);
   render(); guardarMesa();
   if(S.velocidade!=="direto"&&!parou) conferirFila(prontas,S.velocidade); else semCarimbo();
 }
@@ -1444,13 +1599,13 @@ async function gerarBloco(p,alvo,ctx,signal){
   const consumir=txt=>{
     let novo=false;
     for(const r of leitor.alimentar(txt)){
-      if(!["plano","mom","esp"].includes(r.t))continue;
+      if(!["plano","mom","esp","alt"].includes(r.t))continue;
       if(Number(r.k)) kAtual=Math.min(alvo.length,Math.max(1,Number(r.k)));
       else if(r.t==="plano"&&alvo[kAtual-1].temPlano&&kAtual<alvo.length) kAtual++;
       const q=de(r.k), i=alvo.indexOf(q);
       aplicar(q,r); q.vez="escrevendo"; if(r.t==="plano")q.temPlano=true; if(r.t==="mom")q.parcial=null;
       for(let j=0;j<i;j++) if(alvo[j].gerando&&utilizavel(alvo[j])) encerrar(alvo[j]);
-      if(r.t==="esp"&&espelhoCompleto(q)) encerrar(q);
+      if((r.t==="esp"||r.t==="alt")&&espelhoCompleto(q)) encerrar(q);
       novo=true;
     }
     const parc=leitor.parcial(txt);
@@ -1489,6 +1644,7 @@ function faseTexto(q){
   const en=q.enunciado, esp=q.nucleo.espelho.itens;
   if(q.vez==="fila") return "na vez: outra questão deste bloco está sendo escrita antes";
   if(q.vez==="espera") return "na fila: duas chamadas rodam por vez";
+  if(ehObj(q)&&en.itens.length&&!q.parcial) return `enunciado pronto · escrevendo as alternativas, ${Math.min((q.alternativas||[]).length+1,nAlt(q.params))} de ${nAlt(q.params)}`;
   if(en.itens.length&&!q.parcial){ const tot=Math.max(en.itens.length,Object.keys(q.nucleo.alvos||{}).length); return `enunciado pronto · escrevendo o espelho, item ${Math.min(esp.length+1,tot)} de ${tot}`; }
   if(q.parcial||en.momentos.length) return "escrevendo o enunciado";
   if(q.temPlano) return "plano fechado · começando o enunciado";
@@ -1537,17 +1693,22 @@ async function conferir(q,{modo="seguro",trio=null,consertados=null}={}){
         const [a,b]=await Promise.all([
           pedirRegistros(pCandidatos(["forte"],q),{tier:motor().escreve,signal:sig,rotulo:"candidato forte"}),
           pedirRegistros(pCandidatos(["mediano","decoreba"],q),{tier:"quick",signal:sig,rotulo:"candidatos mediano e decoreba"})]);
-        trio=[...a,...b].map(r=>{ const k=perfilDe(r.perfil); return k&&r.r&&typeof r.r==="object"?{perfil:k,respostas:Object.fromEntries(Object.entries(r.r).map(([i,t])=>[letra(i),String(t||"")]))}:null; }).filter(Boolean);
+        trio=[...a,...b].map(r=>{ const k=perfilDe(r.perfil); return k&&r.r&&typeof r.r==="object"?{perfil:k,porque:limpo(r.porque),respostas:Object.fromEntries(Object.entries(r.r).map(([i,t])=>[letra(i),String(t||"")]))}:null; }).filter(Boolean);
         if(!trio.some(t=>t.perfil==="forte")||trio.length<2) throw {code:"gen",message:"as provas simuladas vieram incompletas."};
         marca("candidatos","ok",`${trio.length} provas simuladas`);
       }
     }else{ trio=null; marca("candidatos","espera","só na auditoria"); }
-    marca("revisor","rodando",trio?"corrigindo as provas e revisando":"procurando erro clínico");
+    const obj=ehObj(q);
+    marca("revisor","rodando",trio?(obj?"revisando com as respostas simuladas":"corrigindo as provas e revisando"):"procurando erro clínico");
     const regs=await pedirRegistros(pRevisor(q,trio,consertados),{tier:"complex",signal:sig,rotulo:trio?"banca: correção e revisão":"revisor"});
     const rev=regs.find(r=>r.t==="rev"||r.notas);
     if(!rev) throw {code:"gen",message:"a revisão veio sem notas."};
     const prec=preceptorDe(rev), notas={forte:null,mediano:null,decoreba:null}, detalhe={}; let diverg="";
-    for(const r of regs){
+    if(obj&&trio){ const gab=gabaritoDe(q);
+      for(const c of trio){ const l=(String((c.respostas||{}).a||"").toUpperCase().match(/[A-E]/)||[""])[0];
+        notas[c.perfil]=l===gab?10:0; detalhe[c.perfil]={marcou:l||"?",faltou:c.porque||"",grave:"",fora:""};
+        if(c.perfil==="forte"&&l!==gab)diverg=`marcou ${l||"?"}${c.porque?`: ${c.porque}`:""}`; } }
+    for(const r of (obj?[]:regs)){
       const k=(r.t==="nota"||(r.perfil&&r.itens))?perfilDe(r.perfil):null; if(!k)continue;
       const soma=Object.values(r.itens||{}).reduce((s,v)=>s+(Number(v)||0),0);
       notas[k]=Math.round(Math.max(0,Math.min(10,soma))*100)/100;
@@ -1555,9 +1716,9 @@ async function conferir(q,{modo="seguro",trio=null,consertados=null}={}){
       if(k==="forte")diverg=limpo(r.diverg);
     }
     const ns=prec.criterios.map(c=>c.nota);
-    marca("revisor","ok",trio?`${fmt(notas.forte)} · ${fmt(notas.mediano)} · ${fmt(notas.decoreba)}`:(ns.length?`menor nota ${Math.min(...ns)} de 5`:"sem notas"));
+    marca("revisor","ok",trio&&obj?["forte","mediano","decoreba"].map(k=>detalhe[k]?detalhe[k].marcou:"—").join(" · ")+" · gabarito "+gabaritoDe(q):trio?`${fmt(notas.forte)} · ${fmt(notas.mediano)} · ${fmt(notas.decoreba)}`:(ns.length?`menor nota ${Math.min(...ns)} de 5`:"sem notas"));
     marca("decisao","rodando","aplicando a regra");
-    const d=decidir({notas,divergencia:diverg,preceptor:prec,dificuldade:q.params.dificuldade});
+    const d=decidir({notas,divergencia:diverg,preceptor:prec,dificuldade:q.params.dificuldade,objetiva:obj});
     q.veredito=d;
     q.validacao={notas,detalhe,discriminacao:(notas.forte!=null&&notas.mediano!=null)?Math.round((notas.forte-notas.mediano)*100)/100:null,preceptor:prec,trio:trio||null,modo};
     marca("decisao",d.v==="APROVAR"?"ok":"falhou",d.v==="APROVAR"?"aprovada":d.v.toLowerCase());
@@ -1593,7 +1754,7 @@ async function consertar(){
   try{
     const regs=await pedirRegistros(pConserto(q,lista),{tier:motor().escreve,rotulo:"conserto",cache:false,prio:true});
     let mudou=0, fim=null;
-    for(const r of regs){ if(r.t==="fim"||r.mudei){ fim=r; continue; } if(["plano","mom","esp"].includes(r.t)){ aplicar(q,r); mudou++; } }
+    for(const r of regs){ if(r.t==="fim"||r.mudei){ fim=r; continue; } if(["plano","mom","esp","alt"].includes(r.t)){ aplicar(q,r); mudou++; } }
     if(!mudou) throw {code:"gen",message:"o conserto não devolveu nenhum bloco."};
     q.reescalado=null; q.falhasEspelho=[]; finalizar(q);
     q.ajuste=limpo(fim&&fim.mudei)||`${mudou} ${mudou===1?"bloco reescrito":"blocos reescritos"}`;
@@ -1714,7 +1875,18 @@ async function entregarReescrita(){
   finally{ pr.entregando=false; render(); guardarMesa(); }
 }
 function registrar(){
-  const q=S.questao, pr=S.prova; if(!q||!pr||!pr.correcao)return;
+  const q=S.questao, pr=S.prova; if(!q||!pr)return;
+  if(ehObj(q)){
+    const o=pr.obj; if(!o||!o.fim)return;
+    const etapa=(((q.nucleo.alvos||{}).a||{}).etapa||"—").toLowerCase();
+    const graves=o.tentativas.map(l=>altDe(q,l)).filter(a=>a&&!a.ok&&a.grave).map(a=>`${a.txt}: ${a.grave}`);
+    const reg={id:pr.questaoId+"-"+(pr.registroId||(pr.registroId=Date.now())),criado:pr.criado||(pr.criado=hoje()),ts:pr.registroId,tipo:"objetiva",
+      questaoId:q.id,tema:q.params.tema,area:q.params.area,nivel:q.params.nivel,formato:q.params.formato,dificuldade:q.params.dificuldade,
+      nota:o.nota,etapas:{[etapa]:{o:o.nota,m:10}},graves,reescrita_nota:null,repescagem:graves.length?[dias(pr.criado,3),dias(pr.criado,10)]:[]};
+    S.historico=ordenarHistorico([reg,...S.historico.filter(h=>h.id!==reg.id)]);
+    salvar("sessoes",reg.id,reg); return;
+  }
+  if(!pr.correcao)return;
   const etapas={}, graves=[];
   for(const i of pr.correcao.itens||[]){
     const etapa=(i.etapa_raciocinio||"—").toLowerCase(), {o,m}=pontosDoItem(i);
@@ -1801,7 +1973,7 @@ const ABAS=[["montar","Montar"],["prova","Questão"],["painel","Painel"],["banco
 function renderTabs(){
   document.getElementById("tabs").replaceChildren(...ABAS.map(([k,t])=>el("button",{role:"tab","aria-selected":String(S.view===k),
     onclick:()=>{ S.view=k; S.remover=null; render(); }},t+(k==="banco"&&S.banco.length?` ${S.banco.length}`:""))));
-  document.getElementById("modo-kicker").textContent=S.responder&&S.view==="prova"?"respondendo · espelho lacrado":"gerar, ver e exportar";
+  document.getElementById("modo-kicker").textContent=S.responder&&S.view==="prova"?(ehObj(S.questao)?"respondendo · gabarito lacrado":"respondendo · espelho lacrado"):"gerar, ver e exportar";
 }
 function renderBanner(){
   const host=document.getElementById("banner"); if(!host)return;
@@ -1840,6 +2012,7 @@ function vMontar(){
   const areas=p.nivel==="básico"?AREAS_BAS:AREAS_CLIN;
   if(!areas.includes(p.area))p.area=areas[0];
   if(ehFaculdade(p.nivel)&&p.direta&&COM_PACIENTE(p.formato)){ p.formato="mecanismo"; p.botoes=autoBotoes(p.dificuldade,p.formato,p.nivel); }
+  if(p.tipo==="objetiva"&&p.formato==="caso evolutivo"){ p.formato="caso clínico"; p.botoes=autoBotoes(p.dificuldade,p.formato,p.nivel); }
   const pool=poolDe(p.formato), dir=diretaOn(p);
   const avisos=conferirBotoes(p.botoes,p.dificuldade,p.formato,p.nivel);
   const campo=(rot,node,largo)=>el("label",{cls:"f"+(largo?" largo":"")},el("span",{txt:rot}),node);
@@ -1857,6 +2030,15 @@ function vMontar(){
   };
   const subniveis=ehFaculdade(p.nivel)?FACUL:RESID;
   const alvo=el("section",{cls:"card"},
+    el("div",{cls:"eyebrow",txt:"que questão"}),
+    el("div",{cls:"dial gr",id:"f-tipo",style:"margin:12px 0 6px;max-width:26rem"},
+      ...[["discursiva","Discursiva"],["objetiva","Objetiva"]].map(([k,rot])=>
+        el("button",{"aria-pressed":String((p.tipo||"discursiva")===k),onclick:()=>{ if(p.tipo===k)return; p.tipo=k;
+          if(k==="objetiva"&&p.formato==="caso evolutivo") p.formato="caso clínico";
+          p.botoes=autoBotoes(p.dificuldade,p.formato,p.nivel); guardarPrefs(); render(); }},rot))),
+    el("p",{cls:"hint tight",style:"margin-bottom:14px"},p.tipo==="objetiva"
+      ?"Múltipla escolha com uma única melhor resposta. Mesmos níveis, botões, árvore e revisor; cada distrator nasce de um erro de raciocínio, e o gabarito sai comentado alternativa por alternativa."
+      :"Resposta escrita, corrigida quesito a quesito pelo espelho."),
     el("div",{cls:"eyebrow",txt:"para que prova"}),
     el("div",{cls:"dial gr",style:"margin:12px 0 10px;max-width:26rem"},
       ...[["Faculdade",FACUL],["Residência",RESID]].map(([rot,ns])=>
@@ -1889,8 +2071,9 @@ function vMontar(){
       campo("recorte (opcional)",el("input",{type:"text",id:"f-foco",value:p.foco||"",placeholder:"ex.: gestante; foco no potássio",oninput:e=>{ p.foco=e.target.value; }})),
       campo("formato",sel("f-formato",p.formato,formatosPara(p),v=>{ p.formato=v; p.botoes=autoBotoes(p.dificuldade,v,p.nivel); render(); })),
       COM_PACIENTE(p.formato)?campo("cenário",sel("f-cenario",p.cenario,CENARIOS,v=>{ p.cenario=v; })):null,
-      campo("linhas por item",sel("f-limite",String(p.limite),["5","10","15","20"],v=>{ p.limite=Number(v); render(); })),
-      campo("itens",sel("f-itens",String(p.itens),["1","2","3","4"],v=>{ p.itens=Number(v); })),
+      p.tipo==="objetiva"?campo("alternativas",sel("f-alt",String(nAlt(p)),["4","5"],v=>{ p.alternativas=Number(v); guardarPrefs(); })):null,
+      p.tipo==="objetiva"?null:campo("linhas por item",sel("f-limite",String(p.limite),["5","10","15","20"],v=>{ p.limite=Number(v); render(); })),
+      p.tipo==="objetiva"?null:campo("itens",sel("f-itens",String(p.itens),["1","2","3","4"],v=>{ p.itens=Number(v); })),
       campo("dificuldade",el("div",{cls:"dial",id:"f-dif"},...[0,1,2,3,4,5].map(d=>el("button",{cls:d?null:"largo","aria-pressed":String(d===p.dificuldade),
         title:d?`dificuldade ${d}`:"aprendizagem: para quem acabou de ver a aula e precisa fixar",
         onclick:()=>{ p.dificuldade=d; p.botoes=autoBotoes(d,p.formato,p.nivel); render(); }},d?String(d):"aprender"))))
@@ -1898,7 +2081,7 @@ function vMontar(){
     COM_PACIENTE(p.formato)?null:el("label",{cls:"chk",style:"margin-top:12px"},
       el("input",{type:"checkbox",id:"f-sem-pessoas",checked:p.semPessoas||null,onchange:e=>{ p.semPessoas=e.target.checked; }}),
       "sem pessoas no enunciado: dados de bancada, curva ou amostra, nenhum indivíduo"),
-    avisoLinhas(p),
+    p.tipo==="objetiva"?null:avisoLinhas(p),
     fonteDaVerdade(p)
   );
 
@@ -1918,7 +2101,7 @@ function vMontar(){
     (avisos.length||p.dificuldade===0)?null:el("div",{cls:"alerta ok",style:"margin-top:10px"},"Combinação coerente com a tabela de dificuldade.")
   );
 
-  const V=VELOCIDADES[S.velocidade], M=motor(), n=S.quantidade, escrita=n===1?1:Math.max(2,Math.ceil(n/3)), total=escrita+n*(V.c-1), naSessao=prontasDaSessao().length;
+  const V=VELOCIDADES[S.velocidade], M=motor(), n=S.quantidade, escrita=n===1?1:Math.max(2,Math.ceil(n/(p.tipo==="objetiva"?5:3))), total=escrita+n*(V.c-1), naSessao=prontasDaSessao().length;
   const esteira=el("section",{cls:"card"},
     el("div",{cls:"eyebrow",txt:"esteira"}),
     el("div",{cls:"grid",style:"margin-top:12px"},
@@ -2079,6 +2262,7 @@ function vProva(){
   if(S.lote.length>1) out.push(barraLote(q));
   out.push(cabecalho(q,pr));
   if(S.log.length) out.push(el("section",{cls:"card fino"},...S.log.map(l=>el("div",{cls:"alerta",style:"margin:4px 0"},l))));
+  if(ehObj(q)){ out.push(cartaoObjetiva(q,pr)); if(pr.obj&&pr.obj.fim) out.push(resultadoObjetiva(q,pr)); out.push(blocoGabarito(q,pr)); return out; }
   out.push(...cartoesEnunciado(q,pr));
   if(S.responder&&!pr.entregue&&!q.gerando&&q.enunciado.itens.length) out.push(el("section",{cls:"card"},
     el("div",{cls:"acoes"},
@@ -2108,7 +2292,7 @@ function cabecalho(q,pr){
   return el("section",{cls:"card"},
     el("div",{cls:"cab"},
       el("div",{cls:"cab-t"},
-        el("div",{cls:"kicker",txt:`${p.nivel} · ${p.area} · ${p.formato}${COM_PACIENTE(p.formato)?" · "+p.cenario:""}${diretaOn(p)?" · sem caso clínico":""} · ${rotuloDif(p.dificuldade)}`}),
+        el("div",{cls:"kicker",txt:`${p.nivel} · ${p.area} · ${p.formato}${COM_PACIENTE(p.formato)?" · "+p.cenario:""}${diretaOn(p)?" · sem caso clínico":""} · ${rotuloDif(p.dificuldade)}${p.tipo==="objetiva"?" · objetiva":""}`}),
         el("h2",{txt:p.tema}),
         p.no&&p.no.caminho?el("div",{cls:"hint tight",style:"margin-top:2px",txt:"assunto: "+p.no.caminho}):null,
         el("div",{cls:"hint tight",style:"margin-top:4px",txt:(p.botoes||[]).map(b=>"↑ "+b).join("  ")})),
@@ -2123,6 +2307,130 @@ function cabecalho(q,pr){
       (pr.entregue||!q.enunciado.itens.length)?null:el("button",{cls:"ghost",id:"bt-responder",onclick:()=>modoResponder(!S.responder)},
         S.responder?"Voltar a só ver":"Responder esta")),
     el("div",{id:"val-strip"}));
+}
+/* ── OBJETIVA: enunciado, pergunta e alternativas ── */
+const altDe=(q,l)=>(q.alternativas||[]).find(a=>a.l===l)||null;
+function objDe(pr){ return pr.obj||(pr.obj={marcada:null,tentativas:[],fim:false,nota:null}); }
+function cartaoObjetiva(q,pr){
+  const en=q.enunciado, o=objDe(pr), alts=q.alternativas||[], pronta=!!q.embaralhada;
+  const stem=(en.momentos||[]).map(m=>m.texto).join("\n\n"), pergunta=((en.itens||[])[0]||{}).comando||"";
+  const corpo=[el("div",{cls:"eyebrow",txt:"enunciado"})];
+  if(!stem&&!q.parcial) corpo.push(el("div",{cls:"trava",style:"margin-top:10px"},q.gerando?"A questão está sendo planejada. O enunciado aparece aqui assim que começar a ser escrito.":"Esta questão veio sem enunciado."));
+  else corpo.push(el("div",{cls:"prova",id:stem?null:"vivo-mom",style:"margin-top:10px",html:destacarValores(stem||q.parcial.txt)+(stem?"":CARET)}));
+  if(pergunta) corpo.push(el("p",{cls:"pergunta",txt:pergunta}));
+  if(!pronta){ if(q.gerando&&pergunta) corpo.push(el("div",{cls:"trava",style:"margin-top:12px"},`Escrevendo as alternativas: ${alts.length} de ${nAlt(q.params)}. Elas aparecem juntas, já embaralhadas.`)); }
+  else if(!S.responder) corpo.push(el("div",{cls:"alts"},...alts.map(a=>el("div",{cls:"alt"},el("span",{cls:"l",txt:a.l+")"}),el("span",{cls:"tx",txt:a.txt})))));
+  else{
+    const erradas=o.tentativas.filter(l=>!(altDe(q,l)||{}).ok);
+    corpo.push(el("div",{cls:"alts",role:"radiogroup","aria-label":"alternativas"},...alts.map(a=>{
+      const tentada=o.tentativas.includes(a.l), estado=o.fim?(a.ok?"certa":tentada?"errada":null):(tentada?"errada":null);
+      return el("button",{cls:"alt",id:"alt-"+a.l,role:"radio","aria-checked":String(o.marcada===a.l),"aria-pressed":String(!o.fim&&o.marcada===a.l),"data-e":estado,
+        disabled:(o.fim||tentada)?true:null,onclick:()=>{ o.marcada=a.l; render(); }},
+        el("span",{cls:"l",txt:a.l+")"}),
+        el("span",{cls:"tx"},a.txt,(o.fim||tentada)&&a.por?el("span",{cls:"por",txt:(o.fim&&a.ok?"Correta. ":tentada?"Não é esta. ":"")+a.por}):null));
+    })));
+    if(!o.fim) corpo.push(
+      erradas.length?el("div",{cls:"alerta",style:"margin-top:12px"},el("b",{txt:"Ainda não. "}),"O comentário da alternativa que você marcou diz qual foi o erro de raciocínio, sem entregar a resposta. Você tem mais uma tentativa, que vale metade."):null,
+      el("div",{cls:"acoes",style:"margin-top:12px"},
+        el("button",{cls:"go",id:"bt-confirmar",disabled:o.marcada?null:true,onclick:()=>confirmarAlternativa(q,pr)},erradas.length?"Confirmar a segunda tentativa":"Confirmar"),
+        el("button",{cls:"ghost",onclick:()=>encerrarObjetiva(q,pr)},"Ver o gabarito"),
+        el("span",{cls:"hint tight",txt:erradas.length?"":"corrigir uma objetiva não gasta chamada: o gabarito comentado já veio com a questão."})));
+  }
+  return el("section",{cls:"card"},...corpo);
+}
+function confirmarAlternativa(q,pr){
+  const o=objDe(pr), a=altDe(q,o.marcada); if(!a||o.fim)return;
+  o.tentativas.push(a.l); o.marcada=null;
+  if(a.ok){ o.nota=o.tentativas.length===1?10:5; encerrarObjetiva(q,pr); return; }
+  if(o.tentativas.length>=2){ o.nota=0; encerrarObjetiva(q,pr); return; }
+  render(); guardarMesa();
+}
+function encerrarObjetiva(q,pr){
+  const o=objDe(pr); if(o.fim)return;
+  o.fim=true; if(o.nota==null)o.nota=0; o.marcada=null;
+  pr.entregue=true; pr.fase=2; S.responder=true; S.espelhoAberto=true;
+  registrar(); render(); guardarMesa();
+}
+function resultadoObjetiva(q,pr){
+  const o=objDe(pr), gab=gabaritoDe(q), primeira=o.tentativas[0], rec=o.recurso;
+  const frase=!o.tentativas.length?"Você abriu o gabarito sem marcar."
+    :o.nota>=10?"Certo de primeira."
+    :o.nota>=5?`Errou a primeira (${primeira}) e acertou a segunda: vale metade.`
+    :`Marcou ${o.tentativas.join(" e ")}. O gabarito é ${gab}.`;
+  const grave=(o.tentativas.map(l=>altDe(q,l)).find(a=>a&&!a.ok&&a.grave)||{});
+  const podeRecorrer=!rec&&o.tentativas.length&&o.nota<10&&S.sampleOk!==false;
+  return el("section",{cls:"card"},
+    el("div",{cls:"eyebrow",txt:"resultado"}),
+    el("div",{cls:"linha-nota",style:"margin:12px 0 4px"},
+      el("div",{cls:"nota"},fmt(o.nota),el("small",{txt:" /10"})),
+      el("p",{cls:"feedback",style:"flex:1;min-width:12rem",txt:frase})),
+    grave.grave?el("div",{cls:"alerta bad",style:"margin-top:10px"},el("b",{txt:`A alternativa ${grave.l} seria um erro grave: `}),grave.grave):null,
+    q.nucleo.ponte_clinica?el("p",{cls:"hint",style:"margin-top:10px"},el("b",{txt:"Por que isso importa: "}),q.nucleo.ponte_clinica):null,
+    rec?el("div",{cls:"alerta"+(rec.decisao==="mantido"?"":" ok"),style:"margin-top:10px"},
+      el("b",{txt:rec.decisao==="mantido"?"Recurso negado. ":rec.decisao==="anulado"?"Recurso acolhido: questão anulada, ponto para você. ":`Recurso acolhido: a melhor resposta é ${rec.correta}. `}),rec.porque||"",
+      rec.espelho?el("span",{cls:"hint tight",style:"display:block;margin-top:4px",txt:"A questão ficou marcada para conserto: "+rec.espelho}):null):null,
+    podeRecorrer&&pr.recursoAberto!=="obj"?el("div",{cls:"acoes",style:"margin-top:12px"},
+      el("button",{cls:"ghost sm",id:"bt-rec-obj",onclick:()=>{ pr.recursoAberto="obj"; pr.falhaRecurso=""; render(); const t=document.getElementById("rc-obj"); if(t)t.focus(); }},"Discordo do gabarito"),
+      el("button",{cls:"ghost sm",onclick:aplicarSugestao},"Montar a próxima pelo meu ponto fraco")):null,
+    podeRecorrer&&pr.recursoAberto==="obj"?el("div",{style:"margin-top:12px"},
+      el("label",{cls:"f"},el("span",{txt:"recurso contra o gabarito"}),
+        el("textarea",{rows:"3",id:"rc-obj",value:(pr.recursoTexto||{}).obj||"",disabled:pr.recursoEnviando?true:null,
+          placeholder:"Diga por que a alternativa que você marcou também é correta, ou por que o gabarito não é.",
+          oninput:e=>{ (pr.recursoTexto||(pr.recursoTexto={})).obj=e.target.value; agendarMesa(); }})),
+      el("div",{cls:"acoes",style:"margin-top:8px"},
+        el("button",{cls:"go",id:"bt-rec-obj-enviar",disabled:pr.recursoEnviando?true:null,onclick:()=>enviarRecursoObj(q,pr)},pr.recursoEnviando?"julgando…":"Enviar recurso"),
+        el("button",{cls:"ghost",disabled:pr.recursoEnviando?true:null,onclick:()=>{ pr.recursoAberto=null; render(); }},"Cancelar"),
+        el("span",{cls:"hint tight",txt:"uma chamada curta, um recurso por questão. Um segundo examinador decide se o gabarito se mantém."})),
+      pr.falhaRecurso?el("div",{cls:"alerta bad",style:"margin-top:8px"},pr.falhaRecurso):null):null);
+}
+async function enviarRecursoObj(q,pr){
+  const o=objDe(pr); if(o.recurso||pr.recursoEnviando)return;
+  const arg=((pr.recursoTexto||{}).obj||"").trim();
+  if(arg.length<15){ pr.falhaRecurso="Escreva o seu argumento: por que a sua alternativa também vale, ou por que o gabarito não vale."; render(); return; }
+  pr.recursoEnviando="obj"; pr.falhaRecurso=""; render();
+  try{
+    const regs=await pedirRegistros(pRecursoObj(q,o.tentativas[0],arg),{tier:motor().corrige,rotulo:"recurso do gabarito"});
+    const r=regs.find(x=>x.t==="rec"||x.decisao)||{}, d=semAcento(r.decisao||"");
+    const correta=(String(r.correta||"").toUpperCase().match(/[A-E]/)||[""])[0];
+    const decisao=d.startsWith("anul")?"anulado":(d.startsWith("troc")&&altDe(q,correta)&&correta!==gabaritoDe(q))?"trocado":"mantido";
+    const antes=o.nota;
+    if(decisao==="anulado") o.nota=10;
+    else if(decisao==="trocado"){ const k=o.tentativas.indexOf(correta); if(k===0)o.nota=10; else if(k===1)o.nota=Math.max(o.nota,5); }
+    const falha=limpo(r.espelho)||(decisao==="trocado"?`O gabarito deveria ser ${correta}.`:decisao==="anulado"?"A questão tem mais de uma resposta defensável.":"");
+    o.recurso={argumento:arg,decisao,correta,porque:limpo(r.porque),espelho:decisao==="mantido"?"":falha,antes,depois:o.nota};
+    if(decisao!=="mantido"&&falha){ q.falhasEspelho=[...(q.falhasEspelho||[]).filter(f=>f.item!=="gabarito"),{item:"gabarito",texto:falha}]; if(S.banco.some(x=>x.id===q.id)) guardarNoBanco(q,true); }
+    pr.recursoAberto=null; registrar();
+  }catch(e){ pr.falhaRecurso=erroLegivel(e); }
+  finally{ pr.recursoEnviando=null; render(); guardarMesa(); }
+}
+/* o gabarito comentado: o "espelho" da objetiva */
+function blocoGabarito(q,pr){
+  const n=q.nucleo, alts=q.alternativas||[], po=n.paciente_oculto, fim=!!(pr&&pr.obj&&pr.obj.fim);
+  if(q.gerando&&!q.embaralhada) return el("section",{cls:"card"},el("div",{cls:"eyebrow",txt:"gabarito comentado"}),el("p",{cls:"hint",style:"margin-top:8px"},"O gabarito aparece quando as alternativas estiverem completas."));
+  if(S.responder&&!fim) return el("section",{cls:"card"},
+    el("div",{cls:"lacre"},
+      el("span",{cls:"sel",txt:"▼ gabarito comentado"}),
+      el("p",{},"Lacrado enquanto você responde. Marque, confirme, e o comentário de cada alternativa aparece."),
+      el("button",{cls:"ghost sm",onclick:()=>encerrarObjetiva(q,pr)},"Ver o gabarito")));
+  return el("section",{cls:"card"},
+    el("div",{cls:"eyebrow",txt:`gabarito comentado — ${gabaritoDe(q)||"?"}`}),
+    el("div",{cls:"alts",style:"margin-top:12px"},...alts.map(a=>el("div",{cls:"alt","data-e":a.ok?"certa":null},
+      el("span",{cls:"l",txt:a.l+")"}),
+      el("span",{cls:"tx"},a.txt,a.por?el("span",{cls:"por",txt:(a.ok?"Correta. ":"")+a.por}):null,
+        a.grave?el("span",{cls:"por",style:"color:var(--bad)",txt:"Erro grave: "+a.grave}):null)))),
+    ...(q.falhasEspelho||[]).map(f=>el("div",{cls:"alerta",style:"margin-top:10px"},el("b",{txt:"Falha apontada em recurso: "}),f.texto)),
+    n.anti?el("div",{cls:"alerta",style:"margin-top:14px"},el("b",{txt:"Contra a resposta decorada: "}),n.anti):null,
+    n.referencia?el("div",{cls:"hint tight mono",style:"margin-top:10px;font-size:11.5px",txt:"fonte: "+n.referencia}):null,
+    el("details",{id:"d-nucleo",style:"margin-top:16px"},el("summary",{txt:"plano da questão e ponte clínica"}),
+      el("div",{cls:"body"},
+        n.ponte_clinica?el("p",{cls:"prova",style:"margin-bottom:10px;font-size:15.5px",txt:"Ponte clínica: "+n.ponte_clinica}):null,
+        po?el("div",{cls:"sel-dark",txt:[po.resumo,(po.diagnosticos||[]).length?"Diagnóstico: "+po.diagnosticos.join(", "):"",po.fisiopatologia_central?"Fisiopatologia: "+po.fisiopatologia_central:"",
+          po.o_que_o_aluno_nao_ve?"O que o aluno não vê: "+po.o_que_o_aluno_nao_ve:"",evolucaoDe(po)?"Evolução — "+evolucaoDe(po):""].filter(Boolean).join("\n\n")}):null,
+        (n.cadeia_causal||[]).length?el("div",{cls:"sel-dark"},n.cadeia_causal.map(e=>`${e.elo}. ${e.de} → ${e.para}${e.por_que?`  (${e.por_que})`:""}`).join("\n")):null,
+        (n.botoes_aplicados||[]).length?el("div",{cls:"hint tight",style:"margin-top:10px"},"Botões aplicados: ",n.botoes_aplicados.map(b=>`${b.botao} — ${b.onde_aparece}`).join(" · ")):null)),
+    q.gerando?null:el("div",{cls:"acoes",style:"margin-top:14px"},
+      el("button",{cls:"ghost sm",onclick:e=>copiar(markdownQuestao(q),e.target)},"Copiar Markdown"),
+      el("button",{cls:"ghost sm",id:"dl-md",onclick:()=>baixarArquivo(`${slug(q.params.tema)}-${tagDif(q.params.dificuldade)}.md`,markdownQuestao(q),"dl-md")},"Baixar .md")));
 }
 function cartoesEnunciado(q,pr){
   const out=[], en=q.enunciado, ms=en.momentos;
@@ -2195,7 +2503,15 @@ function blocoPreceptor(prec){
 }
 function tabelaValidacao(q){
   const v=q.validacao, lim=q.params.dificuldade>=4?3:2, det=v.detalhe||{}, apr=q.params.dificuldade<=2;
-  const linha=(r,k)=>el("tr",{},el("td",{},r,det[k]&&det[k].faltou?el("span",{cls:"hint tight",style:"display:block",txt:"faltou: "+det[k].faltou}):null),el("td",{cls:"num",txt:fmt(v.notas[k])}));
+  const obj=ehObj(q), gab=gabaritoDe(q);
+  const linha=(r,k)=>el("tr",{},el("td",{},r,det[k]&&det[k].faltou?el("span",{cls:"hint tight",style:"display:block",txt:(obj?"raciocínio: ":"faltou: ")+det[k].faltou}):null),
+    el("td",{cls:"num",txt:obj?(det[k]?`${det[k].marcou} · ${det[k].marcou===gab?"certo":"errado"}`:"—"):fmt(v.notas[k])}));
+  if(obj) return el("div",{style:"margin-top:14px"},
+    el("div",{cls:"eyebrow",txt:`candidatos simulados · gabarito ${gab}`}),
+    el("table",{cls:"val",style:"margin-top:8px"},
+      el("tr",{},el("th",{txt:"perfil"}),el("th",{cls:"num",txt:"marcou"})),
+      linha("residente forte","forte"),linha("interno mediano","mediano"),linha("decoreba","decoreba")),
+    v.preceptor?blocoPreceptor(v.preceptor):null);
   return el("div",{style:"margin-top:14px"},
     el("div",{cls:"eyebrow",txt:"candidatos simulados"}),
     el("table",{cls:"val",style:"margin-top:8px"},
@@ -2408,12 +2724,35 @@ function txtProva(q,n){
   for(const m of ms){
     if(ms.length>1)L.push(`[MOMENTO ${m.momento}]`);
     L.push(quebra(m.texto),"");
+    if(ehObj(q)) continue;
     for(const i of (q.enunciado.itens||[]).filter(i=>(i.momento||1)===m.momento))
       L.push(quebra(`${i.item}) ${i.comando}`),`   (até ${i.limite_linhas||q.params.limite} linhas)`,"");
+  }
+  if(ehObj(q)){
+    L.push(quebra(((q.enunciado.itens||[])[0]||{}).comando||""),"");
+    for(const a of q.alternativas||[]) L.push(quebra(`${a.l}) ${a.txt}`));
+    L.push("");
   }
   return L.join("\n").replace(/\n{3,}/g,"\n\n");
 }
 function txtEspelho(q,n){
+  if(ehObj(q)){
+    const vd=q.veredito||{}, vl=q.validacao||{}, prec=vl.preceptor, nu=q.nucleo;
+    const L=[`GABARITO DA QUESTÃO ${n||1} — ${q.params.tema}: ${gabaritoDe(q)||"?"}`,`veredito: ${vd.v||"SEM CARIMBO"}`];
+    if(vd.por&&prec) L.push(quebra("motivo: "+vd.por));
+    if(vl.detalhe&&vl.detalhe.forte) L.push(`candidatos simulados: forte ${vl.detalhe.forte.marcou} · mediano ${(vl.detalhe.mediano||{}).marcou||"—"} · decoreba ${(vl.detalhe.decoreba||{}).marcou||"—"}`);
+    if(prec){ const baixas=(prec.criterios||[]).filter(c=>c.nota<5).map(c=>`${c.criterio} ${c.nota}/5`);
+      if(baixas.length) L.push(quebra("notas do revisor abaixo de 5: "+baixas.join("; ")));
+      for(const a of prec.achados||[]) L.push(quebra(`   - [${a.criterio}] ${a.defeito}${a.conserto?" -> "+a.conserto:""}`)); }
+    L.push("");
+    for(const a of q.alternativas||[]) L.push(quebra(`${a.l}) ${a.ok?"CORRETA. ":""}${a.por||""}${a.grave?` [erro grave: ${a.grave}]`:""}`));
+    L.push("");
+    if(nu.ponte_clinica) L.push(quebra("Ponte clínica: "+nu.ponte_clinica),"");
+    if(nu.anti) L.push(quebra("Contra a resposta decorada: "+nu.anti),"");
+    if((nu.conferir||[]).length) L.push(quebra("Para conferência humana: "+nu.conferir.join("; ")),"");
+    if(nu.referencia) L.push(quebra("Fonte: "+nu.referencia),"");
+    return L.join("\n");
+  }
   const esp=q.nucleo.espelho||{itens:[]};
   const vd=q.veredito||{}, vl=q.validacao||{}, prec=vl.preceptor;
   const L=[`ESPELHO DA QUESTÃO ${n||1} — ${q.params.tema} · ${fmt(somaMax(esp.itens))} pontos`,`veredito: ${vd.v||"SEM CARIMBO"}`];
@@ -2444,9 +2783,11 @@ function txtEspelho(q,n){
   return L.join("\n");
 }
 function txtPacote(qs,titulo){
-  const L=[REGUA,titulo||`DISCURSIVAS — ${qs.length} ${qs.length===1?"questão":"questões"}`,`gerado em ${hoje()}`,REGUA,""];
+  const L=[REGUA,titulo||`QUESTÕES — ${qs.length} ${qs.length===1?"questão":"questões"}`,`gerado em ${hoje()}`,REGUA,""];
   qs.forEach((q,i)=>L.push(txtProva(q,i+1),REGUA,""));
-  L.push("","ESPELHO DO CORRETOR — não leia antes de responder","");
+  const objs=qs.map((q,i)=>ehObj(q)?`${i+1}-${gabaritoDe(q)||"?"}`:null).filter(Boolean);
+  L.push("",objs.length===qs.length?"GABARITO COMENTADO — não leia antes de responder":objs.length?"GABARITO E ESPELHO — não leia antes de responder":"ESPELHO DO CORRETOR — não leia antes de responder","");
+  if(objs.length) L.push(quebra("Gabarito das objetivas: "+objs.join("   ")),"",REGUA,"");
   qs.forEach((q,i)=>L.push(txtEspelho(q,i+1),REGUA,""));
   return L.join("\n");
 }
@@ -2458,6 +2799,26 @@ async function baixarArquivo(nome,conteudo,btnId){
   catch(e){ diz(e&&e.code==="declined"?"download recusado":"não deu para baixar"); }
 }
 function markdownQuestao(q){
+  if(ehObj(q)){ const n=q.nucleo;
+    return `# ${q.params.tema} — objetiva, ${q.params.formato} (${rotuloDif(q.params.dificuldade)})
+
+> ${q.params.nivel} · ${q.params.area}${COM_PACIENTE(q.params.formato)?" · "+q.params.cenario:""}${q.params.no&&q.params.no.caminho?" · assunto: "+q.params.no.caminho:""} · botões no alto: ${(q.params.botoes||[]).join(", ")||"nenhum"}
+> veredito: ${(q.veredito||{}).v||"SEM CARIMBO"} — ${(q.veredito||{}).por||""}
+
+## Questão
+
+${textoEnunObj(q)}
+
+${(q.alternativas||[]).map(a=>`- **${a.l})** ${a.txt}`).join("\n")}
+
+## Gabarito comentado: ${gabaritoDe(q)||"?"}
+
+${(q.alternativas||[]).map(a=>`- **${a.l})** ${a.ok?"**Correta.** ":""}${a.por||""}${a.grave?` _(erro grave: ${a.grave})_`:""}`).join("\n")}
+
+## Ponte clínica
+
+${n.ponte_clinica||""}
+${n.anti?`\n**Contra a resposta decorada:** ${n.anti}\n`:""}${(n.conferir||[]).length?`\n**Para conferência humana:** ${n.conferir.join("; ")}\n`:""}${n.referencia?`\nFonte: ${n.referencia}\n`:""}`; }
   const esp=q.nucleo.espelho||{itens:[]}, n=q.nucleo, ref=n.referencia||((esp.itens||[])[0]||{}).referencia;
   return `# ${q.params.tema} — ${q.params.formato} (${rotuloDif(q.params.dificuldade)})
 
@@ -2543,7 +2904,7 @@ function vBanco(){
       el("span",{cls:"hint tight",txt:"todas as questões primeiro, os espelhos no fim do arquivo."})),
     el("div",{cls:"lista"},...todas.map(q=>el("div",{cls:"reg"},
       el("span",{cls:"carimbo mini","data-v":(q.veredito||{}).v||"SEM CARIMBO",txt:((q.veredito||{}).v||"SEM CARIMBO").toLowerCase()}),
-      el("span",{cls:"t"},q.params.tema,el("span",{cls:"mot",txt:`${q.params.nivel} · ${q.params.area} · ${q.params.formato} · ${tagDif(q.params.dificuldade)}`})),
+      el("span",{cls:"t"},q.params.tema,el("span",{cls:"mot",txt:`${q.params.nivel} · ${q.params.area} · ${q.params.formato} · ${tagDif(q.params.dificuldade)}${ehObj(q)?" · objetiva":""}`})),
       el("span",{cls:"d",txt:q.criado}),
       el("button",{cls:"ghost sm",id:"dl-q-"+q.id,
         onclick:()=>baixarArquivo(`${slug(q.params.tema)}-${tagDif(q.params.dificuldade)}.txt`,txtPacote([q],q.params.tema),"dl-q-"+q.id)},"TXT"),
