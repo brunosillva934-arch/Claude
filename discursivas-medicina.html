@@ -535,8 +535,24 @@ function vazamentos(q){
   return out;
 }
 const PRONTUARIO=/(\b(homem|mulher|menin[oa]|lactente|gestante|idos[oa]|paciente|senhora?|rapaz|jovem|criança)\b[^.\n]{0,40}\b\d{1,3}\s*(anos|meses|dias)\b|\b(PA|FC|FR|SpO2)\s*:?\s*\d|\bao exame\b|\b(chega|procura|dá entrada|é admitid[oa]|comparece)\b[^.\n]{0,30}\b(UBS|UPA|pronto|ambulat|hospital|emerg|consult)|\bqueixa(ndo-se)? de\b|\bhistória clínica\b)/i;
+/* botão no baixo que subiu por conta própria: o que dá para ver no texto, a página vê sem gastar chamada */
+const VALOR_COM_UNIDADE=/\d+[\d.,]*\s?(?:\/\s?\d+[\d.,]*)?\s?(?:mmHg|bpm|irpm|mg\/dL|g\/dL|mEq\/L|mmol\/L|mOsm\/kg|ng\/mL|pg\/mL|UI\/L|U\/L|mL\/min|L\/min|mg\/g|µm|mm²|mm\b|%)/g;
+function subiuDoBaixo(q){
+  const p=q.params, A=[]; if(COM_PACIENTE(p.formato))return A;
+  const alto=n=>(p.botoes||[]).includes(n);
+  const regras=[["Comparação",/\b(compare|comparar|comparando|diferencie|diferenciar|diferenciando|distinga|distinguir|contraste|contrastar)\b/,"pede comparação","sem pedir que o aluno compare ou distinga grupos, modelos ou conceitos"],
+    ["Previsão",/\b(preveja|prever|previsao|previsoes)\b|o que (aconteceria|ocorreria|se esperaria)/,"pede previsão","sem pedir previsão de situação nova"],
+    ["Elos causais",/\b(tres|quatro|cinco|seis|[3-6])\s+(elos|etapas|passos|niveis)/,"pede cadeia longa","pedindo no máximo 2 elos"]];
+  for(const i of q.enunciado.itens){ const c=semAcento(i.comando);
+    for(const [botao,re,oque,como] of regras) if(!alto(botao)&&re.test(c))
+      A.push({n:"warn",t:`Item ${i.item}: o comando ${oque}, e o botão ${botao} está no baixo nesta dificuldade.`,conserto:`Item ${i.item}: o comando ${oque}, mas o botão ${botao} está no baixo. Reescreva o comando e o espelho desse item ${como}.`}); }
+  if(!alto("Interpretação")){ const nv=((q.enunciado.momentos||[]).map(m=>m.texto).join(" ").match(VALOR_COM_UNIDADE)||[]).length;
+    if(nv>=5) A.push({n:"warn",t:`O enunciado traz ${nv} valores para o aluno ler, e o botão Interpretação está no baixo.`,conserto:"O botão Interpretação está no baixo: troque os valores crus do enunciado por resultados descritos em palavras, já lidos."}); }
+  return A;
+}
 function checar(q){
   const A=[], p=q.params, en=q.enunciado, esp=q.nucleo.espelho.itens, lim=p.limite||10;
+  if(!q.exemplo) A.push(...subiuDoBaixo(q));
   if(diretaOn(p)){ const m=PRONTUARIO.exec(textoEnunciado(en));
     if(m) A.push({n:"warn",t:`O enunciado parece caso clínico («${m[0].trim()}»), e o pedido era questão sem caso clínico.`,conserto:"O pedido é questão sem caso clínico: reescreva o enunciado sem paciente, história clínica, sinais vitais nem exame físico, mantendo o que os itens cobram e a mesma dificuldade."}); }
   const faltam=en.itens.filter(i=>!esp.some(e=>e.item===i.item)).map(i=>i.item);
@@ -647,7 +663,7 @@ function blocoParams(p,ctx,n){
   if(!pac&&p.semPessoas) L.push('- Sem pessoas no enunciado: nada de paciente, indivíduo, idade ou sexo. Apresente os dados como preparação experimental, amostra, curva, traçado ou valores de bancada ("em cardiomiócitos isolados", "a curva abaixo"). A ponte clínica continua obrigatória, mas só no plano.');
   if(mat) L.push(`- MATERIAL DO CURSO — fonte de verdade desta questão, acima de qualquer diretriz. Cubra só o que ele sustenta, no recorte e na ênfase dele. Se ele contrariar a diretriz vigente, siga o material e registre a divergência em "conferir". Em "ref", cite: ${p.referencia||"material do curso"}.\n"""\n${mat}\n"""`);
   else L.push(`- Fonte: ${p.referencia||(p.nivel==="básico"?"o livro-texto de referência da disciplina; em tema clínico, a diretriz brasileira vigente mais aceita":"a diretriz brasileira vigente mais aceita; sem diretriz brasileira, a internacional de referência")}`);
-  if(ctx&&ctx.evitar&&ctx.evitar.length) L.push(`- Já gerados neste tema; mude ${pac?"o paciente":"a situação"} e o ângulo: ${ctx.evitar.map(s=>`«${s}»`).join("; ")}`);
+  if(ctx&&ctx.evitar&&ctx.evitar.length) L.push(`- Já gerados neste tema; mude ${pac?"o paciente":"a situação"} e o ângulo, sem sair do que é central no tema (melhor repetir um ponto central com outra situação do que ir para um detalhe periférico): ${ctx.evitar.map(s=>`«${s}»`).join("; ")}`);
   if(ctx&&ctx.angulos&&ctx.angulos.length) L.push(`- Ângulos sugeridos, um por questão e nesta ordem${foco?", dentro do recorte pedido":""} (adapte ao formato): ${ctx.angulos.slice(0,n).join("; ")}`);
   return L.join("\n");
 }
@@ -662,6 +678,7 @@ const TETO={
 function pGerar(p,n,ctx){
   const pac=COM_PACIENTE(p.formato), dir=diretaOn(p), evo=p.formato==="caso evolutivo", bas=p.nivel==="básico", k=n>1?'"k":1,':"";
   const apr=p.dificuldade===0, leve=p.dificuldade===1||p.dificuldade===2, teto=TETO[p.dificuldade], interp=(p.botoes||[]).includes("Interpretação");
+  const baixosN=poolDe(p.formato).filter(b=>!(p.botoes||[]).includes(b.n)).map(b=>b.n).join(", ");
   const recursos="valores, curvas ou lâminas cruas com Interpretação; dois modelos ou estados lado a lado com Comparação; intervenção hipotética com Previsão; achado que contraria a regra com Contraintuitivo";
   const comum=`"ponte":"por que isso muda o cuidado de alguém","botoes":[["botão","onde ele aparece"]],"alvos":[["a","etapa","${apr?"a ideia central que o item fixa":"o que só responde quem raciocina"}",4]],"anti":"${apr?"":"item X: o que a resposta decorada diria e por que perde ponto"}","conferir":["dose, valor de corte ou recomendação que um humano deve conferir"],"ref":"fonte, ano"}`;
   const plano=pac
@@ -719,7 +736,8 @@ function pGerar(p,n,ctx){
     plano,
     `{"t":"mom",${k}"n":1,"txt":"o que o aluno lê","itens":[["a","comando do item"]]}`,
     `{"t":"esp",${k}"i":"a","max":"resposta nota máxima","q":[["quesito observável",1.5,1]],"alt":[["resposta também correta","condição em que vale"]],"comuns":["erro comum"],"graves":[["erro","conduta","consequência para o paciente"]]}`,
-    `Um "mom" por momento${evo?"":" (aqui, um só)"}, com os itens dele; um "esp" por item. Em "alvos": [letra, etapa, alvo, pontos do item], e etapa é uma de: ${ETAPAS.join(" | ")}. Em "q": [quesito, pontos, 1 se exige justificativa senão 0]. Em "graves": [erro, "conduta" ou "conceito", consequência]. Lista sem conteúdo vai vazia: [].`
+    `Um "mom" por momento${evo?"":" (aqui, um só)"}, com os itens dele; um "esp" por item. Em "alvos": [letra, etapa, alvo, pontos do item], e etapa é uma de: ${ETAPAS.join(" | ")}. Em "q": [quesito, pontos, 1 se exige justificativa senão 0]. Em "graves": [erro, "conduta" ou "conceito", consequência]. Lista sem conteúdo vai vazia: [].`,
+    baixosN?`Antes de responder, confira cada comando e cada quesito contra a lista do baixo (${baixosN}): o que um botão no baixo proíbe não pode aparecer, nem como subitem.${teto?" Confira também a carga de leitura.":""}`:null
   ].filter(x=>x!=null).join("\n");
 }
 
@@ -1098,14 +1116,14 @@ function medir(rotulo,ent,sai,ms,tier,falhou){
   u.itens.length=Math.min(u.itens.length,12);
   pintarMedidor();
 }
-async function chamar(prompt,{tier,signal,onText,cache,rotulo,prio}={}){
+async function chamar(prompt,{tier,signal,onText,cache,rotulo,prio,aoIniciar}={}){
   const s=await pedirSample();
   if(!s) throw {code:"not_granted",message:"Claude indisponível nesta visualização."};
   const opts={modelTier:tier||"default"};
   if(signal)opts.signal=signal; if(onText)opts.onText=onText; if(cache===false)opts.cache=false;
   let t0=0;
   try{
-    const r=await naFila(()=>{ t0=performance.now(); return s(prompt,opts); },prio);
+    const r=await naFila(()=>{ t0=performance.now(); if(aoIniciar){ try{ aoIniciar(); }catch(e){} } return s(prompt,opts); },prio);
     medir(rotulo,prompt.length,(r&&r.text||"").length,performance.now()-t0,r&&r.modelTierApplied);
     return r||{text:"",truncated:false};
   }catch(e){
@@ -1172,7 +1190,7 @@ async function removerDoBanco(id){
 /* a mesa: a questão aberta e o que você escreveu sobrevivem a um recarregar — questão perdida é chamada desperdiçada */
 let _mesaT=0;
 function guardarMesa(){
-  const qs=(S.lote.length?S.lote:(S.questao?[S.questao]:[])).filter(q=>q&&!q.gerando&&!q.exemplo&&utilizavel(q)).map(limpa);
+  const qs=S.lote.filter(q=>q&&!q.gerando&&!q.exemplo&&utilizavel(q)).map(limpa);
   const provas={}; for(const q of qs) if(S.provas[q.id]) provas[q.id]=limpa(S.provas[q.id]);
   guardar("disc-mesa",{qs,atual:S.questao&&S.questao.id,provas,responder:S.responder});
 }
@@ -1181,7 +1199,7 @@ function restaurarMesa(){
   const m=ler("disc-mesa",null); if(!m||!Array.isArray(m.qs))return;
   const qs=m.qs.filter(q=>q&&q.id&&q.params&&q.nucleo&&q.nucleo.espelho&&q.enunciado);
   if(!qs.length)return;
-  S.lote=qs.length>1?qs:[]; S.provas=m.provas||{};
+  S.lote=qs; S.provas=m.provas||{};
   S.questao=qs.find(q=>q.id===m.atual)||qs[0]; const pr=S.prova=provaDe(S.questao);
   S.responder=!!(m.responder||pr.entregue); S.espelhoAberto=!S.responder||pr.fase>=2||!!pr.pulou;
 }
@@ -1193,7 +1211,7 @@ function restaurarPrefs(){
   const p=ler("disc-prefs",null); if(!p)return;
   if(VELOCIDADES[p.velocidade])S.velocidade=p.velocidade;
   if(MOTORES[p.motor])S.motor=p.motor;
-  if(p.quantidade>=1&&p.quantidade<=5)S.quantidade=p.quantidade|0;
+  if(p.quantidade>=1&&p.quantidade<=15)S.quantidade=p.quantidade|0;
   const a=p.params;
   if(a&&NIVEIS.includes(a.nivel)&&FORMATOS.includes(a.formato)&&typeof a.tema==="string"&&Array.isArray(a.botoes)){
     Object.assign(S.params,a);
@@ -1246,33 +1264,60 @@ async function gerarTudo(){
   if(p.fonte==="curso"&&!(p.material||"").trim()){ S.log=["Você escolheu o material do curso como fonte, mas não colou nada. Cole o conteúdo ou volte para a diretriz vigente."]; render(); return; }
   const n=S.quantidade, base=Date.now(), guardado=limpa(p);
   const qs=Array.from({length:n},(_,i)=>{ const q=esqueleto({...guardado,botoes:[...p.botoes]},"q"+(base+i)); q.gerando=true; return q; });
-  const meio=Math.ceil(n/2), blocos=n===1?[qs]:[qs.slice(0,meio),qs.slice(meio)];
-  for(const b of blocos) b.forEach((q,i)=>{ q.vez=i?"fila":"pensando"; });
+  /* blocos de até 3 questões por chamada; a fila roda duas chamadas por vez */
+  const nb=n===1?1:Math.max(2,Math.ceil(n/3)), blocos=Array.from({length:nb},()=>[]);
+  qs.forEach((q,i)=>blocos[i%nb].push(q));
+  for(const b of blocos) b.forEach((q,i)=>{ q.vez=i?"fila":"espera"; });
   guardarPrefs();
-  S.rodando=true; S.abort=new AbortController(); S.log=[]; S.t0=performance.now(); zerarEsteira();
-  S.lote=n>1?qs:[]; S.questao=qs[0]; S.prova=provaDe(qs[0]); S.responder=false; S.espelhoAberto=true; S.view="prova";
+  /* a sessão: o que já estava pronto fica; as novas entram no fim */
+  const anteriores=S.lote.filter(q=>!q.gerando&&utilizavel(q)), qAntes=S.questao, pAntes=S.prova, respAntes=S.responder, espAntes=S.espelhoAberto;
+  S.rodando=true; S.abort=new AbortController(); S.log=[]; S.remover=null; S.t0=performance.now(); zerarEsteira();
+  S.lote=[...anteriores,...qs]; S.questao=qs[0]; S.prova=provaDe(qs[0]); S.responder=false; S.espelhoAberto=true; S.view="prova";
   marca("questao","rodando",n>1?`${n} questões em ${blocos.length} chamadas`:"planejando o caso");
   render();
   const tique=setInterval(pintarVivo,1000), sig=S.abort.signal;
   const evitar=evitarPara(p), ang=n>1?embaralhar(angulosPara(p)):[];
-  const falhas=(await Promise.all(blocos.map((b,i)=>
-    gerarBloco(p,b,{evitar,angulos:n>1?ang.slice(i?meio:0,(i?meio:0)+b.length):[]},sig).then(()=>null,e=>e||{code:"gen"})))).filter(Boolean);
+  const angulo=q=>{ const k=qs.indexOf(q); return ang[k%ang.length]+(k>=ang.length?" (outra situação e outro ponto do tema)":""); };
+  const falhas=(await Promise.all(blocos.map(b=>
+    gerarBloco(p,b,{evitar,angulos:n>1?b.map(angulo):[]},sig).then(()=>null,e=>e||{code:"gen"})))).filter(Boolean);
   clearInterval(tique);
   S.rodando=false; S.abort=null;
   for(const q of qs){ q.gerando=false; q.parcial=null; }
   const prontas=qs.filter(utilizavel), parou=falhas.some(e=>e.code==="cancelled");
+  S.lote=[...anteriores,...prontas];
   if(!prontas.length){
-    S.questao=null; S.prova=null; S.lote=[]; S.view="montar";
+    /* nada novo ficou pronto: a sessão volta ao que era */
+    const volta=qAntes&&(anteriores.includes(qAntes)||qAntes.exemplo||S.banco.some(x=>x.id===qAntes.id));
+    S.questao=volta?qAntes:(anteriores[0]||null); S.prova=S.questao?(volta?pAntes:provaDe(S.questao)):null;
+    S.responder=volta?respAntes:false; S.espelhoAberto=volta?espAntes:true; S.view="montar";
     S.log.push(parou?"Interrompido antes de a questão ficar pronta.":erroLegivel(falhas[0]||{code:"gen",message:"a resposta veio sem questão."}));
     falharEsteira(parou?"interrompido":"falhou"); render(); return;
   }
   if(prontas.length<n) S.log.push(parou?`Interrompido: ${prontas.length} de ${n} ficaram prontas.`:`${n-prontas.length} de ${n} não vieram. ${erroLegivel(falhas[0]||{code:"gen"})}`);
   for(const q of prontas){ finalizar(q); lembrar(q); }
-  S.lote=prontas.length>1?prontas:[];
   if(!prontas.includes(S.questao)){ S.questao=prontas[0]; S.prova=provaDe(prontas[0]); }
   marca("questao","ok",n>1?`${prontas.length} de ${n} prontas`:`${prontas[0].nucleo.espelho.itens.length} itens · ${fmt(somaMax(prontas[0].nucleo.espelho.itens))} pontos`);
   render(); guardarMesa();
   if(S.velocidade!=="direto"&&!parou) conferirFila(prontas,S.velocidade); else semCarimbo();
+}
+function tirarDaSessao(q){
+  if(S.remover!=="s:"+q.id){ S.remover="s:"+q.id; render(); return; }
+  S.remover=null; const k=S.lote.indexOf(q);
+  S.lote=S.lote.filter(x=>x!==q); delete S.provas[q.id];
+  if(S.questao===q){ const prox=S.lote[Math.min(k,S.lote.length-1)]||null; if(prox){ abrirQuestao(prox); return; } S.questao=null; S.prova=null; }
+  render(); guardarMesa();
+}
+function esvaziarSessao(){
+  if(S.remover!=="sessao"){ S.remover="sessao"; render(); return; }
+  S.remover=null;
+  if(S.questao&&S.lote.includes(S.questao)){ S.questao=null; S.prova=null; }
+  for(const q of S.lote) delete S.provas[q.id];
+  S.lote=[]; render(); guardarMesa();
+}
+const prontasDaSessao=()=>S.lote.filter(x=>!x.gerando&&utilizavel(x));
+function baixarSessao(btnId){
+  const qs=prontasDaSessao(); if(!qs.length)return;
+  baixarArquivo(`sessao-${qs.length}q-${hoje()}.txt`,txtPacote(qs,`Sessão · ${qs.length} ${qs.length===1?"questão":"questões"}`),btnId);
 }
 function encerrar(q){ q.gerando=false; q.parcial=null; finalizar(q); }
 async function gerarBloco(p,alvo,ctx,signal){
@@ -1302,7 +1347,8 @@ async function gerarBloco(p,alvo,ctx,signal){
   };
   try{
     const r=await chamar(pGerar(p,alvo.length,ctx),{tier:motor().escreve,signal,cache:false,prio:true,
-      rotulo:alvo.length>1?`escrita de ${alvo.length} questões`:"escrita da questão",onText:({text})=>consumir(text)});
+      rotulo:alvo.length>1?`escrita de ${alvo.length} questões`:"escrita da questão",onText:({text})=>consumir(text),
+      aoIniciar:()=>{ if(alvo[0].vez==="espera"){ alvo[0].vez="pensando"; pintarVivo(); } }});
     consumir(r.text);
     if(r.truncated&&!alvo.every(espelhoCompleto)) throw {code:"gen",message:"a resposta foi cortada pelo limite de tamanho."};
     if(!alvo.every(utilizavel)) throw {code:"gen",message:"a resposta veio incompleta."};
@@ -1325,6 +1371,7 @@ function pintarParcial(q,primeira){
 function faseTexto(q){
   const en=q.enunciado, esp=q.nucleo.espelho.itens;
   if(q.vez==="fila") return "na vez: outra questão deste bloco está sendo escrita antes";
+  if(q.vez==="espera") return "na fila: duas chamadas rodam por vez";
   if(en.itens.length&&!q.parcial){ const tot=Math.max(en.itens.length,Object.keys(q.nucleo.alvos||{}).length); return `enunciado pronto · escrevendo o espelho, item ${Math.min(esp.length+1,tot)} de ${tot}`; }
   if(q.parcial||en.momentos.length) return "escrevendo o enunciado";
   if(q.temPlano) return "plano fechado · começando o enunciado";
@@ -1754,7 +1801,7 @@ function vMontar(){
     (avisos.length||p.dificuldade===0)?null:el("div",{cls:"alerta ok",style:"margin-top:10px"},"Combinação coerente com a tabela de dificuldade.")
   );
 
-  const V=VELOCIDADES[S.velocidade], M=motor(), n=S.quantidade, escrita=n===1?1:2, total=escrita+n*(V.c-1);
+  const V=VELOCIDADES[S.velocidade], M=motor(), n=S.quantidade, escrita=n===1?1:Math.max(2,Math.ceil(n/3)), total=escrita+n*(V.c-1), naSessao=prontasDaSessao().length;
   const esteira=el("section",{cls:"card"},
     el("div",{cls:"eyebrow",txt:"esteira"}),
     el("div",{cls:"grid",style:"margin-top:12px"},
@@ -1772,13 +1819,18 @@ function vMontar(){
       " Só a escrita segura a tela, e o enunciado aparece enquanto o espelho ainda está sendo escrito. Reprovou, você decide se vale o conserto: a esteira não refaz nada sozinha."),
     el("div",{cls:"esteira",id:"esteira"}),
     el("div",{cls:"acoes",style:"margin-top:14px"},
-      el("div",{cls:"dial",style:"min-width:11rem"},...[1,2,3,4,5].map(k=>
+      el("div",{cls:"dial",style:"min-width:15rem"},...[1,2,3,4,5,10,15].map(k=>
         el("button",{"aria-pressed":String(k===S.quantidade),title:`${k} ${k===1?"questão":"questões"} de uma vez`,
           onclick:()=>{ S.quantidade=k; render(); }},String(k)))),
       el("button",{cls:"go",id:"bt-gerar",disabled:S.rodando||null,onclick:gerarTudo},
         S.rodando?"gerando…":(n>1?`Gerar ${n} questões`:"Gerar questão")),
       S.rodando?el("button",{cls:"ghost",onclick:parar},"Parar"):null,
-      el("span",{cls:"hint tight",txt:"a questão abre para ler e exportar; responder é um botão lá dentro."})),
+      el("span",{cls:"hint tight",txt:"as novas questões entram na sessão e as anteriores ficam; responder é um botão dentro de cada uma."})),
+    naSessao?el("div",{cls:"acoes",style:"margin-top:12px;border-top:1px solid var(--rule);padding-top:12px"},
+      el("span",{cls:"kicker",txt:`sessão · ${naSessao} ${naSessao===1?"questão":"questões"}`}),
+      el("button",{cls:"ghost sm",id:"dl-sessao",onclick:()=>baixarSessao("dl-sessao")},naSessao===1?"Baixar em TXT":`Baixar as ${naSessao} em um TXT`),
+      el("button",{cls:"ghost sm",onclick:()=>{ const q=S.questao&&S.lote.includes(S.questao)?S.questao:S.lote[S.lote.length-1]; if(q)abrirQuestao(q); }},"Abrir"),
+      el("button",{cls:"ghost sm",disabled:S.rodando||null,onclick:esvaziarSessao},S.remover==="sessao"?`Confirmar: apagar as ${S.lote.length}`:"Esvaziar a sessão")):null,
     S.log.length?el("div",{style:"margin-top:12px"},...S.log.map(l=>el("div",{cls:"alerta",style:"margin-top:6px"},l))):null,
     el("div",{cls:"medidor",id:"medidor",style:"margin-top:12px"}),
     el("details",{id:"d-uso",style:"margin-top:12px"},el("summary",{txt:"o que cada chamada gastou"}),
@@ -1870,17 +1922,18 @@ function vProva(){
   return out;
 }
 function barraLote(q){
-  const i=S.lote.indexOf(q), prontas=S.lote.filter(x=>!x.gerando&&utilizavel(x));
+  const i=S.lote.indexOf(q), prontas=prontasDaSessao();
   return el("section",{cls:"card fino"},
     el("div",{cls:"acoes"},
-      el("span",{cls:"kicker",txt:`lote · ${i<0?"fora do lote":`questão ${i+1} de ${S.lote.length}`}`}),
-      ...S.lote.map((x,j)=>el("button",{cls:"ghost sm","aria-pressed":String(j===i),title:x.params.tema,
-        onclick:()=>abrirQuestao(x)},String(j+1)+(x.gerando?" …":respondida(x)?" ✓":""))),
+      el("span",{cls:"kicker",txt:`sessão · ${i<0?"esta questão é de fora":`questão ${i+1} de ${S.lote.length}`}`}),
+      ...S.lote.map((x,j)=>el("button",{cls:"ghost sm","aria-pressed":String(j===i),title:`${x.params.tema} · ${x.params.nivel} · ${rotuloDif(x.params.dificuldade)}`,
+        onclick:()=>abrirQuestao(x)},String(j+1)+(x.gerando?" …":respondida(x)?" ✓":"")))),
+    el("div",{cls:"acoes",style:"margin-top:8px"},
+      el("button",{cls:"ghost sm",id:"dl-lote",disabled:prontas.length?null:true,onclick:()=>baixarSessao("dl-lote")},`Baixar as ${prontas.length} em um TXT`),
+      el("button",{cls:"ghost sm",disabled:prontas.length?null:true,onclick:e=>copiar(txtPacote(prontas,`Sessão · ${prontas.length} questões`),e.target)},"Copiar todas"),
       el("span",{cls:"sep"}),
-      el("button",{cls:"ghost sm",id:"dl-lote",disabled:prontas.length?null:true,
-        onclick:()=>baixarArquivo(`lote-${slug(q.params.tema)}-${prontas.length}q.txt`,
-          txtPacote(prontas,`Lote · ${prontas.length} questões · ${q.params.area}`),"dl-lote")},"Baixar o lote em TXT"),
-      el("button",{cls:"ghost sm",disabled:prontas.length?null:true,onclick:e=>copiar(txtPacote(prontas,`Lote · ${prontas.length} questões`),e.target)},"Copiar")));
+      i>=0?el("button",{cls:"ghost sm",disabled:(S.rodando||q.gerando)||null,onclick:()=>tirarDaSessao(q)},S.remover==="s:"+q.id?"Confirmar: tirar esta":"Tirar esta"):null,
+      el("button",{cls:"ghost sm",disabled:S.rodando||null,onclick:esvaziarSessao},S.remover==="sessao"?`Confirmar: apagar as ${S.lote.length}`:"Esvaziar a sessão")));
 }
 function cabecalho(q,pr){
   const p=q.params, pronto=!q.gerando&&utilizavel(q), noBanco=S.banco.some(x=>x.id===q.id);
