@@ -1,0 +1,6 @@
+As fontes desta pasta são distribuídas sob a SIL Open Font License 1.1 (https://scripts.sil.org/OFL).
+
+Newsreader — Copyright 2020 The Newsreader Project Authors (github.com/productiontype/Newsreader)
+IBM Plex Sans e IBM Plex Mono — Copyright 2019 IBM Corp.
+
+Arquivos .woff2 (subconjunto latino) obtidos dos pacotes @fontsource.
