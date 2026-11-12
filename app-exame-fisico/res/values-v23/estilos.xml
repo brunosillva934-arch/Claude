@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Do Android 6 em diante a barra de status pode ser clara com ícones escuros. -->
+    <style name="Tema" parent="@android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/papel</item>
+        <item name="android:colorAccent">#0f6b63</item>
+        <item name="android:statusBarColor">@color/superficie</item>
+        <item name="android:windowLightStatusBar">true</item>
+    </style>
+</resources>
