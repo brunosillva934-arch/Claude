@@ -38,23 +38,75 @@
   function plural(n, um, varios) { return n + " " + (n === 1 ? um : varios); }
 
   /* ── a base ────────────────────────────────────────────────────── */
+  var SV = window.SEMENTE_VERSAO || 1; /* versão do conteúdo que veio com o app */
+  function motivoDeSemente(m) { return { id: nid(), nome: m[0], nota: m[1] || "" }; }
+  function achadoDeSemente(x) {
+    var ms = [], i;
+    for (i = 0; i < (x.motivos || []).length; i++) ms.push(motivoDeSemente(x.motivos[i]));
+    return { id: nid(), nome: x.nome, nota: x.nota, classe: x.k === "e" ? "e" : "a", motivos: ms };
+  }
+  function noDeSemente(t) {
+    var n = { id: nid(), nome: t.nome, nota: t.nota, filhos: [], achados: [] }, i;
+    if (t.unica) n.unica = true;
+    for (i = 0; i < t.itens.length; i++) {
+      if (t.itens[i].k === "t") n.filhos.push(noDeSemente(t.itens[i]));
+      else n.achados.push(achadoDeSemente(t.itens[i]));
+    }
+    return n;
+  }
   function daSemente() {
-    function achado(x) {
-      var ms = [], i;
-      for (i = 0; i < (x.motivos || []).length; i++) ms.push({ id: nid(), nome: x.motivos[i][0], nota: x.motivos[i][1] || "" });
-      return { id: nid(), nome: x.nome, nota: x.nota, classe: x.k === "e" ? "e" : "a", motivos: ms };
-    }
-    function no(t) {
-      var n = { id: nid(), nome: t.nome, nota: t.nota, filhos: [], achados: [] }, i;
-      for (i = 0; i < t.itens.length; i++) {
-        if (t.itens[i].k === "t") n.filhos.push(no(t.itens[i]));
-        else n.achados.push(achado(t.itens[i]));
-      }
-      return n;
-    }
     var areas = [], i;
-    for (i = 0; i < window.SEMENTE.length; i++) areas.push(no(window.SEMENTE[i]));
-    return { v: 1, areas: areas };
+    for (i = 0; i < window.SEMENTE.length; i++) areas.push(noDeSemente(window.SEMENTE[i]));
+    return { v: 1, sv: SV, areas: areas };
+  }
+  /* Traz para um roteiro já existente o que entrou em versões mais novas do conteúdo.
+     Junta pelo nome: o que você editou fica como está, e o que você apagou de uma versão
+     antiga não volta (só entra o que é de versão mais nova que a do seu roteiro).
+     Devolve quantos itens (tópicos, achados e motivos) foram acrescentados. */
+  function atualizar(b) {
+    var de = b.sv || 1, n = 0;
+    if (de >= SV) return 0;
+    function igual(lista, nome) {
+      for (var i = 0; i < lista.length; i++) if (norm(lista[i].nome) === norm(nome)) return lista[i];
+      return null;
+    }
+    function novo(it, tudo) { return tudo || (it.ver || 1) > de; }
+    /* põe o tópico novo logo depois do vizinho que o precede no conteúdo, se você ainda o tem */
+    function encaixar(lista, u, irmaos, it) {
+      var ant = null, i, j;
+      for (i = 0; irmaos[i] !== it; i++) if (irmaos[i].k === "t") ant = irmaos[i];
+      if (!ant) { lista.unshift(u); return; }
+      for (j = 0; j < lista.length; j++) if (norm(lista[j].nome) === norm(ant.nome)) { lista.splice(j + 1, 0, u); return; }
+      lista.push(u);
+    }
+    function motivos(alvo, x, tudo) {
+      for (var i = 0; i < x.motivos.length; i++) {
+        if (!novo({ ver: x.motivos[i][2] }, tudo) || igual(alvo.motivos, x.motivos[i][0])) continue;
+        alvo.motivos.push(motivoDeSemente(x.motivos[i]));
+        n++;
+      }
+    }
+    function itens(alvo, t, tudo) {
+      for (var i = 0; i < t.itens.length; i++) {
+        var it = t.itens[i], eNovo = novo(it, tudo), u, c;
+        if (it.k === "t") {
+          u = igual(alvo.filhos, it.nome);
+          if (u) { if (it.unica && u.unica === undefined) u.unica = true; itens(u, it, eNovo); }
+          else if (eNovo) { u = noDeSemente(it); encaixar(alvo.filhos, u, t.itens, it); c = contar(u); n += 1 + c.topicos + c.achados + c.motivos; }
+        } else {
+          u = igual(alvo.achados, it.nome);
+          if (u) motivos(u, it, eNovo);
+          else if (eNovo) { u = achadoDeSemente(it); alvo.achados.push(u); n += 1 + u.motivos.length; }
+        }
+      }
+    }
+    for (var i = 0; i < window.SEMENTE.length; i++) {
+      var t = window.SEMENTE[i], u = igual(b.areas, t.nome), c;
+      if (u) itens(u, t, novo(t, false));
+      else if (novo(t, false)) { u = noDeSemente(t); encaixar(b.areas, u, window.SEMENTE, t); c = contar(u); n += 1 + c.topicos + c.achados + c.motivos; }
+    }
+    b.sv = SV;
+    return n;
   }
   /* aceita um backup mexido à mão: completa o que faltar em vez de quebrar */
   function consertar(b) {
@@ -62,6 +114,7 @@
     function no(n) {
       if (!n || typeof n !== "object") return null;
       var r = { id: String(n.id || nid()), nome: String(n.nome || "Sem nome"), nota: String(n.nota || ""), filhos: [], achados: [] }, i, f, a, j, ms;
+      if (typeof n.unica === "boolean") r.unica = n.unica; /* sem o campo: você nunca mexeu, a atualização pode ligar */
       for (i = 0; i < (n.filhos || []).length; i++) { f = no(n.filhos[i]); if (f) r.filhos.push(f); }
       for (i = 0; i < (n.achados || []).length; i++) {
         a = n.achados[i];
@@ -77,7 +130,7 @@
     }
     var areas = [], i, x;
     for (i = 0; i < b.areas.length; i++) { x = no(b.areas[i]); if (x) areas.push(x); }
-    return { v: 1, areas: areas };
+    return { v: 1, sv: Number(b.sv) || 1, areas: areas };
   }
 
   var base = consertar(ler("base"));
@@ -122,7 +175,9 @@
     relogioExames = setTimeout(function () { guardar("exames", exames); }, 500);
   }
 
+  var novidades = 0;
   if (!base) { base = daSemente(); guardar("base", base); }
+  else if ((novidades = atualizar(base)) || base.sv !== SV) guardar("base", base);
   indexar();
 
   function contar(no) {
@@ -386,7 +441,7 @@
         gs = gruposDe(ar);
         h += '<div class="dentro"><div class="acoes" style="margin-top:12px"><button class="botao pequeno" data-a="tudo-esperado" data-id="' + ar.id + '">' + IC.certo + "Marcar o esperado no que falta</button></div>";
         for (j = 0; j < gs.length; j++) {
-          h += '<div class="grupo"><span>' + esc(gs[j].titulo) + '</span><button data-a="novo-achado" data-pai="' + gs[j].no.id + '">+ achado</button></div>';
+          h += '<div class="grupo"><span>' + esc(gs[j].titulo) + (gs[j].no.unica ? ' <i class="so-um">· escolha um</i>' : "") + '</span><button data-a="novo-achado" data-pai="' + gs[j].no.id + '">+ achado</button></div>';
           for (k = 0; k < gs[j].no.achados.length; k++) {
             var ac = gs[j].no.achados[k], on = !!e.marcas[ac.id];
             h += '<div class="marca-l ' + ac.classe + (on ? " on" : "") + '"><button class="toque" data-a="marcar" data-id="' + ac.id + '" aria-pressed="' + on + '"><span class="caixa">' + IC.certo + "</span><span>" + esc(ac.nome) + "</span></button>" +
@@ -550,8 +605,8 @@
   }
 
   /* ── folhas ────────────────────────────────────────────────────── */
-  function abrirFolha(f) { S.folha = f; desenharFolha(); }
-  function fecharFolha() { S.folha = null; folhaEl.innerHTML = ""; }
+  function abrirFolha(f) { S.folha = f; document.body.classList.add("com-folha"); desenharFolha(); }
+  function fecharFolha() { S.folha = null; document.body.classList.remove("com-folha"); folhaEl.innerHTML = ""; }
   function cabFolha(titulo) {
     return '<div class="cab"><h2 class="cresce">' + esc(titulo) + '</h2><button class="icone-b" data-a="fechar-folha" aria-label="Fechar">' + IC.fechar + "</button></div>";
   }
@@ -574,6 +629,8 @@
       h += '<div class="campo"><label for="f-nome">' + rot.nome + '</label><input id="f-nome" type="text" autocomplete="off" autocapitalize="sentences" maxlength="160" placeholder="' + rot.ex + '" value="' + esc(o.nome) + '">' +
         (f.alvo === "motivo" ? '<div class="sugestoes" id="f-sug"></div>' : "") + "</div>";
       h += '<div class="campo"><label for="f-nota">' + rot.nota + '</label><textarea id="f-nota" placeholder="' + rot.dicaNota + '">' + esc(o.nota) + "</textarea></div>";
+      if (f.alvo === "no" && rot !== ROT.area)
+        h += '<label class="opcao"><input type="checkbox" id="f-unica"' + (o.unica ? " checked" : "") + '><span><b>Escolha única no exame</b><span class="dica">Marcar um achado deste tópico desmarca os outros (por exemplo, BEG, REG e MEG).</span></span></label>';
       h += '<div class="acoes" style="margin-top:16px"><button class="botao principal" data-a="salvar">Salvar</button>' + (f.id ? "" : '<button class="botao" data-a="salvar" data-outro="1">Salvar e criar outro</button>') + "</div>";
       if (f.id) {
         i = r.lista.indexOf(o);
@@ -593,7 +650,7 @@
         '<button class="item-menu" data-a="exportar"><span class="cresce"><div>Salvar cópia de segurança</div><div class="sub">Um arquivo com todo o roteiro e os exames</div></span></button>' +
         '<button class="item-menu" data-a="importar"><span class="cresce"><div>Restaurar de uma cópia</div><div class="sub">Substitui o que está no aparelho</div></span></button>' +
         '<button class="item-menu" data-a="repor"><span class="cresce"><div>Repor o conteúdo inicial</div><div class="sub">Volta o roteiro ao que veio com o app</div></span></button>' +
-        '<p class="dica" style="margin-top:16px">Exame físico' + (A && A.versao ? " " + esc(A.versao()) : "") + ". Funciona sem internet; nada sai do aparelho. O conteúdo inicial é um ponto de partida para estudo: confira com as suas referências e ajuste como quiser.</p>";
+        '<p class="dica" style="margin-top:16px">Exame físico' + (A && A.versao ? " " + esc(A.versao()) : "") + ", conteúdo na versão " + SV + ". Funciona sem internet; nada sai do aparelho. O conteúdo inicial é um ponto de partida para estudo: confira com as suas referências e ajuste como quiser.</p>";
     } else if (f.tipo === "confirmar") {
       h = cabFolha(f.titulo) + '<p class="apoio">' + esc(f.msg) + '</p><div class="acoes" style="margin-top:18px"><button class="botao ' + (f.perigo ? "perigo" : "principal") + '" data-a="confirmar">' + esc(f.rotulo) + '</button><button class="botao" data-a="fechar-folha">Cancelar</button></div>';
     }
@@ -642,13 +699,16 @@
   /* ── mudanças ──────────────────────────────────────────────────── */
   function salvarEdicao(outro) {
     var f = S.folha, nome = document.getElementById("f-nome").value.replace(/\s+/g, " ").trim(), nota = document.getElementById("f-nota").value.replace(/\s+$/, ""), o, pai;
+    var unica = document.getElementById("f-unica");
     if (!nome) { aviso("Dê um nome antes de salvar."); document.getElementById("f-nome").focus(); return; }
     if (f.id) {
       o = IDX[f.id].o;
       o.nome = nome; o.nota = nota;
       if (f.alvo === "achado") o.classe = f.classe;
+      if (unica) o.unica = unica.checked;
     } else if (f.alvo === "no") {
       o = { id: nid(), nome: nome, nota: nota, filhos: [], achados: [] };
+      if (unica) o.unica = unica.checked;
       if (f.pai) IDX[f.pai].o.filhos.push(o); else base.areas.push(o);
     } else if (f.alvo === "achado") {
       pai = IDX[f.pai];
@@ -680,6 +740,8 @@
     var r = IDX[id];
     if (e.marcas[id]) { delete e.marcas[id]; delete e.prov[id]; return; }
     if (!r) return;
+    if (r.pai.unica) /* escolha única: sai o que estava marcado no mesmo tópico */
+      for (var i = 0; i < r.pai.achados.length; i++) { delete e.marcas[r.pai.achados[i].id]; delete e.prov[r.pai.achados[i].id]; }
     e.marcas[id] = { n: r.o.nome, c: r.o.classe, area: r.trilha[0].id, areaNome: r.trilha[0].nome };
   }
   function nomeArquivo(s) { return norm(s).replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "exame"; }
@@ -696,6 +758,7 @@
     var d, b;
     try { d = JSON.parse(texto); } catch (e) { d = null; }
     b = d && d.tipo === "exame-fisico" ? consertar(d.base) : null;
+    if (b) atualizar(b);
     if (!b) { aviso("Esse arquivo não é uma cópia deste app."); return; }
     confirmar("Restaurar a cópia?", "O roteiro e os exames deste aparelho serão substituídos pelos do arquivo (" + plural(b.areas.length, "área", "áreas") + ").", "Substituir tudo", function () {
       base = b;
@@ -748,11 +811,12 @@
       var r = IDX[S.folha.id], i = r.lista.indexOf(r.o), j = i + Number(d.d);
       if (j < 0 || j >= r.lista.length) return;
       r.lista[i] = r.lista[j]; r.lista[j] = r.o;
-      var nome = document.getElementById("f-nome").value, nota = document.getElementById("f-nota").value;
+      var nome = document.getElementById("f-nome").value, nota = document.getElementById("f-nota").value, un = document.getElementById("f-unica"), marcado = un && un.checked;
       salvarBase();
       desenharFolha();
       document.getElementById("f-nome").value = nome;
       document.getElementById("f-nota").value = nota;
+      if (un) document.getElementById("f-unica").checked = marcado;
       desenhar(true);
     },
     apagar: function () {
@@ -800,7 +864,11 @@
         livre = true;
         for (j = 0; j < gs[i].no.achados.length; j++) if (e.marcas[gs[i].no.achados[j].id]) livre = false;
         if (!livre) continue;
-        for (j = 0; j < gs[i].no.achados.length; j++) if (gs[i].no.achados[j].classe === "e") { marcar(e, gs[i].no.achados[j].id); n++; }
+        for (j = 0; j < gs[i].no.achados.length; j++) if (gs[i].no.achados[j].classe === "e") {
+          marcar(e, gs[i].no.achados[j].id);
+          n++;
+          if (gs[i].no.unica) break; /* só o primeiro esperado */
+        }
       }
       salvarExames();
       desenhar(true);
@@ -871,9 +939,9 @@
     }
   });
   document.addEventListener("focusin", function (ev) {
-    if (/^(INPUT|TEXTAREA)$/.test(ev.target.tagName)) document.body.className = "teclado";
+    if (/^(INPUT|TEXTAREA)$/.test(ev.target.tagName)) document.body.classList.add("teclado");
   });
-  document.addEventListener("focusout", function () { document.body.className = ""; });
+  document.addEventListener("focusout", function () { document.body.classList.remove("teclado"); });
   document.getElementById("seletor").addEventListener("change", function () {
     var arq = this.files && this.files[0], leitor;
     if (!arq) return;
@@ -894,4 +962,5 @@
   if (midia && midia.addListener) midia.addListener(tema);
   tema();
   desenhar();
+  if (novidades) aviso("Roteiro atualizado: " + plural(novidades, "item novo", "itens novos") + ".");
 })();

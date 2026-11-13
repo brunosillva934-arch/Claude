@@ -1,20 +1,82 @@
-/* Conteúdo inicial do app. Só entra na primeira abertura (ou em "Repor o conteúdo inicial");
-   depois disso tudo é editável no aparelho.
+/* Conteúdo que vem com o app. Esta é a versão 1; as versões seguintes ficam em conteudo/*.js
+   e entram com S.mais(versão)(caminho, itens), que junta pelo nome ao que já existe.
+   No aparelho, o conteúdo inteiro só entra na primeira abertura (ou em "Repor o conteúdo
+   inicial"); quem já tem o roteiro recebe apenas o que for de uma versão mais nova, sem
+   perder o que editou.
    T(nome, como examinar, itens)      área ou tópico; os itens são outros T, E ou X
+   U(nome, como examinar, itens)      tópico de escolha única (um achado por vez no exame)
    E(nome, como reconhecer)           achado esperado
    X(nome, como reconhecer, motivos)  achado anormal; cada motivo é [nome, como leva ao achado] */
 (function () {
   "use strict";
   function T(nome, nota, itens) { return { k: "t", nome: nome, nota: nota || "", itens: itens || [] }; }
-  function E(nome, nota) { return { k: "e", nome: nome, nota: nota || "" }; }
+  /* tópico de escolha única: no exame, marcar um achado desmarca os outros */
+  function U(nome, nota, itens) { var t = T(nome, nota, itens); t.unica = true; return t; }
+  function E(nome, nota, motivos) { return { k: "e", nome: nome, nota: nota || "", motivos: motivos || [] }; }
   function X(nome, nota, motivos) { return { k: "x", nome: nome, nota: nota || "", motivos: motivos || [] }; }
+  function norm(s) {
+    s = String(s || "").toLowerCase();
+    if (s.normalize) s = s.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    return s.replace(/\s+/g, " ").trim();
+  }
+  function buscar(lista, topico, nome) {
+    for (var i = 0; i < lista.length; i++)
+      if ((lista[i].k === "t") === topico && norm(lista[i].nome) === norm(nome)) return lista[i];
+    return null;
+  }
+  /* junta pelo nome: tópico igual recebe os itens novos; achado igual recebe os motivos novos.
+     Com "antes", os tópicos novos entram antes do tópico com esse nome em vez de no fim. */
+  function juntar(lista, itens, ver, antes) {
+    var pos = -1, i;
+    if (antes) {
+      for (i = 0; i < lista.length; i++) if (lista[i].k === "t" && norm(lista[i].nome) === norm(antes)) pos = i;
+      if (pos < 0) window.SEMENTE_AVISOS.push("tópico de referência inexistente: " + antes);
+    }
+    for (i = 0; i < itens.length; i++) {
+      var it = itens[i], igual = buscar(lista, it.k === "t", it.nome), j, ja, k;
+      if (!igual) {
+        it.ver = ver;
+        if (pos >= 0 && it.k === "t") lista.splice(pos++, 0, it); else lista.push(it);
+        continue;
+      }
+      if (!igual.nota) igual.nota = it.nota;
+      if (it.unica) igual.unica = true;
+      if (it.k === "t") { juntar(igual.itens, it.itens, ver); continue; }
+      for (j = 0; j < it.motivos.length; j++) {
+        ja = false;
+        for (k = 0; k < igual.motivos.length; k++) if (norm(igual.motivos[k][0]) === norm(it.motivos[j][0])) ja = true;
+        if (ja) window.SEMENTE_AVISOS.push("motivo repetido: " + it.nome + " / " + it.motivos[j][0]);
+        else igual.motivos.push([it.motivos[j][0], it.motivos[j][1], ver]);
+      }
+    }
+  }
+  function mais(ver) {
+    window.SEMENTE_VERSAO = Math.max(window.SEMENTE_VERSAO, ver);
+    return function (caminho, itens, antes) {
+      var lista = window.SEMENTE, partes = caminho ? caminho.split(" › ") : [], i, no;
+      for (i = 0; i < partes.length; i++) {
+        no = buscar(lista, true, partes[i]);
+        if (!no) { /* não quebra o app: cria o tópico e deixa o aviso para a conferência */
+          window.SEMENTE_AVISOS.push("caminho criado: " + partes.slice(0, i + 1).join(" › "));
+          no = T(partes[i], "", []);
+          no.ver = ver;
+          lista.push(no);
+        }
+        lista = no.itens;
+      }
+      juntar(lista, itens, ver, antes);
+    };
+  }
+  window.SEMENTE_VERSAO = 1;
+  window.SEMENTE_AVISOS = [];
+  window.SEM = { T: T, U: U, E: E, X: X, mais: mais };
 
   window.SEMENTE = [
 
     /* ───────────────────────── EXAME GERAL ───────────────────────── */
     T("Exame geral", "Começa quando o paciente entra na sala. Observe antes de tocar: aparência, postura, fala, marcha, higiene.", [
       T("Ectoscopia", "Inspeção global, com boa luz (de preferência natural) e o paciente o mais descoberto que o pudor permitir.", [
-        T("Estado geral", "Impressão de conjunto sobre o quanto a doença repercute no organismo.", [
+        U("Estado geral", "Impressão de conjunto sobre o quanto a doença repercute no organismo.", [
           E("Bom estado geral (BEG)", "Aparência saudável, sem sinais de sofrimento, ativo e colaborativo."),
           X("Regular estado geral (REG)", "Aparenta estar doente, mas mantém suas funções e interage bem.", [
             ["Doença aguda moderada", "Febre, dor e resposta inflamatória consomem energia e abatem o paciente sem chegar a comprometer as funções vitais."],
@@ -86,7 +148,7 @@
             ["Dor pleurítica", "Deitar sobre o lado doente limita o movimento daquela parede e diminui a dor."]
           ])
         ]),
-        T("Estado de hidratação", "Avalie mucosas, turgor e elasticidade da pele, olhos, estado geral, sede e diurese. No bebê, a fontanela.", [
+        U("Estado de hidratação", "Avalie mucosas, turgor e elasticidade da pele, olhos, estado geral, sede e diurese. No bebê, a fontanela.", [
           E("Hidratado", "Mucosas úmidas, turgor preservado, olhos brilhantes."),
           X("Desidratação", "Mucosas secas, turgor diminuído (a prega se desfaz devagar), olhos fundos, sede, pouca urina; grave: hipotensão e rebaixamento.", [
             ["Diarreia e vômitos", "Perda direta de água e eletrólitos pelo tubo digestivo, sem reposição suficiente."],
@@ -129,7 +191,7 @@
             ["Celulite e erisipela", "A inflamação aumenta a permeabilidade dos capilares; há calor, rubor e dor."]
           ])
         ]),
-        T("Estado nutricional e biotipo", "Olhe panículo adiposo, massa muscular (têmporas, interósseos, quadríceps) e proporção entre tronco e membros.", [
+        U("Estado nutricional e biotipo", "Olhe panículo adiposo, massa muscular (têmporas, interósseos, quadríceps) e proporção entre tronco e membros.", [
           E("Eutrófico", "Panículo e musculatura proporcionais; IMC entre 18,5 e 24,9."),
           X("Emagrecimento e caquexia", "Ossos salientes, têmporas escavadas, musculatura consumida.", [
             ["Neoplasia", "Citocinas como TNF e IL-6 aumentam o catabolismo de músculo e gordura e tiram o apetite."],

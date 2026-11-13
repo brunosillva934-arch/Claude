@@ -101,6 +101,10 @@ body.teclado .nav{display:none}
 .campo textarea{min-height:120px;resize:vertical}
 .campo input:focus,.campo textarea:focus{outline:2px solid var(--accent);outline-offset:0;border-color:var(--accent)}
 .dica{font-size:.8rem;color:var(--ink-3)}
+.opcao{display:flex;gap:12px;align-items:flex-start;margin-top:16px;padding:12px 14px;border:1px solid var(--rule);border-radius:12px;cursor:pointer}
+.opcao input{width:20px;height:20px;margin:2px 0 0;accent-color:var(--accent);flex:none}
+.opcao b{display:block;font-weight:600;font-size:.92rem}
+.so-um{font-style:normal;text-transform:none;letter-spacing:0;font-weight:500}
 .seg{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:var(--surface-2);padding:4px;border-radius:14px}
 .seg button{min-height:42px;border-radius:10px;text-align:center;font-weight:600;font-size:.9rem;color:var(--ink-2);display:flex;align-items:center;justify-content:center;gap:8px}
 .seg button.ativa{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.14)}
@@ -153,4 +157,5 @@ body.teclado .nav{display:none}
 #aviso.on{display:flex}
 #aviso button{margin-left:auto;font-weight:600;color:var(--accent-soft);padding:6px 4px;white-space:nowrap}
 :root[data-theme="dark"] #aviso button{color:var(--accent-ink)}
+body.com-folha #aviso{top:calc(12px + env(safe-area-inset-top,0px));bottom:auto}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}

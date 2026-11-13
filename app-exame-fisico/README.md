@@ -18,11 +18,17 @@ O arquivo para instalar é **`Exame-fisico.apk`**, nesta pasta.
 Cada área e tópico tem uma nota de **como examinar**; cada achado, uma nota de
 **como reconhecer**; cada motivo, uma nota de **como leva ao achado**.
 
-O app já vem com 11 áreas (exame geral, sinais vitais, pele e anexos, cabeça e
-pescoço, respiratório, cardiovascular, vascular periférico, abdome, neurológico,
-osteoarticular, mamas/geniturinário/anorretal), com os achados esperados, os
-anormais e os motivos de cada um. É um ponto de partida para estudo: confira com
-as suas referências e ajuste como quiser.
+O app já vem com 14 áreas, 90 tópicos, 569 achados e 835 motivos: exame geral,
+sinais vitais, pele e anexos, cabeça e pescoço (com fundo de olho, ouvidos, nariz
+e pescoço), respiratório, cardiovascular, vascular periférico (com pé diabético),
+abdome, neurológico, exame psíquico, osteoarticular (ombro, mão, quadril, joelho,
+pé, músculos), mamas/geniturinário/anorretal (com genitália feminina), exame
+obstétrico e exame pediátrico e do recém-nascido. É um ponto de partida para
+estudo: confira com as suas referências e ajuste como quiser.
+
+Alguns tópicos são de **escolha única** (estado geral, hidratação, estado
+nutricional, biotipo): no exame, marcar um achado desmarca os outros. Dá para
+ligar ou desligar isso em qualquer tópico, no lápis.
 
 ## Usar
 
@@ -55,6 +61,19 @@ as suas referências e ajuste como quiser.
 Serve em Android 5.0 ou mais novo. Versões futuras instalam por cima e mantêm o
 que você escreveu.
 
+### O que acontece ao atualizar
+
+Quem já tem o roteiro no aparelho recebe só o conteúdo novo, junto pelo nome ao
+que já existe, e vê um aviso com quantos itens entraram:
+
+- o que você editou (nomes, notas, ordem) fica como está;
+- o que você criou fica;
+- o que você apagou de uma versão anterior não volta;
+- tópicos novos entram na posição em que aparecem no conteúdo do app;
+- se você renomeou uma área ou um tópico, o conteúdo novo daquele trecho não
+  encontra onde entrar e fica de fora (use "Repor o conteúdo inicial", depois de
+  salvar uma cópia, se quiser tudo).
+
 ## Montar de novo
 
 Sem Gradle nem Android Studio; bastam pacotes do Ubuntu/Debian:
@@ -66,7 +85,9 @@ apt-get install aapt apksigner zipalign dalvik-exchange android-sdk-platform-23 
 
 | Caminho | O que é |
 | --- | --- |
-| `web/dados.js` | O conteúdo inicial: áreas, tópicos, achados e motivos |
+| `web/dados.js` | O conteúdo da versão 1 e as funções que montam o conteúdo |
+| `web/conteudo/*.js` | O que entrou depois, por região do corpo, com a versão em que entrou |
+| `conferir.js` | Confere o conteúdo antes de montar (caminhos, nomes repetidos, motivos sem nota) |
 | `web/app.js`, `web/estilo.css` | As telas |
 | `montar.py` | Junta `web/` num único `index.html`, com as fontes embutidas |
 | `src/` | A atividade Android: um WebView e a ponte para arquivos e compartilhamento |
@@ -76,14 +97,21 @@ apt-get install aapt apksigner zipalign dalvik-exchange android-sdk-platform-23 
 
 A chave fica no repositório de propósito: assinar sempre com a mesma é o que
 deixa a versão nova instalar por cima. Para uma versão nova, aumente `NOME` e
-`CODIGO` em `montar.sh`. O conteúdo de `web/dados.js` só entra na primeira
-abertura (ou em "Repor o conteúdo inicial"); depois vale o que está no aparelho.
+`CODIGO` em `montar.sh`.
+
+Para acrescentar conteúdo numa versão futura, crie um arquivo em `web/conteudo/`
+com `S.mais(3)("Área › Tópico", [itens], "tópico antes do qual entrar")` (3 é a
+versão do conteúdo; use sempre um número maior que o anterior). Não altere nem
+renomeie o que já foi publicado: a ligação com o roteiro de quem já instalou é
+feita pelo nome.
 
 ## O que foi e o que não foi testado
 
 A página foi testada em navegador com tamanho de celular (390 e 320 px, claro e
 escuro): navegação, criar/editar/apagar/desfazer, motivos ligados pelo nome,
-exame com resumo, revisão, busca, e a ponte com o Android simulada (salvar,
-cópia de segurança, restauração, arquivo inválido). O APK foi conferido por
+exame com resumo, escolha única, revisão, busca, e a ponte com o Android
+simulada (salvar, cópia de segurança, restauração, arquivo inválido). A
+atualização foi testada partindo de um roteiro da versão 1 com edições,
+apagamentos, área renomeada e área própria. O APK foi conferido por
 dentro (manifesto, assinatura, conteúdo). Ele **não foi executado em aparelho
 nem em emulador** no ambiente em que foi montado.

@@ -35,11 +35,19 @@ def fontes():
     return "\n".join(regras)
 
 
+def juntar_conteudo():
+    """dados.js (versão 1 e as funções) e depois cada conteudo/*.js, em ordem de nome."""
+    partes = [ler("dados.js")]
+    for arq in sorted((WEB / "conteudo").glob("*.js")):
+        partes.append(arq.read_text(encoding="utf-8"))
+    return "\n".join(partes)
+
+
 def montar():
     partes = {
         "/*FONTES*/": fontes(),
         "/*ESTILO*/": ler("estilo.css"),
-        "/*DADOS*/": ler("dados.js"),
+        "/*DADOS*/": juntar_conteudo(),
         "/*APP*/": ler("app.js"),
     }
     html = ler("index.html")

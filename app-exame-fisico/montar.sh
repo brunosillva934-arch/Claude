@@ -5,8 +5,8 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
-NOME=1.0     # versão que a pessoa vê
-CODIGO=1     # aumente a cada versão: o Android só instala por cima se não for menor
+NOME=1.1     # versão que a pessoa vê
+CODIGO=2     # aumente a cada versão: o Android só instala por cima se não for menor
 MINIMO=21    # Android 5.0
 ALVO=34      # Android 14
 ANDROID_JAR=${ANDROID_JAR:-/usr/lib/android-sdk/platforms/android-23/android.jar}
@@ -19,7 +19,8 @@ SENHA=android
 T=$(mktemp -d)   # pasta de trabalho descartável, fica em /tmp
 mkdir -p "$T/classes" "$T/assets" "$T/dex"
 
-# 1. a página: web/ vira um único index.html, com as fontes dentro
+# 1. a página: confere o conteúdo e junta web/ num único index.html, com as fontes dentro
+if command -v node > /dev/null; then node conferir.js; else echo "(sem node: conteúdo não conferido)"; fi
 python3 montar.py "$T/assets/index.html"
 
 # 2. o código Java vira classes.dex (sem lambdas: o dx antigo não as converte)
