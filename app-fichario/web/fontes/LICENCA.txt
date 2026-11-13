@@ -1,0 +1,8 @@
+Fontes embutidas no app, todas sob a SIL Open Font License 1.1 (https://openfontlicense.org):
+- Atkinson Hyperlegible — Copyright 2020 Braille Institute of America, Inc.
+- Source Serif 4 — © 2014-2021 Adobe Systems Incorporated, com o nome reservado "Source".
+- IBM Plex Mono — Copyright 2017 IBM Corp.
+Arquivos tirados dos pacotes @fontsource (subconjunto latino, woff2).
+
+web/preact-htm.js é o build "standalone" do htm 3.1.1 (licença Apache 2.0, Jason Miller),
+que inclui o Preact (licença MIT, Jason Miller).

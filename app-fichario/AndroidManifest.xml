@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Nenhuma permissão: o app não usa a rede e só lê os arquivos que você escolhe ou manda para ele. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="app.fichario.medico">
+
+    <application
+        android:allowBackup="true"
+        android:hardwareAccelerated="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="Fichário"
+        android:theme="@style/Tema">
+
+        <activity
+            android:name=".MainActivity"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboard|keyboardHidden|navigation|uiMode|fontScale|layoutDirection|locale"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:windowSoftInputMode="adjustResize">
+
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+            <!-- "Abrir com" no arquivo do fichário vindo do outro aparelho -->
+            <intent-filter android:label="Importar no Fichário">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="content" android:mimeType="application/json" />
+                <data android:mimeType="application/octet-stream" />
+            </intent-filter>
+
+            <!-- "Compartilhar": um texto vira nota; o arquivo do fichário é importado -->
+            <intent-filter android:label="Anotar no Fichário">
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+                <data android:mimeType="application/json" />
+                <data android:mimeType="application/octet-stream" />
+            </intent-filter>
+        </activity>
+
+        <!-- Entrega o arquivo exportado para o app escolhido no "Enviar o fichário" -->
+        <provider
+            android:name=".Arquivos"
+            android:authorities="app.fichario.medico.arquivos"
+            android:exported="false"
+            android:grantUriPermissions="true" />
+    </application>
+</manifest>

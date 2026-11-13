@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="papel">#0f1514</color>
+    <color name="superficie">#161f1d</color>
+
+    <style name="Tema" parent="@android:style/Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/papel</item>
+        <item name="android:colorAccent">#52c3ad</item>
+        <item name="android:statusBarColor">@color/papel</item>
+        <item name="android:navigationBarColor">@color/superficie</item>
+    </style>
+</resources>

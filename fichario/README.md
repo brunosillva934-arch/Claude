@@ -1,6 +1,6 @@
 # Fichário Médico
 
-Fichário de conhecimento médico para celular e tablet, publicado como página no claude.ai:
+Versão para o navegador, publicada como página no claude.ai (a versão Android, sem internet, está em `app-fichario/`):
 https://claude.ai/artifact/DhGdb4ZTcXtZoorZaPCnrx
 
 ## Fluxo
