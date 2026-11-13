@@ -1,0 +1,1645 @@
+<title>Fichário Médico</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@500&family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&display=swap">
+<style>
+/* Fichário: no celular, uma coluna com barra de abas e botão Anotar ao alcance do polegar;
+   no tablet, trilho à esquerda e lista + ficha lado a lado. A ficha é um cartão de fichário:
+   a aba de cima tem a cor da especialidade e a margem esquerda traz as seções (Def, Fisiopato, Clínica, Dx, Tto, Pérolas). */
+:root {
+  --bg: #f2f5f4;
+  --surface: #ffffff;
+  --surface-2: #e8edeb;
+  --ink: #16201d;
+  --ink-2: #47544f;
+  --ink-3: #6f7d78;
+  --line: #dbe2df;
+  --line-strong: #bfcac5;
+  --accent: #0c6a5c;
+  --accent-ink: #ffffff;
+  --accent-wash: #dcefe9;
+  --marker: #f7d84f;
+  --marker-soft: #fdf3c4;
+  --marker-ink: #4d3d00;
+  --danger: #b3261e;
+  --danger-wash: #fbe8e6;
+  --warn: #8a5a00;
+  --warn-wash: #fff0d4;
+  --scrim: rgb(10 16 14 / 0.45);
+  --t0: #74827d;
+  --t1: #c73a52;
+  --t2: #2a73b3;
+  --t3: #a87008;
+  --t4: #6150ad;
+  --t5: #26875a;
+  --t6: #a8458a;
+  --t7: #80613f;
+  --t8: #23808e;
+  --shadow: 0 1px 2px rgb(22 32 29 / 0.06), 0 10px 30px -16px rgb(22 32 29 / 0.28);
+
+  --f-ui: "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --f-disp: "Source Serif 4", "Iowan Old Style", Georgia, serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  --s-xs: 0.78rem;
+  --s-sm: 0.9rem;
+  --s-md: 1rem;
+  --s-lg: 1.1875rem;
+  --s-xl: 1.5rem;
+  --s-2xl: 2.125rem;
+  --r: 16px;
+  --r-sm: 10px;
+  --barra: 64px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1514;
+    --surface: #161f1d;
+    --surface-2: #1d2826;
+    --ink: #e3ebe8;
+    --ink-2: #a8b6b1;
+    --ink-3: #7f8e89;
+    --line: #25312e;
+    --line-strong: #364540;
+    --accent: #52c3ad;
+    --accent-ink: #062520;
+    --accent-wash: #14302a;
+    --marker: #8a7419;
+    --marker-soft: #2e2810;
+    --marker-ink: #ffe27a;
+    --danger: #ff8a80;
+    --danger-wash: #3a1a17;
+    --warn: #f2b85c;
+    --warn-wash: #33260f;
+    --scrim: rgb(0 0 0 / 0.6);
+    --t0: #8a9893;
+    --t1: #f07b8c;
+    --t2: #6fb0e8;
+    --t3: #e5b24f;
+    --t4: #a596ef;
+    --t5: #63c99a;
+    --t6: #e283bf;
+    --t7: #c9a57d;
+    --t8: #66c2cf;
+    --shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 12px 32px -16px rgb(0 0 0 / 0.7);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1514;
+  --surface: #161f1d;
+  --surface-2: #1d2826;
+  --ink: #e3ebe8;
+  --ink-2: #a8b6b1;
+  --ink-3: #7f8e89;
+  --line: #25312e;
+  --line-strong: #364540;
+  --accent: #52c3ad;
+  --accent-ink: #062520;
+  --accent-wash: #14302a;
+  --marker: #8a7419;
+  --marker-soft: #2e2810;
+  --marker-ink: #ffe27a;
+  --danger: #ff8a80;
+  --danger-wash: #3a1a17;
+  --warn: #f2b85c;
+  --warn-wash: #33260f;
+  --scrim: rgb(0 0 0 / 0.6);
+  --t0: #8a9893;
+  --t1: #f07b8c;
+  --t2: #6fb0e8;
+  --t3: #e5b24f;
+  --t4: #a596ef;
+  --t5: #63c99a;
+  --t6: #e283bf;
+  --t7: #c9a57d;
+  --t8: #66c2cf;
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 12px 32px -16px rgb(0 0 0 / 0.7);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--f-ui);
+  font-size: var(--s-md);
+  line-height: 1.5;
+}
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0 0 auto;
+  height: env(safe-area-inset-top, 0px);
+  z-index: 10;
+  background: var(--bg);
+}
+html.travado, html.travado body { overflow: hidden; }
+button, input, textarea, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+h1, h2, h3 { margin: 0; text-wrap: balance; font-weight: 600; }
+p { margin: 0; }
+ul, ol { margin: 0; padding: 0; list-style: none; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+mark { background: var(--marker-soft); color: inherit; border-radius: 3px; padding: 0 1px; box-shadow: inset 0 -0.45em 0 var(--marker); }
+
+.ico { width: 20px; height: 20px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.muted { color: var(--ink-3); }
+.small { font-size: var(--s-sm); }
+.meta { font-size: var(--s-xs); color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.dica { font-size: var(--s-sm); color: var(--ink-3); }
+.dica.alerta { color: var(--warn); }
+.selo {
+  display: inline-flex; align-items: center;
+  font-family: var(--f-mono); font-size: 0.68rem; letter-spacing: 0.06em; text-transform: uppercase;
+  padding: 1px 7px; border-radius: 999px;
+  color: var(--warn); background: var(--warn-wash);
+}
+
+/* ---------- botões ---------- */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 44px; padding: 8px 16px;
+  border-radius: 999px; border: 1px solid var(--line-strong);
+  background: var(--surface); color: var(--ink);
+  font-weight: 700; font-size: var(--s-sm); line-height: 1.15;
+  transition: border-color 0.15s, background 0.15s, transform 0.08s;
+}
+.btn:hover { border-color: var(--ink-3); }
+.btn:active { transform: translateY(1px); }
+.btn[disabled] { opacity: 0.45; cursor: not-allowed; transform: none; }
+.btn.primario { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.btn.primario:hover { filter: brightness(1.06); }
+.btn.perigo { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 40%, var(--line-strong)); }
+.btn.perigo.armado { background: var(--danger); border-color: var(--danger); color: var(--surface); }
+.btn.largo { width: 100%; }
+.btn .ico { width: 18px; height: 18px; }
+.btn-texto {
+  background: none; border: 0; padding: 8px 4px; min-height: 44px;
+  color: var(--accent); font-weight: 700; font-size: var(--s-sm);
+}
+.link-btn {
+  background: none; border: 0; padding: 0;
+  color: var(--accent); font-weight: 700; text-decoration: underline; text-underline-offset: 3px;
+}
+.icone-btn {
+  display: inline-grid; place-items: center;
+  width: 36px; height: 36px; border-radius: 999px;
+  border: 1px solid var(--line); background: var(--surface); color: var(--accent);
+}
+.icone-btn:hover { border-color: var(--accent); }
+.icone-btn .ico { width: 18px; height: 18px; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chips.rolagem { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+.chips.rolagem::-webkit-scrollbar { display: none; }
+.chip {
+  flex: none;
+  display: inline-flex; align-items: center; gap: 7px;
+  min-height: 38px; padding: 6px 13px;
+  border-radius: 999px; border: 1px solid var(--line-strong);
+  background: var(--surface); color: var(--ink-2);
+  font-size: var(--s-sm); font-weight: 700;
+}
+.chip:hover { border-color: var(--ink-3); color: var(--ink); }
+.chip[aria-pressed="true"], .chip[aria-checked="true"] { background: var(--ink); border-color: var(--ink); color: var(--bg); }
+.chip .n { font-family: var(--f-mono); font-size: 0.72rem; opacity: 0.75; }
+.chip .tom { width: 8px; height: 8px; border-radius: 2px; background: var(--tom); }
+.chip.link { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 45%, var(--line-strong)); }
+.chip.pontilhado { border-style: dashed; color: var(--ink-3); }
+.chip.sugestao { border-color: var(--accent); color: var(--ink); background: var(--accent-wash); }
+
+.campo {
+  width: 100%; min-height: 46px;
+  padding: 10px 14px; border-radius: var(--r-sm);
+  border: 1px solid var(--line-strong); background: var(--surface);
+  font-size: 1rem;
+}
+.campo:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-wash); }
+
+.aba {
+  display: inline-flex; align-items: center; gap: 6px; min-width: 0;
+  font-family: var(--f-mono); font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--tom);
+}
+.aba::before { content: ""; width: 8px; height: 8px; border-radius: 2px; background: var(--tom); flex: none; }
+
+/* ---------- estrutura ---------- */
+.app {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 8px calc(var(--barra) + 110px);
+}
+.main { min-width: 0; }
+.view { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+.vhead { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding-top: 8px; }
+.eyebrow { font-family: var(--f-mono); font-size: var(--s-xs); letter-spacing: 0.05em; text-transform: uppercase; color: var(--ink-3); }
+.vtitle { font-family: var(--f-disp); font-weight: 600; font-size: var(--s-2xl); line-height: 1.1; letter-spacing: -0.01em; }
+
+.trilho { display: none; }
+.barra {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  background: color-mix(in srgb, var(--surface) 94%, transparent);
+  -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+  border-top: 1px solid var(--line);
+  padding-top: 4px;
+  padding-bottom: calc(4px + env(safe-area-inset-bottom, 0px));
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.barra-item {
+  position: relative;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  min-height: 56px; border: 0; background: none; color: var(--ink-3);
+  font-size: var(--s-xs); font-weight: 700;
+}
+.barra-item[aria-current="page"] { color: var(--accent); }
+.barra-item .ico { width: 23px; height: 23px; }
+.badge {
+  display: inline-grid; place-items: center;
+  min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px;
+  background: var(--accent); color: var(--accent-ink);
+  font-family: var(--f-mono); font-size: 0.68rem;
+}
+.barra-item .badge { position: absolute; top: 4px; left: calc(50% + 6px); }
+.fab {
+  position: fixed; z-index: 21;
+  right: calc(16px + env(safe-area-inset-right, 0px));
+  bottom: calc(var(--barra) + 18px + env(safe-area-inset-bottom, 0px));
+  display: inline-flex; align-items: center; gap: 8px;
+  height: 58px; padding: 0 22px 0 18px; border-radius: 999px; border: 0;
+  background: var(--accent); color: var(--accent-ink);
+  font-weight: 700; font-size: var(--s-md);
+  box-shadow: 0 10px 26px -10px color-mix(in srgb, var(--accent) 70%, transparent), var(--shadow);
+}
+.fab .ico { width: 24px; height: 24px; stroke-width: 2.2; }
+
+@media (min-width: 760px) {
+  .app {
+    display: grid; grid-template-columns: 210px minmax(0, 1fr); gap: 36px;
+    padding-block: 0 56px;
+  }
+  .barra, .fab { display: none; }
+  .trilho {
+    display: flex; flex-direction: column; gap: 18px;
+    position: sticky; top: env(safe-area-inset-top, 0px); align-self: start;
+    padding-block: 22px;
+  }
+  .main { padding-top: 14px; }
+}
+.marca { display: flex; align-items: center; gap: 10px; font-family: var(--f-disp); font-weight: 600; font-size: var(--s-lg); }
+.marca svg { width: 30px; height: 30px; flex: none; }
+.marca .m-card { fill: var(--accent); }
+.marca .m-risco { stroke: var(--accent-ink); stroke-width: 2; stroke-linecap: round; fill: none; }
+.trilho-nav { display: flex; flex-direction: column; gap: 2px; }
+.trilho-item {
+  display: flex; align-items: center; gap: 12px;
+  min-height: 46px; padding: 8px 12px; border-radius: 12px; border: 0;
+  background: none; color: var(--ink-2); font-weight: 700; text-align: left;
+}
+.trilho-item:hover { background: var(--surface-2); color: var(--ink); }
+.trilho-item[aria-current="page"] { background: var(--accent-wash); color: var(--accent); }
+.trilho-item span:first-of-type { flex: 1; }
+.trilho-dica { font-size: var(--s-xs); color: var(--ink-3); line-height: 1.45; }
+
+/* ---------- avisos ---------- */
+.aviso {
+  display: flex; gap: 12px; align-items: flex-start; flex-wrap: wrap;
+  padding: 12px 14px; border-radius: var(--r-sm);
+  background: var(--warn-wash); color: var(--ink); font-size: var(--s-sm);
+}
+.aviso p { flex: 1 1 240px; }
+.aviso { margin-bottom: 16px; }
+.aviso.erro { background: var(--danger-wash); }
+
+/* ---------- hoje ---------- */
+.hoje-grade { display: grid; gap: 16px; }
+@media (min-width: 1080px) { .hoje-grade { grid-template-columns: 1fr 1fr; align-items: start; } }
+.bloco {
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r);
+  padding: 18px; display: flex; flex-direction: column; gap: 14px; min-width: 0;
+}
+.bloco-cabeca { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.bloco-cabeca h2 { font-family: var(--f-disp); font-size: var(--s-xl); font-weight: 600; line-height: 1.15; }
+.contador { font-family: var(--f-mono); font-size: var(--s-lg); color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.contador.quente { color: var(--accent); }
+.previas { display: flex; flex-direction: column; gap: 8px; }
+.previa {
+  width: 100%; text-align: left; display: flex; flex-direction: column; gap: 4px;
+  padding: 10px 12px; border-radius: var(--r-sm);
+  border: 1px dashed var(--line-strong); background: var(--bg);
+}
+.previa:hover { border-color: var(--ink-3); }
+.previa-texto, .clamp2 {
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+  overflow-wrap: anywhere; white-space: pre-line;
+}
+.clamp2 { -webkit-line-clamp: 2; }
+.linhas { display: flex; flex-direction: column; }
+.linha {
+  width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; align-items: center;
+  padding: 11px 2px; border: 0; border-top: 1px solid var(--line); background: none; text-align: left;
+}
+.linhas li:first-child .linha { border-top: 0; }
+.linha:hover .linha-nome { color: var(--accent); }
+.linha-nome { font-weight: 700; overflow-wrap: anywhere; }
+.linha-sub { grid-column: 1 / -1; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.boas-vindas { gap: 18px; }
+.passos { display: grid; gap: 12px; counter-reset: passo; }
+.passos li { display: grid; grid-template-columns: 2.25rem minmax(0, 1fr); gap: 2px 10px; counter-increment: passo; }
+.passos li::before {
+  content: counter(passo); grid-row: span 2;
+  width: 2rem; height: 2rem; border-radius: 999px; display: grid; place-items: center;
+  background: var(--accent-wash); color: var(--accent); font-family: var(--f-mono); font-size: var(--s-sm);
+}
+.passos b { font-size: var(--s-lg); }
+.passos span { color: var(--ink-2); }
+.exemplos { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; color: var(--ink-2); font-size: var(--s-sm); }
+.exemplos p { flex: 1 1 260px; }
+
+/* ---------- lista de fichas ---------- */
+.split { display: grid; grid-template-columns: minmax(280px, 340px) minmax(0, 1fr); gap: 28px; align-items: start; }
+.split > .lista-fichas {
+  position: sticky; top: calc(env(safe-area-inset-top, 0px) + 8px);
+  max-height: calc(100dvh - env(safe-area-inset-top, 0px) - 16px);
+  overflow-y: auto; padding-right: 6px; padding-bottom: 24px;
+}
+.split-vazio {
+  display: grid; place-items: center; min-height: 320px; padding: 24px; text-align: center;
+  border: 1px dashed var(--line-strong); border-radius: var(--r); color: var(--ink-3);
+}
+.seg { display: inline-grid; grid-auto-flow: column; border: 1px solid var(--line-strong); border-radius: 999px; overflow: hidden; width: fit-content; }
+.seg button { border: 0; background: var(--surface); padding: 7px 14px; font-size: var(--s-xs); font-weight: 700; color: var(--ink-2); min-height: 36px; }
+.seg button + button { border-left: 1px solid var(--line-strong); }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.lista-ctrl { display: flex; flex-direction: column; gap: 12px; }
+.fichas { display: flex; flex-direction: column; gap: 8px; }
+.ficha-linha {
+  width: 100%; text-align: left; display: flex; flex-direction: column; gap: 6px;
+  padding: 12px 14px; border-radius: var(--r-sm);
+  border: 1px solid var(--line); background: var(--surface);
+}
+.ficha-linha:hover { border-color: var(--line-strong); }
+.ficha-linha.ativo { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.ficha-linha-topo { display: flex; align-items: center; gap: 8px; justify-content: space-between; }
+.ficha-linha-nome { font-weight: 700; font-size: var(--s-md); overflow-wrap: anywhere; }
+.ficha-linha-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: var(--s-xs); color: var(--ink-3); }
+.pontos { display: inline-flex; gap: 3px; }
+.pontos i { width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid var(--line-strong); }
+.pontos i.cheio { background: var(--accent); border-color: var(--accent); }
+.falta { font-size: var(--s-xs); color: var(--ink-3); }
+.falta.ok { color: var(--accent); }
+
+/* ---------- ficha ---------- */
+.voltar {
+  display: inline-flex; align-items: center; gap: 4px; width: fit-content;
+  min-height: 40px; padding: 6px 10px 6px 4px; border: 0; background: none;
+  color: var(--accent); font-weight: 700;
+}
+.cartao {
+  position: relative; margin-top: 24px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 4px var(--r) var(--r) var(--r);
+  box-shadow: var(--shadow); min-width: 0;
+}
+.cartao-aba {
+  position: absolute; left: -1px; bottom: 100%;
+  max-width: 80%;
+  display: inline-flex; align-items: center; gap: 8px;
+  height: 26px; padding: 0 14px;
+  border: 1px solid var(--line); border-bottom: 0; border-radius: 10px 10px 0 0;
+  background: color-mix(in srgb, var(--tom) 16%, var(--surface));
+  color: var(--tom);
+  font-family: var(--f-mono); font-size: 0.72rem; letter-spacing: 0.07em; text-transform: uppercase;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.cartao-cabeca { padding: 20px 18px 16px; display: flex; flex-direction: column; gap: 10px; }
+.ficha-nome { font-family: var(--f-disp); font-weight: 600; font-size: var(--s-2xl); line-height: 1.08; letter-spacing: -0.01em; overflow-wrap: anywhere; }
+.sinonimos { color: var(--ink-2); font-size: var(--s-sm); }
+.acoes { display: flex; flex-wrap: wrap; gap: 8px; padding-top: 4px; }
+.secnav {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 4;
+  display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none;
+  padding: 8px 18px; border-top: 1px solid var(--line);
+  background: color-mix(in srgb, var(--surface) 94%, transparent);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+}
+.secnav::-webkit-scrollbar { display: none; }
+.secnav-item {
+  flex: none; display: inline-flex; align-items: center; gap: 5px;
+  min-height: 34px; padding: 4px 11px; border-radius: 999px;
+  border: 1px solid var(--line); background: var(--surface);
+  font-family: var(--f-mono); font-size: 0.74rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink);
+}
+.secnav-item .n { color: var(--accent); }
+.secnav-item.vazio { color: var(--ink-3); border-style: dashed; }
+.secao { display: grid; grid-template-columns: 7.5rem minmax(0, 1fr); border-top: 1px solid var(--line); scroll-margin-top: calc(env(safe-area-inset-top, 0px) + 56px); }
+.secao-margem { padding: 16px 12px 14px 18px; border-right: 1px solid var(--line); display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+.sec-abbr { font-family: var(--f-mono); font-size: 0.78rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); }
+.sec-nome { font-size: var(--s-xs); color: var(--ink-3); line-height: 1.3; }
+.secao-conteudo { padding: 10px 14px 12px; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.notas { display: flex; flex-direction: column; gap: 2px; }
+.nota {
+  display: flex; flex-direction: column; gap: 3px;
+  padding: 8px 10px; margin-inline: -10px; border-radius: var(--r-sm);
+  cursor: pointer;
+}
+.nota:hover { background: var(--surface-2); }
+.nota.estatica { cursor: default; margin-inline: 0; }
+.nota.estatica:hover { background: none; }
+.nota-texto { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.55; }
+.secao-perolas .nota-texto { background: var(--marker-soft); box-decoration-break: clone; -webkit-box-decoration-break: clone; padding: 1px 4px; border-radius: 3px; }
+.secao-perolas .sec-abbr { color: var(--marker-ink); background: var(--marker-soft); padding: 1px 6px; border-radius: 4px; box-shadow: inset 0 -0.4em 0 var(--marker); }
+.vazio-btn {
+  align-self: flex-start; border: 0; background: none; padding: 8px 0; min-height: 40px;
+  color: var(--ink-3); font-style: italic; text-align: left;
+}
+.vazio-btn:hover { color: var(--accent); }
+.cartao-rodape { border-top: 1px solid var(--line); padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 12px; }
+.cartao-rodape h2 { font-family: var(--f-mono); font-size: 0.78rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); font-weight: 500; }
+.rev-info { font-size: var(--s-sm); color: var(--ink-2); }
+@media (max-width: 560px) {
+  .secao { grid-template-columns: minmax(0, 1fr); }
+  .secao-margem { border-right: 0; flex-direction: row; align-items: center; padding: 12px 16px 0; }
+  .secao-margem .icone-btn { margin-left: auto; }
+  .secao-conteudo { padding: 4px 16px 12px; }
+  .cartao-cabeca { padding: 18px 16px 14px; }
+  .secnav { padding-inline: 16px; }
+  .cartao-rodape { padding-inline: 16px; }
+  .ficha-nome, .vtitle { font-size: 1.75rem; }
+}
+
+/* ---------- revisão ---------- */
+.rev-topo { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.instrucao { color: var(--ink-2); max-width: 60ch; }
+.rev-secao { border-top: 1px solid var(--line); }
+.rev-revelar {
+  width: 100%; display: grid; grid-template-columns: 7.5rem minmax(0, 1fr) auto; gap: 10px; align-items: center;
+  min-height: 56px; padding: 10px 18px; border: 0; background: none; text-align: left;
+}
+.rev-revelar:hover { background: var(--surface-2); }
+.rev-revelar .sec-titulo { font-weight: 700; }
+.rev-corpo { padding: 0 18px 14px calc(7.5rem + 28px); }
+@media (max-width: 560px) {
+  .rev-revelar { grid-template-columns: minmax(0, 1fr) auto; padding-inline: 16px; }
+  .rev-revelar .sec-abbr { grid-column: 1 / -1; }
+  .rev-corpo { padding: 0 16px 14px; }
+}
+.avaliar {
+  position: sticky; bottom: calc(var(--barra) + env(safe-area-inset-bottom, 0px) + 10px); z-index: 5;
+  background: var(--surface); border: 1px solid var(--line-strong); border-radius: var(--r);
+  box-shadow: var(--shadow); padding: 12px; display: flex; flex-direction: column; gap: 10px;
+}
+@media (min-width: 760px) { .avaliar { bottom: 16px; } }
+.avaliar-titulo { font-weight: 700; font-size: var(--s-sm); color: var(--ink-2); }
+.avaliar-botoes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.avaliar-botoes .btn { flex-direction: column; gap: 2px; border-radius: var(--r-sm); min-height: 58px; padding: 8px 6px; text-align: center; }
+.avaliar-botoes .btn span { font-weight: 400; font-size: var(--s-xs); color: var(--ink-3); }
+.avaliar-esqueci { color: var(--danger); }
+.avaliar-parcial { color: var(--warn); }
+.avaliar-bem.btn { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.avaliar-bem.btn span { color: inherit; opacity: 0.85; }
+
+/* ---------- busca ---------- */
+.resultados { display: flex; flex-direction: column; gap: 10px; }
+.resultados h2 { font-family: var(--f-mono); font-size: 0.78rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); font-weight: 500; }
+.achado {
+  width: 100%; text-align: left; display: flex; flex-direction: column; gap: 5px;
+  padding: 12px 14px; border-radius: var(--r-sm); border: 1px solid var(--line); background: var(--surface);
+}
+.achado:hover { border-color: var(--line-strong); }
+.onde { font-size: var(--s-xs); color: var(--ink-3); display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+/* ---------- folhas (painéis) ---------- */
+.folha-fundo {
+  position: fixed; inset: 0; z-index: 40;
+  background: var(--scrim);
+  display: flex; align-items: flex-end; justify-content: center;
+  padding-top: calc(env(safe-area-inset-top, 0px) + 10px);
+}
+.folha {
+  width: 100%; max-width: 680px; height: 100%;
+  background: var(--bg); border-radius: 20px 20px 0 0;
+  display: flex; flex-direction: column; overflow: hidden;
+  box-shadow: var(--shadow);
+}
+@media (min-width: 760px) {
+  .folha-fundo { align-items: center; padding: 32px; }
+  .folha { height: auto; max-height: min(900px, 100%); border-radius: 20px; }
+}
+.folha-cabeca {
+  display: grid; grid-template-columns: minmax(84px, auto) minmax(0, 1fr) minmax(84px, auto); align-items: center; gap: 8px;
+  padding-top: 6px; padding-bottom: 6px;
+  padding-left: max(12px, env(safe-area-inset-left, 0px));
+  padding-right: max(12px, env(safe-area-inset-right, 0px));
+  background: var(--surface); border-bottom: 1px solid var(--line);
+}
+.folha-cabeca > :first-child { justify-self: start; }
+.folha-titulo { font-size: var(--s-md); font-weight: 700; text-align: center; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.folha-acao { justify-self: end; }
+.folha-acao .btn { min-height: 40px; padding: 6px 16px; }
+.folha-corpo {
+  flex: 1; overflow-y: auto; overscroll-behavior: contain;
+  display: flex; flex-direction: column; gap: 20px;
+  padding-top: 18px;
+  padding-bottom: calc(28px + env(safe-area-inset-bottom, 0px));
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.nota-campo {
+  width: 100%; min-height: 10rem; resize: vertical;
+  padding: 14px 16px; border-radius: var(--r);
+  border: 1px solid var(--line-strong); background: var(--surface);
+  font-size: 1.0625rem; line-height: 1.55;
+}
+.nota-campo:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-wash); }
+.grupo { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.rotulo { font-weight: 700; font-size: var(--s-sm); color: var(--ink-2); }
+.rotulo-linha { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.ficha-escolhida {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 8px 8px 8px 14px; border-radius: var(--r-sm);
+  border: 1px solid var(--accent); background: var(--accent-wash);
+}
+.ficha-escolhida .nome { flex: 1; font-weight: 700; min-width: 0; overflow-wrap: anywhere; }
+.escolher-ficha { display: flex; flex-direction: column; gap: 10px; }
+.sugestoes { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.opcoes { display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--surface); overflow: hidden; }
+.opcao {
+  width: 100%; display: flex; align-items: center; gap: 10px; text-align: left;
+  min-height: 46px; padding: 10px 14px; border: 0; border-top: 1px solid var(--line); background: none; font-weight: 700;
+}
+.opcoes li:first-child .opcao { border-top: 0; }
+.opcao:hover { background: var(--surface-2); }
+.opcao.criar { color: var(--accent); }
+.mini-form { display: grid; gap: 10px; padding: 14px; border-radius: var(--r-sm); border: 1px solid var(--accent); background: var(--surface); }
+.mini-form .linha-botoes { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+.secoes-grade { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.secao-opcao {
+  position: relative;
+  display: flex; flex-direction: column; align-items: flex-start; gap: 1px;
+  min-height: 60px; padding: 10px 10px 8px; border-radius: var(--r-sm);
+  border: 1px solid var(--line-strong); background: var(--surface); text-align: left;
+}
+.secao-opcao b { font-family: var(--f-mono); font-weight: 500; font-size: 0.82rem; letter-spacing: 0.04em; text-transform: uppercase; }
+.secao-opcao span { font-size: var(--s-xs); color: var(--ink-3); line-height: 1.25; }
+.secao-opcao[aria-checked="true"] { border-color: var(--accent); background: var(--accent); color: var(--accent-ink); }
+.secao-opcao[aria-checked="true"] span { color: inherit; opacity: 0.85; }
+.sugerida {
+  position: absolute; top: -8px; right: 6px;
+  font-style: normal; font-family: var(--f-mono); font-size: 0.62rem; letter-spacing: 0.05em; text-transform: uppercase;
+  padding: 1px 6px; border-radius: 999px; background: var(--marker); color: var(--marker-ink);
+}
+.check { display: flex; gap: 10px; align-items: center; font-size: var(--s-sm); color: var(--ink-2); min-height: 40px; }
+.check input { width: 20px; height: 20px; accent-color: var(--accent); margin: 0; }
+.confirma {
+  display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+  padding: 12px 14px; border-radius: var(--r-sm); background: var(--danger-wash); font-size: var(--s-sm);
+}
+.confirma p { flex: 1 1 220px; }
+.zona { display: flex; gap: 10px; flex-wrap: wrap; border-top: 1px solid var(--line); padding-top: 16px; }
+.encaixar-nota {
+  display: flex; flex-direction: column; gap: 8px;
+  padding: 16px; border-radius: var(--r); background: var(--surface); border: 1px solid var(--line);
+}
+.encaixar-nota .nota-texto { font-size: 1.0625rem; }
+.encaixar-rodape { display: grid; grid-template-columns: auto auto minmax(0, 1fr); gap: 8px; }
+.concluido { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; padding: 24px 4px; }
+.concluido-titulo { font-family: var(--f-disp); font-size: var(--s-xl); font-weight: 600; }
+.copia { min-height: 50vh; font-family: var(--f-mono); font-size: 0.85rem; }
+
+.toast {
+  position: fixed; z-index: 60; left: 50%; transform: translateX(-50%);
+  bottom: calc(var(--barra) + 90px + env(safe-area-inset-bottom, 0px));
+  max-width: calc(100% - 32px);
+  background: var(--ink); color: var(--bg);
+  padding: 10px 18px; border-radius: 999px; font-size: var(--s-sm); font-weight: 700;
+  box-shadow: var(--shadow);
+}
+@media (min-width: 760px) { .toast { bottom: calc(24px + env(safe-area-inset-bottom, 0px)); } }
+.abrindo { padding: 40px 0; color: var(--ink-3); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; scroll-behavior: auto !important; }
+}
+</style>
+
+<div id="app"><p class="abrindo">Abrindo o fichário…</p></div>
+
+<script src="https://cdn.jsdelivr.net/npm/htm@3.1.1/preact/standalone.umd.js"></script>
+<script>
+(function () {
+"use strict";
+if (!window.htmPreact) {
+  document.getElementById("app").innerHTML = '<p class="abrindo">Não consegui carregar o fichário. Verifique a conexão e abra de novo.</p>';
+  return;
+}
+const { html, render, useState, useEffect, useMemo, useRef } = window.htmPreact;
+
+/* ================= domínio ================= */
+const SECOES = [
+  { id: "def", nome: "Definição", abbr: "Def" },
+  { id: "fisio", nome: "Fisiopatologia", abbr: "Fisiopato" },
+  { id: "clinica", nome: "Quadro clínico", abbr: "Clínica" },
+  { id: "dx", nome: "Diagnóstico", abbr: "Dx" },
+  { id: "tto", nome: "Tratamento", abbr: "Tto" },
+  { id: "perolas", nome: "Pérolas e pegadinhas", abbr: "Pérolas" },
+];
+const SECAO = Object.fromEntries(SECOES.map((s) => [s.id, s]));
+const FONTES = ["Aula", "Enfermaria", "Livro", "Plantão", "Outra"];
+const ESPECIALIDADES = [
+  ["Cardiologia", "Cardio"], ["Pneumologia", "Pneumo"], ["Gastroenterologia", "Gastro"], ["Nefrologia", "Nefro"],
+  ["Endocrinologia", "Endócrino"], ["Infectologia", "Infecto"], ["Hematologia", "Hemato"], ["Reumatologia", "Reumato"],
+  ["Neurologia", "Neuro"], ["Psiquiatria", "Psiq"], ["Pediatria", "Pediatria"], ["Ginecologia e Obstetrícia", "GO"],
+  ["Cirurgia", "Cirurgia"], ["Dermatologia", "Dermato"], ["Emergência", "Emergência"], ["Farmacologia", "Farmaco"],
+  ["Semiologia", "Semio"], ["Medicina preventiva", "Preventiva"],
+];
+const ESCADA = [1, 3, 7, 14, 30, 60, 120];
+
+const fold = (s) => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const uid = (p) => p + "-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+const iso = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+const hojeISO = () => iso(new Date());
+function addDias(n) { const d = new Date(); d.setHours(12, 0, 0, 0); d.setDate(d.getDate() + n); return iso(d); }
+function diasAte(s) {
+  if (!s) return 0;
+  const [y, m, dd] = String(s).split("-").map(Number);
+  const a = new Date(y, m - 1, dd, 12); const b = new Date(); b.setHours(12, 0, 0, 0);
+  return Math.round((a - b) / 864e5);
+}
+function rotuloDias(n) { return n <= 0 ? "hoje" : n === 1 ? "amanhã" : `em ${n} dias`; }
+function atraso(prox) {
+  const n = diasAte(prox);
+  if (n >= 0) return "para hoje";
+  return `atrasada ${-n} ${-n === 1 ? "dia" : "dias"}`;
+}
+function quando(ms) {
+  if (!ms) return "";
+  const d = new Date(ms), h = new Date(), ontem = new Date();
+  ontem.setDate(ontem.getDate() - 1);
+  if (iso(d) === iso(h)) return "hoje, " + d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  if (iso(d) === iso(ontem)) return "ontem";
+  const op = d.getFullYear() === h.getFullYear() ? { day: "numeric", month: "short" } : { day: "numeric", month: "short", year: "numeric" };
+  return d.toLocaleDateString("pt-BR", op).replace(/ de /g, " ").replace(/\./g, "");
+}
+const plural = (n, um, varios) => `${n} ${n === 1 ? um : varios}`;
+
+const ESP = new Map(ESPECIALIDADES.map(([n, c], i) => [fold(n), { nome: n, curto: c, tom: (i % 8) + 1 }]));
+function espInfo(e) {
+  const k = fold(e).trim();
+  if (!k) return { nome: "Sem especialidade", curto: "Sem área", tom: 0 };
+  const x = ESP.get(k);
+  if (x) return x;
+  let h = 0; for (const c of k) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  return { nome: e, curto: e, tom: (h % 8) + 1 };
+}
+
+/* Pistas de seção: palavras que costumam aparecer em cada parte da ficha. */
+const PISTAS = {
+  tto: ["tratamento", "tratar", "trata-se com", "conduta", "manejo", "dose", "posologia", "mg", "prescrev", "iniciar", "suspender", "primeira linha", "1a linha", "droga de escolha", "antibiot", "antimicrobian", "profilaxia", "vacina", "cirurgia indicada", "contraindic", "betabloq", "diuretic", "ieca", "corticoide", "insulina", "analges", "terapia", "reposicao"],
+  dx: ["diagnostic", "exame complementar", "laborat", "hemograma", "ecg", "eletrocardiograma", "radiografia", "raio-x", "rx", "tomografia", "ressonancia", "ultrass", "usg", "ecocardiograma", "biopsia", "criterio", "padrao-ouro", "padrao ouro", "sensibilidade", "especificidade", "sorologia", "cultura", "gasometria", "bnp", "troponina", "d-dimero", "escore", "curb", "dosagem", "marcador", "achado"],
+  clinica: ["sintoma", "sinal", "sinais", "quadro", "apresenta", "cursa com", "queixa", "ausculta", "sopro", "dor", "febre", "dispneia", "tosse", "edema", "palpa", "inspec", "percuss", "exame fisico", "estertor", "crepita", "turgencia", "manifesta", "paciente com", "leito", "semiolog", "triade", "irradia"],
+  fisio: ["fisiopato", "mecanismo", "etiolog", "patogen", "ocorre por", "devido a", "leva a", "ativacao", "receptor", "inflamac", "mediador", "deposito", "obstrucao", "resulta em", "por causa", "remodelamento"],
+  def: ["definic", "define-se", "definida", "definido", "conceito", "caracteriza-se", "consiste em", "classificac", "e uma sindrome", "e uma doenca", "e um tipo", "sindrome clinica"],
+  perolas: ["pegadinha", "cai na prova", "prova", "nao confundir", "cuidado", "atencao", "macete", "mnemonic", "perola", "classico", "classica", "excecao", "dica", "lembrar", "nunca", "sempre"],
+};
+const PISTAS_RE = Object.entries(PISTAS).map(([sec, lista]) => [sec, lista.map((p) => new RegExp("(^|[^a-z0-9])" + esc(p) + (p.length <= 3 ? "($|[^a-z0-9])" : "")))]);
+function sugerirSecao(texto) {
+  const t = fold(texto);
+  if (t.trim().length < 3) return null;
+  let melhor = null, pontos = 0;
+  for (const [sec, res] of PISTAS_RE) {
+    let s = 0; for (const re of res) if (re.test(t)) s++;
+    if (s > pontos) { pontos = s; melhor = sec; }
+  }
+  return melhor;
+}
+function termosDaFicha(f) { return [f.nome, ...(f.sinonimos || [])].map((x) => fold(x).trim()).filter((x) => x.length >= 2); }
+function sugerirFichas(texto, lista) {
+  const t = fold(texto);
+  if (t.trim().length < 2) return [];
+  const achados = [];
+  for (const f of lista) {
+    let pos = Infinity;
+    for (const k of termosDaFicha(f)) {
+      const m = new RegExp("(^|[^a-z0-9])" + esc(k) + "($|[^a-z0-9])").exec(t);
+      if (m && m.index < pos) pos = m.index;
+    }
+    if (pos < Infinity) achados.push([pos, f]);
+  }
+  return achados.sort((a, b) => a[0] - b[0]).map((x) => x[1]).slice(0, 3);
+}
+function nomeProvavel(texto) {
+  const linha = String(texto || "").trim().split("\n")[0];
+  const m = /^([^:–—\n]{3,48})\s*[:–—]/.exec(linha);
+  return m ? m[1].trim() : "";
+}
+function acharFicha(lista, nome) {
+  const k = fold(nome).trim();
+  return lista.find((f) => termosDaFicha(f).includes(k)) || null;
+}
+function proximaRev(rev, nota) {
+  const p = rev && Number.isFinite(rev.passo) ? rev.passo : 0;
+  const np = nota === "esqueci" ? 0 : nota === "parcial" ? p : Math.min(ESCADA.length - 1, p + 1);
+  return { passo: np, proxima: addDias(ESCADA[np]), vezes: ((rev && rev.vezes) || 0) + 1, ultima: Date.now() };
+}
+
+/* ================= conveniências locais ================= */
+const LS = {
+  get(k, def) { try { const v = localStorage.getItem(k); return v == null ? def : JSON.parse(v); } catch (e) { return def; } },
+  set(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} },
+};
+
+/* ================= dados ================= */
+/* Toda escrita entra antes numa fila guardada neste aparelho e sai para o banco em ordem.
+   Sem sinal na enfermaria, a nota não se perde: fica na fila e sobe quando a conexão voltar. */
+const store = {
+  db: null, estado: "iniciando",
+  remoto: { fichas: new Map(), notas: new Map() },
+  carregado: { fichas: false, notas: false },
+  pend: [], enviando: false, falhou: false, bloqueado: false, cheio: false,
+  ver: 0, toast: null,
+};
+{ const p = LS.get("fichario.pendentes.v1", []); store.pend = Array.isArray(p) ? p.filter((o) => o && typeof o.path === "string") : []; }
+const ouvintes = new Set();
+function mudou() { store.ver++; ouvintes.forEach((f) => f()); }
+function useStore() {
+  const [, f] = useState(0);
+  useEffect(() => { const l = () => f((x) => x + 1); ouvintes.add(l); return () => ouvintes.delete(l); }, []);
+  return store;
+}
+let toastTimer = 0;
+function aviso(msg) {
+  store.toast = { msg, id: Date.now() }; mudou();
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { store.toast = null; mudou(); }, 2800);
+}
+
+const semMeta = (x) => { const r = Object.assign({}, x); delete r.id; delete r._pend; return r; };
+function salvarPend() { LS.set("fichario.pendentes.v1", store.pend); }
+function gravar(path, data) {
+  const limpo = data ? JSON.parse(JSON.stringify(semMeta(data))) : null;
+  store.pend = store.pend.filter((o) => o.path !== path);
+  store.pend.push({ path, data: limpo });
+  salvarPend(); mudou(); enviar();
+}
+async function tentar(fn) {
+  try { return await fn(); }
+  catch (e) {
+    if (e && e.code && e.code !== "unavailable") throw e;
+    await new Promise((r) => setTimeout(r, 400 + Math.random() * 700));
+    return await fn();
+  }
+}
+async function enviar() {
+  if (store.enviando || !store.db || store.bloqueado) return;
+  store.enviando = true;
+  try {
+    while (store.pend.length) {
+      const op = store.pend[0];
+      try {
+        const ref = store.db.doc(op.path);
+        if (op.data) await tentar(() => ref.set(op.data)); else await tentar(() => ref.delete());
+      } catch (e) {
+        const c = e && e.code;
+        if (c === "invalid_argument" || c === "transform_error" || c === "not_granted") store.bloqueado = true;
+        else if (c === "quota_exceeded") store.cheio = true;
+        store.falhou = true; mudou();
+        return;
+      }
+      store.pend = store.pend.filter((o) => o !== op);
+      store.falhou = false; store.cheio = false;
+      salvarPend(); mudou();
+    }
+  } finally { store.enviando = false; }
+}
+let desassinar = [];
+function assinar() {
+  desassinar.forEach((u) => { try { u(); } catch (e) {} });
+  desassinar = [];
+  for (const col of ["fichas", "notas"]) {
+    desassinar.push(store.db.collection(col).onSnapshot((snap) => {
+      const m = new Map();
+      for (const d of snap.docs) m.set(d.id, Object.assign({}, d.data(), { id: d.id }));
+      store.remoto[col] = m; store.carregado[col] = true;
+      if (store.estado === "erro") store.estado = "ok";
+      mudou();
+    }, (err) => { store.estado = err && err.code === "revoked" ? "revogado" : "erro"; mudou(); }));
+  }
+}
+async function iniciar() {
+  let db = null;
+  try { db = window.claude && typeof window.claude.use === "function" ? await window.claude.use("db") : null; } catch (e) { db = null; }
+  if (!db) { store.estado = "sem-db"; mudou(); return; }
+  store.db = db; store.estado = "ok"; mudou();
+  assinar();
+  enviar();
+}
+window.addEventListener("online", () => { store.falhou = false; enviar(); });
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") enviar(); });
+
+let memo = { ver: -1 };
+function dados() {
+  if (memo.ver === store.ver) return memo;
+  const fichas = new Map(store.remoto.fichas), notas = new Map(store.remoto.notas);
+  for (const op of store.pend) {
+    const [col, id] = op.path.split("/");
+    const m = col === "fichas" ? fichas : col === "notas" ? notas : null;
+    if (!m) continue;
+    if (op.data) m.set(id, Object.assign({}, op.data, { id, _pend: true })); else m.delete(id);
+  }
+  const porFicha = new Map(), caixa = [];
+  for (const n of notas.values()) {
+    if (n.fichaId && fichas.has(n.fichaId)) {
+      if (!porFicha.has(n.fichaId)) porFicha.set(n.fichaId, []);
+      porFicha.get(n.fichaId).push(n);
+    } else caixa.push(n);
+  }
+  const porData = (a, b) => (a.criadaEm || 0) - (b.criadaEm || 0);
+  for (const arr of porFicha.values()) arr.sort(porData);
+  caixa.sort(porData);
+  const lista = [...fichas.values()].sort((a, b) => String(a.nome || "").localeCompare(String(b.nome || ""), "pt-BR"));
+  const hoje = hojeISO();
+  const comNotas = (f) => (porFicha.get(f.id) || []).length > 0;
+  const devidas = lista.filter((f) => f.rev && f.rev.proxima && f.rev.proxima <= hoje && comNotas(f))
+    .sort((a, b) => a.rev.proxima.localeCompare(b.rev.proxima));
+  const futuras = lista.filter((f) => f.rev && f.rev.proxima && f.rev.proxima > hoje && comNotas(f))
+    .sort((a, b) => a.rev.proxima.localeCompare(b.rev.proxima));
+  const recentes = [...notas.values()].sort((a, b) => (b.atualizadaEm || b.criadaEm || 0) - (a.atualizadaEm || a.criadaEm || 0)).slice(0, 6);
+  const atividade = new Map();
+  for (const [fid, arr] of porFicha) atividade.set(fid, Math.max(...arr.map((n) => n.atualizadaEm || n.criadaEm || 0)));
+  const temExemplos = [...fichas.values(), ...notas.values()].some((x) => x.exemplo);
+  memo = { ver: store.ver, fichas, notas, porFicha, caixa, lista, devidas, proxima: futuras[0] || null, recentes, atividade, temExemplos };
+  return memo;
+}
+
+/* ---------- operações ---------- */
+function novidade(fichaId) {
+  const f = dados().fichas.get(fichaId);
+  if (!f) return;
+  let rev = f.rev;
+  if (!rev) rev = { passo: 0, proxima: addDias(1), vezes: 0, ultima: null };
+  else if (diasAte(rev.proxima) > 3) rev = Object.assign({}, rev, { proxima: addDias(3) });
+  else return;
+  gravar("fichas/" + fichaId, Object.assign(semMeta(f), { rev }));
+}
+function novaNota({ texto, fonte, fichaId, secao }) {
+  const id = uid("n"), agora = Date.now();
+  gravar("notas/" + id, { texto, fonte, fichaId: fichaId || null, secao: fichaId ? secao : null, criadaEm: agora, atualizadaEm: agora, v: 1 });
+  if (fichaId) novidade(fichaId);
+  return id;
+}
+function editarNota(nota, patch) {
+  const antes = nota.fichaId;
+  const n = Object.assign(semMeta(nota), patch, { atualizadaEm: Date.now() });
+  if (!n.fichaId) { n.fichaId = null; n.secao = null; }
+  gravar("notas/" + nota.id, n);
+  if (n.fichaId && n.fichaId !== antes) novidade(n.fichaId);
+}
+function apagarNota(nota) { gravar("notas/" + nota.id, null); }
+function novaFicha({ nome, especialidade, sinonimos, diferenciais }) {
+  const id = uid("f");
+  gravar("fichas/" + id, { nome, especialidade: especialidade || "", sinonimos: sinonimos || [], diferenciais: diferenciais || [], criadaEm: Date.now(), rev: null, v: 1 });
+  return id;
+}
+function revisarFicha(f, nota) { gravar("fichas/" + f.id, Object.assign(semMeta(f), { rev: proximaRev(f.rev, nota) })); }
+function apagarFicha(f) {
+  const d = dados();
+  for (const n of d.porFicha.get(f.id) || []) gravar("notas/" + n.id, Object.assign(semMeta(n), { fichaId: null, secao: null, atualizadaEm: Date.now() }));
+  gravar("fichas/" + f.id, null);
+}
+function apagarExemplos() {
+  const d = dados();
+  for (const n of d.notas.values()) {
+    if (n.exemplo) gravar("notas/" + n.id, null);
+    else if (n.fichaId && d.fichas.get(n.fichaId) && d.fichas.get(n.fichaId).exemplo) gravar("notas/" + n.id, Object.assign(semMeta(n), { fichaId: null, secao: null }));
+  }
+  for (const f of d.fichas.values()) if (f.exemplo) gravar("fichas/" + f.id, null);
+}
+function fichaComoTexto(f, notas) {
+  let s = `${f.nome}\n${f.especialidade || ""}\n`;
+  if ((f.sinonimos || []).length) s += `Também: ${f.sinonimos.join(", ")}\n`;
+  for (const sec of SECOES) {
+    const ns = notas.filter((n) => n.secao === sec.id);
+    if (!ns.length) continue;
+    s += `\n${sec.nome.toUpperCase()}\n`;
+    for (const n of ns) s += `- ${String(n.texto).replace(/\n/g, "\n  ")}\n`;
+  }
+  if ((f.diferenciais || []).length) s += `\nDIFERENCIAIS\n${f.diferenciais.join(", ")}\n`;
+  return s.trim();
+}
+const listaDeTexto = (s) => [...new Set(String(s || "").split(/[,;\n]/).map((x) => x.trim()).filter(Boolean))];
+
+/* ================= interface ================= */
+function ico(n) {
+  switch (n) {
+    case "mais": return html`<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>`;
+    case "hoje": return html`<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>`;
+    case "fichas": return html`<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5A1.5 1.5 0 0 1 5.5 8H10l1.5 2h7A1.5 1.5 0 0 1 20 11.5v7a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 18.5z"/><path d="M6.5 5h11"/></svg>`;
+    case "busca": return html`<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg>`;
+    case "voltar": return html`<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>`;
+    case "x": return html`<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>`;
+    default: return null;
+  }
+}
+function Marca() {
+  return html`<svg viewBox="0 0 32 32" aria-hidden="true"><path class="m-card" d="M4 10a2.5 2.5 0 0 1 2.5-2.5h6.2l2.3 3h10.5A2.5 2.5 0 0 1 28 13v11.5a2.5 2.5 0 0 1-2.5 2.5h-19A2.5 2.5 0 0 1 4 24.5z"/><path class="m-risco" d="M9.5 17h13M9.5 21.5h8"/></svg>`;
+}
+function Aba({ esp }) {
+  const i = espInfo(esp);
+  return html`<span class="aba" style=${`--tom: var(--t${i.tom})`}>${i.curto}</span>`;
+}
+function useMedia(q) {
+  const [m, setM] = useState(() => window.matchMedia(q).matches);
+  useEffect(() => {
+    const mq = window.matchMedia(q), f = () => setM(mq.matches);
+    if (mq.addEventListener) mq.addEventListener("change", f); else mq.addListener(f);
+    return () => { if (mq.removeEventListener) mq.removeEventListener("change", f); else mq.removeListener(f); };
+  }, [q]);
+  return m;
+}
+const reduzMovimento = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const topo = () => window.scrollTo({ top: 0 });
+
+const ABAS = [
+  { id: "hoje", nome: "Hoje", ico: "hoje" },
+  { id: "fichas", nome: "Fichas", ico: "fichas" },
+  { id: "buscar", nome: "Buscar", ico: "busca" },
+];
+
+function App() {
+  useStore();
+  const d = dados();
+  const [aba, setAbaBruta] = useState(() => { const a = LS.get("fichario.aba", "hoje"); return ABAS.some((x) => x.id === a) ? a : "hoje"; });
+  const [fichaId, setFichaId] = useState(null);
+  const [foco, setFoco] = useState(null);
+  const [rev, setRev] = useState(null);
+  const [folha, setFolha] = useState(null);
+  const largo = useMedia("(min-width: 1080px)");
+
+  const nav = {
+    setAba(a) {
+      if (a === "fichas" && aba === "fichas" && !rev) setFichaId(null);
+      setAbaBruta(a); LS.set("fichario.aba", a); setRev(null); topo();
+    },
+    abrirFicha(id, secao) {
+      setRev(null); setAbaBruta("fichas"); LS.set("fichario.aba", "fichas");
+      setFichaId(id); setFoco(secao || null); if (!secao) topo();
+    },
+    fecharFicha() { setFichaId(null); topo(); },
+    anotar(preset) { setFolha({ tipo: "nota", preset: preset || null }); },
+    editarNota(nota) { setFolha({ tipo: "nota", nota }); },
+    encaixar() { setFolha({ tipo: "encaixar" }); },
+    novaFicha(preset) { setFolha({ tipo: "ficha", preset: preset || null }); },
+    editarFicha(ficha) { setFolha({ tipo: "ficha", ficha }); },
+    copiar(texto) { setFolha({ tipo: "copiar", texto }); },
+    revisar(ids) { setRev({ fila: ids, i: 0 }); topo(); },
+    fecharFolha() { setFolha(null); },
+  };
+
+  const ficha = fichaId ? d.fichas.get(fichaId) : null;
+  useEffect(() => { if (fichaId && !ficha && store.carregado.fichas) setFichaId(null); }, [fichaId, ficha]);
+
+  let conteudo;
+  if (rev) conteudo = html`<${Revisao} d=${d} rev=${rev} setRev=${setRev} nav=${nav}/>`;
+  else if (aba === "hoje") conteudo = html`<${Hoje} d=${d} nav=${nav}/>`;
+  else if (aba === "buscar") conteudo = html`<${Buscar} d=${d} nav=${nav}/>`;
+  else if (largo) conteudo = html`<div class="split">
+      <${ListaFichas} d=${d} nav=${nav} sel=${fichaId}/>
+      ${ficha ? html`<${FichaView} key=${ficha.id} f=${ficha} d=${d} nav=${nav} foco=${foco} setFoco=${setFoco} largo=${true}/>`
+              : html`<div class="split-vazio"><p>Escolha uma ficha na lista para ver as anotações dela.</p></div>`}
+    </div>`;
+  else conteudo = ficha
+    ? html`<${FichaView} key=${ficha.id} f=${ficha} d=${d} nav=${nav} foco=${foco} setFoco=${setFoco} largo=${false}/>`
+    : html`<${ListaFichas} d=${d} nav=${nav} sel=${null}/>`;
+
+  const contagemHoje = d.caixa.length + d.devidas.length;
+  const atual = rev ? null : aba;
+
+  let painel = null;
+  if (folha) {
+    if (folha.tipo === "nota") painel = html`<${EditorNota} key=${folha.nota ? folha.nota.id : "nova"} d=${d} nota=${folha.nota} preset=${folha.preset} nav=${nav}/>`;
+    else if (folha.tipo === "encaixar") painel = html`<${Encaixar} d=${d} nav=${nav}/>`;
+    else if (folha.tipo === "ficha") painel = html`<${FormFicha} d=${d} ficha=${folha.ficha} preset=${folha.preset} nav=${nav}/>`;
+    else if (folha.tipo === "copiar") painel = html`<${Copiar} texto=${folha.texto} nav=${nav}/>`;
+  }
+
+  return html`<div class="app">
+    <aside class="trilho">
+      <div class="marca"><${Marca}/><span>Fichário</span></div>
+      <button class="btn primario largo" onClick=${() => nav.anotar()}>${ico("mais")} Anotar</button>
+      <nav class="trilho-nav" aria-label="Seções do app">
+        ${ABAS.map((a) => html`<button key=${a.id} class="trilho-item" aria-current=${atual === a.id ? "page" : undefined} onClick=${() => nav.setAba(a.id)}>
+          ${ico(a.ico)}<span>${a.nome}</span>${a.id === "hoje" && contagemHoje ? html`<span class="badge">${contagemHoje}</span>` : null}
+        </button>`)}
+      </nav>
+      <p class="trilho-dica">Ctrl + Enter salva a nota quando há teclado.</p>
+    </aside>
+    <main class="main">
+      <${Avisos}/>
+      ${conteudo}
+    </main>
+    <nav class="barra" aria-label="Seções do app">
+      ${ABAS.map((a) => html`<button key=${a.id} class="barra-item" aria-current=${atual === a.id ? "page" : undefined} onClick=${() => nav.setAba(a.id)}>
+        ${ico(a.ico)}<span>${a.nome}</span>${a.id === "hoje" && contagemHoje ? html`<span class="badge">${contagemHoje}</span>` : null}
+      </button>`)}
+    </nav>
+    ${!rev && !folha ? html`<button class="fab" onClick=${() => nav.anotar(aba === "fichas" && ficha ? { fichaId: ficha.id } : null)}>${ico("mais")} Anotar</button>` : null}
+    ${painel}
+    ${store.toast ? html`<div class="toast" role="status" key=${store.toast.id}>${store.toast.msg}</div>` : null}
+  </div>`;
+}
+
+function Avisos() {
+  const s = store;
+  const n = s.pend.length;
+  if (s.estado === "sem-db") return html`<div class="aviso"><p>O fichário não conseguiu abrir seus dados nesta tela. Abra pelo site ou app do Claude, com a sua conta. O que você anotar aqui fica guardado neste aparelho até lá${n ? ` (${plural(n, "alteração guardada", "alterações guardadas")})` : ""}.</p></div>`;
+  if (s.estado === "revogado") return html`<div class="aviso erro"><p>O acesso a este fichário foi encerrado nesta tela.</p></div>`;
+  if (s.estado === "erro") return html`<div class="aviso erro"><p>A conexão com seus dados caiu.</p><button class="btn" onClick=${() => { store.estado = "ok"; assinar(); mudou(); }}>Reconectar</button></div>`;
+  if (s.bloqueado) return html`<div class="aviso erro"><p>Esta conta não pode salvar neste fichário. ${n ? `${plural(n, "alteração continua guardada", "alterações continuam guardadas")} neste aparelho.` : ""}</p></div>`;
+  if (s.cheio) return html`<div class="aviso erro"><p>O fichário chegou ao limite de armazenamento. Apague notas ou fichas antigas para salvar as novas.</p></div>`;
+  if (s.falhou && n) return html`<div class="aviso"><p>${plural(n, "alteração ainda não foi enviada", "alterações ainda não foram enviadas")}. Ficam guardadas neste aparelho e sobem quando a conexão voltar.</p><button class="btn" onClick=${() => { store.falhou = false; enviar(); mudou(); }}>Enviar agora</button></div>`;
+  return null;
+}
+
+/* ---------- Hoje ---------- */
+function Hoje({ d, nav }) {
+  const carregando = store.estado === "iniciando" || (store.estado === "ok" && !(store.carregado.fichas && store.carregado.notas));
+  const vazio = !carregando && d.fichas.size === 0 && d.notas.size === 0;
+  const data = new Intl.DateTimeFormat("pt-BR", { weekday: "long", day: "numeric", month: "long" }).format(new Date());
+  const [confirmar, setConfirmar] = useState(false);
+  return html`<div class="view">
+    <header class="vhead"><div><p class="eyebrow">${data}</p><h1 class="vtitle">Hoje</h1></div></header>
+    ${carregando ? html`<p class="muted">Carregando suas fichas…</p>`
+    : vazio ? html`<section class="bloco boas-vindas">
+        <div class="bloco-cabeca"><h2>Seu fichário está vazio</h2></div>
+        <ol class="passos">
+          <li><b>Anote</b><span>Toque em Anotar e escreva como numa nota. Não precisa decidir onde guardar.</span></li>
+          <li><b>Encaixe</b><span>Depois, mande cada nota para uma ficha (a doença, o sinal, a droga) e para uma seção: Def, Fisiopato, Clínica, Dx, Tto ou Pérolas.</span></li>
+          <li><b>Revise</b><span>A ficha volta aqui no dia de revisar: amanhã, em 3 dias, em 7, em 14…</span></li>
+        </ol>
+        <button class="btn primario" onClick=${() => nav.anotar()}>${ico("mais")} Escrever a primeira nota</button>
+      </section>`
+    : html`<div class="hoje-grade">
+        <section class="bloco">
+          <div class="bloco-cabeca"><h2>Caixa de entrada</h2><span class=${"contador" + (d.caixa.length ? " quente" : "")}>${d.caixa.length}</span></div>
+          ${d.caixa.length ? html`
+            <ul class="previas">${d.caixa.slice(0, 3).map((n) => html`<li key=${n.id}>
+              <button class="previa" onClick=${() => nav.editarNota(n)}><span class="previa-texto">${n.texto}</span><span class="meta">${n.fonte ? n.fonte + " · " : ""}${quando(n.criadaEm)}</span></button>
+            </li>`)}</ul>
+            ${d.caixa.length > 3 ? html`<p class="meta">e mais ${d.caixa.length - 3}</p>` : null}
+            <button class="btn primario largo" onClick=${nav.encaixar}>${d.caixa.length === 1 ? "Encaixar a nota" : `Encaixar as ${d.caixa.length} notas`}</button>`
+          : html`<p class="muted">Vazia. Tudo o que você anotou já está nas fichas.</p>`}
+        </section>
+        <section class="bloco">
+          <div class="bloco-cabeca"><h2>Revisar hoje</h2><span class=${"contador" + (d.devidas.length ? " quente" : "")}>${d.devidas.length}</span></div>
+          ${d.devidas.length ? html`
+            <ul class="linhas">${d.devidas.map((f) => html`<li key=${f.id}>
+              <button class="linha" onClick=${() => nav.revisar([f.id])}>
+                <span class="linha-nome">${f.nome}</span><span class="meta">${atraso(f.rev.proxima)}</span>
+                <span class="linha-sub"><${Aba} esp=${f.especialidade}/><span class="meta">${plural((d.porFicha.get(f.id) || []).length, "nota", "notas")}</span></span>
+              </button>
+            </li>`)}</ul>
+            <button class="btn primario largo" onClick=${() => nav.revisar(d.devidas.map((f) => f.id))}>${d.devidas.length === 1 ? "Revisar a ficha" : `Revisar as ${d.devidas.length} fichas`}</button>`
+          : html`<p class="muted">Nada para revisar hoje.${d.proxima ? ` Próxima: ${d.proxima.nome}, ${rotuloDias(diasAte(d.proxima.rev.proxima))}.` : ""}</p>`}
+        </section>
+      </div>
+      ${d.recentes.length ? html`<section class="bloco">
+        <div class="bloco-cabeca"><h2>Anotado por último</h2></div>
+        <ul class="linhas">${d.recentes.map((n) => {
+          const f = n.fichaId ? d.fichas.get(n.fichaId) : null;
+          return html`<li key=${n.id}><button class="linha" onClick=${() => (f ? nav.abrirFicha(f.id, n.secao) : nav.editarNota(n))}>
+            <span class="clamp2">${n.texto}</span><span class="meta">${quando(n.atualizadaEm || n.criadaEm)}</span>
+            <span class="linha-sub">${f ? html`<${Aba} esp=${f.especialidade}/><span class="meta">${f.nome} › ${SECAO[n.secao] ? SECAO[n.secao].abbr : "sem seção"}</span>` : html`<span class="meta">Caixa de entrada</span>`}</span>
+          </button></li>`;
+        })}</ul>
+      </section>` : null}
+      ${d.temExemplos ? html`<div class="exemplos">
+        ${confirmar
+          ? html`<p>Apagar as fichas e notas de exemplo? Notas suas que estiverem nelas voltam para a caixa de entrada.</p>
+                 <button class="btn perigo armado" onClick=${() => { apagarExemplos(); setConfirmar(false); aviso("Exemplos apagados."); }}>Apagar exemplos</button>
+                 <button class="btn" onClick=${() => setConfirmar(false)}>Manter</button>`
+          : html`<p>Os itens marcados com <span class="selo">exemplo</span> mostram como o fichário funciona.</p>
+                 <button class="btn" onClick=${() => setConfirmar(true)}>Apagar exemplos</button>`}
+      </div>` : null}`}
+  </div>`;
+}
+
+/* ---------- Lista de fichas ---------- */
+function LinhaFicha({ f, notas, ativo, onClick }) {
+  const tem = new Set(notas.map((n) => n.secao));
+  const faltam = SECOES.filter((s) => !tem.has(s.id));
+  const cheias = SECOES.filter((s) => tem.has(s.id));
+  return html`<button class=${"ficha-linha" + (ativo ? " ativo" : "")} aria-current=${ativo ? "true" : undefined} onClick=${onClick}>
+    <span class="ficha-linha-topo"><span class="ficha-linha-nome">${f.nome}</span>${f.exemplo ? html`<span class="selo">exemplo</span>` : null}</span>
+    <span class="ficha-linha-meta">
+      <${Aba} esp=${f.especialidade}/>
+      <span>${plural(notas.length, "nota", "notas")}</span>
+      <span class="pontos" role="img" aria-label=${`Seções preenchidas: ${cheias.map((s) => s.abbr).join(", ") || "nenhuma"}`}>${SECOES.map((s) => html`<i key=${s.id} class=${tem.has(s.id) ? "cheio" : ""}></i>`)}</span>
+    </span>
+    ${faltam.length === 0 ? html`<span class="falta ok">Todas as seções preenchidas</span>`
+      : faltam.length === SECOES.length ? html`<span class="falta">Sem anotações</span>`
+      : html`<span class="falta">Falta: ${faltam.map((s) => s.abbr).join(", ")}</span>`}
+  </button>`;
+}
+
+function ListaFichas({ d, nav, sel }) {
+  const [esp, setEspBruto] = useState(() => LS.get("fichario.filtro", ""));
+  const [ordem, setOrdemBruta] = useState(() => LS.get("fichario.ordem", "az"));
+  const [q, setQ] = useState("");
+  const setEsp = (e) => { setEspBruto(e); LS.set("fichario.filtro", e); };
+  const setOrdem = (o) => { setOrdemBruta(o); LS.set("fichario.ordem", o); };
+  const contagem = useMemo(() => {
+    const m = new Map();
+    for (const f of d.lista) { const k = espInfo(f.especialidade).nome; m.set(k, (m.get(k) || 0) + 1); }
+    return [...m].sort((a, b) => a[0].localeCompare(b[0], "pt-BR"));
+  }, [d.ver]);
+  const espAtivo = esp && contagem.some(([e]) => e === esp) ? esp : "";
+  const termo = fold(q).trim();
+  let lista = d.lista.filter((f) => (!espAtivo || espInfo(f.especialidade).nome === espAtivo) && (!termo || fold([f.nome, ...(f.sinonimos || [])].join(" ")).includes(termo)));
+  if (ordem === "recentes") lista = [...lista].sort((a, b) => (d.atividade.get(b.id) || b.criadaEm || 0) - (d.atividade.get(a.id) || a.criadaEm || 0));
+  return html`<div class="view lista-fichas">
+    <header class="vhead"><h1 class="vtitle">Fichas</h1><button class="btn" onClick=${() => nav.novaFicha()}>${ico("mais")} Nova ficha</button></header>
+    <div class="lista-ctrl">
+      <input id="filtro-fichas" class="campo" type="search" placeholder="Filtrar por nome ou sinônimo" value=${q} onInput=${(e) => setQ(e.target.value)} aria-label="Filtrar fichas"/>
+      ${contagem.length > 1 ? html`<div class="chips rolagem" role="group" aria-label="Especialidade">
+        <button class="chip" aria-pressed=${!espAtivo} onClick=${() => setEsp("")}>Todas <span class="n">${d.lista.length}</span></button>
+        ${contagem.map(([e, n]) => { const i = espInfo(e); return html`<button key=${e} class="chip" aria-pressed=${espAtivo === e} onClick=${() => setEsp(espAtivo === e ? "" : e)}><i class="tom" style=${`--tom: var(--t${i.tom})`}></i>${i.curto} <span class="n">${n}</span></button>`; })}
+      </div>` : null}
+      <div class="seg" role="group" aria-label="Ordem">
+        <button aria-pressed=${ordem === "az"} onClick=${() => setOrdem("az")}>A–Z</button>
+        <button aria-pressed=${ordem === "recentes"} onClick=${() => setOrdem("recentes")}>Mexidas por último</button>
+      </div>
+    </div>
+    ${lista.length ? html`<ul class="fichas">${lista.map((f) => html`<li key=${f.id}>
+        <${LinhaFicha} f=${f} notas=${d.porFicha.get(f.id) || []} ativo=${sel === f.id} onClick=${() => nav.abrirFicha(f.id)}/>
+      </li>`)}</ul>`
+    : html`<p class="muted">${d.lista.length ? "Nenhuma ficha com esse filtro." : "Nenhuma ficha ainda. Crie uma aqui ou encaixe uma nota da caixa de entrada."}</p>`}
+  </div>`;
+}
+
+/* ---------- Ficha ---------- */
+function NotaItem({ n, nav }) {
+  const abrir = () => nav.editarNota(n);
+  const mostrarPend = n._pend && (store.falhou || !store.db);
+  return html`<li><div class="nota" role="button" tabindex="0" onClick=${abrir} onKeyDown=${(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); abrir(); } }}>
+    <span class="nota-texto">${n.texto}</span>
+    <span class="meta">${n.fonte ? n.fonte + " · " : ""}${quando(n.criadaEm)}${mostrarPend ? " · ainda não enviada" : ""}</span>
+  </div></li>`;
+}
+
+function FichaView({ f, d, nav, foco, setFoco, largo }) {
+  const notas = d.porFicha.get(f.id) || [];
+  const porSecao = useMemo(() => {
+    const m = Object.fromEntries(SECOES.map((s) => [s.id, []])); const sem = [];
+    for (const n of notas) (m[n.secao] || sem).push(n);
+    return { m, sem };
+  }, [notas]);
+  const ir = (id) => { const el = document.getElementById("sec-" + id); if (el) el.scrollIntoView({ block: "start", behavior: reduzMovimento() ? "auto" : "smooth" }); };
+  useEffect(() => { if (foco) { requestAnimationFrame(() => ir(foco)); setFoco(null); } }, [foco]);
+  const difs = (f.diferenciais || []).map((nome) => ({ nome, ficha: acharFicha(d.lista, nome) }));
+  const citadaEm = d.lista.filter((x) => x.id !== f.id && (x.diferenciais || []).some((nome) => termosDaFicha(f).includes(fold(nome).trim())));
+  const tom = espInfo(f.especialidade).tom;
+  const copiar = () => {
+    const t = fichaComoTexto(f, notas);
+    try {
+      navigator.clipboard.writeText(t).then(() => aviso("Ficha copiada como texto."), () => nav.copiar(t));
+    } catch (e) { nav.copiar(t); }
+  };
+  const r = f.rev;
+  return html`<div class="view">
+    ${!largo ? html`<button class="voltar" onClick=${nav.fecharFicha}>${ico("voltar")} Fichas</button>` : null}
+    <article class="cartao" style=${`--tom: var(--t${tom})`}>
+      <span class="cartao-aba">${espInfo(f.especialidade).nome}</span>
+      <header class="cartao-cabeca">
+        <h1 class="ficha-nome">${f.nome}${f.exemplo ? html` <span class="selo">exemplo</span>` : null}</h1>
+        ${(f.sinonimos || []).length ? html`<p class="sinonimos">Também: ${f.sinonimos.join(" · ")}</p>` : null}
+        <div class="acoes">
+          <button class="btn primario" onClick=${() => nav.anotar({ fichaId: f.id })}>${ico("mais")} Anotar nesta ficha</button>
+          <button class="btn" disabled=${!notas.length} onClick=${() => nav.revisar([f.id])}>Revisar</button>
+          <button class="btn" onClick=${() => nav.editarFicha(f)}>Editar</button>
+          <button class="btn" disabled=${!notas.length} onClick=${copiar}>Copiar texto</button>
+        </div>
+      </header>
+      <nav class="secnav" aria-label="Ir para a seção">
+        ${SECOES.map((s) => { const c = porSecao.m[s.id].length; return html`<button key=${s.id} class=${"secnav-item" + (c ? "" : " vazio")} onClick=${() => ir(s.id)}>${s.abbr}${c ? html`<span class="n">${c}</span>` : null}</button>`; })}
+      </nav>
+      ${SECOES.map((s) => html`<section key=${s.id} class=${"secao secao-" + s.id} id=${"sec-" + s.id}>
+        <div class="secao-margem">
+          <span class="sec-abbr">${s.abbr}</span>
+          ${s.abbr !== s.nome ? html`<span class="sec-nome">${s.nome}</span>` : null}
+          <button class="icone-btn" aria-label=${`Anotar em ${s.nome}`} onClick=${() => nav.anotar({ fichaId: f.id, secao: s.id })}>${ico("mais")}</button>
+        </div>
+        <div class="secao-conteudo">
+          ${porSecao.m[s.id].length
+            ? html`<ul class="notas">${porSecao.m[s.id].map((n) => html`<${NotaItem} key=${n.id} n=${n} nav=${nav}/>`)}</ul>`
+            : html`<button class="vazio-btn" onClick=${() => nav.anotar({ fichaId: f.id, secao: s.id })}>Nada anotado ainda</button>`}
+        </div>
+      </section>`)}
+      ${porSecao.sem.length ? html`<section class="secao"><div class="secao-margem"><span class="sec-abbr">Sem seção</span></div>
+        <div class="secao-conteudo"><ul class="notas">${porSecao.sem.map((n) => html`<${NotaItem} key=${n.id} n=${n} nav=${nav}/>`)}</ul></div></section>` : null}
+      <footer class="cartao-rodape">
+        <h2>Diferenciais</h2>
+        ${difs.length ? html`<div class="chips">${difs.map((x) => x.ficha
+            ? html`<button key=${x.nome} class="chip link" onClick=${() => nav.abrirFicha(x.ficha.id)}>${x.nome} ›</button>`
+            : html`<button key=${x.nome} class="chip pontilhado" title="Criar esta ficha" onClick=${() => nav.novaFicha({ nome: x.nome, especialidade: f.especialidade })}>+ ${x.nome}</button>`)}</div>`
+          : html`<p class="muted small">Nenhum diferencial ainda. <button class="link-btn" onClick=${() => nav.editarFicha(f)}>Adicionar</button></p>`}
+        ${citadaEm.length ? html`<p class="small muted">Aparece como diferencial em: ${citadaEm.map((x, i) => html`${i ? ", " : ""}<button class="link-btn" onClick=${() => nav.abrirFicha(x.id)}>${x.nome}</button>`)}</p>` : null}
+        <p class="rev-info">${r ? `Próxima revisão ${rotuloDias(diasAte(r.proxima))}${r.vezes ? ` · revisada ${plural(r.vezes, "vez", "vezes")}` : ""}.` : "Entra na revisão quando receber a primeira nota."}</p>
+      </footer>
+    </article>
+  </div>`;
+}
+
+/* ---------- Revisão ---------- */
+function Revisao({ d, rev, setRev, nav }) {
+  const id = rev.fila[rev.i];
+  const f = d.fichas.get(id);
+  const [abertas, setAbertas] = useState({});
+  useEffect(() => { setAbertas({}); topo(); }, [id]);
+  useEffect(() => { if (!f) avancar(); }, [f]);
+  function avancar() {
+    if (rev.i + 1 < rev.fila.length) setRev({ fila: rev.fila, i: rev.i + 1 });
+    else setRev(null);
+  }
+  if (!f) return null;
+  const notas = d.porFicha.get(id) || [];
+  const secs = SECOES.filter((s) => notas.some((n) => n.secao === s.id));
+  const blocos = secs.map((s) => ({ id: s.id, abbr: s.abbr, nome: s.nome, notas: notas.filter((n) => n.secao === s.id) }));
+  if ((f.diferenciais || []).length) blocos.push({ id: "difs", abbr: "Ddx", nome: "Diferenciais", lista: f.diferenciais });
+  const todas = blocos.every((b) => abertas[b.id]);
+  const p = f.rev && Number.isFinite(f.rev.passo) ? f.rev.passo : 0;
+  const opcoes = [["esqueci", "Esqueci", 1], ["parcial", "Lembrei em parte", ESCADA[p]], ["bem", "Lembrei bem", ESCADA[Math.min(ESCADA.length - 1, p + 1)]]];
+  const avaliar = (k) => {
+    const prox = proximaRev(f.rev, k);
+    revisarFicha(f, k);
+    if (rev.i + 1 < rev.fila.length) setRev({ fila: rev.fila, i: rev.i + 1 });
+    else { setRev(null); aviso(rev.fila.length > 1 ? "Revisão do dia concluída." : `${f.nome} volta ${rotuloDias(ESCADA[prox.passo])}.`); }
+  };
+  return html`<div class="view">
+    <div class="rev-topo">
+      <button class="voltar" onClick=${() => setRev(null)}>${ico("x")} Sair da revisão</button>
+      ${rev.fila.length > 1 ? html`<span class="meta">${rev.i + 1} de ${rev.fila.length}</span>` : null}
+    </div>
+    <article class="cartao" style=${`--tom: var(--t${espInfo(f.especialidade).tom})`}>
+      <span class="cartao-aba">${espInfo(f.especialidade).nome}</span>
+      <header class="cartao-cabeca">
+        <h1 class="ficha-nome">${f.nome}</h1>
+        <p class="instrucao">Antes de abrir cada parte, tente lembrar o que você anotou. Depois diga como foi.</p>
+      </header>
+      ${blocos.length ? blocos.map((b) => {
+        const aberta = !!abertas[b.id];
+        return html`<section key=${b.id} class=${"rev-secao secao-" + b.id}>
+          <button class="rev-revelar" aria-expanded=${aberta ? "true" : "false"} onClick=${() => setAbertas(Object.assign({}, abertas, { [b.id]: !aberta }))}>
+            <span class="sec-abbr">${b.abbr}</span><span class="sec-titulo">${b.nome}</span>
+            <span class="meta">${aberta ? "esconder" : b.notas ? `${plural(b.notas.length, "nota", "notas")} · mostrar` : "mostrar"}</span>
+          </button>
+          ${aberta ? html`<div class="rev-corpo">${b.notas
+            ? html`<ul class="notas">${b.notas.map((n) => html`<li key=${n.id}><div class="nota estatica"><span class="nota-texto">${n.texto}</span></div></li>`)}</ul>`
+            : html`<p class="nota-texto">${b.lista.join(" · ")}</p>`}</div>` : null}
+        </section>`;
+      }) : html`<p class="cartao-cabeca muted">Esta ficha ainda não tem notas.</p>`}
+    </article>
+    ${blocos.length && !todas ? html`<button class="btn largo" onClick=${() => setAbertas(Object.fromEntries(blocos.map((b) => [b.id, true])))}>Mostrar tudo</button>` : null}
+    <div class="avaliar">
+      <p class="avaliar-titulo">Como foi lembrar ${f.nome}?</p>
+      <div class="avaliar-botoes">${opcoes.map(([k, rot, dias]) => html`<button key=${k} class=${"btn avaliar-" + k} onClick=${() => avaliar(k)}><b>${rot}</b><span>volta ${rotuloDias(dias)}</span></button>`)}</div>
+    </div>
+  </div>`;
+}
+
+/* ---------- Busca ---------- */
+function foldIdx(s) {
+  let out = "";
+  for (const ch of s) {
+    let c = ch.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+    if (c.length !== ch.length) c = c.length > ch.length ? c.slice(0, ch.length) : c.padEnd(ch.length, " ");
+    out += c;
+  }
+  return out;
+}
+function Trecho({ texto, termos }) {
+  const f = foldIdx(texto);
+  const primeiro = Math.min(...termos.map((t) => { const i = f.indexOf(t); return i < 0 ? Infinity : i; }));
+  let ini = 0;
+  if (primeiro !== Infinity && primeiro > 70) { ini = texto.lastIndexOf(" ", primeiro - 40); if (ini < 0) ini = primeiro - 40; }
+  const fim = Math.min(texto.length, ini + 220);
+  const pedaco = texto.slice(ini, fim), fp = f.slice(ini, fim);
+  const marcas = [];
+  for (const t of termos) { let i = 0; while (t && (i = fp.indexOf(t, i)) >= 0) { marcas.push([i, i + t.length]); i += t.length; } }
+  marcas.sort((a, b) => a[0] - b[0]);
+  const unidas = [];
+  for (const m of marcas) { const u = unidas[unidas.length - 1]; if (u && m[0] <= u[1]) u[1] = Math.max(u[1], m[1]); else unidas.push(m.slice()); }
+  const partes = []; let pos = 0;
+  unidas.forEach(([a, b], i) => { if (a > pos) partes.push(pedaco.slice(pos, a)); partes.push(html`<mark key=${i}>${pedaco.slice(a, b)}</mark>`); pos = b; });
+  partes.push(pedaco.slice(pos));
+  return html`<span class="nota-texto">${ini > 0 ? "…" : ""}${partes}${fim < texto.length ? "…" : ""}</span>`;
+}
+function Buscar({ d, nav }) {
+  const [q, setQ] = useState("");
+  const ref = useRef(null);
+  useEffect(() => { if (ref.current && window.matchMedia("(min-width: 760px)").matches) ref.current.focus(); }, []);
+  const termos = fold(q).split(/\s+/).filter(Boolean);
+  const res = useMemo(() => {
+    if (!termos.length) return null;
+    const fichas = d.lista.filter((f) => { const h = fold([f.nome, ...(f.sinonimos || []), f.especialidade || "", ...(f.diferenciais || [])].join(" ")); return termos.every((t) => h.includes(t)); });
+    const notas = [...d.notas.values()].filter((n) => {
+      const f = n.fichaId ? d.fichas.get(n.fichaId) : null;
+      const s = SECAO[n.secao];
+      const h = fold([n.texto, f ? f.nome : "", f ? (f.sinonimos || []).join(" ") : "", s ? s.nome + " " + s.abbr : "", n.fonte || ""].join(" "));
+      return termos.every((t) => h.includes(t));
+    }).sort((a, b) => (b.atualizadaEm || 0) - (a.atualizadaEm || 0)).slice(0, 80);
+    return { fichas, notas };
+  }, [q, d.ver]);
+  return html`<div class="view">
+    <header class="vhead"><h1 class="vtitle">Buscar</h1></header>
+    <input id="busca" ref=${ref} class="campo" type="search" placeholder="Doença, sinal, droga, exame…" value=${q} onInput=${(e) => setQ(e.target.value)} aria-label="Buscar nas fichas e notas"/>
+    ${!res ? html`<p class="muted">Procura em ${plural(d.fichas.size, "ficha", "fichas")} e ${plural(d.notas.size, "nota", "notas")}, sem ligar para acentos. Junte palavras para estreitar: “pac tto”, “ic dx”.</p>`
+    : html`<div class="view" style="gap: 24px">
+      ${res.fichas.length ? html`<section class="resultados"><h2>${plural(res.fichas.length, "ficha", "fichas")}</h2>
+        <ul class="fichas">${res.fichas.map((f) => html`<li key=${f.id}><${LinhaFicha} f=${f} notas=${d.porFicha.get(f.id) || []} onClick=${() => nav.abrirFicha(f.id)}/></li>`)}</ul></section>` : null}
+      ${res.notas.length ? html`<section class="resultados"><h2>${plural(res.notas.length, "nota", "notas")}</h2>
+        <ul class="fichas">${res.notas.map((n) => { const f = n.fichaId ? d.fichas.get(n.fichaId) : null; return html`<li key=${n.id}>
+          <button class="achado" onClick=${() => (f ? nav.abrirFicha(f.id, n.secao) : nav.editarNota(n))}>
+            <${Trecho} texto=${n.texto} termos=${termos}/>
+            <span class="onde">${f ? html`<${Aba} esp=${f.especialidade}/><span>${f.nome} › ${SECAO[n.secao] ? SECAO[n.secao].abbr : "sem seção"}</span>` : html`<span>Caixa de entrada</span>`}<span>· ${quando(n.criadaEm)}</span></span>
+          </button></li>`; })}</ul></section>` : null}
+      ${!res.fichas.length && !res.notas.length ? html`<p class="muted">Nada encontrado para “${q.trim()}”.</p>` : null}
+    </div>`}
+  </div>`;
+}
+
+/* ---------- Painéis ---------- */
+function Folha({ titulo, onFechar, rotuloFechar, acao, children }) {
+  const ref = useRef(onFechar); ref.current = onFechar;
+  useEffect(() => {
+    const k = (e) => { if (e.key === "Escape") ref.current(); };
+    document.addEventListener("keydown", k);
+    document.documentElement.classList.add("travado");
+    return () => { document.removeEventListener("keydown", k); document.documentElement.classList.remove("travado"); };
+  }, []);
+  return html`<div class="folha-fundo" onClick=${(e) => { if (e.target === e.currentTarget) ref.current(); }}>
+    <div class="folha" role="dialog" aria-modal="true" aria-label=${titulo}>
+      <div class="folha-cabeca">
+        <button class="btn-texto" onClick=${() => ref.current()}>${rotuloFechar || "Cancelar"}</button>
+        <h2 class="folha-titulo">${titulo}</h2>
+        <div class="folha-acao">${acao}</div>
+      </div>
+      <div class="folha-corpo">${children}</div>
+    </div>
+  </div>`;
+}
+
+function NovaFichaMini({ inicial, onCriar, onCancelar }) {
+  const [nome, setNome] = useState(inicial.nome || "");
+  const [esp, setEsp] = useState(inicial.especialidade || "");
+  const criar = () => { if (nome.trim()) onCriar({ nome: nome.trim(), especialidade: esp.trim() }); };
+  const enter = (e) => { if (e.key === "Enter") { e.preventDefault(); criar(); } };
+  return html`<div class="mini-form">
+    <div class="grupo"><label class="rotulo" for="mini-nome">Nome da ficha</label>
+      <input id="mini-nome" class="campo" value=${nome} onInput=${(e) => setNome(e.target.value)} onKeyDown=${enter} placeholder="Ex.: Estenose aórtica"/></div>
+    <div class="grupo"><label class="rotulo" for="mini-esp">Especialidade</label>
+      <input id="mini-esp" class="campo" list="lista-esp" value=${esp} onInput=${(e) => setEsp(e.target.value)} onKeyDown=${enter} placeholder="Ex.: Cardiologia"/></div>
+    <div class="linha-botoes"><button class="btn" onClick=${onCancelar}>Voltar</button><button class="btn primario" disabled=${!nome.trim()} onClick=${criar}>Criar ficha</button></div>
+  </div>`;
+}
+
+function EscolherFicha({ d, valor, onEscolher, texto }) {
+  const [q, setQ] = useState("");
+  const [criando, setCriando] = useState(null);
+  const sugestoes = useMemo(() => (valor ? [] : sugerirFichas(texto || "", d.lista)), [texto, d.ver, valor]);
+  if (valor) {
+    const f = d.fichas.get(valor);
+    return html`<div class="ficha-escolhida"><${Aba} esp=${f && f.especialidade}/><span class="nome">${f ? f.nome : "Ficha apagada"}</span><button class="btn-texto" onClick=${() => onEscolher(null)}>Trocar</button></div>`;
+  }
+  if (criando) return html`<${NovaFichaMini} inicial=${criando} onCancelar=${() => setCriando(null)} onCriar=${(dd) => {
+    LS.set("fichario.esp", dd.especialidade);
+    const id = novaFicha(dd); onEscolher(id); setCriando(null); setQ("");
+  }}/>`;
+  const termo = fold(q).trim();
+  const achadas = termo ? d.lista.filter((f) => fold([f.nome, ...(f.sinonimos || [])].join(" ")).includes(termo)).slice(0, 6) : [];
+  const exata = achadas.some((f) => fold(f.nome).trim() === termo);
+  const palpite = !termo && !sugestoes.length ? nomeProvavel(texto) : "";
+  const palpiteExiste = palpite && acharFicha(d.lista, palpite);
+  const espPadrao = LS.get("fichario.esp", "");
+  return html`<div class="escolher-ficha">
+    ${sugestoes.length ? html`<div class="sugestoes"><span class="dica">Parece ser:</span>${sugestoes.map((f) => html`<button key=${f.id} class="chip sugestao" onClick=${() => onEscolher(f.id)}>${f.nome}</button>`)}</div>` : null}
+    ${palpite && !palpiteExiste ? html`<div class="sugestoes"><button class="chip pontilhado" onClick=${() => setCriando({ nome: palpite, especialidade: espPadrao })}>+ Criar ficha “${palpite}”</button></div>` : null}
+    <input id="busca-ficha" class="campo" type="search" placeholder="Buscar ficha ou criar nova" value=${q} onInput=${(e) => setQ(e.target.value)} aria-label="Buscar ficha"
+      onKeyDown=${(e) => { if (e.key === "Enter") { e.preventDefault(); if (achadas[0]) onEscolher(achadas[0].id); else if (q.trim()) setCriando({ nome: q.trim(), especialidade: espPadrao }); } }}/>
+    ${termo ? html`<ul class="opcoes">
+      ${achadas.map((f) => html`<li key=${f.id}><button class="opcao" onClick=${() => onEscolher(f.id)}><${Aba} esp=${f.especialidade}/><span>${f.nome}</span></button></li>`)}
+      ${!exata ? html`<li><button class="opcao criar" onClick=${() => setCriando({ nome: q.trim(), especialidade: espPadrao })}>${ico("mais")} Criar ficha “${q.trim()}”</button></li>` : null}
+    </ul>` : null}
+  </div>`;
+}
+
+function EscolherSecao({ valor, sugerida, onEscolher }) {
+  return html`<div class="secoes-grade" role="radiogroup" aria-label="Seção">
+    ${SECOES.map((s) => html`<button key=${s.id} class=${"secao-opcao secao-" + s.id} role="radio" aria-checked=${valor === s.id ? "true" : "false"} onClick=${() => onEscolher(s.id)}>
+      <b>${s.abbr}</b><span>${s.nome}</span>${sugerida === s.id && valor !== s.id ? html`<i class="sugerida">sugerida</i>` : null}
+    </button>`)}
+  </div>`;
+}
+
+function EditorNota({ d, nota, preset, nav }) {
+  const nova = !nota;
+  const rasc = nova ? LS.get("fichario.rascunho", null) : null;
+  const [texto, setTexto] = useState(nota ? nota.texto : (rasc && rasc.texto) || "");
+  const [fonte, setFonte] = useState(nota ? nota.fonte || "" : (rasc && rasc.fonte) || LS.get("fichario.fonte", "Aula"));
+  const [fichaId, setFichaId] = useState(nota ? nota.fichaId || null : (preset && preset.fichaId) || null);
+  const [secao, setSecao] = useState(nota ? nota.secao || null : (preset && preset.secao) || null);
+  const [manual, setManual] = useState(!!(nota ? nota.secao : preset && preset.secao));
+  const [continuar, setContinuar] = useState(() => nova && LS.get("fichario.continuar", false));
+  const [confirmar, setConfirmar] = useState(null);
+  const ta = useRef(null);
+  const sug = useMemo(() => sugerirSecao(texto), [texto]);
+  const secaoEf = fichaId ? (manual ? secao : sug || secao) : null;
+  const mudouAlgo = nova ? !!texto.trim() : texto !== nota.texto || (fonte || "") !== (nota.fonte || "") || fichaId !== (nota.fichaId || null) || secaoEf !== (nota.secao || null);
+  const pode = !!texto.trim() && (!fichaId || !!secaoEf);
+
+  useEffect(() => {
+    if (!nova) return;
+    const t = setTimeout(() => LS.set("fichario.rascunho", texto.trim() ? { texto, fonte } : null), 350);
+    return () => clearTimeout(t);
+  }, [texto, fonte]);
+  useEffect(() => { if (ta.current) { ta.current.focus(); const n = ta.current.value.length; try { ta.current.setSelectionRange(n, n); } catch (e) {} } }, []);
+
+  const salvar = () => {
+    if (!pode) return;
+    if (fonte) LS.set("fichario.fonte", fonte);
+    const f = fichaId ? d.fichas.get(fichaId) : null;
+    if (nova) {
+      novaNota({ texto: texto.trim(), fonte, fichaId, secao: secaoEf });
+      LS.set("fichario.rascunho", null);
+      aviso(f ? `Nota salva em ${f.nome} › ${SECAO[secaoEf].abbr}.` : "Nota salva na caixa de entrada.");
+      if (continuar) {
+        setTexto(""); setManual(!!(preset && preset.secao)); setSecao((preset && preset.secao) || null); setConfirmar(null);
+        if (ta.current) ta.current.focus();
+      } else nav.fecharFolha();
+    } else {
+      editarNota(nota, { texto: texto.trim(), fonte, fichaId, secao: secaoEf });
+      aviso(nota.fichaId && !fichaId ? "Nota devolvida à caixa de entrada." : "Nota atualizada.");
+      nav.fecharFolha();
+    }
+  };
+  const fechar = () => {
+    if (mudouAlgo && confirmar !== "descartar") { setConfirmar("descartar"); return; }
+    if (nova) LS.set("fichario.rascunho", null);
+    nav.fecharFolha();
+  };
+  const fEsc = fichaId ? d.fichas.get(fichaId) : null;
+
+  return html`<${Folha} titulo=${nova ? (fEsc ? `Nota em ${fEsc.nome}` : "Nova nota") : "Editar nota"} onFechar=${fechar}
+      acao=${html`<button class="btn primario" disabled=${!pode} onClick=${salvar}>Salvar</button>`}>
+    ${confirmar === "descartar" ? html`<div class="confirma"><p>${nova ? "Descartar o que você escreveu?" : "Sair sem salvar as mudanças?"}</p>
+      <button class="btn perigo armado" onClick=${fechar}>Descartar</button><button class="btn" onClick=${() => setConfirmar(null)}>Continuar</button></div>` : null}
+    <textarea id="nota-texto" ref=${ta} class="nota-campo" rows="7" value=${texto} aria-label="Texto da nota"
+      placeholder="Escreva como numa nota. Ex.: Sopro sistólico ejetivo em foco aórtico, irradia para carótidas. Professor: pensar em estenose aórtica."
+      onInput=${(e) => setTexto(e.target.value)}
+      onKeyDown=${(e) => { if ((e.metaKey || e.ctrlKey) && e.key === "Enter") { e.preventDefault(); salvar(); } }}></textarea>
+    <div class="grupo">
+      <span class="rotulo" id="rot-fonte">Onde você viu</span>
+      <div class="chips" role="radiogroup" aria-labelledby="rot-fonte">
+        ${FONTES.map((x) => html`<button key=${x} class="chip" role="radio" aria-checked=${fonte === x ? "true" : "false"} onClick=${() => setFonte(fonte === x ? "" : x)}>${x}</button>`)}
+      </div>
+    </div>
+    <div class="grupo">
+      <div class="rotulo-linha"><span class="rotulo">Ficha</span>${!fichaId ? html`<span class="dica">opcional: sem ficha, a nota vai para a caixa de entrada</span>` : null}</div>
+      <${EscolherFicha} d=${d} valor=${fichaId} texto=${texto} onEscolher=${(id) => { setFichaId(id); if (!id) { setManual(false); setSecao(null); } }}/>
+    </div>
+    ${fichaId ? html`<div class="grupo">
+      <div class="rotulo-linha"><span class="rotulo">Seção</span>${!secaoEf ? html`<span class="dica alerta">escolha a seção para salvar</span>` : null}</div>
+      <${EscolherSecao} valor=${secaoEf} sugerida=${sug} onEscolher=${(s) => { setSecao(s); setManual(true); }}/>
+    </div>` : null}
+    ${nova ? html`<label class="check" for="continuar"><input id="continuar" type="checkbox" checked=${continuar} onChange=${(e) => { setContinuar(e.target.checked); LS.set("fichario.continuar", e.target.checked); }}/>Depois de salvar, já abrir outra nota</label>`
+      : html`<div class="zona">
+        ${confirmar === "apagar"
+          ? html`<button class="btn perigo armado" onClick=${() => { apagarNota(nota); aviso("Nota apagada."); nav.fecharFolha(); }}>Apagar de vez</button><button class="btn" onClick=${() => setConfirmar(null)}>Manter</button>`
+          : html`<button class="btn perigo" onClick=${() => setConfirmar("apagar")}>Apagar nota</button>`}
+        ${nota.fichaId ? html`<button class="btn" onClick=${() => { editarNota(nota, { texto: texto.trim() || nota.texto, fichaId: null, secao: null }); aviso("Nota devolvida à caixa de entrada."); nav.fecharFolha(); }}>Devolver à caixa</button>` : null}
+        <span class="meta" style="align-self: center">Criada ${quando(nota.criadaEm)}</span>
+      </div>`}
+  <//>`;
+}
+
+function Encaixar({ d, nav }) {
+  const [fila] = useState(() => d.caixa.map((n) => n.id));
+  const [i, setI] = useState(0);
+  const [feitas, setFeitas] = useState(0);
+  const naCaixa = (id) => { const n = d.notas.get(id); return n && !(n.fichaId && d.fichas.has(n.fichaId)); };
+  let idx = i; while (idx < fila.length && !naCaixa(fila[idx])) idx++;
+  const atual = idx < fila.length ? d.notas.get(fila[idx]) : null;
+  const restam = fila.slice(idx).filter(naCaixa).length;
+
+  const [fichaId, setFichaId] = useState(null);
+  const [secao, setSecao] = useState(null);
+  const [manual, setManual] = useState(false);
+  const [editando, setEditando] = useState(false);
+  const [texto, setTexto] = useState("");
+  const [apagar, setApagar] = useState(false);
+  useEffect(() => {
+    if (!atual) return;
+    const s = sugerirFichas(atual.texto, d.lista);
+    setFichaId(s[0] ? s[0].id : null); setSecao(null); setManual(false); setEditando(false); setTexto(atual.texto); setApagar(false);
+  }, [atual && atual.id]);
+  const sug = useMemo(() => sugerirSecao(texto), [texto]);
+  const secaoEf = fichaId ? (manual ? secao : sug || secao) : null;
+  const encaixar = () => {
+    if (!atual || !fichaId || !secaoEf) return;
+    const f = d.fichas.get(fichaId);
+    editarNota(atual, { texto: texto.trim() || atual.texto, fichaId, secao: secaoEf });
+    setFeitas((x) => x + 1);
+    aviso(`Encaixada em ${f ? f.nome : "ficha"} › ${SECAO[secaoEf].abbr}.`);
+  };
+  return html`<${Folha} titulo=${atual ? `Encaixar · ${plural(restam, "nota", "notas")}` : "Encaixar"} rotuloFechar="Fechar" onFechar=${nav.fecharFolha}>
+    ${atual ? html`
+      <div class="encaixar-nota">
+        ${editando
+          ? html`<textarea id="encaixar-texto" class="nota-campo" rows="5" value=${texto} onInput=${(e) => setTexto(e.target.value)} aria-label="Texto da nota"></textarea>`
+          : html`<p class="nota-texto">${texto}</p>`}
+        <p class="meta">${atual.fonte ? atual.fonte + " · " : ""}${quando(atual.criadaEm)} · <button class="link-btn" onClick=${() => setEditando(!editando)}>${editando ? "pronto" : "editar texto"}</button></p>
+      </div>
+      <div class="grupo"><span class="rotulo">Ficha</span>
+        <${EscolherFicha} key=${atual.id} d=${d} valor=${fichaId} texto=${texto} onEscolher=${(id) => { setFichaId(id); if (!id) { setManual(false); setSecao(null); } }}/></div>
+      ${fichaId ? html`<div class="grupo"><div class="rotulo-linha"><span class="rotulo">Seção</span>${!secaoEf ? html`<span class="dica alerta">escolha a seção</span>` : null}</div>
+        <${EscolherSecao} valor=${secaoEf} sugerida=${sug} onEscolher=${(s) => { setSecao(s); setManual(true); }}/></div>` : null}
+      <div class="encaixar-rodape">
+        ${apagar
+          ? html`<button class="btn perigo armado" onClick=${() => { apagarNota(atual); aviso("Nota apagada."); }}>Apagar de vez</button>`
+          : html`<button class="btn perigo" onClick=${() => setApagar(true)}>Apagar</button>`}
+        <button class="btn" onClick=${() => setI(idx + 1)}>Pular</button>
+        <button class="btn primario" disabled=${!(fichaId && secaoEf)} onClick=${encaixar}>Encaixar</button>
+      </div>`
+    : html`<div class="concluido">
+        <p class="concluido-titulo">${restam === 0 && d.caixa.length === 0 ? "Caixa de entrada vazia." : "Fim da fila."}</p>
+        <p class="muted">${feitas ? `${plural(feitas, "nota encaixada", "notas encaixadas")} agora.` : ""}${d.caixa.length ? ` ${plural(d.caixa.length, "nota continua", "notas continuam")} na caixa.` : ""}</p>
+        <button class="btn primario" onClick=${nav.fecharFolha}>Fechar</button>
+      </div>`}
+  <//>`;
+}
+
+function FormFicha({ d, ficha, preset, nav }) {
+  const [nome, setNome] = useState(ficha ? ficha.nome : (preset && preset.nome) || "");
+  const [esp, setEsp] = useState(ficha ? ficha.especialidade || "" : (preset && preset.especialidade) || LS.get("fichario.esp", ""));
+  const [sin, setSin] = useState(ficha ? (ficha.sinonimos || []).join(", ") : "");
+  const [dif, setDif] = useState(ficha ? (ficha.diferenciais || []).join(", ") : "");
+  const [confirmar, setConfirmar] = useState(false);
+  const repetida = nome.trim() && d.lista.find((f) => (!ficha || f.id !== ficha.id) && fold(f.nome).trim() === fold(nome).trim());
+  const nNotas = ficha ? (d.porFicha.get(ficha.id) || []).length : 0;
+  const salvar = () => {
+    if (!nome.trim()) return;
+    const dd = { nome: nome.trim(), especialidade: esp.trim(), sinonimos: listaDeTexto(sin), diferenciais: listaDeTexto(dif) };
+    LS.set("fichario.esp", dd.especialidade);
+    if (ficha) { gravar("fichas/" + ficha.id, Object.assign(semMeta(ficha), dd)); aviso("Ficha atualizada."); nav.fecharFolha(); }
+    else { const id = novaFicha(dd); nav.fecharFolha(); nav.abrirFicha(id); aviso("Ficha criada."); }
+  };
+  return html`<${Folha} titulo=${ficha ? "Editar ficha" : "Nova ficha"} onFechar=${nav.fecharFolha}
+      acao=${html`<button class="btn primario" disabled=${!nome.trim()} onClick=${salvar}>Salvar</button>`}>
+    <div class="grupo"><label class="rotulo" for="ff-nome">Nome</label>
+      <input id="ff-nome" class="campo" value=${nome} onInput=${(e) => setNome(e.target.value)} placeholder="Ex.: Insuficiência cardíaca"/>
+      ${repetida ? html`<span class="dica alerta">Já existe uma ficha com esse nome.</span>` : null}</div>
+    <div class="grupo"><label class="rotulo" for="ff-esp">Especialidade</label>
+      <input id="ff-esp" class="campo" list="lista-esp" value=${esp} onInput=${(e) => setEsp(e.target.value)} placeholder="Ex.: Cardiologia"/></div>
+    <div class="grupo"><label class="rotulo" for="ff-sin">Sinônimos e siglas</label>
+      <input id="ff-sin" class="campo" value=${sin} onInput=${(e) => setSin(e.target.value)} placeholder="Ex.: IC, ICC"/>
+      <span class="dica">Separe por vírgula. Servem para a busca e para o fichário reconhecer a ficha quando você escreve a sigla numa nota.</span></div>
+    <div class="grupo"><label class="rotulo" for="ff-dif">Diferenciais</label>
+      <input id="ff-dif" class="campo" value=${dif} onInput=${(e) => setDif(e.target.value)} placeholder="Ex.: DPOC exacerbada, Tromboembolismo pulmonar"/>
+      <span class="dica">Separe por vírgula. Quando existir uma ficha com o mesmo nome, vira atalho para ela.</span></div>
+    ${ficha ? html`<div class="zona">
+      ${confirmar
+        ? html`<div class="confirma" style="width: 100%"><p>Apagar a ficha ${ficha.nome}?${nNotas ? ` ${plural(nNotas, "nota volta", "notas voltam")} para a caixa de entrada.` : ""}</p>
+            <button class="btn perigo armado" onClick=${() => { apagarFicha(ficha); nav.fecharFolha(); aviso("Ficha apagada."); }}>Apagar ficha</button>
+            <button class="btn" onClick=${() => setConfirmar(false)}>Manter</button></div>`
+        : html`<button class="btn perigo" onClick=${() => setConfirmar(true)}>Apagar ficha</button>`}
+    </div>` : null}
+  <//>`;
+}
+
+function Copiar({ texto, nav }) {
+  const ref = useRef(null);
+  useEffect(() => { if (ref.current) { ref.current.focus(); ref.current.select(); } }, []);
+  return html`<${Folha} titulo="Copiar ficha" rotuloFechar="Fechar" onFechar=${nav.fecharFolha}>
+    <p class="dica">O texto já está selecionado. Use o copiar do seu aparelho.</p>
+    <textarea id="copia" ref=${ref} class="nota-campo copia" readonly value=${texto}></textarea>
+  <//>`;
+}
+
+/* lista de especialidades para os campos */
+const dl = document.createElement("datalist");
+dl.id = "lista-esp";
+for (const [n] of ESPECIALIDADES) { const o = document.createElement("option"); o.value = n; dl.appendChild(o); }
+document.body.appendChild(dl);
+
+const raiz = document.getElementById("app");
+raiz.textContent = "";
+render(html`<${App}/>`, raiz);
+iniciar();
+})();
+</script>
