@@ -7,7 +7,8 @@ if (!window.htmPreact) {
 const { html, render, useState, useEffect, useMemo, useRef } = window.htmPreact;
 
 /* ================= domínio ================= */
-const SECOES = [
+/* Três tipos de ficha, cada um com as suas seções de anotação e um resumo de campos para marcar. */
+const SECOES_DOENCA = [
   { id: "def", nome: "Definição", abbr: "Def" },
   { id: "fisio", nome: "Fisiopatologia", abbr: "Fisiopato" },
   { id: "clinica", nome: "Quadro clínico", abbr: "Clínica" },
@@ -15,7 +16,92 @@ const SECOES = [
   { id: "tto", nome: "Tratamento", abbr: "Tto" },
   { id: "perolas", nome: "Pérolas e pegadinhas", abbr: "Pérolas" },
 ];
-const SECAO = Object.fromEntries(SECOES.map((s) => [s.id, s]));
+const SECOES_MED = [
+  { id: "mec", nome: "Mecanismo de ação", abbr: "Mecanismo" },
+  { id: "indic", nome: "Indicações", abbr: "Indicação" },
+  { id: "dose", nome: "Posologia", abbr: "Dose" },
+  { id: "ea", nome: "Efeitos adversos", abbr: "EA" },
+  { id: "ci", nome: "Contraindicações", abbr: "CI" },
+  { id: "inter", nome: "Interações", abbr: "Interações" },
+  { id: "perolas", nome: "Pérolas e pegadinhas", abbr: "Pérolas" },
+];
+const SECOES_EXAME = [
+  { id: "indic", nome: "Quando pedir", abbr: "Indicação" },
+  { id: "preparo", nome: "Preparo e coleta", abbr: "Preparo" },
+  { id: "ref", nome: "Valores de referência", abbr: "Ref" },
+  { id: "interp", nome: "Como interpretar", abbr: "Leitura" },
+  { id: "causas", nome: "Aumenta ou diminui em", abbr: "Causas" },
+  { id: "limites", nome: "Limitações e interferentes", abbr: "Limites" },
+  { id: "perolas", nome: "Pérolas e pegadinhas", abbr: "Pérolas" },
+];
+const AJUSTE = ["Não precisa", "Ajustar dose", "Evitar"];
+const TONS_AJUSTE = { "Ajustar dose": "alerta", Evitar: "perigo" };
+const CAMPOS_DOENCA = [
+  { id: "curso", nome: "Curso", tipo: "um", opcoes: ["Agudo", "Subagudo", "Crônico"] },
+  { id: "notificacao", nome: "Notificação compulsória", tipo: "um", opcoes: ["Não", "Semanal", "Imediata (24 h)"], tons: { "Imediata (24 h)": "alerta" } },
+];
+const CAMPOS_MED = [
+  { id: "classe", nome: "Classe", tipo: "texto", ex: "Ex.: Diurético de alça", lista: "lista-classe" },
+  { id: "vias", nome: "Vias", tipo: "varios", opcoes: ["VO", "SL", "IV", "IM", "SC", "Inalatória", "Tópica", "Retal", "Transdérmica"] },
+  { id: "gestacao", nome: "Gestação", tipo: "um", opcoes: ["A", "B", "C", "D", "X"], tons: { D: "alerta", X: "perigo" },
+    dica: "Categoria de risco da ANVISA. A e B: sem risco demonstrado. C: sem estudos adequados em gestantes. D: risco fetal comprovado, só se o benefício justificar. X: contraindicado." },
+  { id: "lactacao", nome: "Amamentação", tipo: "um", opcoes: ["Compatível", "Usar com cautela", "Contraindicado"], tons: { "Usar com cautela": "alerta", Contraindicado: "perigo" } },
+  { id: "renal", nome: "Ajuste renal", tipo: "um", opcoes: AJUSTE, tons: TONS_AJUSTE },
+  { id: "hepatico", nome: "Ajuste hepático", tipo: "um", opcoes: AJUSTE, tons: TONS_AJUSTE },
+  { id: "receita", nome: "Receita", tipo: "um", opcoes: ["Simples", "Antimicrobiano (2 vias)", "Controle especial (C1)", "Notificação B (azul)", "Notificação A (amarela)"],
+    tons: { "Controle especial (C1)": "alerta", "Notificação B (azul)": "alerta", "Notificação A (amarela)": "alerta" } },
+  { id: "monitorar", nome: "Monitorar", tipo: "varios", opcoes: ["Função renal", "Potássio", "Sódio", "Glicemia", "Função hepática", "Hemograma", "INR", "Nível sérico", "ECG / QT", "PA e FC"] },
+];
+const CAMPOS_EXAME = [
+  { id: "categoria", nome: "Tipo de exame", tipo: "um", opcoes: ["Laboratório", "Imagem", "Método gráfico", "Prova funcional", "Endoscopia", "Anatomopatológico", "Microbiologia"] },
+  { id: "amostra", nome: "Amostra", tipo: "um", opcoes: ["Sangue venoso", "Sangue arterial", "Urina", "Fezes", "Líquor", "Líquido cavitário", "Escarro", "Swab", "Tecido"],
+    se: (c) => ["Laboratório", "Microbiologia", "Anatomopatológico"].includes(c.categoria) },
+  { id: "contraste", nome: "Contraste", tipo: "um", opcoes: ["Sem contraste", "Iodado", "Gadolínio", "Bário"], se: (c) => c.categoria === "Imagem" },
+  { id: "radiacao", nome: "Radiação ionizante", tipo: "um", opcoes: ["Não", "Sim"], se: (c) => c.categoria === "Imagem", tons: { Sim: "alerta" } },
+  { id: "jejum", nome: "Jejum", tipo: "um", opcoes: ["Não precisa", "4 h", "8 h", "12 h"] },
+  { id: "invasivo", nome: "Invasivo", tipo: "um", opcoes: ["Não", "Pouco", "Sim"] },
+  { id: "referencia", nome: "Referência", tipo: "texto", ex: "Ex.: 3,5–5,0 mEq/L" },
+  { id: "sens", nome: "Sensibilidade", tipo: "texto", ex: "Ex.: 90%", curto: true },
+  { id: "espec", nome: "Especificidade", tipo: "texto", ex: "Ex.: 75%", curto: true },
+];
+const TIPOS = {
+  doenca: { id: "doenca", nome: "Doença", plural: "Doenças", secoes: SECOES_DOENCA, campos: CAMPOS_DOENCA, exNome: "Ex.: Insuficiência cardíaca",
+    prefixoSin: "Também", rotuloSin: "Sinônimos e siglas", exSin: "Ex.: IC, ICC", rotuloLig: "Diferenciais", abbrLig: "Ddx",
+    exLig: "Ex.: DPOC exacerbada, Tromboembolismo pulmonar", vazioLig: "Nenhum diferencial ainda." },
+  medicamento: { id: "medicamento", nome: "Medicamento", plural: "Medicamentos", secoes: SECOES_MED, campos: CAMPOS_MED, exNome: "Ex.: Furosemida",
+    prefixoSin: "Nomes comerciais", rotuloSin: "Nomes comerciais e siglas", exSin: "Ex.: Lasix", rotuloLig: "Usado em", abbrLig: "Uso",
+    exLig: "Ex.: Insuficiência cardíaca, Síndrome nefrótica", vazioLig: "Nenhuma doença ligada ainda." },
+  exame: { id: "exame", nome: "Exame", plural: "Exames", secoes: SECOES_EXAME, campos: CAMPOS_EXAME, exNome: "Ex.: BNP",
+    prefixoSin: "Também", rotuloSin: "Siglas e outros nomes", exSin: "Ex.: NT-proBNP", rotuloLig: "Pedido em", abbrLig: "Pedido",
+    exLig: "Ex.: Insuficiência cardíaca", vazioLig: "Nenhuma doença ligada ainda." },
+};
+const ORDEM_TIPOS = ["doenca", "medicamento", "exame"];
+const CLASSES = ["Betabloqueador", "IECA", "BRA", "Bloqueador de canal de cálcio", "Diurético de alça", "Diurético tiazídico", "Antagonista mineralocorticoide",
+  "iSGLT2", "Agonista GLP-1", "Biguanida", "Sulfonilureia", "Insulina", "Estatina", "Antiagregante plaquetário", "Anticoagulante", "Nitrato", "Antiarrítmico",
+  "Digitálico", "Vasopressor", "Inotrópico", "Betalactâmico", "Macrolídeo", "Quinolona", "Aminoglicosídeo", "Glicopeptídeo", "Antifúngico", "Antiviral",
+  "Corticoide", "AINE", "Opioide", "Analgésico simples", "IBP", "Antiemético", "Broncodilatador β2-agonista", "Anticolinérgico inalatório", "Anti-histamínico",
+  "ISRS", "Antipsicótico", "Benzodiazepínico", "Anticonvulsivante", "Hormônio tireoidiano", "Imunossupressor"];
+const tipoDe = (f) => (f && TIPOS[f.tipo] ? f.tipo : "doenca");
+const secoesDe = (f) => TIPOS[tipoDe(f)].secoes;
+const secaoDe = (f, id) => secoesDe(f).find((s) => s.id === id) || null;
+const abbrSecao = (f, id) => { const s = secaoDe(f, id); return s ? s.abbr : "sem seção"; };
+const temValor = (v) => (Array.isArray(v) ? v.length > 0 : typeof v === "string" ? v.trim() !== "" : v != null);
+const textoCampo = (v) => (Array.isArray(v) ? v.join(", ") : String(v));
+const camposVisiveis = (tipo, c) => TIPOS[tipo].campos.filter((cp) => !cp.se || cp.se(c || {}));
+function limparCampos(tipo, c) {
+  const o = {};
+  for (const cp of camposVisiveis(tipo, c)) {
+    let v = c[cp.id];
+    if (typeof v === "string") v = v.trim();
+    if (temValor(v)) o[cp.id] = v;
+  }
+  return o;
+}
+function resumoCurto(f) {
+  const c = f.campos || {}, t = tipoDe(f);
+  const partes = t === "medicamento" ? [c.classe, (c.vias || []).join(", ")] : t === "exame" ? [c.categoria, c.amostra] : [c.curso];
+  return partes.filter(temValor).join(" · ");
+}
 const FONTES = ["Aula", "Enfermaria", "Livro", "Plantão", "Outra"];
 const ESPECIALIDADES = [
   ["Cardiologia", "Cardio"], ["Pneumologia", "Pneumo"], ["Gastroenterologia", "Gastro"], ["Nefrologia", "Nefro"],
@@ -65,21 +151,45 @@ function espInfo(e) {
   return { nome: e, curto: e, tom: (h % 8) + 1 };
 }
 
-/* Pistas de seção: palavras que costumam aparecer em cada parte da ficha. */
+/* Pistas de seção: palavras que costumam aparecer em cada parte da ficha, por tipo. */
+const PEROLAS = ["pegadinha", "cai na prova", "prova", "nao confundir", "cuidado", "atencao", "macete", "mnemonic", "perola", "classico", "classica", "excecao", "dica", "lembrar", "nunca", "sempre"];
 const PISTAS = {
+  doenca: {
   tto: ["tratamento", "tratar", "trata-se com", "conduta", "manejo", "dose", "posologia", "mg", "prescrev", "iniciar", "suspender", "primeira linha", "1a linha", "droga de escolha", "antibiot", "antimicrobian", "profilaxia", "vacina", "cirurgia indicada", "contraindic", "betabloq", "diuretic", "ieca", "corticoide", "insulina", "analges", "terapia", "reposicao"],
   dx: ["diagnostic", "exame complementar", "laborat", "hemograma", "ecg", "eletrocardiograma", "radiografia", "raio-x", "rx", "tomografia", "ressonancia", "ultrass", "usg", "ecocardiograma", "biopsia", "criterio", "padrao-ouro", "padrao ouro", "sensibilidade", "especificidade", "sorologia", "cultura", "gasometria", "bnp", "troponina", "d-dimero", "escore", "curb", "dosagem", "marcador", "achado"],
   clinica: ["sintoma", "sinal", "sinais", "quadro", "apresenta", "cursa com", "queixa", "ausculta", "sopro", "dor", "febre", "dispneia", "tosse", "edema", "palpa", "inspec", "percuss", "exame fisico", "estertor", "crepita", "turgencia", "manifesta", "paciente com", "leito", "semiolog", "triade", "irradia"],
   fisio: ["fisiopato", "mecanismo", "etiolog", "patogen", "ocorre por", "devido a", "leva a", "ativacao", "receptor", "inflamac", "mediador", "deposito", "obstrucao", "resulta em", "por causa", "remodelamento"],
   def: ["definic", "define-se", "definida", "definido", "conceito", "caracteriza-se", "consiste em", "classificac", "e uma sindrome", "e uma doenca", "e um tipo", "sindrome clinica"],
   perolas: ["pegadinha", "cai na prova", "prova", "nao confundir", "cuidado", "atencao", "macete", "mnemonic", "perola", "classico", "classica", "excecao", "dica", "lembrar", "nunca", "sempre"],
+},
+  medicamento: {
+    mec: ["mecanismo", "inibe", "inibidor", "bloqueia", "bloqueador", "antagonista", "agonista", "receptor", "enzima", "canal", "cotransportador", "bomba", "age no", "age na", "atua"],
+    indic: ["indicad", "indicacao", "usado em", "usada em", "usar em", "uso em", "tratamento de", "primeira linha", "droga de escolha", "profilaxia"],
+    dose: ["dose", "posologia", "mg", "mcg", "ui", "mg/kg", "ataque", "manutencao", "vezes ao dia", "12/12", "8/8", "6/6", "24/24", "infusao", "diluir", "bolus", "titular"],
+    ea: ["efeito adverso", "efeitos adversos", "colateral", "toxicidade", "hipotensao", "bradicardia", "hipercalemia", "hipocalemia", "hiponatremia", "tosse", "angioedema", "sangramento", "nefrotox", "hepatotox", "ototox", "rash", "nausea"],
+    ci: ["contraindic", "nao usar", "evitar", "gestante", "gravidez", "alergia", "hipersensibilidade"],
+    inter: ["interacao", "interage", "associado a", "associar", "potencializa", "cyp", "indutor", "inibidor enzimatico", "aumenta o nivel", "reduz o nivel", "junto com"],
+    perolas: PEROLAS,
+  },
+  exame: {
+    indic: ["indicad", "indicacao", "pedir", "solicitar", "rastreio", "rastreamento", "suspeita", "serve para", "avalia"],
+    preparo: ["jejum", "preparo", "coleta", "coletar", "tubo", "suspender", "horas antes", "repouso", "bexiga cheia", "garrote"],
+    ref: ["referencia", "normal", "valor de", "valores", "faixa", "mg/dl", "meq/l", "g/dl", "mmol", "pg/ml", "ng/ml", "ui/l", "/mm3"],
+    interp: ["interpret", "indica", "sugere", "sugestivo", "padrao", "achado", "laudo", "compativel", "sinal de", "preditivo"],
+    causas: ["aumenta em", "aumentado em", "elevado em", "eleva", "diminui em", "reduzido em", "baixo em", "causas"],
+    limites: ["falso positivo", "falso negativo", "falso-positivo", "falso-negativo", "limitac", "interfer", "nao exclui", "nao afasta"],
+    perolas: PEROLAS,
+  },
 };
-const PISTAS_RE = Object.entries(PISTAS).map(([sec, lista]) => [sec, lista.map((p) => new RegExp("(^|[^a-z0-9])" + esc(p) + (p.length <= 3 ? "($|[^a-z0-9])" : "")))]);
-function sugerirSecao(texto) {
+const PISTAS_RE = {};
+for (const [tipo, mapa] of Object.entries(PISTAS)) {
+  PISTAS_RE[tipo] = Object.entries(mapa).map(([sec, lista]) => [sec, lista.map((p) => new RegExp("(^|[^a-z0-9])" + esc(p) + (p.length <= 3 ? "($|[^a-z0-9])" : "")))]);
+}
+function sugerirSecao(texto, tipo) {
   const t = fold(texto);
   if (t.trim().length < 3) return null;
   let melhor = null, pontos = 0;
-  for (const [sec, res] of PISTAS_RE) {
+  for (const [sec, res] of PISTAS_RE[tipo] || PISTAS_RE.doenca) {
     let s = 0; for (const re of res) if (re.test(t)) s++;
     if (s > pontos) { pontos = s; melhor = sec; }
   }
@@ -296,6 +406,17 @@ function semearExemplos() {
   nota("ex-pac-dx", "ex-pac", "dx", "Aula", t(2, 25), "CURB-65: Confusão, Ureia > 50 mg/dL, FR ≥ 30 irpm, PAS < 90 ou PAD ≤ 60 mmHg, idade ≥ 65 anos.\n0–1 ponto: tratar em casa. 2: considerar internação. 3 ou mais: internar; com 4–5, avaliar UTI.");
   nota("ex-cx-1", null, null, "Enfermaria", t(1), "Estenose aórtica: tríade clássica de angina, síncope e dispneia. Sopro sistólico ejetivo em foco aórtico, irradiando para as carótidas.");
   nota("ex-cx-2", null, null, "Aula", t(0, -60), "Tratamento da PAC em paciente com comorbidade (DPOC, diabetes, IC): betalactâmico + macrolídeo, ou quinolona respiratória sozinha.");
+  ficha("ex-furo", { tipo: "medicamento", nome: "Furosemida", especialidade: "Cardiologia", sinonimos: ["Lasix"], diferenciais: ["Insuficiência cardíaca", "Síndrome nefrótica"],
+    campos: { classe: "Diurético de alça", vias: ["VO", "IV"], gestacao: "C", receita: "Simples", monitorar: ["Função renal", "Potássio", "Sódio"] },
+    criadaEm: t(2, 40), atualizadaEm: t(2, 40), rev: { passo: 0, proxima: addDias(2), vezes: 0, ultima: null } });
+  nota("ex-furo-mec", "ex-furo", "mec", "Aula", t(2, 40), "Inibe o cotransportador Na-K-2Cl no ramo ascendente espesso da alça de Henle.");
+  nota("ex-furo-ea", "ex-furo", "ea", "Livro", t(2, 41), "Hipocalemia, hiponatremia, alcalose metabólica, hiperuricemia e ototoxicidade (mais com dose alta IV feita rápido).");
+  ficha("ex-bnp", { tipo: "exame", nome: "BNP", especialidade: "Cardiologia", sinonimos: ["NT-proBNP", "Peptídeo natriurético tipo B"], diferenciais: ["Insuficiência cardíaca"],
+    campos: { categoria: "Laboratório", amostra: "Sangue venoso", jejum: "Não precisa", referencia: "IC improvável no quadro agudo: BNP < 100 pg/mL ou NT-proBNP < 300 pg/mL" },
+    criadaEm: t(1, 30), atualizadaEm: t(1, 30), rev: { passo: 0, proxima: addDias(1), vezes: 0, ultima: null } });
+  nota("ex-bnp-interp", "ex-bnp", "interp", "Aula", t(1, 30), "Valor preditivo negativo alto: BNP normal praticamente afasta IC como causa da dispneia.");
+  nota("ex-bnp-lim", "ex-bnp", "limites", "Livro", t(1, 31), "Obesidade baixa o BNP (falso negativo). Idade avançada, insuficiência renal e fibrilação atrial elevam (falso positivo).");
+  nota("ex-bnp-perola", "ex-bnp", "perolas", "Aula", t(1, 32), "Em uso de sacubitril-valsartana, prefira o NT-proBNP: o BNP sobe porque a neprilisina, que o degrada, está inibida.");
 }
 
 let memo = { ver: -1 };
@@ -351,9 +472,9 @@ function editarNota(nota, patch) {
   if (n.fichaId && n.fichaId !== antes) novidade(n.fichaId);
 }
 function apagarNota(nota) { gravar("notas/" + nota.id, null); }
-function novaFicha({ nome, especialidade, sinonimos, diferenciais }) {
+function novaFicha({ nome, especialidade, sinonimos, diferenciais, tipo, campos }) {
   const id = uid("f");
-  gravar("fichas/" + id, { nome, especialidade: especialidade || "", sinonimos: sinonimos || [], diferenciais: diferenciais || [], criadaEm: Date.now(), rev: null, v: 1 });
+  gravar("fichas/" + id, { tipo: TIPOS[tipo] ? tipo : "doenca", nome, especialidade: especialidade || "", sinonimos: sinonimos || [], diferenciais: diferenciais || [], campos: campos || {}, criadaEm: Date.now(), rev: null, v: 1 });
   return id;
 }
 function revisarFicha(f, nota) { gravar("fichas/" + f.id, Object.assign(semMeta(f), { rev: proximaRev(f.rev, nota) })); }
@@ -371,15 +492,17 @@ function apagarExemplos() {
   for (const f of d.fichas.values()) if (f.exemplo) gravar("fichas/" + f.id, null);
 }
 function fichaComoTexto(f, notas) {
-  let s = `${f.nome}\n${f.especialidade || ""}\n`;
-  if ((f.sinonimos || []).length) s += `Também: ${f.sinonimos.join(", ")}\n`;
-  for (const sec of SECOES) {
+  const tipo = tipoDe(f), T = TIPOS[tipo], c = f.campos || {};
+  let s = `${f.nome}\n${T.nome}${f.especialidade ? " · " + f.especialidade : ""}\n`;
+  if ((f.sinonimos || []).length) s += `${T.prefixoSin}: ${f.sinonimos.join(", ")}\n`;
+  for (const cp of camposVisiveis(tipo, c)) if (temValor(c[cp.id])) s += `${cp.nome}: ${textoCampo(c[cp.id])}\n`;
+  for (const sec of T.secoes) {
     const ns = notas.filter((n) => n.secao === sec.id);
     if (!ns.length) continue;
     s += `\n${sec.nome.toUpperCase()}\n`;
     for (const n of ns) s += `- ${String(n.texto).replace(/\n/g, "\n  ")}\n`;
   }
-  if ((f.diferenciais || []).length) s += `\nDIFERENCIAIS\n${f.diferenciais.join(", ")}\n`;
+  if ((f.diferenciais || []).length) s += `\n${T.rotuloLig.toUpperCase()}\n${f.diferenciais.join(", ")}\n`;
   return s.trim();
 }
 const listaDeTexto = (s) => [...new Set(String(s || "").split(/[,;\n]/).map((x) => x.trim()).filter(Boolean))];
@@ -574,7 +697,7 @@ function Hoje({ d, nav }) {
           const f = n.fichaId ? d.fichas.get(n.fichaId) : null;
           return html`<li key=${n.id}><button class="linha" onClick=${() => (f ? nav.abrirFicha(f.id, n.secao) : nav.editarNota(n))}>
             <span class="clamp2">${n.texto}</span><span class="meta">${quando(n.atualizadaEm || n.criadaEm)}</span>
-            <span class="linha-sub">${f ? html`<${Aba} esp=${f.especialidade}/><span class="meta">${f.nome} › ${SECAO[n.secao] ? SECAO[n.secao].abbr : "sem seção"}</span>` : html`<span class="meta">Caixa de entrada</span>`}</span>
+            <span class="linha-sub">${f ? html`<${Aba} esp=${f.especialidade}/><span class="meta">${f.nome} › ${abbrSecao(f, n.secao)}</span>` : html`<span class="meta">Caixa de entrada</span>`}</span>
           </button></li>`;
         })}</ul>
       </section>` : null}
@@ -590,44 +713,61 @@ function Hoje({ d, nav }) {
 }
 
 /* ---------- Lista de fichas ---------- */
+function TipoTag({ f }) {
+  const t = tipoDe(f);
+  return t === "doenca" ? null : html`<span class=${"tipo-tag tipo-" + t}>${TIPOS[t].nome}</span>`;
+}
 function LinhaFicha({ f, notas, ativo, onClick }) {
+  const secoes = secoesDe(f);
   const tem = new Set(notas.map((n) => n.secao));
-  const faltam = SECOES.filter((s) => !tem.has(s.id));
-  const cheias = SECOES.filter((s) => tem.has(s.id));
+  const faltam = secoes.filter((s) => !tem.has(s.id));
+  const cheias = secoes.filter((s) => tem.has(s.id));
+  const sub = resumoCurto(f);
   return html`<button class=${"ficha-linha" + (ativo ? " ativo" : "")} aria-current=${ativo ? "true" : undefined} onClick=${onClick}>
     <span class="ficha-linha-topo"><span class="ficha-linha-nome">${f.nome}</span>${f.exemplo ? html`<span class="selo">exemplo</span>` : null}</span>
+    ${sub ? html`<span class="ficha-linha-sub">${sub}</span>` : null}
     <span class="ficha-linha-meta">
+      <${TipoTag} f=${f}/>
       <${Aba} esp=${f.especialidade}/>
       <span>${plural(notas.length, "nota", "notas")}</span>
-      <span class="pontos" role="img" aria-label=${`Seções preenchidas: ${cheias.map((s) => s.abbr).join(", ") || "nenhuma"}`}>${SECOES.map((s) => html`<i key=${s.id} class=${tem.has(s.id) ? "cheio" : ""}></i>`)}</span>
+      <span class="pontos" role="img" aria-label=${`Seções preenchidas: ${cheias.map((s) => s.abbr).join(", ") || "nenhuma"}`}>${secoes.map((s) => html`<i key=${s.id} class=${tem.has(s.id) ? "cheio" : ""}></i>`)}</span>
     </span>
     ${faltam.length === 0 ? html`<span class="falta ok">Todas as seções preenchidas</span>`
-      : faltam.length === SECOES.length ? html`<span class="falta">Sem anotações</span>`
+      : faltam.length === secoes.length ? html`<span class="falta">Sem anotações</span>`
       : html`<span class="falta">Falta: ${faltam.map((s) => s.abbr).join(", ")}</span>`}
   </button>`;
 }
 
 function ListaFichas({ d, nav, sel }) {
   const [esp, setEspBruto] = useState(() => LS.get("fichario.filtro", ""));
+  const [tipoF, setTipoBruto] = useState(() => { const t = LS.get("fichario.tipoFiltro", ""); return TIPOS[t] ? t : ""; });
   const [ordem, setOrdemBruta] = useState(() => LS.get("fichario.ordem", "az"));
   const [q, setQ] = useState("");
   const setEsp = (e) => { setEspBruto(e); LS.set("fichario.filtro", e); };
+  const setTipoF = (t) => { setTipoBruto(t); LS.set("fichario.tipoFiltro", t); };
   const setOrdem = (o) => { setOrdemBruta(o); LS.set("fichario.ordem", o); };
+  const porTipo = useMemo(() => { const m = { doenca: 0, medicamento: 0, exame: 0 }; for (const f of d.lista) m[tipoDe(f)]++; return m; }, [d.ver]);
   const contagem = useMemo(() => {
     const m = new Map();
-    for (const f of d.lista) { const k = espInfo(f.especialidade).nome; m.set(k, (m.get(k) || 0) + 1); }
+    for (const f of d.lista) { if (tipoF && tipoDe(f) !== tipoF) continue; const k = espInfo(f.especialidade).nome; m.set(k, (m.get(k) || 0) + 1); }
     return [...m].sort((a, b) => a[0].localeCompare(b[0], "pt-BR"));
-  }, [d.ver]);
+  }, [d.ver, tipoF]);
   const espAtivo = esp && contagem.some(([e]) => e === esp) ? esp : "";
   const termo = fold(q).trim();
-  let lista = d.lista.filter((f) => (!espAtivo || espInfo(f.especialidade).nome === espAtivo) && (!termo || fold([f.nome, ...(f.sinonimos || [])].join(" ")).includes(termo)));
+  let lista = d.lista.filter((f) => (!tipoF || tipoDe(f) === tipoF) && (!espAtivo || espInfo(f.especialidade).nome === espAtivo)
+    && (!termo || fold([f.nome, ...(f.sinonimos || []), resumoCurto(f)].join(" ")).includes(termo)));
   if (ordem === "recentes") lista = [...lista].sort((a, b) => (d.atividade.get(b.id) || b.criadaEm || 0) - (d.atividade.get(a.id) || a.criadaEm || 0));
+  const totalTipo = tipoF ? porTipo[tipoF] : d.lista.length;
   return html`<div class="view lista-fichas">
-    <header class="vhead"><h1 class="vtitle">Fichas</h1><button class="btn" onClick=${() => nav.novaFicha()}>${ico("mais")} Nova ficha</button></header>
+    <header class="vhead"><h1 class="vtitle">Fichas</h1><button class="btn" onClick=${() => nav.novaFicha(tipoF ? { tipo: tipoF } : null)}>${ico("mais")} Nova ficha</button></header>
     <div class="lista-ctrl">
-      <input id="filtro-fichas" class="campo" type="search" placeholder="Filtrar por nome ou sinônimo" value=${q} onInput=${(e) => setQ(e.target.value)} aria-label="Filtrar fichas"/>
+      <div class="chips rolagem" role="group" aria-label="Tipo de ficha">
+        <button class="chip" aria-pressed=${!tipoF} onClick=${() => setTipoF("")}>Todas <span class="n">${d.lista.length}</span></button>
+        ${ORDEM_TIPOS.map((t) => html`<button key=${t} class="chip" aria-pressed=${tipoF === t} onClick=${() => setTipoF(tipoF === t ? "" : t)}>${TIPOS[t].plural} <span class="n">${porTipo[t]}</span></button>`)}
+      </div>
+      <input id="filtro-fichas" class="campo" type="search" placeholder="Filtrar por nome, sigla ou classe" value=${q} onInput=${(e) => setQ(e.target.value)} aria-label="Filtrar fichas"/>
       ${contagem.length > 1 ? html`<div class="chips rolagem" role="group" aria-label="Especialidade">
-        <button class="chip" aria-pressed=${!espAtivo} onClick=${() => setEsp("")}>Todas <span class="n">${d.lista.length}</span></button>
+        <button class="chip" aria-pressed=${!espAtivo} onClick=${() => setEsp("")}>Todas as áreas <span class="n">${totalTipo}</span></button>
         ${contagem.map(([e, n]) => { const i = espInfo(e); return html`<button key=${e} class="chip" aria-pressed=${espAtivo === e} onClick=${() => setEsp(espAtivo === e ? "" : e)}><i class="tom" style=${`--tom: var(--t${i.tom})`}></i>${i.curto} <span class="n">${n}</span></button>`; })}
       </div>` : null}
       <div class="seg" role="group" aria-label="Ordem">
@@ -651,44 +791,72 @@ function NotaItem({ n, nav }) {
   </div></li>`;
 }
 
+function ValorCampo({ cp, v }) {
+  if (Array.isArray(v)) return v.map((x) => html`<span key=${x} class="tag">${x}</span>`);
+  const tom = (cp.tons && cp.tons[v]) || "";
+  return html`<span class=${"valor" + (tom ? " " + tom : "")}>${cp.id === "gestacao" ? "Categoria " + v : v}</span>`;
+}
+function Resumo({ f, nav }) {
+  const tipo = tipoDe(f), c = f.campos || {};
+  const cheios = camposVisiveis(tipo, c).filter((cp) => temValor(c[cp.id]));
+  const editar = () => nav.editarFicha(f);
+  if (!cheios.length) {
+    if (tipo === "doenca") return null;
+    return html`<div class="resumo resumo-vazio">
+      <p class="muted small">${tipo === "medicamento" ? "Marque classe, vias, categoria na gestação, ajuste renal, tipo de receita e o que monitorar." : "Marque o tipo de exame, a amostra, o jejum, a referência e a sensibilidade."}</p>
+      <button class="btn" onClick=${editar}>Preencher o resumo</button>
+    </div>`;
+  }
+  return html`<div class="resumo" role="button" tabindex="0" aria-label="Editar o resumo" onClick=${editar} onKeyDown=${(e) => { if (e.key === "Enter") editar(); }}>
+    <div class="resumo-topo"><span class="resumo-titulo">Resumo</span><span class="resumo-editar">editar</span></div>
+    <dl class="resumo-grade">${cheios.map((cp) => html`<div key=${cp.id} class=${"resumo-item" + (cp.tipo === "texto" && !cp.curto ? " largo" : "")}>
+      <dt>${cp.nome}</dt><dd><${ValorCampo} cp=${cp} v=${c[cp.id]}/></dd>
+    </div>`)}</dl>
+  </div>`;
+}
+
 function FichaView({ f, d, nav, foco, setFoco, largo }) {
+  const tipo = tipoDe(f), T = TIPOS[tipo], secoes = T.secoes;
   const notas = d.porFicha.get(f.id) || [];
   const porSecao = useMemo(() => {
-    const m = Object.fromEntries(SECOES.map((s) => [s.id, []])); const sem = [];
+    const m = Object.fromEntries(secoes.map((s) => [s.id, []])); const sem = [];
     for (const n of notas) (m[n.secao] || sem).push(n);
     return { m, sem };
-  }, [notas]);
+  }, [notas, tipo]);
   const ir = (id) => { const el = document.getElementById("sec-" + id); if (el) el.scrollIntoView({ block: "start", behavior: reduzMovimento() ? "auto" : "smooth" }); };
   useEffect(() => { if (foco) { requestAnimationFrame(() => ir(foco)); setFoco(null); } }, [foco]);
-  const difs = (f.diferenciais || []).map((nome) => ({ nome, ficha: acharFicha(d.lista, nome) }));
-  const citadaEm = d.lista.filter((x) => x.id !== f.id && (x.diferenciais || []).some((nome) => termosDaFicha(f).includes(fold(nome).trim())));
+  const ligadas = (f.diferenciais || []).map((nome) => ({ nome, ficha: acharFicha(d.lista, nome) }));
+  const citam = d.lista.filter((x) => x.id !== f.id && (x.diferenciais || []).some((nome) => termosDaFicha(f).includes(fold(nome).trim())));
+  const citamTipo = (t) => citam.filter((x) => tipoDe(x) === t);
   const tom = espInfo(f.especialidade).tom;
-  const copiar = () => {
+  const compartilhar = () => {
     const t = fichaComoTexto(f, notas);
     if (window.Android) { window.Android.compartilhar(f.nome, t); return; }
     try {
       navigator.clipboard.writeText(t).then(() => aviso("Ficha copiada como texto."), () => nav.copiar(t));
     } catch (e) { nav.copiar(t); }
   };
+  const link = (x) => html`<button key=${x.id} class="chip link" onClick=${() => nav.abrirFicha(x.id)}>${x.nome} ›</button>`;
   const r = f.rev;
   return html`<div class="view">
     ${!largo ? html`<button class="voltar" onClick=${nav.fecharFicha}>${ico("voltar")} Fichas</button>` : null}
     <article class="cartao" style=${`--tom: var(--t${tom})`}>
-      <span class="cartao-aba">${espInfo(f.especialidade).nome}</span>
+      <span class="cartao-aba">${T.nome} · ${espInfo(f.especialidade).nome}</span>
       <header class="cartao-cabeca">
         <h1 class="ficha-nome">${f.nome}${f.exemplo ? html` <span class="selo">exemplo</span>` : null}</h1>
-        ${(f.sinonimos || []).length ? html`<p class="sinonimos">Também: ${f.sinonimos.join(" · ")}</p>` : null}
+        ${(f.sinonimos || []).length ? html`<p class="sinonimos">${T.prefixoSin}: ${f.sinonimos.join(" · ")}</p>` : null}
         <div class="acoes">
           <button class="btn primario" onClick=${() => nav.anotar({ fichaId: f.id })}>${ico("mais")} Anotar nesta ficha</button>
           <button class="btn" disabled=${!notas.length} onClick=${() => nav.revisar([f.id])}>Revisar</button>
           <button class="btn" onClick=${() => nav.editarFicha(f)}>Editar</button>
-          <button class="btn" disabled=${!notas.length} onClick=${copiar}>Compartilhar</button>
+          <button class="btn" disabled=${!notas.length} onClick=${compartilhar}>Compartilhar</button>
         </div>
       </header>
+      <${Resumo} f=${f} nav=${nav}/>
       <nav class="secnav" aria-label="Ir para a seção">
-        ${SECOES.map((s) => { const c = porSecao.m[s.id].length; return html`<button key=${s.id} class=${"secnav-item" + (c ? "" : " vazio")} onClick=${() => ir(s.id)}>${s.abbr}${c ? html`<span class="n">${c}</span>` : null}</button>`; })}
+        ${secoes.map((s) => { const c = porSecao.m[s.id].length; return html`<button key=${s.id} class=${"secnav-item" + (c ? "" : " vazio")} onClick=${() => ir(s.id)}>${s.abbr}${c ? html`<span class="n">${c}</span>` : null}</button>`; })}
       </nav>
-      ${SECOES.map((s) => html`<section key=${s.id} class=${"secao secao-" + s.id} id=${"sec-" + s.id}>
+      ${secoes.map((s) => html`<section key=${s.id} class=${"secao secao-" + s.id} id=${"sec-" + s.id}>
         <div class="secao-margem">
           <span class="sec-abbr">${s.abbr}</span>
           ${s.abbr !== s.nome ? html`<span class="sec-nome">${s.nome}</span>` : null}
@@ -700,15 +868,23 @@ function FichaView({ f, d, nav, foco, setFoco, largo }) {
             : html`<button class="vazio-btn" onClick=${() => nav.anotar({ fichaId: f.id, secao: s.id })}>Nada anotado ainda</button>`}
         </div>
       </section>`)}
-      ${porSecao.sem.length ? html`<section class="secao"><div class="secao-margem"><span class="sec-abbr">Sem seção</span></div>
+      ${porSecao.sem.length ? html`<section class="secao"><div class="secao-margem"><span class="sec-abbr">Sem seção</span><span class="sec-nome">Toque na nota para escolher</span></div>
         <div class="secao-conteudo"><ul class="notas">${porSecao.sem.map((n) => html`<${NotaItem} key=${n.id} n=${n} nav=${nav}/>`)}</ul></div></section>` : null}
       <footer class="cartao-rodape">
-        <h2>Diferenciais</h2>
-        ${difs.length ? html`<div class="chips">${difs.map((x) => x.ficha
-            ? html`<button key=${x.nome} class="chip link" onClick=${() => nav.abrirFicha(x.ficha.id)}>${x.nome} ›</button>`
-            : html`<button key=${x.nome} class="chip pontilhado" title="Criar esta ficha" onClick=${() => nav.novaFicha({ nome: x.nome, especialidade: f.especialidade })}>+ ${x.nome}</button>`)}</div>`
-          : html`<p class="muted small">Nenhum diferencial ainda. <button class="link-btn" onClick=${() => nav.editarFicha(f)}>Adicionar</button></p>`}
-        ${citadaEm.length ? html`<p class="small muted">Aparece como diferencial em: ${citadaEm.map((x, i) => html`${i ? ", " : ""}<button class="link-btn" onClick=${() => nav.abrirFicha(x.id)}>${x.nome}</button>`)}</p>` : null}
+        <div class="ligacao">
+          <h2>${T.rotuloLig}</h2>
+          ${ligadas.length ? html`<div class="chips">${ligadas.map((x) => x.ficha
+              ? link(x.ficha)
+              : html`<button key=${x.nome} class="chip pontilhado" title="Criar esta ficha" onClick=${() => nav.novaFicha({ nome: x.nome, especialidade: f.especialidade, tipo: "doenca" })}>+ ${x.nome}</button>`)}</div>`
+            : html`<p class="muted small">${T.vazioLig} <button class="link-btn" onClick=${() => nav.editarFicha(f)}>Adicionar</button></p>`}
+        </div>
+        ${tipo === "doenca" ? html`
+          ${citamTipo("doenca").length ? html`<div class="ligacao"><h2>É diferencial de</h2><div class="chips">${citamTipo("doenca").map(link)}</div></div>` : null}
+          <div class="ligacao"><h2>Medicamentos</h2><div class="chips">${citamTipo("medicamento").map(link)}
+            <button class="chip pontilhado" onClick=${() => nav.novaFicha({ tipo: "medicamento", especialidade: f.especialidade, diferenciais: [f.nome] })}>+ Medicamento</button></div></div>
+          <div class="ligacao"><h2>Exames</h2><div class="chips">${citamTipo("exame").map(link)}
+            <button class="chip pontilhado" onClick=${() => nav.novaFicha({ tipo: "exame", especialidade: f.especialidade, diferenciais: [f.nome] })}>+ Exame</button></div></div>`
+        : citam.length ? html`<div class="ligacao"><h2>Aparece em</h2><div class="chips">${citam.map(link)}</div></div>` : null}
         <p class="rev-info">${r ? `Próxima revisão ${rotuloDias(diasAte(r.proxima))}${r.vezes ? ` · revisada ${plural(r.vezes, "vez", "vezes")}` : ""}.` : "Entra na revisão quando receber a primeira nota."}</p>
       </footer>
     </article>
@@ -727,10 +903,16 @@ function Revisao({ d, rev, setRev, nav }) {
     else setRev(null);
   }
   if (!f) return null;
+  const tipo = tipoDe(f), T = TIPOS[tipo], c = f.campos || {};
   const notas = d.porFicha.get(id) || [];
-  const secs = SECOES.filter((s) => notas.some((n) => n.secao === s.id));
-  const blocos = secs.map((s) => ({ id: s.id, abbr: s.abbr, nome: s.nome, notas: notas.filter((n) => n.secao === s.id) }));
-  if ((f.diferenciais || []).length) blocos.push({ id: "difs", abbr: "Ddx", nome: "Diferenciais", lista: f.diferenciais });
+  const blocos = [];
+  const cheios = camposVisiveis(tipo, c).filter((cp) => temValor(c[cp.id]));
+  if (cheios.length) blocos.push({ id: "resumo", abbr: "Resumo", nome: cheios.map((cp) => cp.nome).join(", "), campos: cheios });
+  for (const s of T.secoes) {
+    const ns = notas.filter((n) => n.secao === s.id);
+    if (ns.length) blocos.push({ id: s.id, abbr: s.abbr, nome: s.nome, notas: ns });
+  }
+  if ((f.diferenciais || []).length) blocos.push({ id: "ligadas", abbr: T.abbrLig, nome: T.rotuloLig, lista: f.diferenciais });
   const todas = blocos.every((b) => abertas[b.id]);
   const p = f.rev && Number.isFinite(f.rev.passo) ? f.rev.passo : 0;
   const opcoes = [["esqueci", "Esqueci", 1], ["parcial", "Lembrei em parte", ESCADA[p]], ["bem", "Lembrei bem", ESCADA[Math.min(ESCADA.length - 1, p + 1)]]];
@@ -740,13 +922,18 @@ function Revisao({ d, rev, setRev, nav }) {
     if (rev.i + 1 < rev.fila.length) setRev({ fila: rev.fila, i: rev.i + 1 });
     else { setRev(null); aviso(rev.fila.length > 1 ? "Revisão do dia concluída." : `${f.nome} volta ${rotuloDias(ESCADA[prox.passo])}.`); }
   };
+  const corpo = (b) => {
+    if (b.notas) return html`<ul class="notas">${b.notas.map((n) => html`<li key=${n.id}><div class="nota estatica"><span class="nota-texto">${n.texto}</span></div></li>`)}</ul>`;
+    if (b.campos) return html`<dl class="resumo-grade">${b.campos.map((cp) => html`<div key=${cp.id} class=${"resumo-item" + (cp.tipo === "texto" && !cp.curto ? " largo" : "")}><dt>${cp.nome}</dt><dd><${ValorCampo} cp=${cp} v=${c[cp.id]}/></dd></div>`)}</dl>`;
+    return html`<p class="nota-texto">${b.lista.join(" · ")}</p>`;
+  };
   return html`<div class="view">
     <div class="rev-topo">
       <button class="voltar" onClick=${() => setRev(null)}>${ico("x")} Sair da revisão</button>
       ${rev.fila.length > 1 ? html`<span class="meta">${rev.i + 1} de ${rev.fila.length}</span>` : null}
     </div>
     <article class="cartao" style=${`--tom: var(--t${espInfo(f.especialidade).tom})`}>
-      <span class="cartao-aba">${espInfo(f.especialidade).nome}</span>
+      <span class="cartao-aba">${T.nome} · ${espInfo(f.especialidade).nome}</span>
       <header class="cartao-cabeca">
         <h1 class="ficha-nome">${f.nome}</h1>
         <p class="instrucao">Antes de abrir cada parte, tente lembrar o que você anotou. Depois diga como foi.</p>
@@ -758,9 +945,7 @@ function Revisao({ d, rev, setRev, nav }) {
             <span class="sec-abbr">${b.abbr}</span><span class="sec-titulo">${b.nome}</span>
             <span class="meta">${aberta ? "esconder" : b.notas ? `${plural(b.notas.length, "nota", "notas")} · mostrar` : "mostrar"}</span>
           </button>
-          ${aberta ? html`<div class="rev-corpo">${b.notas
-            ? html`<ul class="notas">${b.notas.map((n) => html`<li key=${n.id}><div class="nota estatica"><span class="nota-texto">${n.texto}</span></div></li>`)}</ul>`
-            : html`<p class="nota-texto">${b.lista.join(" · ")}</p>`}</div>` : null}
+          ${aberta ? html`<div class="rev-corpo">${corpo(b)}</div>` : null}
         </section>`;
       }) : html`<p class="cartao-cabeca muted">Esta ficha ainda não tem notas.</p>`}
     </article>
@@ -806,10 +991,10 @@ function Buscar({ d, nav }) {
   const termos = fold(q).split(/\s+/).filter(Boolean);
   const res = useMemo(() => {
     if (!termos.length) return null;
-    const fichas = d.lista.filter((f) => { const h = fold([f.nome, ...(f.sinonimos || []), f.especialidade || "", ...(f.diferenciais || [])].join(" ")); return termos.every((t) => h.includes(t)); });
+    const fichas = d.lista.filter((f) => { const h = fold([f.nome, ...(f.sinonimos || []), f.especialidade || "", ...(f.diferenciais || []), TIPOS[tipoDe(f)].nome, ...Object.values(f.campos || {}).map(textoCampo)].join(" ")); return termos.every((t) => h.includes(t)); });
     const notas = [...d.notas.values()].filter((n) => {
       const f = n.fichaId ? d.fichas.get(n.fichaId) : null;
-      const s = SECAO[n.secao];
+      const s = f ? secaoDe(f, n.secao) : null;
       const h = fold([n.texto, f ? f.nome : "", f ? (f.sinonimos || []).join(" ") : "", s ? s.nome + " " + s.abbr : "", n.fonte || ""].join(" "));
       return termos.every((t) => h.includes(t));
     }).sort((a, b) => (b.atualizadaEm || 0) - (a.atualizadaEm || 0)).slice(0, 80);
@@ -826,7 +1011,7 @@ function Buscar({ d, nav }) {
         <ul class="fichas">${res.notas.map((n) => { const f = n.fichaId ? d.fichas.get(n.fichaId) : null; return html`<li key=${n.id}>
           <button class="achado" onClick=${() => (f ? nav.abrirFicha(f.id, n.secao) : nav.editarNota(n))}>
             <${Trecho} texto=${n.texto} termos=${termos}/>
-            <span class="onde">${f ? html`<${Aba} esp=${f.especialidade}/><span>${f.nome} › ${SECAO[n.secao] ? SECAO[n.secao].abbr : "sem seção"}</span>` : html`<span>Caixa de entrada</span>`}<span>· ${quando(n.criadaEm)}</span></span>
+            <span class="onde">${f ? html`<${Aba} esp=${f.especialidade}/><span>${f.nome} › ${abbrSecao(f, n.secao)}</span>` : html`<span>Caixa de entrada</span>`}<span>· ${quando(n.criadaEm)}</span></span>
           </button></li>`; })}</ul></section>` : null}
       ${!res.fichas.length && !res.notas.length ? html`<p class="muted">Nada encontrado para “${q.trim()}”.</p>` : null}
     </div>`}
@@ -860,14 +1045,22 @@ function Folha({ titulo, onFechar, rotuloFechar, acao, children }) {
   </div>`;
 }
 
+function SeletorTipo({ valor, onMudar }) {
+  return html`<div class="seg seg-tipos" style="--n: 3" role="radiogroup" aria-label="Tipo de ficha">
+    ${ORDEM_TIPOS.map((t) => html`<button key=${t} role="radio" aria-checked=${valor === t ? "true" : "false"} onClick=${() => onMudar(t)}>${TIPOS[t].nome}</button>`)}
+  </div>`;
+}
+
 function NovaFichaMini({ inicial, onCriar, onCancelar }) {
   const [nome, setNome] = useState(inicial.nome || "");
   const [esp, setEsp] = useState(inicial.especialidade || "");
-  const criar = () => { if (nome.trim()) onCriar({ nome: nome.trim(), especialidade: esp.trim() }); };
+  const [tipo, setTipo] = useState(TIPOS[inicial.tipo] ? inicial.tipo : "doenca");
+  const criar = () => { if (nome.trim()) onCriar({ nome: nome.trim(), especialidade: esp.trim(), tipo }); };
   const enter = (e) => { if (e.key === "Enter") { e.preventDefault(); criar(); } };
   return html`<div class="mini-form">
+    <div class="grupo"><span class="rotulo">Tipo de ficha</span><${SeletorTipo} valor=${tipo} onMudar=${setTipo}/></div>
     <div class="grupo"><label class="rotulo" for="mini-nome">Nome da ficha</label>
-      <input id="mini-nome" class="campo" value=${nome} onInput=${(e) => setNome(e.target.value)} onKeyDown=${enter} placeholder="Ex.: Estenose aórtica"/></div>
+      <input id="mini-nome" class="campo" value=${nome} onInput=${(e) => setNome(e.target.value)} onKeyDown=${enter} placeholder=${TIPOS[tipo].exNome}/></div>
     <div class="grupo"><label class="rotulo" for="mini-esp">Especialidade</label>
       <input id="mini-esp" class="campo" list="lista-esp" value=${esp} onInput=${(e) => setEsp(e.target.value)} onKeyDown=${enter} placeholder="Ex.: Cardiologia"/></div>
     <div class="linha-botoes"><button class="btn" onClick=${onCancelar}>Voltar</button><button class="btn primario" disabled=${!nome.trim()} onClick=${criar}>Criar ficha</button></div>
@@ -880,10 +1073,10 @@ function EscolherFicha({ d, valor, onEscolher, texto }) {
   const sugestoes = useMemo(() => (valor ? [] : sugerirFichas(texto || "", d.lista)), [texto, d.ver, valor]);
   if (valor) {
     const f = d.fichas.get(valor);
-    return html`<div class="ficha-escolhida"><${Aba} esp=${f && f.especialidade}/><span class="nome">${f ? f.nome : "Ficha apagada"}</span><button class="btn-texto" onClick=${() => onEscolher(null)}>Trocar</button></div>`;
+    return html`<div class="ficha-escolhida"><${Aba} esp=${f && f.especialidade}/><span class="nome">${f ? f.nome : "Ficha apagada"}</span>${f ? html`<${TipoTag} f=${f}/>` : null}<button class="btn-texto" onClick=${() => onEscolher(null)}>Trocar</button></div>`;
   }
   if (criando) return html`<${NovaFichaMini} inicial=${criando} onCancelar=${() => setCriando(null)} onCriar=${(dd) => {
-    LS.set("fichario.esp", dd.especialidade);
+    LS.set("fichario.esp", dd.especialidade); LS.set("fichario.tipo", dd.tipo);
     const id = novaFicha(dd); onEscolher(id); setCriando(null); setQ("");
   }}/>`;
   const termo = fold(q).trim();
@@ -891,22 +1084,22 @@ function EscolherFicha({ d, valor, onEscolher, texto }) {
   const exata = achadas.some((f) => fold(f.nome).trim() === termo);
   const palpite = !termo && !sugestoes.length ? nomeProvavel(texto) : "";
   const palpiteExiste = palpite && acharFicha(d.lista, palpite);
-  const espPadrao = LS.get("fichario.esp", "");
+  const novo = (nome) => setCriando({ nome, especialidade: LS.get("fichario.esp", ""), tipo: LS.get("fichario.tipo", "doenca") });
   return html`<div class="escolher-ficha">
     ${sugestoes.length ? html`<div class="sugestoes"><span class="dica">Parece ser:</span>${sugestoes.map((f) => html`<button key=${f.id} class="chip sugestao" onClick=${() => onEscolher(f.id)}>${f.nome}</button>`)}</div>` : null}
-    ${palpite && !palpiteExiste ? html`<div class="sugestoes"><button class="chip pontilhado" onClick=${() => setCriando({ nome: palpite, especialidade: espPadrao })}>+ Criar ficha “${palpite}”</button></div>` : null}
+    ${palpite && !palpiteExiste ? html`<div class="sugestoes"><button class="chip pontilhado" onClick=${() => novo(palpite)}>+ Criar ficha “${palpite}”</button></div>` : null}
     <input id="busca-ficha" class="campo" type="search" placeholder="Buscar ficha ou criar nova" value=${q} onInput=${(e) => setQ(e.target.value)} aria-label="Buscar ficha"
-      onKeyDown=${(e) => { if (e.key === "Enter") { e.preventDefault(); if (achadas[0]) onEscolher(achadas[0].id); else if (q.trim()) setCriando({ nome: q.trim(), especialidade: espPadrao }); } }}/>
+      onKeyDown=${(e) => { if (e.key === "Enter") { e.preventDefault(); if (achadas[0]) onEscolher(achadas[0].id); else if (q.trim()) novo(q.trim()); } }}/>
     ${termo ? html`<ul class="opcoes">
-      ${achadas.map((f) => html`<li key=${f.id}><button class="opcao" onClick=${() => onEscolher(f.id)}><${Aba} esp=${f.especialidade}/><span>${f.nome}</span></button></li>`)}
-      ${!exata ? html`<li><button class="opcao criar" onClick=${() => setCriando({ nome: q.trim(), especialidade: espPadrao })}>${ico("mais")} Criar ficha “${q.trim()}”</button></li>` : null}
+      ${achadas.map((f) => html`<li key=${f.id}><button class="opcao" onClick=${() => onEscolher(f.id)}><${Aba} esp=${f.especialidade}/><span>${f.nome}</span><${TipoTag} f=${f}/></button></li>`)}
+      ${!exata ? html`<li><button class="opcao criar" onClick=${() => novo(q.trim())}>${ico("mais")} Criar ficha “${q.trim()}”</button></li>` : null}
     </ul>` : null}
   </div>`;
 }
 
-function EscolherSecao({ valor, sugerida, onEscolher }) {
+function EscolherSecao({ valor, sugerida, onEscolher, secoes }) {
   return html`<div class="secoes-grade" role="radiogroup" aria-label="Seção">
-    ${SECOES.map((s) => html`<button key=${s.id} class=${"secao-opcao secao-" + s.id} role="radio" aria-checked=${valor === s.id ? "true" : "false"} onClick=${() => onEscolher(s.id)}>
+    ${(secoes || SECOES_DOENCA).map((s) => html`<button key=${s.id} class=${"secao-opcao secao-" + s.id} role="radio" aria-checked=${valor === s.id ? "true" : "false"} onClick=${() => onEscolher(s.id)}>
       <b>${s.abbr}</b><span>${s.nome}</span>${sugerida === s.id && valor !== s.id ? html`<i class="sugerida">sugerida</i>` : null}
     </button>`)}
   </div>`;
@@ -923,8 +1116,10 @@ function EditorNota({ d, nota, preset, nav }) {
   const [continuar, setContinuar] = useState(() => nova && LS.get("fichario.continuar", false));
   const [confirmar, setConfirmar] = useState(null);
   const ta = useRef(null);
-  const sug = useMemo(() => sugerirSecao(texto), [texto]);
-  const secaoEf = fichaId ? (manual ? secao : sug || secao) : null;
+  const tipoAlvo = tipoDe(fichaId ? d.fichas.get(fichaId) : null);
+  const secoesAlvo = TIPOS[tipoAlvo].secoes;
+  const sug = useMemo(() => sugerirSecao(texto, tipoAlvo), [texto, tipoAlvo]);
+  const secaoEf = fichaId ? (manual && secoesAlvo.some((s) => s.id === secao) ? secao : sug) : null;
   const mudouAlgo = nova ? !!texto.trim() : texto !== nota.texto || (fonte || "") !== (nota.fonte || "") || fichaId !== (nota.fichaId || null) || secaoEf !== (nota.secao || null);
   const pode = !!texto.trim() && (!fichaId || !!secaoEf);
 
@@ -942,7 +1137,7 @@ function EditorNota({ d, nota, preset, nav }) {
     if (nova) {
       novaNota({ texto: texto.trim(), fonte, fichaId, secao: secaoEf });
       LS.set("fichario.rascunho", null);
-      aviso(f ? `Nota salva em ${f.nome} › ${SECAO[secaoEf].abbr}.` : "Nota salva na caixa de entrada.");
+      aviso(f ? `Nota salva em ${f.nome} › ${abbrSecao(f, secaoEf)}.` : "Nota salva na caixa de entrada.");
       if (continuar) {
         setTexto(""); setManual(!!(preset && preset.secao)); setSecao((preset && preset.secao) || null); setConfirmar(null);
         if (ta.current) ta.current.focus();
@@ -980,7 +1175,7 @@ function EditorNota({ d, nota, preset, nav }) {
     </div>
     ${fichaId ? html`<div class="grupo">
       <div class="rotulo-linha"><span class="rotulo">Seção</span>${!secaoEf ? html`<span class="dica alerta">escolha a seção para salvar</span>` : null}</div>
-      <${EscolherSecao} valor=${secaoEf} sugerida=${sug} onEscolher=${(s) => { setSecao(s); setManual(true); }}/>
+      <${EscolherSecao} valor=${secaoEf} sugerida=${sug} secoes=${secoesAlvo} onEscolher=${(s) => { setSecao(s); setManual(true); }}/>
     </div>` : null}
     ${nova ? html`<label class="check" for="continuar"><input id="continuar" type="checkbox" checked=${continuar} onChange=${(e) => { setContinuar(e.target.checked); LS.set("fichario.continuar", e.target.checked); }}/>Depois de salvar, já abrir outra nota</label>`
       : html`<div class="zona">
@@ -1013,14 +1208,16 @@ function Encaixar({ d, nav }) {
     const s = sugerirFichas(atual.texto, d.lista);
     setFichaId(s[0] ? s[0].id : null); setSecao(null); setManual(false); setEditando(false); setTexto(atual.texto); setApagar(false);
   }, [atual && atual.id]);
-  const sug = useMemo(() => sugerirSecao(texto), [texto]);
-  const secaoEf = fichaId ? (manual ? secao : sug || secao) : null;
+  const tipoAlvo = tipoDe(fichaId ? d.fichas.get(fichaId) : null);
+  const secoesAlvo = TIPOS[tipoAlvo].secoes;
+  const sug = useMemo(() => sugerirSecao(texto, tipoAlvo), [texto, tipoAlvo]);
+  const secaoEf = fichaId ? (manual && secoesAlvo.some((s) => s.id === secao) ? secao : sug) : null;
   const encaixar = () => {
     if (!atual || !fichaId || !secaoEf) return;
     const f = d.fichas.get(fichaId);
     editarNota(atual, { texto: texto.trim() || atual.texto, fichaId, secao: secaoEf });
     setFeitas((x) => x + 1);
-    aviso(`Encaixada em ${f ? f.nome : "ficha"} › ${SECAO[secaoEf].abbr}.`);
+    aviso(`Encaixada em ${f ? f.nome : "ficha"} › ${abbrSecao(f, secaoEf)}.`);
   };
   return html`<${Folha} titulo=${atual ? `Encaixar · ${plural(restam, "nota", "notas")}` : "Encaixar"} rotuloFechar="Fechar" onFechar=${nav.fecharFolha}>
     ${atual ? html`
@@ -1033,7 +1230,7 @@ function Encaixar({ d, nav }) {
       <div class="grupo"><span class="rotulo">Ficha</span>
         <${EscolherFicha} key=${atual.id} d=${d} valor=${fichaId} texto=${texto} onEscolher=${(id) => { setFichaId(id); if (!id) { setManual(false); setSecao(null); } }}/></div>
       ${fichaId ? html`<div class="grupo"><div class="rotulo-linha"><span class="rotulo">Seção</span>${!secaoEf ? html`<span class="dica alerta">escolha a seção</span>` : null}</div>
-        <${EscolherSecao} valor=${secaoEf} sugerida=${sug} onEscolher=${(s) => { setSecao(s); setManual(true); }}/></div>` : null}
+        <${EscolherSecao} valor=${secaoEf} sugerida=${sug} secoes=${secoesAlvo} onEscolher=${(s) => { setSecao(s); setManual(true); }}/></div>` : null}
       <div class="encaixar-rodape">
         ${apagar
           ? html`<button class="btn perigo armado" onClick=${() => { apagarNota(atual); aviso("Nota apagada."); }}>Apagar de vez</button>`
@@ -1049,37 +1246,78 @@ function Encaixar({ d, nav }) {
   <//>`;
 }
 
+function CampoSelecao({ campo, valor, onMudar }) {
+  if (campo.tipo === "texto") {
+    return html`<input id=${"cp-" + campo.id} class="campo" list=${campo.lista || undefined} value=${valor || ""} placeholder=${campo.ex || ""} aria-label=${campo.nome} onInput=${(e) => onMudar(e.target.value)}/>`;
+  }
+  const varios = campo.tipo === "varios";
+  const marcados = varios ? new Set(valor || []) : null;
+  return html`<div class="chips" role=${varios ? "group" : "radiogroup"} aria-label=${campo.nome}>
+    ${campo.opcoes.map((o) => {
+      const ativo = varios ? marcados.has(o) : valor === o;
+      const clicar = () => {
+        if (!varios) { onMudar(ativo ? "" : o); return; }
+        const s = new Set(marcados); if (ativo) s.delete(o); else s.add(o);
+        onMudar(campo.opcoes.filter((x) => s.has(x)));
+      };
+      const tom = (campo.tons && campo.tons[o]) || "";
+      return varios
+        ? html`<button key=${o} class="chip" aria-pressed=${ativo} onClick=${clicar}>${o}</button>`
+        : html`<button key=${o} class=${"chip" + (tom ? " tom-" + tom : "")} role="radio" aria-checked=${ativo ? "true" : "false"} onClick=${clicar}>${o}</button>`;
+    })}
+  </div>`;
+}
+
 function FormFicha({ d, ficha, preset, nav }) {
+  const [tipo, setTipoBruto] = useState(() => {
+    const t = ficha ? tipoDe(ficha) : (preset && preset.tipo) || LS.get("fichario.tipo", "doenca");
+    return TIPOS[t] ? t : "doenca";
+  });
   const [nome, setNome] = useState(ficha ? ficha.nome : (preset && preset.nome) || "");
   const [esp, setEsp] = useState(ficha ? ficha.especialidade || "" : (preset && preset.especialidade) || LS.get("fichario.esp", ""));
   const [sin, setSin] = useState(ficha ? (ficha.sinonimos || []).join(", ") : "");
-  const [dif, setDif] = useState(ficha ? (ficha.diferenciais || []).join(", ") : "");
+  const [dif, setDif] = useState(ficha ? (ficha.diferenciais || []).join(", ") : ((preset && preset.diferenciais) || []).join(", "));
+  const [campos, setCampos] = useState(() => Object.assign({}, (ficha && ficha.campos) || {}));
   const [confirmar, setConfirmar] = useState(false);
+  const T = TIPOS[tipo];
   const repetida = nome.trim() && d.lista.find((f) => (!ficha || f.id !== ficha.id) && fold(f.nome).trim() === fold(nome).trim());
-  const nNotas = ficha ? (d.porFicha.get(ficha.id) || []).length : 0;
+  const notasFicha = ficha ? d.porFicha.get(ficha.id) || [] : [];
+  const orfas = ficha && tipo !== tipoDe(ficha) ? notasFicha.filter((n) => !T.secoes.some((s) => s.id === n.secao)).length : 0;
+  const mudarCampo = (id, v) => setCampos(Object.assign({}, campos, { [id]: v }));
+  const visiveis = camposVisiveis(tipo, campos);
   const salvar = () => {
     if (!nome.trim()) return;
-    const dd = { nome: nome.trim(), especialidade: esp.trim(), sinonimos: listaDeTexto(sin), diferenciais: listaDeTexto(dif) };
+    const dd = { tipo, nome: nome.trim(), especialidade: esp.trim(), sinonimos: listaDeTexto(sin), diferenciais: listaDeTexto(dif), campos: limparCampos(tipo, campos) };
     LS.set("fichario.esp", dd.especialidade);
     if (ficha) { gravar("fichas/" + ficha.id, Object.assign(semMeta(ficha), dd)); aviso("Ficha atualizada."); nav.fecharFolha(); }
-    else { const id = novaFicha(dd); nav.fecharFolha(); nav.abrirFicha(id); aviso("Ficha criada."); }
+    else { LS.set("fichario.tipo", tipo); const id = novaFicha(dd); nav.fecharFolha(); nav.abrirFicha(id); aviso(`${T.nome} criada.`.replace("Medicamento criada", "Medicamento criado").replace("Exame criada", "Exame criado")); }
   };
   return html`<${Folha} titulo=${ficha ? "Editar ficha" : "Nova ficha"} onFechar=${nav.fecharFolha}
       acao=${html`<button class="btn primario" disabled=${!nome.trim()} onClick=${salvar}>Salvar</button>`}>
+    <div class="grupo"><span class="rotulo">Tipo de ficha</span><${SeletorTipo} valor=${tipo} onMudar=${setTipoBruto}/>
+      ${orfas ? html`<span class="dica alerta">${plural(orfas, "nota vai", "notas vão")} para “Sem seção”, porque ${T.nome.toLowerCase()} tem outras seções. Toque em cada uma depois para escolher a nova seção.</span>` : null}</div>
     <div class="grupo"><label class="rotulo" for="ff-nome">Nome</label>
-      <input id="ff-nome" class="campo" value=${nome} onInput=${(e) => setNome(e.target.value)} placeholder="Ex.: Insuficiência cardíaca"/>
+      <input id="ff-nome" class="campo" value=${nome} onInput=${(e) => setNome(e.target.value)} placeholder=${T.exNome}/>
       ${repetida ? html`<span class="dica alerta">Já existe uma ficha com esse nome.</span>` : null}</div>
     <div class="grupo"><label class="rotulo" for="ff-esp">Especialidade</label>
       <input id="ff-esp" class="campo" list="lista-esp" value=${esp} onInput=${(e) => setEsp(e.target.value)} placeholder="Ex.: Cardiologia"/></div>
-    <div class="grupo"><label class="rotulo" for="ff-sin">Sinônimos e siglas</label>
-      <input id="ff-sin" class="campo" value=${sin} onInput=${(e) => setSin(e.target.value)} placeholder="Ex.: IC, ICC"/>
-      <span class="dica">Separe por vírgula. Servem para a busca e para o fichário reconhecer a ficha quando você escreve a sigla numa nota.</span></div>
-    <div class="grupo"><label class="rotulo" for="ff-dif">Diferenciais</label>
-      <input id="ff-dif" class="campo" value=${dif} onInput=${(e) => setDif(e.target.value)} placeholder="Ex.: DPOC exacerbada, Tromboembolismo pulmonar"/>
-      <span class="dica">Separe por vírgula. Quando existir uma ficha com o mesmo nome, vira atalho para ela.</span></div>
+    ${visiveis.length ? html`<fieldset class="resumo-form">
+      <legend>Resumo · toque para marcar</legend>
+      ${visiveis.map((cp) => html`<div key=${cp.id} class=${"grupo" + (cp.curto ? " curto" : "")}>
+        ${cp.tipo === "texto" ? html`<label class="rotulo" for=${"cp-" + cp.id}>${cp.nome}</label>` : html`<span class="rotulo">${cp.nome}${cp.tipo === "varios" ? html` <span class="dica">· marque quantas quiser</span>` : null}</span>`}
+        <${CampoSelecao} campo=${cp} valor=${campos[cp.id]} onMudar=${(v) => mudarCampo(cp.id, v)}/>
+        ${cp.dica ? html`<span class="dica">${cp.dica}</span>` : null}
+      </div>`)}
+    </fieldset>` : null}
+    <div class="grupo"><label class="rotulo" for="ff-sin">${T.rotuloSin}</label>
+      <input id="ff-sin" class="campo" value=${sin} onInput=${(e) => setSin(e.target.value)} placeholder=${T.exSin}/>
+      <span class="dica">Separe por vírgula. Servem para a busca e para o fichário reconhecer a ficha quando você escreve o nome numa nota.</span></div>
+    <div class="grupo"><label class="rotulo" for="ff-dif">${T.rotuloLig}</label>
+      <input id="ff-dif" class="campo" value=${dif} onInput=${(e) => setDif(e.target.value)} placeholder=${T.exLig}/>
+      <span class="dica">Separe por vírgula. Quando existir uma ficha com o mesmo nome, vira atalho para ela${tipo !== "doenca" ? ", e esta ficha aparece lá" : ""}.</span></div>
     ${ficha ? html`<div class="zona">
       ${confirmar
-        ? html`<div class="confirma" style="width: 100%"><p>Apagar a ficha ${ficha.nome}?${nNotas ? ` ${plural(nNotas, "nota volta", "notas voltam")} para a caixa de entrada.` : ""}</p>
+        ? html`<div class="confirma" style="width: 100%"><p>Apagar a ficha ${ficha.nome}?${notasFicha.length ? ` ${plural(notasFicha.length, "nota volta", "notas voltam")} para a caixa de entrada.` : ""}</p>
             <button class="btn perigo armado" onClick=${() => { apagarFicha(ficha); nav.fecharFolha(); aviso("Ficha apagada."); }}>Apagar ficha</button>
             <button class="btn" onClick=${() => setConfirmar(false)}>Manter</button></div>`
         : html`<button class="btn perigo" onClick=${() => setConfirmar(true)}>Apagar ficha</button>`}
@@ -1134,7 +1372,12 @@ function Backup({ d }) {
   </div>`;
 }
 
-/* lista de especialidades para os campos */
+/* listas de sugestão para os campos de texto */
+const dlc = document.createElement("datalist");
+dlc.id = "lista-classe";
+for (const n of CLASSES) { const o = document.createElement("option"); o.value = n; dlc.appendChild(o); }
+document.body.appendChild(dlc);
+
 const dl = document.createElement("datalist");
 dl.id = "lista-esp";
 for (const [n] of ESPECIALIDADES) { const o = document.createElement("option"); o.value = n; dl.appendChild(o); }

@@ -373,7 +373,7 @@ mark { background: var(--marker-soft); color: inherit; border-radius: 3px; paddi
 .seg { display: inline-grid; grid-auto-flow: column; border: 1px solid var(--line-strong); border-radius: 999px; overflow: hidden; width: fit-content; }
 .seg button { border: 0; background: var(--surface); padding: 7px 14px; font-size: var(--s-xs); font-weight: 700; color: var(--ink-2); min-height: 36px; }
 .seg button + button { border-left: 1px solid var(--line-strong); }
-.seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.seg button[aria-pressed="true"], .seg button[aria-checked="true"] { background: var(--ink); color: var(--bg); }
 .lista-ctrl { display: flex; flex-direction: column; gap: 12px; }
 .fichas { display: flex; flex-direction: column; gap: 8px; }
 .ficha-linha {
@@ -632,3 +632,49 @@ mark { background: var(--marker-soft); color: inherit; border-radius: 3px; paddi
 .numero b { display: block; font-family: var(--f-disp); font-size: var(--s-xl); font-weight: 600; line-height: 1.1; font-variant-numeric: tabular-nums; }
 .numero span { font-size: var(--s-xs); color: var(--ink-3); }
 .resumo-import { padding: 12px 14px; border-radius: var(--r-sm); background: var(--accent-wash); font-size: var(--s-sm); }
+
+/* ---------- tipos de ficha e resumo ---------- */
+.seg-tipos { display: grid; grid-auto-flow: row; grid-template-columns: repeat(var(--n, 3), minmax(0, 1fr)); width: 100%; border-radius: var(--r-sm); }
+.seg-tipos button { min-height: 44px; padding: 6px 4px; font-size: var(--s-xs); line-height: 1.2; }
+.seg-tipos .n { font-family: var(--f-mono); font-weight: 500; opacity: 0.7; }
+.ficha-linha-sub { font-size: var(--s-sm); color: var(--ink-2); overflow-wrap: anywhere; }
+.tipo-tag {
+  flex: none; font-family: var(--f-mono); font-size: 0.66rem; letter-spacing: 0.06em; text-transform: uppercase;
+  padding: 1px 6px; border-radius: 4px; border: 1px solid var(--line-strong); color: var(--ink-2);
+}
+.tipo-medicamento { color: var(--t4); border-color: var(--t4); }
+.tipo-exame { color: var(--t2); border-color: var(--t2); }
+.resumo {
+  border-top: 1px solid var(--line); padding: 14px 18px 16px;
+  display: flex; flex-direction: column; gap: 12px; cursor: pointer; background: var(--surface);
+}
+.resumo:hover { background: var(--surface-2); }
+.resumo-vazio { cursor: default; flex-direction: row; align-items: center; flex-wrap: wrap; }
+.resumo-vazio:hover { background: var(--surface); }
+.resumo-vazio p { flex: 1 1 220px; }
+.resumo-topo { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.resumo-titulo { font-family: var(--f-mono); font-size: 0.74rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); }
+.resumo-editar { font-size: var(--s-xs); font-weight: 700; color: var(--accent); }
+.resumo-grade { margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px 18px; }
+.resumo-item { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.resumo-item.largo { grid-column: 1 / -1; }
+.resumo-item dt { font-family: var(--f-mono); font-size: 0.68rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--ink-3); }
+.resumo-item dd { margin: 0; display: flex; flex-wrap: wrap; gap: 4px; font-weight: 700; overflow-wrap: anywhere; }
+.tag { display: inline-flex; padding: 2px 8px; border-radius: 6px; background: var(--surface-2); font-size: var(--s-sm); font-weight: 700; }
+.valor.alerta, .valor.perigo { padding: 1px 8px; border-radius: 6px; }
+.valor.alerta { color: var(--warn); background: var(--warn-wash); }
+.valor.perigo { color: var(--danger); background: var(--danger-wash); }
+.chip.tom-alerta[aria-checked="true"] { background: var(--warn); border-color: var(--warn); color: var(--surface); }
+.chip.tom-perigo[aria-checked="true"] { background: var(--danger); border-color: var(--danger); color: var(--surface); }
+.resumo-form {
+  margin: 0; min-width: 0; padding: 12px 14px 16px;
+  border: 1px solid var(--line); border-radius: var(--r); background: var(--surface);
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px 12px;
+}
+.resumo-form legend { padding: 0 6px; font-weight: 700; font-size: var(--s-sm); color: var(--accent); }
+.resumo-form > .grupo { grid-column: 1 / -1; }
+.resumo-form > .grupo.curto { grid-column: auto; }
+.resumo-form .chips { gap: 6px; }
+.resumo-form .chip { min-height: 36px; padding: 5px 11px; }
+.ligacao { display: flex; flex-direction: column; gap: 8px; }
+.rev-corpo .resumo-grade { padding-top: 4px; }

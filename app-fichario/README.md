@@ -22,8 +22,17 @@ Serve em Android 5.0 ou mais novo. Versões futuras instalam por cima da atual e
   Um texto compartilhado de outro app (PDF, WhatsApp, navegador) também abre como nota nova.
 - **Encaixar**: em Hoje, "Encaixar" passa pelas notas da caixa uma a uma. O app sugere a ficha
   (pelo nome ou pela sigla escrita na nota) e a seção (pelas palavras do texto).
-- **Fichas**: seis seções (Definição, Fisiopatologia, Quadro clínico, Diagnóstico, Tratamento,
-  Pérolas), sinônimos e diferenciais. "Compartilhar" manda a ficha como texto.
+- **Fichas de três tipos**, cada um com as suas seções de anotação e um resumo de campos para marcar:
+
+  | Tipo | Seções | Resumo para marcar |
+  | --- | --- | --- |
+  | Doença | Def, Fisiopato, Clínica, Dx, Tto, Pérolas | curso, notificação compulsória |
+  | Medicamento | Mecanismo, Indicação, Dose, EA, CI, Interações, Pérolas | classe, vias, gestação (categoria ANVISA), amamentação, ajuste renal e hepático, receita, o que monitorar |
+  | Exame | Indicação, Preparo, Ref, Leitura, Causas, Limites, Pérolas | tipo de exame, amostra, contraste, radiação, jejum, invasivo, referência, sensibilidade, especificidade |
+
+  Medicamento e exame dizem em que doenças são usados ou pedidos; a ficha da doença mostra os dois
+  na parte de baixo, com atalhos para criar um medicamento ou exame já ligado a ela.
+  "Compartilhar" manda a ficha como texto, com o resumo.
 - **Revisar**: a ficha volta em Hoje no dia de revisar (1, 3, 7, 14, 30, 60, 120 dias). Cada seção
   fica fechada até você tentar lembrar.
 - **Backup**: "Enviar o fichário" gera um arquivo `.json` e abre o compartilhamento (Quick Share,
@@ -32,7 +41,7 @@ Serve em Android 5.0 ou mais novo. Versões futuras instalam por cima da atual e
   versão mais recente, o que foi apagado sai, e nada se duplica. Faça nos dois sentidos para
   celular e tablet ficarem iguais. "Salvar cópia em…" guarda o arquivo onde você escolher.
 
-Na primeira abertura há duas fichas e duas notas de exemplo; "Apagar exemplos", em Hoje, tira tudo.
+Na primeira abertura há fichas de exemplo (duas doenças, um medicamento e um exame) e duas notas na caixa; "Apagar exemplos", em Hoje, tira tudo.
 
 ## Montar de novo
 
