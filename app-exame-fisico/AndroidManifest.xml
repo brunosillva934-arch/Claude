@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Nenhuma permissão: o app não usa a rede e só lê o arquivo que você escolhe. -->
+<!-- Nenhuma permissão: o app não usa a rede, só lê o arquivo ou a foto que você escolhe
+     e pede ao app de câmera que grave a foto num endereço dele (SaidaCamera). -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="app.examefisico">
 
@@ -29,5 +30,11 @@
                 <data android:mimeType="application/json" android:scheme="content" />
             </intent-filter>
         </activity>
+
+        <provider
+            android:name=".SaidaCamera"
+            android:authorities="app.examefisico.camera"
+            android:exported="false"
+            android:grantUriPermissions="true" />
     </application>
 </manifest>

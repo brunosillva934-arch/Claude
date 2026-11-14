@@ -16,7 +16,8 @@ O arquivo para instalar é **`Exame-fisico.apk`**, nesta pasta.
 ```
 
 Cada área e tópico tem uma nota de **como examinar**; cada achado, uma nota de
-**como reconhecer**; cada motivo, uma nota de **como leva ao achado**.
+**como reconhecer** e uma galeria de **imagens**; cada motivo, uma nota de **como
+leva ao achado**.
 
 O app já vem com 14 áreas, 90 tópicos, 569 achados e 835 motivos: exame geral,
 sinais vitais, pele e anexos, cabeça e pescoço (com fundo de olho, ouvidos, nariz
@@ -26,11 +27,29 @@ pé, músculos), mamas/geniturinário/anorretal (com genitália feminina), exame
 obstétrico e exame pediátrico e do recém-nascido. É um ponto de partida para
 estudo: confira com as suas referências e ajuste como quiser.
 
+Vêm também 74 **ilustrações esquemáticas** ligadas a 77 achados: curvas de pulso,
+de respiração e do pulso jugular; linhas do tempo de bulhas e sopros; unhas
+(baqueteamento, Schamroth, coiloníquia, Terry, Beau); pupilas e paralisias do III
+e do VI nervo; paralisia facial central e periférica; mapas de sensibilidade;
+posturas; tórax em corte; focos de ausculta e ictus; pontos e sinais do abdome;
+mãos na artrite; Trendelenburg, Lasègue, Babinski, cacifo; altura uterina e
+situações fetais; fontanelas e zonas de Kramer. São desenhos feitos para o app
+(domínio público), não fotos de pacientes: fácies e lesões de pele ficam para as
+fotos que você acrescentar.
+
 Alguns tópicos são de **escolha única** (estado geral, hidratação, estado
 nutricional, biotipo): no exame, marcar um achado desmarca os outros. Dá para
 ligar ou desligar isso em qualquer tópico, no lápis.
 
 ## Usar
+
+- **Imagens**: em qualquer achado, toque em **Foto** para tirar uma foto, escolher
+  uma da galeria ou procurar no Wikimedia Commons ou no Google Imagens (abre o
+  navegador; salve a imagem e volte em "Escolher da galeria"). A foto é reduzida
+  e guardada só no aparelho. Toque numa imagem para vê-la em tela cheia: deslize
+  para passar, toque duas vezes para ampliar, edite a legenda ou apague. A primeira
+  imagem aparece em miniatura nas listas e no exame. Ao fotografar pacientes, peça
+  consentimento e evite rosto e dados que identifiquem.
 
 - **Roteiro**: navegue pelas áreas. Em qualquer nível há **+ Tópico** e
   **+ Achado**; dentro do achado, **+ Motivo**. O lápis edita, reordena (setas)
@@ -44,10 +63,11 @@ ligar ou desligar isso em qualquer tópico, no lápis.
   o normal dos tópicos em branco. O **Resumo** monta o texto do exame, lista os
   anormais com seus motivos (toque no provável e ele entra no texto) e mostra
   **motivos que se repetem** entre os achados. Copie, compartilhe ou salve em TXT.
-- **Revisão**: um achado anormal por vez, por área ou de todas; tente lembrar os
-  motivos antes de abrir.
+- **Revisão**: por **motivos** (um achado anormal por vez; tente lembrar os
+  motivos antes de abrir) ou por **imagens** (reconheça o achado pela imagem).
 - **Buscar** (lupa): tópicos, achados e motivos.
-- **Menu (⋮)**: salvar cópia de segurança (um `.json` com roteiro e exames),
+- **Menu (⋮)**: créditos das imagens; salvar cópia de segurança (um `.json` com
+  roteiro, exames e as suas fotos),
   restaurar de uma cópia (também por "abrir com" no gerenciador de arquivos) e
   repor o conteúdo inicial.
 
@@ -87,7 +107,9 @@ apt-get install aapt apksigner zipalign dalvik-exchange android-sdk-platform-23 
 | --- | --- |
 | `web/dados.js` | O conteúdo da versão 1 e as funções que montam o conteúdo |
 | `web/conteudo/*.js` | O que entrou depois, por região do corpo, com a versão em que entrou |
-| `conferir.js` | Confere o conteúdo antes de montar (caminhos, nomes repetidos, motivos sem nota) |
+| `conferir.js` | Confere o conteúdo antes de montar (caminhos, nomes repetidos, motivos sem nota, imagens) |
+| `web/fotos/` | Imagens que vêm com o app; `desenhos.py` gera as ilustrações (SVG) |
+| `src/.../SaidaCamera.java` | Endereço onde o app de câmera grava a foto, sem o app pedir permissão |
 | `web/app.js`, `web/estilo.css` | As telas |
 | `montar.py` | Junta `web/` num único `index.html`, com as fontes embutidas |
 | `src/` | A atividade Android: um WebView e a ponte para arquivos e compartilhamento |
@@ -98,6 +120,13 @@ apt-get install aapt apksigner zipalign dalvik-exchange android-sdk-platform-23 
 A chave fica no repositório de propósito: assinar sempre com a mesma é o que
 deixa a versão nova instalar por cima. Para uma versão nova, aumente `NOME` e
 `CODIGO` em `montar.sh`.
+
+Para acrescentar imagens que venham com o app (fotos de bancos livres, por
+exemplo), ponha o arquivo em `web/fotos/` e ligue-o ao achado com
+`S.fotos(versão)("Área › Tópico", "Achado", [S.F("fotos/arquivo.jpg", legenda,
+"Autor · licença", "https://página de origem")])`. Use só imagens com licença que
+permita redistribuir (domínio público, CC0, CC BY, CC BY-SA) e registre autor,
+licença e origem: aparecem no visor e em "Créditos das imagens".
 
 Para acrescentar conteúdo numa versão futura, crie um arquivo em `web/conteudo/`
 com `S.mais(3)("Área › Tópico", [itens], "tópico antes do qual entrar")` (3 é a
@@ -112,6 +141,9 @@ escuro): navegação, criar/editar/apagar/desfazer, motivos ligados pelo nome,
 exame com resumo, escolha única, revisão, busca, e a ponte com o Android
 simulada (salvar, cópia de segurança, restauração, arquivo inválido). A
 atualização foi testada partindo de um roteiro da versão 1 com edições,
-apagamentos, área renomeada e área própria. O APK foi conferido por
+apagamentos, área renomeada e área própria, e partindo da versão 1.1. As fotos
+foram testadas no navegador (escolher, reduzir, legenda, apagar, cópia de
+segurança e restauração); a câmera, a galeria e a leitura do EXIF do Android
+só foram compiladas, não executadas. O APK foi conferido por
 dentro (manifesto, assinatura, conteúdo). Ele **não foi executado em aparelho
 nem em emulador** no ambiente em que foi montado.

@@ -6,10 +6,15 @@ import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.Matrix;
+import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Base64;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewParent;
@@ -44,6 +49,11 @@ import java.util.ArrayList;
 public class MainActivity extends Activity {
     private static final int PEDIR_ARQUIVO = 41;
     private static final int PEDIR_DESTINO = 42;
+    private static final int PEDIR_FOTO = 43;
+    private static final int PEDIR_CAMERA = 44;
+    private static final int LIMITE_FOTO = 40 * 1024 * 1024;
+    private static final int LADO_FOTO = 1280;   // maior lado da foto guardada
+    private static final int LADO_MINI = 360;    // miniatura para listas
     private static final int LIMITE_ARQUIVO = 32 * 1024 * 1024;
     private static final int LIMITE_ENVIO = 180000;
 
@@ -51,6 +61,9 @@ public class MainActivity extends Activity {
     private boolean pronta;
     private File pasta;
     private String paraSalvar;
+    private File pastaFotos;
+    /** Fotos já processadas que a página ainda não buscou (nomes, sem extensão). */
+    private final ArrayList<String> fotosProntas = new ArrayList<String>();
     /** Arquivos lidos que a página ainda não buscou: {nome, texto}. */
     private final ArrayList<String[]> pendentes = new ArrayList<String[]>();
 
@@ -59,6 +72,8 @@ public class MainActivity extends Activity {
         super.onCreate(estado);
         pasta = new File(getFilesDir(), "dados");
         pasta.mkdirs();
+        pastaFotos = new File(getFilesDir(), "fotos");
+        pastaFotos.mkdirs();
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
 
         web = new WebView(this);
@@ -145,6 +160,16 @@ public class MainActivity extends Activity {
     @Override
     protected void onActivityResult(int pedido, int resultado, Intent dados) {
         super.onActivityResult(pedido, resultado, dados);
+        if (pedido == PEDIR_FOTO) {
+            if (resultado == RESULT_OK && dados != null && dados.getData() != null) processarFoto(dados.getData(), null);
+            return;
+        }
+        if (pedido == PEDIR_CAMERA) {
+            File f = SaidaCamera.arquivo(this);
+            if (resultado == RESULT_OK && f.isFile() && f.length() > 0) processarFoto(null, f);
+            else f.delete();
+            return;
+        }
         if (pedido == PEDIR_ARQUIVO) {
             if (resultado == RESULT_OK && dados != null && dados.getData() != null) lerEmFundo(dados.getData());
         } else if (pedido == PEDIR_DESTINO) {
@@ -225,14 +250,154 @@ public class MainActivity extends Activity {
         }
     }
 
-    /** Diz à página que há arquivo esperando; ela busca com Android.pendentes(). */
+    /** Diz à página que há arquivo ou foto esperando; ela busca com Android.pendentes() e Android.fotosProntas(). */
     private void avisar() {
         if (web == null || !pronta) return;
-        boolean tem;
+        boolean tem, foto;
         synchronized (pendentes) {
             tem = !pendentes.isEmpty();
         }
+        synchronized (fotosProntas) {
+            foto = !fotosProntas.isEmpty();
+        }
         if (tem) web.evaluateJavascript("window.__chegou&&window.__chegou()", null);
+        if (foto) web.evaluateJavascript("window.__fotoPronta&&window.__fotoPronta()", null);
+    }
+
+    /* ── fotos ───────────────────────────────────────────────────────── */
+
+    private File arquivoFoto(String nome, boolean mini) {
+        if (nome == null || !nome.matches("[A-Za-z0-9_-]{1,80}")) return null;
+        return new File(pastaFotos, nome + (mini ? "_m.jpg" : ".jpg"));
+    }
+
+    private void abrirGaleria() {
+        Intent i = new Intent(Intent.ACTION_GET_CONTENT);
+        i.addCategory(Intent.CATEGORY_OPENABLE);
+        i.setType("image/*");
+        try {
+            startActivityForResult(Intent.createChooser(i, "Escolha a foto"), PEDIR_FOTO);
+        } catch (Exception e) {
+            dizer("Nenhum app de galeria encontrado.");
+        }
+    }
+
+    private void abrirCamera() {
+        Intent i = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
+        i.putExtra(android.provider.MediaStore.EXTRA_OUTPUT, SaidaCamera.ENDERECO);
+        i.setClipData(ClipData.newRawUri("foto", SaidaCamera.ENDERECO));
+        i.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        try {
+            SaidaCamera.arquivo(this).delete();
+            startActivityForResult(i, PEDIR_CAMERA);
+        } catch (Exception e) {
+            dizer("Nenhum app de câmera encontrado. Tire a foto e use \"Galeria\".");
+        }
+    }
+
+    /** Lê a foto, endireita pelo EXIF, reduz e grava foto e miniatura. Roda fora da tela. */
+    private void processarFoto(final Uri origem, final File arquivo) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                File entrada = arquivo;
+                Bitmap b = null, cheia = null, mini = null;
+                try {
+                    if (origem != null) {
+                        entrada = new File(getCacheDir(), "entrada.jpg");
+                        InputStream in = getContentResolver().openInputStream(origem);
+                        if (in == null) throw new Exception("sem dados");
+                        FileOutputStream out = new FileOutputStream(entrada);
+                        try {
+                            byte[] buf = new byte[16384];
+                            int n;
+                            long total = 0;
+                            while ((n = in.read(buf)) != -1) {
+                                total += n;
+                                if (total > LIMITE_FOTO) throw new Exception("grande demais");
+                                out.write(buf, 0, n);
+                            }
+                        } finally {
+                            fechar(in);
+                            fechar(out);
+                        }
+                    }
+                    BitmapFactory.Options o = new BitmapFactory.Options();
+                    o.inJustDecodeBounds = true;
+                    BitmapFactory.decodeFile(entrada.getPath(), o);
+                    if (o.outWidth <= 0 || o.outHeight <= 0) throw new Exception("não é imagem");
+                    int maior = Math.max(o.outWidth, o.outHeight), amostra = 1;
+                    while (maior / (amostra * 2) >= LADO_FOTO) amostra *= 2;
+                    BitmapFactory.Options o2 = new BitmapFactory.Options();
+                    o2.inSampleSize = amostra;
+                    b = BitmapFactory.decodeFile(entrada.getPath(), o2);
+                    if (b == null) throw new Exception("não decodificou");
+                    cheia = escalar(b, LADO_FOTO, giro(entrada));
+                    mini = escalar(cheia, LADO_MINI, 0);
+                    String nome = "u" + Long.toString(System.currentTimeMillis(), 36) + Integer.toString((int) (Math.random() * 1296), 36);
+                    gravarJpeg(cheia, arquivoFoto(nome, false), 82);
+                    gravarJpeg(mini, arquivoFoto(nome, true), 78);
+                    synchronized (fotosProntas) {
+                        fotosProntas.add(nome);
+                    }
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            avisar();
+                        }
+                    });
+                } catch (Throwable e) { // inclui falta de memória com fotos enormes
+                    dizer("Não consegui usar essa foto.");
+                } finally {
+                    if (mini != null && mini != cheia) mini.recycle();
+                    if (cheia != null && cheia != b) cheia.recycle();
+                    if (b != null) b.recycle();
+                    if (entrada != null) entrada.delete();
+                }
+            }
+        }).start();
+    }
+
+    private static int giro(File f) {
+        try {
+            int o = new ExifInterface(f.getPath()).getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
+            if (o == ExifInterface.ORIENTATION_ROTATE_90 || o == ExifInterface.ORIENTATION_TRANSPOSE) return 90;
+            if (o == ExifInterface.ORIENTATION_ROTATE_180) return 180;
+            if (o == ExifInterface.ORIENTATION_ROTATE_270 || o == ExifInterface.ORIENTATION_TRANSVERSE) return 270;
+        } catch (Exception e) {
+            // sem EXIF: fica como está
+        }
+        return 0;
+    }
+
+    private static Bitmap escalar(Bitmap b, int lado, int graus) {
+        float s = Math.min(1f, lado / (float) Math.max(b.getWidth(), b.getHeight()));
+        if (s >= 1f && graus == 0) return b;
+        Matrix m = new Matrix();
+        m.postScale(s, s);
+        if (graus != 0) m.postRotate(graus);
+        return Bitmap.createBitmap(b, 0, 0, b.getWidth(), b.getHeight(), m, true);
+    }
+
+    private static void gravarJpeg(Bitmap b, File destino, int qualidade) throws Exception {
+        File tmp = new File(destino.getPath() + ".tmp");
+        FileOutputStream out = new FileOutputStream(tmp);
+        try {
+            if (!b.compress(Bitmap.CompressFormat.JPEG, qualidade, out)) throw new Exception("não comprimiu");
+            out.getFD().sync();
+        } finally {
+            fechar(out);
+        }
+        if (!tmp.renameTo(destino)) throw new Exception("não gravou");
+    }
+
+    private static byte[] lerArquivo(File f) throws Exception {
+        FileInputStream in = new FileInputStream(f);
+        try {
+            return lerTudo(in, Integer.MAX_VALUE);
+        } finally {
+            fechar(in);
+        }
     }
 
     /* ── utilidades ──────────────────────────────────────────────────── */
@@ -455,6 +620,110 @@ public class MainActivity extends Activity {
         public boolean escuro() {
             int modo = getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
             return modo == Configuration.UI_MODE_NIGHT_YES;
+        }
+
+        /** Abre câmera (true) ou galeria (false); a foto chega por window.__fotoPronta(). */
+        @JavascriptInterface
+        public void escolherFoto(final boolean camera) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    if (camera) abrirCamera();
+                    else abrirGaleria();
+                }
+            });
+        }
+
+        @JavascriptInterface
+        public String fotosProntas() {
+            JSONArray l = new JSONArray();
+            synchronized (fotosProntas) {
+                for (String n : fotosProntas) l.put(n);
+                fotosProntas.clear();
+            }
+            return l.toString();
+        }
+
+        /** A foto como data URL, para a página mostrar sem acesso a arquivos. */
+        @JavascriptInterface
+        public String foto(String nome, boolean mini) {
+            File f = arquivoFoto(nome, mini);
+            if (f == null) return "";
+            if (mini && !f.isFile()) f = arquivoFoto(nome, false);
+            try {
+                return "data:image/jpeg;base64," + Base64.encodeToString(lerArquivo(f), Base64.NO_WRAP);
+            } catch (Exception e) {
+                return "";
+            }
+        }
+
+        @JavascriptInterface
+        public void apagarFoto(String nome) {
+            File f = arquivoFoto(nome, false), m = arquivoFoto(nome, true);
+            if (f != null) f.delete();
+            if (m != null) m.delete();
+        }
+
+        @JavascriptInterface
+        public String listarFotos() {
+            JSONArray l = new JSONArray();
+            String[] nomes = pastaFotos.list();
+            if (nomes != null) for (String n : nomes) if (n.endsWith(".jpg") && !n.endsWith("_m.jpg")) l.put(n.substring(0, n.length() - 4));
+            return l.toString();
+        }
+
+        /** Para a cópia de segurança: a foto inteira em base64. */
+        @JavascriptInterface
+        public String fotoBase64(String nome) {
+            File f = arquivoFoto(nome, false);
+            try {
+                return f == null ? "" : Base64.encodeToString(lerArquivo(f), Base64.NO_WRAP);
+            } catch (Exception e) {
+                return "";
+            }
+        }
+
+        /** Na restauração: grava a foto e refaz a miniatura. */
+        @JavascriptInterface
+        public boolean gravarFoto(String nome, String base64) {
+            File f = arquivoFoto(nome, false);
+            if (f == null || base64 == null) return false;
+            Bitmap b = null, mini = null;
+            try {
+                byte[] dados = Base64.decode(base64, Base64.DEFAULT);
+                FileOutputStream out = new FileOutputStream(f);
+                try {
+                    out.write(dados);
+                } finally {
+                    fechar(out);
+                }
+                b = BitmapFactory.decodeByteArray(dados, 0, dados.length);
+                if (b == null) return false;
+                mini = escalar(b, LADO_MINI, 0);
+                gravarJpeg(mini, arquivoFoto(nome, true), 78);
+                return true;
+            } catch (Throwable e) {
+                return false;
+            } finally {
+                if (mini != null && mini != b) mini.recycle();
+                if (b != null) b.recycle();
+            }
+        }
+
+        /** Abre um endereço https no navegador do aparelho (busca de imagens, fonte de uma foto). */
+        @JavascriptInterface
+        public void abrir(final String url) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    if (url == null || !url.startsWith("https://")) return;
+                    try {
+                        startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
+                    } catch (Exception e) {
+                        dizer("Nenhum navegador encontrado.");
+                    }
+                }
+            });
         }
 
         @JavascriptInterface

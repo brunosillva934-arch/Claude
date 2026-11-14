@@ -67,9 +67,29 @@
       juntar(lista, itens, ver, antes);
     };
   }
+  /* imagem de um achado: arquivo em web/fotos/, legenda, crédito (autor e licença) e página de origem */
+  function F(arq, legenda, credito, fonte, mini) {
+    return { arq: arq, legenda: legenda || "", credito: credito || "", fonte: fonte || "", mini: mini || "" };
+  }
+  /* fotos(versão)(caminho do tópico, nome do achado, [F(...)]) */
+  function fotos(ver) {
+    window.SEMENTE_VERSAO = Math.max(window.SEMENTE_VERSAO, ver);
+    return function (caminho, achado, lista) {
+      var itens = window.SEMENTE, partes = caminho.split(" › "), i, no = null, ac;
+      for (i = 0; i < partes.length; i++) {
+        no = buscar(itens, true, partes[i]);
+        if (!no) break;
+        itens = no.itens;
+      }
+      ac = no && buscar(itens, false, achado);
+      if (!ac) { window.SEMENTE_AVISOS.push("achado inexistente para imagem: " + caminho + " › " + achado); return; }
+      ac.fotos = ac.fotos || [];
+      for (i = 0; i < lista.length; i++) { lista[i].ver = ver; ac.fotos.push(lista[i]); }
+    };
+  }
   window.SEMENTE_VERSAO = 1;
   window.SEMENTE_AVISOS = [];
-  window.SEM = { T: T, U: U, E: E, X: X, mais: mais };
+  window.SEM = { T: T, U: U, E: E, X: X, F: F, mais: mais, fotos: fotos };
 
   window.SEMENTE = [
 

@@ -159,3 +159,44 @@ body.teclado .nav{display:none}
 :root[data-theme="dark"] #aviso button{color:var(--accent-ink)}
 body.com-folha #aviso{top:calc(12px + env(safe-area-inset-top,0px));bottom:auto}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+/* ── imagens ────────────────────────────────── */
+img.ilus{background:#fff}
+.mini{width:44px;height:44px;border-radius:9px;object-fit:cover;flex:none;border:1px solid var(--rule);background:var(--surface-2)}
+.mini.ilus{object-fit:contain;background:#fff}
+.sem-img{display:grid;place-items:center;font-size:.62rem;color:var(--ink-3);text-align:center;background:var(--surface-2)}
+.galeria{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.quadro{position:relative;display:block;width:100%;border-radius:12px;overflow:hidden;background:var(--surface);border:1px solid var(--rule)}
+.quadro::before{content:"";display:block;padding-top:100%}
+.quadro > img,.quadro > .sem-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.quadro > img.ilus{object-fit:contain}
+.quadro > span:not(.sem-img){position:absolute;left:0;right:0;bottom:0;padding:14px 6px 5px;font-size:.66rem;line-height:1.25;color:#fff;background:linear-gradient(transparent,rgba(0,0,0,.72));display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.novo-q{border-style:dashed;border-color:var(--rule-strong);color:var(--accent-ink);background:transparent}
+.novo-q svg,.novo-q b{position:absolute;left:50%;transform:translateX(-50%)}
+.novo-q svg{top:32%}
+.novo-q b{top:58%;font-size:.82rem;font-weight:600}
+.marca-l .ver.com-img{width:58px;padding:5px}
+.marca-l .ver .mini{width:46px;height:46px}
+.item-menu .ic{width:40px;height:40px;border-radius:12px;background:var(--accent-soft);color:var(--accent-ink);display:grid;place-items:center;flex:none}
+.rev-img{margin:-6px -4px 0;border-radius:12px;overflow:hidden;background:#000;display:flex;justify-content:center}
+.rev-img img{max-width:100%;max-height:52vh;display:block}
+.rev-img img.ilus{background:#fff}
+.credito{display:flex;gap:12px;align-items:flex-start}
+.credito .tambem{padding-top:6px}
+
+/* visor em tela cheia: sempre escuro, como uma mesa de luz */
+.visor{position:fixed;inset:0;z-index:50;background:#050707;color:#eef2f1;display:flex;flex-direction:column;padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)}
+.visor .icone-b{color:#eef2f1}
+.visor .icone-b:active{background:rgba(255,255,255,.12)}
+.visor-topo{display:flex;align-items:center;gap:2px;padding:4px 6px;min-height:54px}
+.visor-nome{font-weight:600;font-size:.95rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.visor-conta{font-size:.75rem;color:#a7b3b0}
+.visor-img{flex:1 1 auto;min-height:0;display:flex;overflow:auto;-webkit-overflow-scrolling:touch}
+.visor-img img,.visor-img .sem-img{margin:auto;max-width:100%;max-height:100%;object-fit:contain}
+.visor-img.zoom img{max-width:none;max-height:none;width:240%}
+.visor-img .sem-img{width:60%;height:40%;background:#1a2120;color:#a7b3b0;border-radius:12px}
+.visor-base{display:flex;align-items:center;gap:4px;padding:8px 6px 12px;min-height:72px}
+.visor-legenda{font-size:.92rem;line-height:1.4;white-space:pre-wrap}
+.visor-legenda.vazia{color:#8f9b98;font-size:.82rem}
+.visor-credito{font-size:.74rem;color:#a7b3b0;margin-top:4px}
+.visor-credito button{color:#9fe2d9;text-decoration:underline;font-size:inherit}

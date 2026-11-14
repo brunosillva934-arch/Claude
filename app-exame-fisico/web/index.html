@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; font-src data:; img-src data:">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; font-src data:; img-src 'self' data: file: blob:">
 <meta name="color-scheme" content="light dark">
 <title>Exame físico</title>
 <style>/*FONTES*/</style>
@@ -24,6 +24,7 @@ window.addEventListener("error", function (e) {
 <div id="folha"></div>
 <div id="aviso" role="status" aria-live="polite"></div>
 <input id="seletor" type="file" accept=".json,application/json,text/plain" hidden>
+<input id="seletor-foto" type="file" accept="image/*" hidden>
 <script>/*DADOS*/</script>
 <script>/*APP*/</script>
 </body>

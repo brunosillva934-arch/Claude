@@ -40,10 +40,16 @@
   /* ── a base ────────────────────────────────────────────────────── */
   var SV = window.SEMENTE_VERSAO || 1; /* versão do conteúdo que veio com o app */
   function motivoDeSemente(m) { return { id: nid(), nome: m[0], nota: m[1] || "" }; }
+  function fotoDeSemente(f) {
+    var o = { id: nid(), a: f.arq, legenda: f.legenda, credito: f.credito, fonte: f.fonte };
+    if (f.mini) o.m = f.mini;
+    return o;
+  }
   function achadoDeSemente(x) {
-    var ms = [], i;
+    var ms = [], fs = [], i;
     for (i = 0; i < (x.motivos || []).length; i++) ms.push(motivoDeSemente(x.motivos[i]));
-    return { id: nid(), nome: x.nome, nota: x.nota, classe: x.k === "e" ? "e" : "a", motivos: ms };
+    for (i = 0; i < (x.fotos || []).length; i++) fs.push(fotoDeSemente(x.fotos[i]));
+    return { id: nid(), nome: x.nome, nota: x.nota, classe: x.k === "e" ? "e" : "a", motivos: ms, fotos: fs };
   }
   function noDeSemente(t) {
     var n = { id: nid(), nome: t.nome, nota: t.nota, filhos: [], achados: [] }, i;
@@ -80,9 +86,17 @@
       lista.push(u);
     }
     function motivos(alvo, x, tudo) {
-      for (var i = 0; i < x.motivos.length; i++) {
+      var i, j, tem;
+      for (i = 0; i < x.motivos.length; i++) {
         if (!novo({ ver: x.motivos[i][2] }, tudo) || igual(alvo.motivos, x.motivos[i][0])) continue;
         alvo.motivos.push(motivoDeSemente(x.motivos[i]));
+        n++;
+      }
+      for (i = 0; i < (x.fotos || []).length; i++) {
+        if (!novo(x.fotos[i], tudo)) continue;
+        for (tem = false, j = 0; j < alvo.fotos.length; j++) if (alvo.fotos[j].a === x.fotos[i].arq) tem = true;
+        if (tem) continue;
+        alvo.fotos.push(fotoDeSemente(x.fotos[i]));
         n++;
       }
     }
@@ -108,6 +122,24 @@
     b.sv = SV;
     return n;
   }
+  /* fotos de um achado: "a" é imagem que veio com o app (fotos/...), "u" é foto sua guardada no aparelho */
+  var ARQ_APP = /^fotos\/[a-z0-9_-]+\.(jpg|png|svg)$/, NOME_FOTO = /^[A-Za-z0-9_-]{1,80}$/;
+  function fotosOk(l) {
+    var r = [], i, f, o;
+    if (Object.prototype.toString.call(l) !== "[object Array]") return r;
+    for (i = 0; i < l.length; i++) {
+      f = l[i];
+      if (!f || typeof f !== "object") continue;
+      o = { id: String(f.id || nid()), legenda: String(f.legenda || ""), credito: String(f.credito || ""), fonte: /^https:\/\//.test(f.fonte || "") ? String(f.fonte) : "" };
+      if (typeof f.a === "string" && ARQ_APP.test(f.a)) {
+        o.a = f.a;
+        if (typeof f.m === "string" && ARQ_APP.test(f.m)) o.m = f.m;
+      } else if (typeof f.u === "string" && NOME_FOTO.test(f.u)) o.u = f.u;
+      else continue;
+      r.push(o);
+    }
+    return r;
+  }
   /* aceita um backup mexido à mão: completa o que faltar em vez de quebrar */
   function consertar(b) {
     if (!b || Object.prototype.toString.call(b.areas) !== "[object Array]") return null;
@@ -124,7 +156,7 @@
           if (a.motivos[j] && typeof a.motivos[j] === "object")
             ms.push({ id: String(a.motivos[j].id || nid()), nome: String(a.motivos[j].nome || "Sem nome"), nota: String(a.motivos[j].nota || "") });
         }
-        r.achados.push({ id: String(a.id || nid()), nome: String(a.nome || "Sem nome"), nota: String(a.nota || ""), classe: a.classe === "e" ? "e" : "a", motivos: ms });
+        r.achados.push({ id: String(a.id || nid()), nome: String(a.nome || "Sem nome"), nota: String(a.nota || ""), classe: a.classe === "e" ? "e" : "a", motivos: ms, fotos: fotosOk(a.fotos) });
       }
       return r;
     }
@@ -216,7 +248,7 @@
 
   /* ── estado e navegação ────────────────────────────────────────── */
   var RAIZES = { areas: { v: "areas" }, exames: { v: "exames" }, motivos: { v: "motivos" }, revisao: { v: "revisao" } };
-  var S = { aba: "areas", pilha: [{ v: "areas" }], folha: null, rev: { area: "", id: null, aberto: false }, abertas: {} };
+  var S = { aba: "areas", pilha: [{ v: "areas" }], folha: null, rev: { area: "", id: null, aberto: false, modo: "motivos", foto: 0 }, abertas: {} };
   var desfeito = null;
 
   function atual() { return S.pilha[S.pilha.length - 1]; }
@@ -254,8 +286,38 @@
     roteiro: svg('<path d="M8 6h12M8 12h12M8 18h12"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/>', 20),
     exame: svg('<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1M8.5 12l2.2 2.2L15.5 9.5"/>', 20),
     motivo: svg('<circle cx="6" cy="12" r="2.2"/><circle cx="18" cy="6" r="2.2"/><circle cx="18" cy="18" r="2.2"/><path d="M8 11l8-4M8 13l8 4"/>', 20),
-    revisao: svg('<rect x="4" y="7" width="13" height="13" rx="2"/><path d="M8 7V4h12v12h-3"/>', 20)
+    revisao: svg('<rect x="4" y="7" width="13" height="13" rx="2"/><path d="M8 7V4h12v12h-3"/>', 20),
+    camera: svg('<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>', 20),
+    galeria: svg('<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-9 9"/>', 20),
+    web: svg('<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18"/>', 20),
+    esq: svg('<path d="M15 5l-7 7 7 7"/>', 26),
+    dir: svg('<path d="M9 5l7 7-7 7"/>', 26)
   };
+
+  /* ── imagens ───────────────────────────────────────────────────── */
+  var MINIS = {};
+  function chaveLocal(nome, mini) { return "ef_foto_" + nome + (mini ? "_m" : ""); }
+  /* endereço para <img>: arquivo do app, ou foto sua lida do aparelho (data URL) */
+  function srcFoto(f, mini) {
+    if (f.a) return mini && f.m ? f.m : f.a;
+    var k = f.u + (mini ? "_m" : ""), s = "";
+    if (mini && MINIS[k]) return MINIS[k];
+    try {
+      s = A && A.foto ? A.foto(f.u, !!mini) : (window.localStorage.getItem(chaveLocal(f.u, mini)) || window.localStorage.getItem(chaveLocal(f.u, false)) || "");
+    } catch (e) { s = ""; }
+    if (mini && s) MINIS[k] = s;
+    return s;
+  }
+  function imgFoto(f, mini, classe, alt) {
+    var src = srcFoto(f, mini);
+    if (!src) return '<span class="' + (classe || "") + ' sem-img">sem imagem</span>';
+    return '<img class="' + (classe || "") + (/\.svg$/.test(f.a || "") ? " ilus" : "") + '" src="' + esc(src) + '" alt="' + esc(alt || f.legenda || "") + '"' + (mini ? ' loading="lazy"' : "") + ">";
+  }
+  function apagarArquivoFoto(nome) {
+    delete MINIS[nome + "_m"];
+    if (A && A.apagarFoto) { A.apagarFoto(nome); return; }
+    try { window.localStorage.removeItem(chaveLocal(nome, false)); window.localStorage.removeItem(chaveLocal(nome, true)); } catch (e) { /* nada a fazer */ }
+  }
 
   /* ── peças de tela ─────────────────────────────────────────────── */
   function topo(titulo, extras) {
@@ -290,6 +352,7 @@
     return '<button class="linha" data-a="abrir-achado" data-id="' + ac.id + '"><span class="ponto ' + ac.classe + '"></span><span class="cresce"><div class="nome">' + esc(ac.nome) + "</div>" +
       (sub ? '<div class="sub">' + esc(sub) + "</div>" : "") + "</span>" +
       (ac.motivos.length ? '<span class="num">' + plural(ac.motivos.length, "motivo", "motivos") + "</span>" : "") +
+      (ac.fotos.length ? imgFoto(ac.fotos[0], true, "mini") : "") +
       '<span class="seta">' + IC.seta + "</span></button>";
   }
 
@@ -342,6 +405,11 @@
     h += trilhaHtml(r.trilha) + '<div style="margin-top:10px"><span class="selo ' + ac.classe + '"><span class="ponto ' + ac.classe + '"></span>' + (ac.classe === "e" ? "Achado esperado" : "Achado anormal") + "</span></div>";
     h += '<h1 class="titulo-pag" style="margin-top:8px">' + esc(ac.nome) + "</h1>";
     h += notaHtml("Como reconhecer", ac.nota, ac.id, "Descrever como reconhecer");
+    h += '<div class="secao"><h3>Imagens</h3><span class="conta">' + ac.fotos.length + '</span></div><div class="galeria">';
+    for (i = 0; i < ac.fotos.length; i++)
+      h += '<button class="quadro" data-a="ver-foto" data-id="' + ac.id + '" data-i="' + i + '" aria-label="Ver imagem ' + (i + 1) + '">' + imgFoto(ac.fotos[i], true, "", ac.nome) +
+        (ac.fotos[i].legenda ? "<span>" + esc(ac.fotos[i].legenda) + "</span>" : "") + "</button>";
+    h += '<button class="quadro novo-q" data-a="nova-foto" data-id="' + ac.id + '">' + IC.camera + "<b>Foto</b></button></div>";
     h += '<div class="secao"><h3>' + (ac.classe === "e" ? "Motivos e observações" : "Motivos") + '</h3><span class="conta">' + ac.motivos.length + "</span></div>";
     if (!ac.motivos.length)
       h += '<div class="vazio" style="padding-top:0">' + (ac.classe === "e" ? "Nada registrado. Use para anotar variações do normal, se quiser." : "Nenhum motivo ainda. Adicione o que pode causar este achado e explique o caminho.") + "</div>";
@@ -445,7 +513,7 @@
           for (k = 0; k < gs[j].no.achados.length; k++) {
             var ac = gs[j].no.achados[k], on = !!e.marcas[ac.id];
             h += '<div class="marca-l ' + ac.classe + (on ? " on" : "") + '"><button class="toque" data-a="marcar" data-id="' + ac.id + '" aria-pressed="' + on + '"><span class="caixa">' + IC.certo + "</span><span>" + esc(ac.nome) + "</span></button>" +
-              '<button class="ver" data-a="abrir-achado" data-id="' + ac.id + '" aria-label="Ver motivos de ' + esc(ac.nome) + '">' + IC.seta + "</button></div>";
+              '<button class="ver' + (ac.fotos.length ? " com-img" : "") + '" data-a="abrir-achado" data-id="' + ac.id + '" aria-label="Ver ' + esc(ac.nome) + '">' + (ac.fotos.length ? imgFoto(ac.fotos[0], true, "mini") : IC.seta) + "</button></div>";
           }
         }
         if (!gs.length) h += '<div class="vazio">Esta área ainda não tem achados no roteiro.</div>';
@@ -533,10 +601,11 @@
 
   /* ── revisão ───────────────────────────────────────────────────── */
   function candidatos() {
-    var l = [], id, r;
+    var l = [], id, r, fotos = S.rev.modo === "fotos";
     for (id in IDX) {
       r = IDX[id];
-      if (r.t === "achado" && r.o.classe === "a" && r.o.motivos.length && (!S.rev.area || (r.trilha[0] && r.trilha[0].id === S.rev.area))) l.push(id);
+      if (r.t !== "achado" || (S.rev.area && !(r.trilha[0] && r.trilha[0].id === S.rev.area))) continue;
+      if (fotos ? r.o.fotos.length : r.o.classe === "a" && r.o.motivos.length) l.push(id);
     }
     return l;
   }
@@ -545,18 +614,35 @@
     if (!l.length) { S.rev.id = null; return; }
     do { id = l[Math.floor(Math.random() * l.length)]; } while (l.length > 1 && id === S.rev.id);
     S.rev.id = id;
+    S.rev.foto = Math.floor(Math.random() * IDX[id].o.fotos.length);
     S.rev.aberto = false;
+  }
+  function revisaoFoto(r) {
+    var ac = r.o, f = ac.fotos[S.rev.foto] || ac.fotos[0], h = '<div class="revisao"><div class="rev-img">' + imgFoto(f, false, "", "Imagem para identificar") + "</div>", i;
+    if (!S.rev.aberto)
+      return h + '<p class="pergunta">Que achado é este? Pense também no que pode causá-lo.</p><div class="acoes" style="margin-top:14px"><button class="botao principal" data-a="rev-abrir">Mostrar</button><button class="botao" data-a="rev-proximo">Pular</button></div></div>';
+    h += '<div class="dica" style="margin-top:12px">' + esc(caminho(r.trilha)) + '</div><h2><span class="ponto ' + ac.classe + '" style="display:inline-block;margin-right:8px;vertical-align:middle"></span>' + esc(ac.nome) + "</h2>" +
+      (f.legenda ? '<p class="dica">' + esc(f.legenda) + "</p>" : "") + (ac.nota ? '<p class="apoio" style="margin-top:6px">' + esc(ac.nota) + "</p>" : "");
+    if (ac.motivos.length) {
+      h += '<div class="sugestoes" style="margin-top:12px">';
+      for (i = 0; i < ac.motivos.length; i++) h += '<span class="chip">' + esc(ac.motivos[i].nome) + "</span>";
+      h += "</div>";
+    }
+    return h + '</div><div class="acoes" style="margin-top:14px"><button class="botao principal" data-a="rev-proximo">Próximo</button><button class="botao" data-a="abrir-achado" data-id="' + ac.id + '">Abrir no roteiro</button></div>';
   }
   function telaRevisao() {
     var h = topo() + '<main class="miolo"><div class="sobre">Estudo</div><h1 class="titulo-pag">Revisão</h1>' +
-      '<p class="apoio" style="margin:6px 0 12px">Um achado anormal por vez. Tente lembrar os motivos e o caminho de cada um antes de abrir.</p><div class="chips-rolo">' +
+      '<div class="seg" style="margin:12px 0"><button data-a="rev-modo" data-m="motivos"' + (S.rev.modo !== "fotos" ? ' class="ativa"' : "") + ">Motivos</button>" +
+      '<button data-a="rev-modo" data-m="fotos"' + (S.rev.modo === "fotos" ? ' class="ativa"' : "") + ">Imagens</button></div>" +
+      '<p class="apoio" style="margin:0 0 12px">' + (S.rev.modo === "fotos" ? "Uma imagem por vez: reconheça o achado antes de abrir." : "Um achado anormal por vez. Tente lembrar os motivos e o caminho de cada um antes de abrir.") + '</p><div class="chips-rolo">' +
       '<button class="chip' + (S.rev.area ? "" : " ativa") + '" data-a="rev-area" data-id="">Todas as áreas</button>';
     for (var i = 0; i < base.areas.length; i++)
       h += '<button class="chip' + (S.rev.area === base.areas[i].id ? " ativa" : "") + '" data-a="rev-area" data-id="' + base.areas[i].id + '">' + esc(base.areas[i].nome) + "</button>";
     h += "</div>";
     if (!S.rev.id || !IDX[S.rev.id] || IDX[S.rev.id].t !== "achado") sortear();
-    if (!S.rev.id) return h + '<div class="vazio">Não há achados anormais com motivos aqui. Adicione motivos no roteiro para revisar.</div></main>';
+    if (!S.rev.id) return h + '<div class="vazio">' + (S.rev.modo === "fotos" ? "Nenhum achado com imagem aqui. Adicione fotos nos achados para revisar por imagem." : "Não há achados anormais com motivos aqui. Adicione motivos no roteiro para revisar.") + "</div></main>";
     var r = IDX[S.rev.id], ac = r.o;
+    if (S.rev.modo === "fotos") return h + revisaoFoto(r) + "</main>";
     h += '<div class="revisao"><div class="dica">' + esc(caminho(r.trilha)) + "</div><h2>" + esc(ac.nome) + "</h2>" + (ac.nota ? '<p class="apoio">' + esc(ac.nota) + "</p>" : "");
     if (!S.rev.aberto) {
       h += '<p class="pergunta">Quais motivos explicam este achado? São ' + ac.motivos.length + '.</p><div class="acoes" style="margin-top:14px"><button class="botao principal" data-a="rev-abrir">Mostrar motivos</button><button class="botao" data-a="rev-proximo">Pular</button></div></div>';
@@ -567,6 +653,25 @@
       h += '</div><div class="acoes" style="margin-top:14px"><button class="botao principal" data-a="rev-proximo">Próximo</button><button class="botao" data-a="abrir-achado" data-id="' + ac.id + '">Abrir no roteiro</button></div>';
     }
     return h + "</main>";
+  }
+
+  function telaCreditos() {
+    var h = topo("Créditos das imagens") + '<main class="miolo"><div class="sobre">Sobre</div><h1 class="titulo-pag">Créditos das imagens</h1>' +
+      '<p class="apoio" style="margin-top:6px">Imagens que vieram com o app, com autor, licença e origem. As fotos que você acrescentou não aparecem aqui.</p><div class="lista" style="margin-top:16px">', id, r, i, f, n = 0;
+    for (id in IDX) {
+      r = IDX[id];
+      if (r.t !== "achado") continue;
+      for (i = 0; i < r.o.fotos.length; i++) {
+        f = r.o.fotos[i];
+        if (!f.a) continue;
+        n++;
+        h += '<div class="cartao credito"><button data-a="ver-foto" data-id="' + id + '" data-i="' + i + '" aria-label="Ver imagem">' + imgFoto(f, true, "mini") + '</button><div class="cresce"><div class="nome">' + esc(r.o.nome) + "</div>" +
+          (f.legenda ? '<div class="sub">' + esc(f.legenda) + "</div>" : "") + '<div class="sub">' + esc(f.credito || "Sem crédito registrado") + "</div>" +
+          (f.fonte ? '<button class="tambem" data-a="fonte-foto" data-url="' + esc(f.fonte) + '">Ver origem ›</button>' : "") + "</div></div>";
+      }
+    }
+    if (!n) h += '<div class="vazio">Nenhuma imagem do app no roteiro.</div>';
+    return h + "</div></main>";
   }
 
   /* ── desenhar ──────────────────────────────────────────────────── */
@@ -584,7 +689,7 @@
         e = exameDe(r.id);
         if (e) { h = telaExame(e, r); break; }
       } else {
-        h = r.v === "exames" ? telaExames() : r.v === "motivos" ? telaMotivos() : r.v === "revisao" ? telaRevisao() : telaAreas();
+        h = r.v === "exames" ? telaExames() : r.v === "motivos" ? telaMotivos() : r.v === "revisao" ? telaRevisao() : r.v === "creditos" ? telaCreditos() : telaAreas();
         break;
       }
       S.pilha.pop(); /* o destino foi apagado: volta um passo */
@@ -606,7 +711,14 @@
 
   /* ── folhas ────────────────────────────────────────────────────── */
   function abrirFolha(f) { S.folha = f; document.body.classList.add("com-folha"); desenharFolha(); }
-  function fecharFolha() { S.folha = null; document.body.classList.remove("com-folha"); folhaEl.innerHTML = ""; }
+  /* uma folha aberta por cima do visor (legenda, confirmação) volta para ele ao fechar */
+  function fecharFolha() {
+    var volta = S.folha && S.folha.volta;
+    S.folha = null;
+    document.body.classList.remove("com-folha");
+    folhaEl.innerHTML = "";
+    if (volta) abrirFolha(volta);
+  }
   function cabFolha(titulo) {
     return '<div class="cab"><h2 class="cresce">' + esc(titulo) + '</h2><button class="icone-b" data-a="fechar-folha" aria-label="Fechar">' + IC.fechar + "</button></div>";
   }
@@ -647,16 +759,47 @@
       h = cabFolha("Buscar") + '<div class="campo" style="margin-top:4px"><input id="f-busca" type="search" autocomplete="off" placeholder="Tópico, achado ou motivo" aria-label="Buscar"></div><div class="lista" id="f-res" style="margin-top:12px"></div>';
     } else if (f.tipo === "menu") {
       h = cabFolha("Opções") +
-        '<button class="item-menu" data-a="exportar"><span class="cresce"><div>Salvar cópia de segurança</div><div class="sub">Um arquivo com todo o roteiro e os exames</div></span></button>' +
+        '<button class="item-menu" data-a="exportar"><span class="cresce"><div>Salvar cópia de segurança</div><div class="sub">Um arquivo com o roteiro, os exames e as suas fotos</div></span></button>' +
         '<button class="item-menu" data-a="importar"><span class="cresce"><div>Restaurar de uma cópia</div><div class="sub">Substitui o que está no aparelho</div></span></button>' +
         '<button class="item-menu" data-a="repor"><span class="cresce"><div>Repor o conteúdo inicial</div><div class="sub">Volta o roteiro ao que veio com o app</div></span></button>' +
+        '<button class="item-menu" data-a="creditos"><span class="cresce"><div>Créditos das imagens</div><div class="sub">Autor, licença e origem das imagens do app</div></span></button>' +
         '<p class="dica" style="margin-top:16px">Exame físico' + (A && A.versao ? " " + esc(A.versao()) : "") + ", conteúdo na versão " + SV + ". Funciona sem internet; nada sai do aparelho. O conteúdo inicial é um ponto de partida para estudo: confira com as suas referências e ajuste como quiser.</p>";
+    } else if (f.tipo === "foto-origem") {
+      h = cabFolha("Acrescentar imagem") +
+        '<button class="item-menu" data-a="foto-camera"><span class="ic">' + IC.camera + '</span><span class="cresce"><div>Tirar foto</div><div class="sub">Abre a câmera; peça consentimento e evite mostrar o rosto ou dados do paciente</div></span></button>' +
+        '<button class="item-menu" data-a="foto-galeria"><span class="ic">' + IC.galeria + '</span><span class="cresce"><div>Escolher da galeria</div><div class="sub">Uma foto ou imagem já salva no aparelho</div></span></button>' +
+        '<button class="item-menu" data-a="foto-busca" data-onde="commons"><span class="ic">' + IC.web + '</span><span class="cresce"><div>Procurar no Wikimedia Commons</div><div class="sub">Banco de imagens livres; abre no navegador</div></span></button>' +
+        '<button class="item-menu" data-a="foto-busca" data-onde="google"><span class="ic">' + IC.web + '</span><span class="cresce"><div>Procurar no Google Imagens</div><div class="sub">Abre no navegador</div></span></button>' +
+        '<p class="dica" style="margin-top:12px">Na internet: salve a imagem no celular e volte aqui em "Escolher da galeria". Anote na legenda de onde ela veio.</p>';
+    } else if (f.tipo === "legenda") {
+      o = (IDX[f.id] || { o: { fotos: [] } }).o.fotos[f.i] || {};
+      h = cabFolha("Legenda da imagem") + '<div class="campo"><label for="f-legenda">Legenda</label><textarea id="f-legenda" style="min-height:90px" placeholder="O que a imagem mostra, de onde veio">' + esc(o.legenda || "") + "</textarea></div>" +
+        '<div class="acoes" style="margin-top:16px"><button class="botao principal" data-a="salvar-legenda">Salvar</button></div>';
+    } else if (f.tipo === "visor") {
+      desenharVisor(f);
+      return;
     } else if (f.tipo === "confirmar") {
       h = cabFolha(f.titulo) + '<p class="apoio">' + esc(f.msg) + '</p><div class="acoes" style="margin-top:18px"><button class="botao ' + (f.perigo ? "perigo" : "principal") + '" data-a="confirmar">' + esc(f.rotulo) + '</button><button class="botao" data-a="fechar-folha">Cancelar</button></div>';
     }
     folhaEl.innerHTML = '<div class="veu" data-a="veu"><div class="painel' + (f.tipo === "busca" ? " cheio" : "") + '" role="dialog" aria-modal="true">' + h + "</div></div>";
     var foco = document.getElementById(f.tipo === "busca" ? "f-busca" : "f-nome");
     if (foco && !f.semFoco && (f.tipo === "busca" || !f.id)) foco.focus();
+  }
+  function desenharVisor(f) {
+    var r = IDX[f.id];
+    if (!r || !r.o.fotos.length) { fecharFolha(); return; }
+    if (f.i >= r.o.fotos.length) f.i = r.o.fotos.length - 1;
+    var ac = r.o, ft = ac.fotos[f.i], n = ac.fotos.length;
+    document.body.classList.remove("com-folha"); /* no visor o aviso fica embaixo, sem cobrir os botões */
+    folhaEl.innerHTML = '<div class="visor" role="dialog" aria-modal="true" aria-label="Imagem de ' + esc(ac.nome) + '">' +
+      '<div class="visor-topo"><button class="icone-b" data-a="fechar-folha" aria-label="Fechar">' + IC.fechar + '</button><div class="cresce"><div class="visor-nome">' + esc(ac.nome) + "</div>" +
+      (n > 1 ? '<div class="visor-conta">' + (f.i + 1) + " de " + n + "</div>" : "") + "</div>" +
+      '<button class="icone-b" data-a="legenda-foto" aria-label="Editar legenda">' + IC.lapis + '</button><button class="icone-b" data-a="apagar-foto" aria-label="Apagar imagem">' + IC.lixo + "</button></div>" +
+      '<div class="visor-img' + (f.zoom ? " zoom" : "") + '" data-a="zoom">' + imgFoto(ft, false, "", ft.legenda || ac.nome) + "</div>" +
+      '<div class="visor-base">' + (n > 1 ? '<button class="icone-b" data-a="visor-passo" data-d="-1" aria-label="Anterior">' + IC.esq + "</button>" : "") +
+      '<div class="cresce">' + (ft.legenda ? '<p class="visor-legenda">' + esc(ft.legenda) + "</p>" : '<p class="visor-legenda vazia">Toque duas vezes na imagem para ampliar.</p>') +
+      (ft.credito ? '<p class="visor-credito">' + esc(ft.credito) + (ft.fonte ? ' · <button data-a="fonte-foto" data-url="' + esc(ft.fonte) + '">origem</button>' : "") + "</p>" : "") + "</div>" +
+      (n > 1 ? '<button class="icone-b" data-a="visor-passo" data-d="1" aria-label="Próxima">' + IC.dir + "</button>" : "") + "</div></div>";
   }
   function confirmar(titulo, msg, rotulo, fn, perigo) {
     abrirFolha({ tipo: "confirmar", titulo: titulo, msg: msg, rotulo: rotulo, fn: fn, perigo: perigo });
@@ -713,7 +856,7 @@
     } else if (f.alvo === "achado") {
       pai = IDX[f.pai];
       if (!pai) { fecharFolha(); return; }
-      pai.o.achados.push({ id: nid(), nome: nome, nota: nota, classe: f.classe, motivos: [] });
+      pai.o.achados.push({ id: nid(), nome: nome, nota: nota, classe: f.classe, motivos: [], fotos: [] });
     } else {
       pai = IDX[f.pai];
       if (!pai) { fecharFolha(); return; }
@@ -760,7 +903,17 @@
     b = d && d.tipo === "exame-fisico" ? consertar(d.base) : null;
     if (b) atualizar(b);
     if (!b) { aviso("Esse arquivo não é uma cópia deste app."); return; }
-    confirmar("Restaurar a cópia?", "O roteiro e os exames deste aparelho serão substituídos pelos do arquivo (" + plural(b.areas.length, "área", "áreas") + ").", "Substituir tudo", function () {
+    var fotos = d.fotos && typeof d.fotos === "object" ? d.fotos : {}, nf = 0, k;
+    for (k in fotos) if (NOME_FOTO.test(k) && typeof fotos[k] === "string") nf++;
+    confirmar("Restaurar a cópia?", "O roteiro e os exames deste aparelho serão substituídos pelos do arquivo (" + plural(b.areas.length, "área", "áreas") + (nf ? ", " + plural(nf, "foto", "fotos") : "") + ").", "Substituir tudo", function () {
+      var falhas = 0;
+      for (k in fotos) {
+        if (!NOME_FOTO.test(k) || typeof fotos[k] !== "string") continue;
+        if (A && A.gravarFoto) { if (!A.gravarFoto(k, fotos[k])) falhas++; }
+        else try { window.localStorage.setItem(chaveLocal(k, false), "data:image/jpeg;base64," + fotos[k]); } catch (e) { falhas++; }
+        delete MINIS[k + "_m"];
+      }
+      if (falhas) aviso(plural(falhas, "foto não pôde", "fotos não puderam") + " ser restaurada" + (falhas > 1 ? "s" : "") + ".");
       base = b;
       exames = limparExames(d.exames);
       salvarBase();
@@ -769,6 +922,84 @@
       aviso("Cópia restaurada.");
     }, true);
   }
+  /* ── fotos suas ─────────────────────────────────────────────────── */
+  function pedirFoto(camera) {
+    var p = S.folha && S.folha.tipo === "foto-origem" ? S.folha.id : null, inp;
+    if (!p) return;
+    guardar("foto-pendente", { achado: p });   /* sobrevive se o Android fechar o app enquanto a câmera está aberta */
+    fecharFolha();
+    if (A && A.escolherFoto) { A.escolherFoto(!!camera); return; }
+    inp = document.getElementById("seletor-foto");
+    if (camera) inp.setAttribute("capture", "environment"); else inp.removeAttribute("capture");
+    inp.click();
+  }
+  function receberFotos(nomes) {
+    if (!nomes || !nomes.length) return;
+    var p = ler("foto-pendente"), r = p && IDX[p.achado], i;
+    guardar("foto-pendente", {});
+    if (!r || r.t !== "achado") {
+      for (i = 0; i < nomes.length; i++) apagarArquivoFoto(nomes[i]);
+      aviso("A foto chegou, mas o achado não existe mais.");
+      return;
+    }
+    for (i = 0; i < nomes.length; i++) r.o.fotos.push({ id: nid(), u: nomes[i], legenda: "", credito: "", fonte: "" });
+    salvarBase();
+    if (S.folha) fecharFolha();
+    if (!(atual().v === "achado" && atual().id === r.o.id)) ir({ v: "achado", id: r.o.id }); else desenhar(true);
+    aviso(nomes.length === 1 ? "Foto acrescentada." : plural(nomes.length, "foto acrescentada", "fotos acrescentadas") + ".");
+  }
+  window.__fotoPronta = function () {
+    var l = [];
+    try { l = JSON.parse(A.fotosProntas()); } catch (e) { l = []; }
+    receberFotos(l);
+  };
+  /* no navegador (testes): reduz no canvas e guarda no localStorage */
+  function reduzir(img, lado, q) {
+    var k = Math.min(1, lado / Math.max(img.naturalWidth, img.naturalHeight)), c = document.createElement("canvas");
+    c.width = Math.max(1, Math.round(img.naturalWidth * k));
+    c.height = Math.max(1, Math.round(img.naturalHeight * k));
+    c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+    return c.toDataURL("image/jpeg", q);
+  }
+  document.getElementById("seletor-foto").addEventListener("change", function () {
+    var arq = this.files && this.files[0], url;
+    this.value = "";
+    if (!arq) return;
+    url = URL.createObjectURL(arq);
+    var img = new Image();
+    img.onload = function () {
+      var nome = "u" + Date.now().toString(36) + Math.floor(Math.random() * 1296).toString(36);
+      try {
+        window.localStorage.setItem(chaveLocal(nome, false), reduzir(img, 1280, 0.82));
+        window.localStorage.setItem(chaveLocal(nome, true), reduzir(img, 360, 0.78));
+        receberFotos([nome]);
+      } catch (e) { aviso("Sem espaço para guardar a foto aqui."); }
+      URL.revokeObjectURL(url);
+    };
+    img.onerror = function () { aviso("Não consegui abrir essa imagem."); URL.revokeObjectURL(url); };
+    img.src = url;
+  });
+  function fotosSuas(b) {
+    var l = [];
+    (function andar(nos) {
+      for (var i = 0; i < nos.length; i++) {
+        for (var j = 0; j < nos[i].achados.length; j++)
+          for (var k = 0; k < nos[i].achados[j].fotos.length; k++) if (nos[i].achados[j].fotos[k].u) l.push(nos[i].achados[j].fotos[k].u);
+        andar(nos[i].filhos);
+      }
+    })(b.areas);
+    return l;
+  }
+  /* apaga do aparelho fotos que nenhum achado usa mais (achado ou foto apagados em outra sessão);
+     o Android só lista fotos com mais de uma hora, para não pegar uma que acabou de chegar */
+  function limparFotosOrfas() {
+    if (!A || !A.listarFotos) return;
+    var usadas = {}, l = fotosSuas(base), i, nomes;
+    for (i = 0; i < l.length; i++) usadas[l[i]] = 1;
+    try { nomes = JSON.parse(A.listarFotos()); } catch (e) { return; }
+    for (i = 0; i < nomes.length; i++) if (!usadas[nomes[i]]) A.apagarFoto(nomes[i]);
+  }
+
   window.__chegou = function () {
     try {
       var l = JSON.parse(A.pendentes());
@@ -892,6 +1123,53 @@
     "salvar-exame": function () { var e = exameDe(atual().id); salvarArquivo(nomeArquivo(e.nome) + ".txt", textoExame(e), "text/plain"); },
 
     "rev-area": function (d) { S.rev.area = d.id; sortear(); desenhar(true); },
+    "rev-modo": function (d) { S.rev.modo = d.m; sortear(); desenhar(true); },
+    creditos: function () { fecharFolha(); ir({ v: "creditos" }); },
+
+    "nova-foto": function (d) { abrirFolha({ tipo: "foto-origem", id: d.id }); },
+    "foto-camera": function () { pedirFoto(true); },
+    "foto-galeria": function () { pedirFoto(false); },
+    "foto-busca": function (d) {
+      var r = IDX[S.folha.id], q = r ? r.o.nome.replace(/\(.*?\)/g, "").trim() : "", url = d.onde === "google"
+        ? "https://www.google.com/search?tbm=isch&q=" + encodeURIComponent(q + " exame físico")
+        : "https://commons.wikimedia.org/w/index.php?search=" + encodeURIComponent(q) + "&title=Special:MediaSearch&type=image";
+      if (A && A.abrir) A.abrir(url); else window.open(url, "_blank", "noopener");
+    },
+    "ver-foto": function (d) { if (S.folha) fecharFolha(); abrirFolha({ tipo: "visor", id: d.id, i: Number(d.i) || 0 }); },
+    "visor-passo": function (d) {
+      var f = S.folha, n = IDX[f.id].o.fotos.length;
+      f.i = (f.i + Number(d.d) + n) % n;
+      f.zoom = false;
+      desenharVisor(f);
+    },
+    zoom: function () {
+      var f = S.folha, agora = Date.now();
+      if (agora - (f.toque || 0) < 350) { f.zoom = !f.zoom; desenharVisor(f); f.toque = 0; return; }
+      f.toque = agora;
+    },
+    "legenda-foto": function () { var v = S.folha; abrirFolha({ tipo: "legenda", id: v.id, i: v.i, volta: v }); },
+    "salvar-legenda": function () {
+      var f = S.folha, ft = IDX[f.id].o.fotos[f.i];
+      ft.legenda = document.getElementById("f-legenda").value.replace(/\s+$/, "");
+      salvarBase();
+      fecharFolha();
+      desenhar(true);
+    },
+    "apagar-foto": function () {
+      var v = S.folha, ft = IDX[v.id].o.fotos[v.i];
+      abrirFolha({ tipo: "confirmar", titulo: "Apagar esta imagem?", perigo: true, rotulo: "Apagar", volta: v,
+        msg: ft.u ? "A foto sai do achado e do aparelho. Não dá para desfazer." : "A imagem sai deste achado. Ela volta se você repuser o conteúdo inicial.",
+        fn: function () {
+          var ac = IDX[v.id].o, i = ac.fotos.indexOf(ft);
+          if (i >= 0) ac.fotos.splice(i, 1);
+          if (ft.u) apagarArquivoFoto(ft.u);
+          salvarBase();
+          if (S.folha) { if (ac.fotos.length) { S.folha.i = Math.min(v.i, ac.fotos.length - 1); desenharVisor(S.folha); } else fecharFolha(); }
+          desenhar(true);
+          aviso("Imagem apagada.");
+        } });
+    },
+    "fonte-foto": function (d) { if (A && A.abrir) A.abrir(d.url); else window.open(d.url, "_blank", "noopener"); },
     "rev-abrir": function () { S.rev.aberto = true; desenhar(true); },
     "rev-proximo": function () { sortear(); desenhar(); window.scrollTo(0, 0); },
 
@@ -899,7 +1177,12 @@
       fecharFolha();
       var d = new Date(), dia = d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2);
       salvarExames(true);
-      salvarArquivo("exame-fisico-" + dia + ".json", JSON.stringify({ tipo: "exame-fisico", v: 1, feito: d.toISOString(), base: base, exames: exames }), "application/json");
+      var fotos = {}, l = fotosSuas(base), i, b64;
+      for (i = 0; i < l.length; i++) {
+        try { b64 = A && A.fotoBase64 ? A.fotoBase64(l[i]) : (window.localStorage.getItem(chaveLocal(l[i], false)) || "").replace(/^data:[^,]*,/, ""); } catch (e) { b64 = ""; }
+        if (b64) fotos[l[i]] = b64;
+      }
+      salvarArquivo("exame-fisico-" + dia + ".json", JSON.stringify({ tipo: "exame-fisico", v: 1, feito: d.toISOString(), base: base, exames: exames, fotos: fotos }), "application/json");
     },
     importar: function () {
       fecharFolha();
@@ -938,6 +1221,16 @@
       if (S.folha.tipo === "exame") ACOES["salvar-exame-nome"](); else document.getElementById("f-nota").focus();
     }
   });
+  var toqueX = null;
+  document.addEventListener("touchstart", function (ev) {
+    toqueX = ev.target.closest && ev.target.closest(".visor-img") && !(S.folha && S.folha.zoom) ? ev.touches[0].clientX : null;
+  }, { passive: true });
+  document.addEventListener("touchend", function (ev) {
+    if (toqueX === null || !S.folha || S.folha.tipo !== "visor") return;
+    var dx = ev.changedTouches[0].clientX - toqueX;
+    toqueX = null;
+    if (Math.abs(dx) > 60 && IDX[S.folha.id].o.fotos.length > 1) ACOES["visor-passo"]({ d: dx < 0 ? 1 : -1 });
+  });
   document.addEventListener("focusin", function (ev) {
     if (/^(INPUT|TEXTAREA)$/.test(ev.target.tagName)) document.body.classList.add("teclado");
   });
@@ -963,4 +1256,6 @@
   tema();
   desenhar();
   if (novidades) aviso("Roteiro atualizado: " + plural(novidades, "item novo", "itens novos") + ".");
+  if (A && A.fotosProntas) window.__fotoPronta();
+  if (base.areas.length) limparFotosOrfas();
 })();

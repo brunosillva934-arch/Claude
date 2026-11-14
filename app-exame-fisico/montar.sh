@@ -5,8 +5,8 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
-NOME=1.1     # versão que a pessoa vê
-CODIGO=2     # aumente a cada versão: o Android só instala por cima se não for menor
+NOME=1.2     # versão que a pessoa vê
+CODIGO=3     # aumente a cada versão: o Android só instala por cima se não for menor
 MINIMO=21    # Android 5.0
 ALVO=34      # Android 14
 ANDROID_JAR=${ANDROID_JAR:-/usr/lib/android-sdk/platforms/android-23/android.jar}
@@ -22,6 +22,7 @@ mkdir -p "$T/classes" "$T/assets" "$T/dex"
 # 1. a página: confere o conteúdo e junta web/ num único index.html, com as fontes dentro
 if command -v node > /dev/null; then node conferir.js; else echo "(sem node: conteúdo não conferido)"; fi
 python3 montar.py "$T/assets/index.html"
+cp -r web/fotos "$T/assets/fotos"   # imagens que vêm com o app, lidas como fotos/<nome> pela página
 
 # 2. o código Java vira classes.dex (sem lambdas: o dx antigo não as converte)
 javac -nowarn -Xlint:-options -source 8 -target 8 -bootclasspath "$ANDROID_JAR" -d "$T/classes" $(find src -name '*.java')
