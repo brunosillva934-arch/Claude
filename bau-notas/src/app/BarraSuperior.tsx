@@ -1,12 +1,12 @@
 import { ListTree, Menu, Network, PanelRightClose, PanelRightOpen, Search } from 'lucide-react';
-import { abrirBusca, abrirGaveta, alternarPainel, definirVisao, ramoDe, useLoja } from '../estado/loja';
+import { abrirBusca, abrirGaveta, alternarPainel, definirVisao, nosDaArvore, useLoja } from '../estado/loja';
 import { plural } from '../util/texto';
 
 export function BarraSuperior() {
   const arvore = useLoja((s) => (s.arvoreAtualId ? s.arvores[s.arvoreAtualId] : undefined));
   const total = useLoja((s) => {
     const a = s.arvoreAtualId ? s.arvores[s.arvoreAtualId] : undefined;
-    return a ? ramoDe(s.nos, a.raizId).length : 0;
+    return a ? nosDaArvore(s.nos, a).length : 0;
   });
   const visao = useLoja((s) => s.visao);
   const largo = useLoja((s) => s.largo);

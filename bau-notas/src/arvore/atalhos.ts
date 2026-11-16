@@ -10,7 +10,7 @@
  */
 import { useEffect } from 'react';
 import {
-  alternarRecolhido, criarFilho, criarIrmao, desfazer, editarTitulo, expandirNota, filhosDe, pedirRevelar,
+  alternarRecolhido, criarFilho, raizesDe, criarIrmao, desfazer, editarTitulo, expandirNota, filhosDe, pedirRevelar,
   selecionar, useLoja,
 } from '../estado/loja';
 import { avisar, useUi } from '../ui/servico';
@@ -39,7 +39,7 @@ function andar(tecla: string): void {
     return;
   }
   if (s.visao === 'lista') {
-    const ordem = dispor(s.nos, arvore.raizId).ordem;
+    const ordem = dispor(s.nos, raizesDe(s.nos, arvore)).ordem;
     const i = ordem.indexOf(atual.id);
     if (tecla === 'ArrowUp') irPara(ordem[i - 1]);
     else if (tecla === 'ArrowDown') irPara(ordem[i + 1]);
@@ -60,7 +60,7 @@ function andar(tecla: string): void {
     irPara(filhos[Math.floor((filhos.length - 1) / 2)]);
   } else {
     // Para cima e para baixo: o vizinho mais próximo na mesma coluna.
-    const d = dispor(s.nos, arvore.raizId);
+    const d = dispor(s.nos, raizesDe(s.nos, arvore));
     const aqui = d.posicoes.get(atual.id);
     if (!aqui) return;
     const coluna = d.ordem.filter((id) => d.posicoes.get(id)!.nivel === aqui.nivel);

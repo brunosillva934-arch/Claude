@@ -131,6 +131,8 @@ export interface Indice {
   filhos: Map<string, string[]>;
   /** Nós em que cada nota aparece. */
   porNota: Map<string, string[]>;
+  /** Nós sem pai de cada árvore (cada um começa uma árvore na mesma tela). */
+  raizes: Map<string, string[]>;
 }
 
 const SEM_FILHOS: string[] = [];
@@ -142,27 +144,60 @@ export function indiceDe(nos: Record<string, No>): Indice {
   if (pronto) return pronto;
   const filhos = new Map<string, string[]>();
   const porNota = new Map<string, string[]>();
+  const raizes = new Map<string, string[]>();
   for (const id in nos) {
     const no = nos[id]!;
     if (no.paiId) {
       const lista = filhos.get(no.paiId);
       if (lista) lista.push(id);
       else filhos.set(no.paiId, [id]);
+    } else {
+      const lista = raizes.get(no.arvoreId);
+      if (lista) lista.push(id);
+      else raizes.set(no.arvoreId, [id]);
     }
     const usos = porNota.get(no.notaId);
     if (usos) usos.push(id);
     else porNota.set(no.notaId, [id]);
   }
-  for (const lista of filhos.values()) {
+  for (const lista of [...filhos.values(), ...raizes.values()]) {
     lista.sort((a, b) => nos[a]!.ordem - nos[b]!.ordem || (a < b ? -1 : 1));
   }
-  const indice: Indice = { filhos, porNota };
+  const indice: Indice = { filhos, porNota, raizes };
   cacheIndice.set(nos, indice);
   return indice;
 }
 
 export function filhosDe(nos: Record<string, No>, id: string): string[] {
   return indiceDe(nos).filhos.get(id) ?? SEM_FILHOS;
+}
+
+/**
+ * Raízes de uma tela: a principal (a que dá nome à árvore) primeiro, depois as
+ * outras árvores criadas na mesma tela, na ordem em que aparecem.
+ */
+export function raizesDe(nos: Record<string, No>, arvore: Arvore | undefined): string[] {
+  if (!arvore || !nos[arvore.raizId]) return SEM_FILHOS;
+  const todas = indiceDe(nos).raizes.get(arvore.id) ?? SEM_FILHOS;
+  if (todas.length === 1 && todas[0] === arvore.raizId) return todas;
+  return [arvore.raizId, ...todas.filter((id) => id !== arvore.raizId)];
+}
+
+/** Todos os nós de uma tela, árvore por árvore. */
+export function nosDaArvore(nos: Record<string, No>, arvore: Arvore | undefined): string[] {
+  return raizesDe(nos, arvore).flatMap((id) => ramoDe(nos, id));
+}
+
+/** Irmãos de um nó, ele incluído: os filhos do pai, ou as outras raízes da tela. */
+function irmaosDe(s: Estado, no: No): string[] {
+  return no.paiId ? filhosDe(s.nos, no.paiId) : raizesDe(s.nos, s.arvores[no.arvoreId]);
+}
+
+/** A raiz da árvore em que o nó está. */
+export function raizDe(nos: Record<string, No>, id: string): string {
+  let atual = nos[id];
+  while (atual?.paiId && nos[atual.paiId]) atual = nos[atual.paiId];
+  return atual?.id ?? id;
 }
 
 /** O nó e todos os seus descendentes, em profundidade. */
@@ -581,11 +616,28 @@ function descartarNovo(noId: string): void {
     delete notas[no.notaId];
     sql.push(...sqlApagarNota(no.notaId));
   }
-  if (no.paiId) renumerar(nos, filhosDe(s.nos, no.paiId).filter((id) => id !== noId), sql);
-  const voltarPara = no.paiId && nos[no.paiId] ? no.paiId : null;
+  // Um nó inserido entre dois outros e depois cancelado devolve o filho ao lugar dele.
+  const filhos = filhosDe(s.nos, noId);
+  for (const f of filhos) {
+    const filho = s.nos[f]!;
+    const rotuloDoRamo = filho.rotuloDoRamo ?? no.rotuloDoRamo;
+    nos[f] = { ...filho, paiId: no.paiId, rotuloDoRamo };
+    sql.push(sqlAtualizarNo(f, { paiId: no.paiId, rotuloDoRamo }));
+  }
+  const irmaos = irmaosDe(s, no).slice();
+  irmaos.splice(irmaos.indexOf(noId), 1, ...filhos);
+  renumerar(nos, irmaos, sql);
+  const arvore = s.arvores[no.arvoreId];
+  let arvores = s.arvores;
+  if (arvore && arvore.raizId === noId && filhos[0]) {
+    arvores = { ...s.arvores, [arvore.id]: { ...arvore, raizId: filhos[0] } };
+    sql.push(sqlAtualizarArvore(arvore.id, { raizId: filhos[0] }));
+  }
+  const voltarPara = filhos[0] ?? (no.paiId && nos[no.paiId] ? no.paiId : null);
   set({
     nos,
     notas,
+    arvores,
     edicao: null,
     selecionadoId: voltarPara,
     caminho: voltarPara ? caminhoAte(nos, voltarPara) : VAZIO,
@@ -593,6 +645,114 @@ function descartarNovo(noId: string): void {
       s.notaAbertaId === no.notaId ? (voltarPara ? nos[voltarPara]!.notaId : null) : s.notaAbertaId,
   });
   void enfileirar(sql);
+}
+
+/**
+ * Cria uma árvore nova na mesma tela, abaixo das que já existem. Entra com o
+ * título em edição (e pode reaproveitar uma nota existente, como qualquer nó novo).
+ */
+export function criarArvoreNaTela(): string | null {
+  const s = get();
+  const arvore = s.arvoreAtualId ? s.arvores[s.arvoreAtualId] : undefined;
+  if (!arvore) return null;
+  const nota = novaNota('', TIPO_GERAL);
+  const no: No = {
+    id: uid(),
+    arvoreId: arvore.id,
+    notaId: nota.id,
+    paiId: null,
+    ordem: raizesDe(s.nos, arvore).length,
+    rotuloDoRamo: null,
+    recolhido: false,
+  };
+  const nos = { ...s.nos, [no.id]: no };
+  set({
+    nos,
+    notas: { ...s.notas, [nota.id]: meta(nota) },
+    selecionadoId: no.id,
+    caminho: caminhoAte(nos, no.id),
+    notaAbertaId: nota.id,
+    edicao: { noId: no.id, novo: true },
+    movendoId: null,
+  });
+  void enfileirar([sqlInserirNota(nota), sqlInserirNo(no)]);
+  pedirRevelar(no.id);
+  return no.id;
+}
+
+/**
+ * Cria um nó entre este e o de cima: o novo ocupa o lugar dele e ele passa a ser
+ * filho do novo. O rótulo do ramo acompanha o novo nó, que agora está no ramo.
+ * Numa raiz, o novo nó vira a raiz.
+ */
+export function inserirEntre(noId: string): string | null {
+  const s = get();
+  const no = s.nos[noId];
+  if (!no) return null;
+  const nota = novaNota('', TIPO_GERAL);
+  const novo: No = {
+    id: uid(),
+    arvoreId: no.arvoreId,
+    notaId: nota.id,
+    paiId: no.paiId,
+    ordem: no.ordem,
+    rotuloDoRamo: no.rotuloDoRamo,
+    recolhido: false,
+  };
+  const nos = { ...s.nos, [novo.id]: novo, [noId]: { ...no, paiId: novo.id, ordem: 0, rotuloDoRamo: null } };
+  const sql: Instrucao[] = [
+    sqlInserirNota(nota),
+    sqlInserirNo(novo),
+    sqlAtualizarNo(noId, { paiId: novo.id, ordem: 0, rotuloDoRamo: null }),
+  ];
+  const arvore = s.arvores[no.arvoreId];
+  let arvores = s.arvores;
+  if (arvore && arvore.raizId === noId) {
+    arvores = { ...s.arvores, [arvore.id]: { ...arvore, raizId: novo.id } };
+    sql.push(sqlAtualizarArvore(arvore.id, { raizId: novo.id }));
+  }
+  set({
+    nos,
+    arvores,
+    notas: { ...s.notas, [nota.id]: meta(nota) },
+    selecionadoId: novo.id,
+    caminho: caminhoAte(nos, novo.id),
+    notaAbertaId: nota.id,
+    edicao: { noId: novo.id, novo: true },
+    movendoId: null,
+  });
+  void enfileirar(sql);
+  pedirRevelar(novo.id);
+  return novo.id;
+}
+
+/** Tira o ramo de onde está e o põe como uma árvore própria, na mesma tela. */
+export function separarComoArvore(noId: string): boolean {
+  const s = get();
+  const no = s.nos[noId];
+  const arvore = no ? s.arvores[no.arvoreId] : undefined;
+  if (!no || !no.paiId || !arvore) return false;
+  const paiAntigoId = no.paiId;
+  const ordemAntiga = no.ordem;
+  const nos = { ...s.nos, [noId]: { ...no, paiId: null } };
+  const sql: Instrucao[] = [sqlAtualizarNo(noId, { paiId: null })];
+  renumerar(nos, filhosDe(s.nos, paiAntigoId).filter((id) => id !== noId), sql);
+  renumerar(nos, [...raizesDe(s.nos, arvore), noId], sql);
+  set({
+    nos,
+    movendoId: null,
+    selecionadoId: noId,
+    caminho: caminhoAte(nos, noId),
+    pedidoVerTudo: s.pedidoVerTudo + 1,
+  });
+  void enfileirar(sql);
+  registrarDesfazer({
+    rotulo: 'Separar',
+    desfazer: () => {
+      if (get().nos[noId] && get().nos[paiAntigoId]) moverSemHistorico(noId, paiAntigoId, ordemAntiga);
+    },
+  });
+  return true;
 }
 
 /** Conclui a edição do título. Título vazio num nó novo descarta o nó. */
@@ -682,16 +842,16 @@ export function recolherTudo(recolher: boolean): void {
   if (!arvore) return;
   const nos = { ...s.nos };
   const sql: Instrucao[] = [];
-  for (const id of ramoDe(s.nos, arvore.raizId)) {
+  for (const id of nosDaArvore(s.nos, arvore)) {
     const no = s.nos[id]!;
-    const deveRecolher = recolher && id !== arvore.raizId && filhosDe(s.nos, id).length > 0;
+    const deveRecolher = recolher && no.paiId !== null && filhosDe(s.nos, id).length > 0;
     if (no.recolhido !== deveRecolher) {
       nos[id] = { ...no, recolhido: deveRecolher };
       sql.push(sqlAtualizarNo(id, { recolhido: deveRecolher }));
     }
   }
   if (sql.length === 0) return;
-  const sel = recolher && s.selecionadoId ? arvore.raizId : s.selecionadoId;
+  const sel = recolher && s.selecionadoId ? raizDe(s.nos, s.selecionadoId) : s.selecionadoId;
   set({
     nos,
     selecionadoId: sel,
@@ -705,8 +865,10 @@ export function podeMover(noId: string, novoPaiId: string): boolean {
   const { nos } = get();
   const no = nos[noId];
   const pai = nos[novoPaiId];
-  if (!no || !pai || !no.paiId) return false;
+  if (!no || !pai) return false;
   if (no.arvoreId !== pai.arvoreId) return false;
+  // A raiz principal dá nome à árvore: fica onde está.
+  if (!no.paiId && get().arvores[no.arvoreId]?.raizId === noId) return false;
   return !estaNoRamo(nos, novoPaiId, noId);
 }
 
@@ -718,12 +880,12 @@ export function moverNo(noId: string, novoPaiId: string, indice?: number): boole
   const s = get();
   if (!podeMover(noId, novoPaiId)) return false;
   const no = s.nos[noId]!;
-  const paiAntigoId = no.paiId!;
+  const paiAntigoId = no.paiId;
   const ordemAntiga = no.ordem;
   const nos = { ...s.nos };
   const sql: Instrucao[] = [];
 
-  const antigos = filhosDe(s.nos, paiAntigoId).filter((id) => id !== noId);
+  const antigos = irmaosDe(s, no).filter((id) => id !== noId);
   const novos = paiAntigoId === novoPaiId ? antigos : filhosDe(s.nos, novoPaiId).slice();
   const posicao = Math.max(0, Math.min(indice ?? novos.length, novos.length));
   novos.splice(posicao, 0, noId);
@@ -753,7 +915,9 @@ export function moverNo(noId: string, novoPaiId: string, indice?: number): boole
   registrarDesfazer({
     rotulo: 'Mover',
     desfazer: () => {
-      if (get().nos[noId] && get().nos[paiAntigoId]) moverSemHistorico(noId, paiAntigoId, ordemAntiga);
+      if (!get().nos[noId]) return;
+      if (paiAntigoId === null) separarSemHistorico(noId);
+      else if (get().nos[paiAntigoId]) moverSemHistorico(noId, paiAntigoId, ordemAntiga);
     },
   });
   return true;
@@ -762,6 +926,12 @@ export function moverNo(noId: string, novoPaiId: string, indice?: number): boole
 function moverSemHistorico(noId: string, paiId: string, indice: number): void {
   const antes = pilhaDesfazer.length;
   moverNo(noId, paiId, indice);
+  pilhaDesfazer.length = Math.min(pilhaDesfazer.length, antes);
+}
+
+function separarSemHistorico(noId: string): void {
+  const antes = pilhaDesfazer.length;
+  separarComoArvore(noId);
   pilhaDesfazer.length = Math.min(pilhaDesfazer.length, antes);
 }
 
@@ -811,7 +981,8 @@ export function resumoDaExclusao(noId: string): ResumoExclusao {
 export function excluirNo(noId: string): boolean {
   const s = get();
   const no = s.nos[noId];
-  if (!no || !no.paiId) return false;
+  if (!no) return false;
+  if (!no.paiId && s.arvores[no.arvoreId]?.raizId === noId) return false;
   const ids = ramoDe(s.nos, noId);
   const conjunto = new Set(ids);
   const removidos = ids.map((id) => s.nos[id]!);
@@ -827,10 +998,10 @@ export function excluirNo(noId: string): boolean {
     notas[notaId] = { ...notas[notaId]!, excluidaEm: quando };
     sql.push(sqlAtualizarNota(notaId, { excluidaEm: quando }));
   }
-  renumerar(nos, filhosDe(s.nos, no.paiId).filter((id) => id !== noId), sql);
+  renumerar(nos, irmaosDe(s, no).filter((id) => id !== noId), sql);
 
   const selecaoSome = s.selecionadoId !== null && conjunto.has(s.selecionadoId);
-  const novaSelecao = selecaoSome ? no.paiId : s.selecionadoId;
+  const novaSelecao = selecaoSome ? (no.paiId ?? s.arvores[no.arvoreId]?.raizId ?? null) : s.selecionadoId;
   const notaSome = s.notaAbertaId !== null && orfas.includes(s.notaAbertaId);
   set({
     nos,
@@ -848,14 +1019,19 @@ export function excluirNo(noId: string): boolean {
     rotulo: 'Excluir',
     desfazer: () => {
       const atual = get();
-      const pai = atual.nos[no.paiId!];
       const restaurados = { ...atual.nos };
       const sqlVolta: Instrucao[] = [];
-      // Se o pai original também sumiu nesse meio-tempo, o ramo volta preso à raiz.
-      const paiId = pai ? pai.id : (atual.arvores[no.arvoreId]?.raizId ?? null);
-      if (!paiId || !atual.nos[paiId]) return;
+      const arvoreDoNo = atual.arvores[no.arvoreId];
+      let paiId: string | null = null;
+      if (no.paiId) {
+        // Se o pai original também sumiu nesse meio-tempo, o ramo volta preso à raiz.
+        paiId = atual.nos[no.paiId] ? no.paiId : (arvoreDoNo?.raizId ?? null);
+        if (!paiId || !atual.nos[paiId]) return;
+      } else if (!arvoreDoNo) {
+        return;
+      }
       for (const r of removidos) restaurados[r.id] = r.id === noId ? { ...r, paiId } : r;
-      const irmaos = filhosDe(atual.nos, paiId).slice();
+      const irmaos = (paiId ? filhosDe(atual.nos, paiId) : raizesDe(atual.nos, arvoreDoNo)).slice();
       irmaos.splice(Math.min(no.ordem, irmaos.length), 0, noId);
       sqlVolta.push(...sqlRestaurarNos(removidos.map((r) => restaurados[r.id]!)));
       renumerar(restaurados, irmaos, sqlVolta);
@@ -1027,7 +1203,7 @@ export function resumoDaArvore(arvoreId: string): ResumoExclusao {
   const s = get();
   const arvore = s.arvores[arvoreId];
   if (!arvore) return { nos: 0, notasParaLixeira: 0 };
-  const ids = new Set(ramoDe(s.nos, arvore.raizId));
+  const ids = new Set(nosDaArvore(s.nos, arvore));
   return { nos: ids.size, notasParaLixeira: notasOrfas(s.nos, ids).length };
 }
 
@@ -1036,7 +1212,7 @@ export function excluirArvore(arvoreId: string): boolean {
   const s = get();
   const arvore = s.arvores[arvoreId];
   if (!arvore) return false;
-  const ids = ramoDe(s.nos, arvore.raizId);
+  const ids = nosDaArvore(s.nos, arvore);
   const conjunto = new Set(ids);
   const removidos = ids.map((id) => s.nos[id]!).filter(Boolean);
   const orfas = notasOrfas(s.nos, conjunto);

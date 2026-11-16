@@ -5,8 +5,9 @@
  */
 import { memo, useEffect, useMemo, useRef, type CSSProperties } from 'react';
 import { ChevronDown, ChevronRight, CornerDownRight, Ellipsis, FileText, Link2, Plus } from 'lucide-react';
+import { useShallow } from 'zustand/react/shallow';
 import {
-  alternarRecolhido, cancelarEdicao, confirmarTitulo, criarFilho, criarIrmao, expandirNota, filhosDe, indiceDe,
+  alternarRecolhido, criarArvoreNaTela, raizesDe, cancelarEdicao, confirmarTitulo, criarFilho, criarIrmao, expandirNota, filhosDe, indiceDe,
   moverNo, podeMover, selecionar, tituloDaNota, useLoja,
 } from '../estado/loja';
 import { useVoltar } from '../estado/navegacao';
@@ -237,9 +238,9 @@ const Linha = memo(function Linha({ id, nivel }: { id: string; nivel: number }) 
 });
 
 export function Lista() {
-  const raizId = useLoja((s) => (s.arvoreAtualId ? s.arvores[s.arvoreAtualId]?.raizId : undefined));
+  const raizes = useLoja(useShallow((s) => raizesDe(s.nos, s.arvoreAtualId ? s.arvores[s.arvoreAtualId] : undefined)));
   const nos = useLoja((s) => s.nos);
-  const disposicao = useMemo(() => (raizId ? dispor(nos, raizId) : null), [nos, raizId]);
+  const disposicao = useMemo(() => (raizes.length ? dispor(nos, raizes) : null), [nos, raizes]);
 
   return (
     <div
@@ -251,6 +252,10 @@ export function Lista() {
       {disposicao?.ordem.map((id) => (
         <Linha key={id} id={id} nivel={disposicao.posicoes.get(id)!.nivel} />
       ))}
+      <button type="button" className="lista-nova-arvore" data-acao="nova-arvore-na-tela" onClick={() => criarArvoreNaTela()}>
+        <Plus size={18} />
+        Nova árvore nesta tela
+      </button>
     </div>
   );
 }

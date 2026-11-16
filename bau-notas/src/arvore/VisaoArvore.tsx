@@ -14,7 +14,8 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { Maximize, Minus, Plus, X } from 'lucide-react';
-import { iniciarMover, selecionar, tituloDaNota, useLoja } from '../estado/loja';
+import { useShallow } from 'zustand/react/shallow';
+import { criarArvoreNaTela, iniciarMover, raizesDe, selecionar, tituloDaNota, useLoja } from '../estado/loja';
 import { useVoltar } from '../estado/navegacao';
 import { coresDoTipo } from '../util/cores';
 import { AcoesDoNo } from './AcoesDoNo';
@@ -65,7 +66,9 @@ function Canvas() {
   const disposicaoRef = useRef<Disposicao>(DISPOSICAO_VAZIA);
   const ultimoToqueNoFundo = useRef({ quando: 0, x: 0, y: 0 });
 
-  const raizId = useLoja((s) => (s.arvoreAtualId ? s.arvores[s.arvoreAtualId]?.raizId : undefined));
+  // Raízes da tela: a árvore principal e as outras criadas na mesma tela.
+  const raizes = useLoja(useShallow((s) => raizesDe(s.nos, s.arvoreAtualId ? s.arvores[s.arvoreAtualId] : undefined)));
+  const raizId = raizes[0];
   const arvoreId = useLoja((s) => s.arvoreAtualId);
   const nos = useLoja((s) => s.nos);
   const escuro = useLoja((s) => s.escuro);
@@ -93,7 +96,7 @@ function Canvas() {
       const [id, h] = item.split(':');
       if (id && h) alturas.set(id, Number(h));
     }
-    const d = raizId ? dispor(nos, raizId, (id) => alturas.get(id) ?? ALTURA_NO) : DISPOSICAO_VAZIA;
+    const d = raizes.length ? dispor(nos, raizes, (id) => alturas.get(id) ?? ALTURA_NO) : DISPOSICAO_VAZIA;
     const novosNos = new Map<string, Node>();
     const novasArestas = new Map<string, Edge>();
     const nodes: Node[] = [];
@@ -122,7 +125,7 @@ function Canvas() {
     cacheNos.current = novosNos;
     cacheArestas.current = novasArestas;
     return { nodes, edges, disposicao: d };
-  }, [nos, raizId, chaveDasAlturas]);
+  }, [nos, raizes, chaveDasAlturas]);
   disposicaoRef.current = disposicao;
 
   // O minimapa só aparece quando parte da árvore está fora da tela.
@@ -388,6 +391,16 @@ function Canvas() {
           }}
         >
           <Minus size={22} />
+        </button>
+        <button
+          type="button"
+          className="controle com-texto"
+          data-acao="nova-arvore-na-tela"
+          aria-label="Nova árvore nesta tela"
+          onClick={() => criarArvoreNaTela()}
+        >
+          <Plus size={20} />
+          Árvore
         </button>
       </div>
 

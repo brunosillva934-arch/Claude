@@ -74,7 +74,7 @@ export function iniciarArrasto(noId: string, x: number, y: number): boolean {
   const s = useLoja.getState();
   const no = s.nos[noId];
   const c = contexto.atual;
-  if (!no || !no.paiId || !c) return false;
+  if (!no || !c || (!no.paiId && s.arvores[no.arvoreId]?.raizId === noId)) return false;
   const titulo = tituloDaNota(s.notas[no.notaId]);
   ativo = { noId, titulo, x, y, quadro: 0 };
   definirArrasto({ noId, alvoId: null, posicao: 'dentro' });

@@ -928,3 +928,20 @@ html[data-tema='escuro'] {
   background: var(--cor-media);
   border-color: var(--cor);
 }
+
+/* Lista recuada: criar uma árvore nova na mesma tela. */
+.lista-nova-arvore {
+  margin: 12px 8px 0;
+  min-height: var(--toque);
+  padding: 0 14px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: var(--destaque);
+}
+
+.lista-nova-arvore:active {
+  background: var(--destaque-fraco);
+}

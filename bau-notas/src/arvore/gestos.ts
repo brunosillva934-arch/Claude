@@ -34,8 +34,11 @@ let ultimoToque = { id: '', quando: 0 };
 /** Nó cujo próximo clique deve ser ignorado (o clique que fecha um toque longo ou um arrasto). */
 let ignorarCliqueDe: string | null = null;
 
+/** A raiz principal não sai do lugar; as outras árvores da tela podem ser arrastadas. */
 function ehRaiz(noId: string): boolean {
-  return !useLoja.getState().nos[noId]?.paiId;
+  const s = useLoja.getState();
+  const no = s.nos[noId];
+  return !no || (!no.paiId && s.arvores[no.arvoreId]?.raizId === noId);
 }
 
 /** Abre o menu do nó ancorado ao lado do elemento tocado. */

@@ -3,12 +3,13 @@
  * longo, o rótulo do ramo, a troca de tipo e a exclusão com desfazer.
  */
 import {
-  ChevronsDownUp, ChevronsUpDown, CornerDownRight, FileText, Hash, ListPlus, MessageSquareText, Move, Pencil, Shapes,
-  Tag, Trash2,
+  BetweenHorizontalStart as Between, ChevronsDownUp, ChevronsUpDown, CornerDownRight, FileText, GitBranchPlus, Hash,
+  ListPlus, MessageSquareText, Move, Pencil, Shapes, Tag, Trash2,
 } from 'lucide-react';
 import {
   alternarRecolhido, criarFilho, criarIrmao, definirRotulo, definirTopico, desfazer, editarTitulo, excluirArvore,
-  excluirNo, expandirNota, filhosDe, iniciarMover, mudarTipoDaNota, resumoDaArvore, resumoDaExclusao, selecionar,
+  excluirNo, expandirNota, filhosDe, iniciarMover, inserirEntre, mudarTipoDaNota, resumoDaArvore, resumoDaExclusao,
+  selecionar, separarComoArvore,
   tiposOrdenados, tituloDaNota, useLoja,
 } from '../estado/loja';
 import { gravarResumoAgora } from '../nota/salvamento';
@@ -79,8 +80,8 @@ export async function pedirExclusao(noId: string): Promise<void> {
   if (!no) return;
   const titulo = tituloDaNota(s.notas[no.notaId]);
 
-  if (!no.paiId) {
-    // A raiz só sai junto com a árvore.
+  if (!no.paiId && s.arvores[no.arvoreId]?.raizId === noId) {
+    // A raiz principal só sai junto com a árvore (a tela inteira).
     const arvore = s.arvores[no.arvoreId];
     if (!arvore) return;
     const r = resumoDaArvore(arvore.id);
@@ -126,6 +127,7 @@ export function abrirMenuDoNo(noId: string, x: number, y: number, aposSoltar = f
   const tipo = nota ? s.tipos[nota.tipoId] : undefined;
   const temFilhos = filhosDe(s.nos, noId).length > 0;
   const raiz = !no.paiId;
+  const principal = raiz && s.arvores[no.arvoreId]?.raizId === noId;
   const topico = nota?.topico === true;
 
   const itens: ItemMenu[] = [
@@ -181,17 +183,36 @@ export function abrirMenuDoNo(noId: string, x: number, y: number, aposSoltar = f
     },
     {
       id: 'mover',
-      rotulo: 'Mover para outro pai',
+      rotulo: raiz ? 'Pôr dentro de outro nó' : 'Mover para outro pai',
       icone: Move,
-      desativado: raiz,
+      desativado: principal,
       aoEscolher: () => iniciarMover(noId),
     },
+    ...(raiz
+      ? []
+      : [
+          {
+            id: 'separar',
+            rotulo: 'Separar como árvore própria',
+            icone: GitBranchPlus,
+            detalhe: 'nesta tela',
+            aoEscolher: () => {
+              if (separarComoArvore(noId)) avisarDesfazer(`“${tituloDaNota(nota)}” virou uma árvore nesta tela`);
+            },
+          },
+        ]),
     {
       id: 'filho',
       rotulo: 'Novo filho',
       icone: CornerDownRight,
       separadorAntes: true,
       aoEscolher: () => void criarFilho(noId),
+    },
+    {
+      id: 'entre',
+      rotulo: raiz ? 'Novo nó acima (novo pai)' : 'Novo nó entre este e o de cima',
+      icone: Between,
+      aoEscolher: () => void inserirEntre(noId),
     },
     {
       id: 'irmao',
@@ -208,7 +229,7 @@ export function abrirMenuDoNo(noId: string, x: number, y: number, aposSoltar = f
     },
     {
       id: 'excluir',
-      rotulo: raiz ? 'Excluir a árvore' : 'Excluir',
+      rotulo: principal ? 'Excluir a árvore (tela inteira)' : raiz ? 'Excluir esta árvore' : 'Excluir',
       icone: Trash2,
       perigo: true,
       separadorAntes: true,

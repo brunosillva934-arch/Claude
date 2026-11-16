@@ -3,7 +3,7 @@
  * Este arquivo não entra no pacote do APK.
  */
 import { dispor } from '../arvore/layout';
-import { filhosDe, ramoDe, tituloDaNota, useLoja } from '../estado/loja';
+import { filhosDe, nosDaArvore, raizesDe, tituloDaNota, useLoja } from '../estado/loja';
 
 declare global {
   interface Window {
@@ -14,6 +14,9 @@ declare global {
       nosVisiveis(): number;
       tipoDe(titulo: string): string | null;
       topicosDaArvoreAtual(): string[];
+      raizes(): string[];
+      rotulo(titulo: string): string;
+      posicao(titulo: string): { x: number; y: number };
     };
   }
 }
@@ -35,12 +38,33 @@ window.__bauTeste = {
     const s = useLoja.getState();
     return Object.values(s.notas).find((n) => n.titulo === titulo)?.tipoId ?? null;
   },
+  /** Títulos das árvores da tela atual, a principal primeiro. */
+  raizes() {
+    const s = useLoja.getState();
+    const arvore = s.arvoreAtualId ? s.arvores[s.arvoreAtualId] : undefined;
+    return raizesDe(s.nos, arvore).map((id) => tituloDaNota(s.notas[s.nos[id]!.notaId]));
+  },
+  rotulo(titulo) {
+    const s = useLoja.getState();
+    const no = Object.values(s.nos).find(
+      (n) => n.arvoreId === s.arvoreAtualId && tituloDaNota(s.notas[n.notaId]) === titulo,
+    );
+    return no?.rotuloDoRamo ?? '';
+  },
+  /** Posição do nó na tela (coordenadas do canvas). */
+  posicao(titulo) {
+    const el = [...document.querySelectorAll<HTMLElement>('.react-flow__node')].find(
+      (n) => n.querySelector<HTMLElement>('.no')?.dataset.titulo === titulo,
+    );
+    const m = el ? /translate\(([-\d.]+)px,\s*([-\d.]+)px\)/.exec(el.style.transform) : null;
+    return m ? { x: Number(m[1]), y: Number(m[2]) } : { x: NaN, y: NaN };
+  },
   /** Títulos dos tópicos da árvore atual, em ordem alfabética. */
   topicosDaArvoreAtual() {
     const s = useLoja.getState();
     const arvore = s.arvoreAtualId ? s.arvores[s.arvoreAtualId] : undefined;
     if (!arvore) return [];
-    return ramoDe(s.nos, arvore.raizId)
+    return nosDaArvore(s.nos, arvore)
       .map((id) => s.notas[s.nos[id]!.notaId]!)
       .filter((n) => n.topico)
       .map((n) => n.titulo)
@@ -50,11 +74,11 @@ window.__bauTeste = {
   nosVisiveis() {
     const s = useLoja.getState();
     const arvore = s.arvoreAtualId ? s.arvores[s.arvoreAtualId] : undefined;
-    return arvore ? dispor(s.nos, arvore.raizId).ordem.length : 0;
+    return arvore ? dispor(s.nos, raizesDe(s.nos, arvore)).ordem.length : 0;
   },
   nosDaArvoreAtual() {
     const s = useLoja.getState();
     const arvore = s.arvoreAtualId ? s.arvores[s.arvoreAtualId] : undefined;
-    return arvore ? ramoDe(s.nos, arvore.raizId).length : 0;
+    return arvore ? nosDaArvore(s.nos, arvore).length : 0;
   },
 };

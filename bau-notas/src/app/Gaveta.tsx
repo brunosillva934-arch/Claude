@@ -5,7 +5,7 @@ import {
   BookOpenCheck, Ellipsis, FlaskConical, Moon, Network, Pencil, Plus, Search, Shapes, SunMedium, SunMoon, Trash2, X,
 } from 'lucide-react';
 import {
-  abrirBusca, abrirGaveta, abrirTipos, adicionarExemplo, arvoresOrdenadas, criarArvore, criarArvoreDeTeste, excluirArvore, ramoDe, renomearArvore,
+  abrirBusca, abrirGaveta, abrirTipos, adicionarExemplo, arvoresOrdenadas, criarArvore, criarArvoreDeTeste, excluirArvore, nosDaArvore, renomearArvore,
   resumoDaArvore, selecionarArvore, useLoja,
 } from '../estado/loja';
 import { useVoltar } from '../estado/navegacao';
@@ -100,7 +100,7 @@ export function Gaveta() {
               <button type="button" className="gaveta-arvore" data-arvore={a.nome} onClick={() => selecionarArvore(a.id)}>
                 <Network size={20} />
                 <span className="gaveta-nome">{a.nome}</span>
-                <span className="gaveta-contagem">{ramoDe(nos, a.raizId).length}</span>
+                <span className="gaveta-contagem">{nosDaArvore(nos, a).length}</span>
               </button>
               <button
                 type="button"

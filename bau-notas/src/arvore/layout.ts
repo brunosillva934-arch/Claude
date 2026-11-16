@@ -67,21 +67,27 @@ export function filhosVisiveis(nos: Record<string, No>, id: string): string[] {
   return !no || no.recolhido ? [] : filhosDe(nos, id);
 }
 
+/** Espaço vertical entre duas árvores da mesma tela. */
+export const ESPACO_ENTRE_ARVORES = 72;
+
 /**
- * `alturaDe` dá a altura de cada cartão; sem ela, todos têm a altura padrão.
+ * Dispõe uma ou mais árvores na mesma tela, uma embaixo da outra, com as
+ * colunas alinhadas. `alturaDe` dá a altura de cada cartão; sem ela, todos têm
+ * a altura padrão.
  */
 export function dispor(
   nos: Record<string, No>,
-  raizId: string,
+  raiz: string | readonly string[],
   alturaDe: (id: string) => number = () => ALTURA_NO,
 ): Disposicao {
-  if (!nos[raizId]) return DISPOSICAO_VAZIA;
+  const raizes = (typeof raiz === 'string' ? [raiz] : raiz).filter((id) => nos[id]);
+  if (raizes.length === 0) return DISPOSICAO_VAZIA;
 
   // 1ª passada: ordem de leitura, nível de cada nó e o vão que cada coluna precisa.
   const ordem: string[] = [];
   const nivel = new Map<string, number>();
   const vaos: number[] = [];
-  const pilha: Array<[string, number]> = [[raizId, 0]];
+  const pilha: Array<[string, number]> = raizes.map((id) => [id, 0] as [string, number]).reverse();
   while (pilha.length) {
     const [id, n] = pilha.pop()!;
     ordem.push(id);
@@ -117,9 +123,14 @@ export function dispor(
     faixa.set(id, Math.max(h, pilhaDosFilhos));
   }
 
-  // 3ª passada (de cima para baixo): cada ramo recebe o topo da sua faixa; os
-  // filhos se empilham dentro dela, centrados.
-  const topoDaFaixa = new Map<string, number>([[raizId, 0]]);
+  // 3ª passada (de cima para baixo): cada árvore e cada ramo recebem o topo da
+  // sua faixa; os filhos se empilham dentro dela, centrados.
+  const topoDaFaixa = new Map<string, number>();
+  let topoDaArvore = 0;
+  for (const id of raizes) {
+    topoDaFaixa.set(id, topoDaArvore);
+    topoDaArvore += faixa.get(id)! + ESPACO_ENTRE_ARVORES;
+  }
   for (const id of ordem) {
     const f = filhosVisiveis(nos, id);
     if (f.length === 0) continue;
@@ -158,6 +169,6 @@ export function dispor(
     ordem,
     vaos,
     largura: xDoNivel[xDoNivel.length - 1]! + LARGURA_NO,
-    altura: faixa.get(raizId)!,
+    altura: topoDaArvore - ESPACO_ENTRE_ARVORES,
   };
 }

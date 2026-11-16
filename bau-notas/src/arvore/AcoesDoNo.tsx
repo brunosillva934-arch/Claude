@@ -7,7 +7,7 @@
  */
 import { NodeToolbar, Position, useStore } from '@xyflow/react';
 import { Ellipsis, FileText, Plus } from 'lucide-react';
-import { criarFilho, criarIrmao, expandirNota, filhosDe, tituloDaNota, useLoja } from '../estado/loja';
+import { criarFilho, criarIrmao, expandirNota, filhosDe, inserirEntre, tituloDaNota, useLoja } from '../estado/loja';
 import { menuDoNo } from './gestos';
 import { LARGURA_NO } from './layout';
 import { ZOOM_DE_LONGE } from './RotulosDeLonge';
@@ -32,6 +32,19 @@ export function AcoesDoNo() {
         <button type="button" className="acao-no" data-acao="filho" onClick={() => criarFilho(id)}>
           <Plus size={18} />
           Filho
+        </button>
+      </NodeToolbar>
+      {/* Do lado da linha que chega ao nó: um nó novo entre este e o de cima. */}
+      <NodeToolbar nodeId={id} isVisible position={Position.Left} offset={raiz ? 10 : 26}>
+        <button
+          type="button"
+          className="acao-no suave"
+          data-acao="entre"
+          aria-label={raiz ? 'Novo nó acima deste (novo pai)' : 'Novo nó entre este e o de cima'}
+          onClick={() => inserirEntre(id)}
+        >
+          <Plus size={18} />
+          {raiz ? 'Pai' : 'Entre'}
         </button>
       </NodeToolbar>
       {!raiz && (
