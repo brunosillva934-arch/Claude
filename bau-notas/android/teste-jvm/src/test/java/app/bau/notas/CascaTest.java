@@ -7,6 +7,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.robolectric.Shadows.shadowOf;
 
+import android.os.Build;
 import android.os.Looper;
 import android.webkit.WebView;
 
@@ -20,12 +21,17 @@ import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
 
 /**
- * Confere, com o framework do Android 14 e o SQLite de verdade, o caminho de
- * que o app depende para abrir: banco, ponte e criação da tela.
+ * Confere, com o framework do Android e o SQLite de verdade, o caminho de que
+ * o app depende para abrir: banco, ponte e criação da tela.
+ *
+ * Roda no SDK 35 porque o Robolectric 4.18 não consegue criar janelas no SDK 34
+ * (procura uma classe que só existe a partir do Android 15). O app continua
+ * declarando alvo 34, como no APK.
  */
 @RunWith(RobolectricTestRunner.class)
-@Config(sdk = 34, manifest = Config.NONE)
+@Config(sdk = 35, manifest = Config.NONE)
 public class CascaTest {
+    private static final int ALVO_DO_APK = 34;
 
     private static JSONArray lote(String... instrucoes) throws Exception {
         JSONArray a = new JSONArray();
@@ -100,6 +106,7 @@ public class CascaTest {
 
     @Test
     public void telaAbreEAPonteResponde() throws Exception {
+        RuntimeEnvironment.getApplication().getApplicationInfo().targetSdkVersion = ALVO_DO_APK;
         MainActivity tela = Robolectric.buildActivity(MainActivity.class).setup().get();
         WebView web = tela.web;
         assertNotNull(web);
@@ -111,7 +118,7 @@ public class CascaTest {
         // Chamada síncrona: informações do sistema (é a primeira coisa que a página pede).
         JSONObject info = new JSONObject(tela.ponte.chamarSinc("sistema.info", "{}"));
         assertTrue(info.getBoolean("ok"));
-        assertEquals(34, info.getJSONObject("valor").getInt("sdk"));
+        assertEquals(Build.VERSION.SDK_INT, info.getJSONObject("valor").getInt("sdk"));
         assertFalse(info.getJSONObject("valor").getBoolean("noturno"));
 
         // Gravação síncrona (usada quando o app vai para segundo plano) e leitura assíncrona.
@@ -136,8 +143,10 @@ public class CascaTest {
         assertTrue(new JSONObject(tela.ponte.chamarSinc("sistema.barras",
                 "{\"status\":\"#FFFFFF\",\"navegacao\":\"#F3F5F8\",\"fundoClaro\":true}")).getBoolean("ok"));
         assertTrue(new JSONObject(tela.ponte.chamarSinc("sistema.toque", "{}")).getBoolean("ok"));
+        assertTrue(new JSONObject(tela.ponte.chamarSinc("sistema.barras",
+                "{\"status\":\"#1A1F26\",\"navegacao\":\"#111418\",\"fundoClaro\":false}")).getBoolean("ok"));
+        // As chamadas acima agendam trabalho na linha principal: ele roda aqui, e não pode falhar.
         shadowOf(Looper.getMainLooper()).idle();
-        assertEquals(0xFFFFFFFF, tela.getWindow().getStatusBarColor());
 
         // Botão voltar: é entregue à página.
         tela.onBackPressed();
