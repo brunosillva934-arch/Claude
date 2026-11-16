@@ -263,7 +263,7 @@ const NOTAS: Rascunho[] = [
     ],
   },
   {
-    chave: 'heparinas', titulo: 'Heparinas', tipoId: 'medicamento',
+    chave: 'heparinas', titulo: 'Heparinas', tipoId: 'classe',
     doc: () => [
       h(2, 'Mecanismo'),
       p('Potencializam a antitrombina, que inativa a trombina e o fator Xa. As de baixo peso molecular agem ',
@@ -271,7 +271,7 @@ const NOTAS: Rascunho[] = [
     ],
   },
   {
-    chave: 'avk', titulo: 'Antagonistas da vitamina K', tipoId: 'medicamento',
+    chave: 'avk', titulo: 'Antagonistas da vitamina K', tipoId: 'classe',
     doc: () => [
       h(2, 'Mecanismo'),
       p('Reduzem a síntese dos fatores II, VII, IX e X. O efeito demora dias: no início, associar heparina.'),
@@ -282,7 +282,7 @@ const NOTAS: Rascunho[] = [
     resumo: 'Ajustar pelo INR; alvo de 2 a 3 na maioria das indicações.', doc: () => [],
   },
   {
-    chave: 'xa', titulo: 'Inibidores diretos do fator Xa', tipoId: 'medicamento',
+    chave: 'xa', titulo: 'Inibidores diretos do fator Xa', tipoId: 'classe',
     doc: () => [
       h(2, 'Mecanismo'),
       p('Inibem o fator Xa diretamente, sem depender da antitrombina. Dose fixa, sem controle laboratorial ',
@@ -302,7 +302,7 @@ const NOTAS: Rascunho[] = [
     resumo: 'Na fibrilação atrial, evitar se o clearance de creatinina passar de 95 mL/min.', doc: () => [],
   },
   {
-    chave: 'trombina', titulo: 'Inibidor direto da trombina', tipoId: 'medicamento',
+    chave: 'trombina', titulo: 'Inibidor direto da trombina', tipoId: 'classe',
     doc: () => [h(2, 'Mecanismo'), p('Liga-se diretamente à trombina, livre ou presa ao coágulo.')],
   },
   {

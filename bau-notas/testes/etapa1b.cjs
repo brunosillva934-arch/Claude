@@ -167,7 +167,7 @@ const resultados = () => pagina.locator('.busca-linha').evaluateAll((els) => els
   await pagina.waitForTimeout(250);
   r = await resultados();
   const tiposVistos = await pagina.locator('.busca-tipo').evaluateAll((e) => [...new Set(e.map((x) => x.textContent))]);
-  confere('só medicamentos, notas e tópicos', tiposVistos.every((t) => t.startsWith('Medicamento')) && r.length === 18 && r.includes('Apixabana'), `${r.length}: ${tiposVistos.join(',')}`);
+  confere('só medicamentos, notas e tópicos', tiposVistos.every((t) => t.startsWith('Medicamento')) && r.length === 14 && r.includes('Apixabana') && !r.includes('Heparinas'), `${r.length}: ${tiposVistos.join(',')}`);
   await pagina.locator('.chip[data-tipo="Exame"]').tap();
   await pagina.waitForTimeout(250);
   const combinados = await pagina.locator('.busca-tipo').evaluateAll((e) =>

@@ -71,14 +71,17 @@ export interface No {
 }
 
 export const TIPO_GERAL = 'geral';
+/** Classe farmacológica (ex.: "Inibidores diretos do fator Xa"): a nota que explica o mecanismo. */
+export const TIPO_CLASSE = 'classe';
 
 /** Tipos que vêm com o app. Os ids são fixos; nome, cor e ícone podem ser editados. */
 export const TIPOS_PADRAO: TipoNota[] = [
   { id: 'doenca', nome: 'Doença', cor: '#D64545', icone: 'coracao', ordem: 0, padrao: true },
   { id: 'medicamento', nome: 'Medicamento', cor: '#2F7ED8', icone: 'comprimido', ordem: 1, padrao: true },
-  { id: 'exame', nome: 'Exame', cor: '#2E9E6B', icone: 'frasco', ordem: 2, padrao: true },
-  { id: 'estudo', nome: 'Estudo/Artigo', cor: '#8A5CD6', icone: 'livro', ordem: 3, padrao: true },
-  { id: 'sintoma', nome: 'Sintoma', cor: '#D98A1F', icone: 'termometro', ordem: 4, padrao: true },
-  { id: 'conduta', nome: 'Conduta/Procedimento', cor: '#1F9EA8', icone: 'prancheta', ordem: 5, padrao: true },
-  { id: TIPO_GERAL, nome: 'Geral', cor: '#6B7785', icone: 'documento', ordem: 6, padrao: true },
+  { id: TIPO_CLASSE, nome: 'Classe farmacológica', cor: '#4F62D9', icone: 'comprimidos', ordem: 2, padrao: true },
+  { id: 'exame', nome: 'Exame', cor: '#2E9E6B', icone: 'frasco', ordem: 3, padrao: true },
+  { id: 'estudo', nome: 'Estudo/Artigo', cor: '#8A5CD6', icone: 'livro', ordem: 4, padrao: true },
+  { id: 'sintoma', nome: 'Sintoma', cor: '#D98A1F', icone: 'termometro', ordem: 5, padrao: true },
+  { id: 'conduta', nome: 'Conduta/Procedimento', cor: '#1F9EA8', icone: 'prancheta', ordem: 6, padrao: true },
+  { id: TIPO_GERAL, nome: 'Geral', cor: '#6B7785', icone: 'documento', ordem: 7, padrao: true },
 ];

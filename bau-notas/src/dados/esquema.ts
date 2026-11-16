@@ -8,7 +8,7 @@
  * RETURNING, sem colunas geradas e sem JSON1 garantido.
  */
 import type { Banco, Instrucao } from './banco';
-import { TIPOS_PADRAO } from './tipos';
+import { TIPO_CLASSE, TIPOS_PADRAO } from './tipos';
 
 const MIGRACOES: Array<() => Instrucao[]> = [
   // 1: modelo inicial
@@ -95,6 +95,17 @@ const MIGRACOES: Array<() => Instrucao[]> = [
   () => [{ sql: 'ALTER TABLE notas ADD COLUMN topico INTEGER NOT NULL DEFAULT 0' }],
   // 3: recomendação curta dos tópicos, mostrada na árvore
   () => [{ sql: "ALTER TABLE notas ADD COLUMN resumo TEXT NOT NULL DEFAULT ''" }],
+  // 4: tipo "Classe farmacológica", logo depois de Medicamento
+  () => {
+    const t = TIPOS_PADRAO.find((x) => x.id === TIPO_CLASSE)!;
+    return [
+      { sql: 'UPDATE tipos SET ordem = ordem + 1 WHERE ordem >= ? AND id <> ?', params: [t.ordem, t.id] },
+      {
+        sql: 'INSERT OR IGNORE INTO tipos (id, nome, cor, icone, ordem, padrao) VALUES (?, ?, ?, ?, ?, 1)',
+        params: [t.id, t.nome, t.cor, t.icone, t.ordem],
+      },
+    ];
+  },
 ];
 
 export const VERSAO_ESQUEMA = MIGRACOES.length;
