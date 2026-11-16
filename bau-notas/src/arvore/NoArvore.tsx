@@ -75,7 +75,7 @@ function EdicaoDoTitulo({ noId, notaId, novo, inicial }: { noId: string; notaId:
         const ib = normalizar(b.titulo).startsWith(termo) ? 0 : 1;
         return ia - ib || compararTexto(a.titulo, b.titulo);
       })
-      .slice(0, 5);
+      .slice(0, 4);
   }, [novo, valor, notas, notaId]);
 
   const confirmar = () => {
@@ -124,6 +124,31 @@ function EdicaoDoTitulo({ noId, notaId, novo, inicial }: { noId: string; notaId:
       />
       <BarraDoNo isVisible={novo} position={Position.Bottom} align="start" offset={6}>
         <div className="sugestoes">
+          {sugestoes.length > 0 && <div className="sugestoes-titulo">Usar uma nota que já existe</div>}
+          {sugestoes.map((n) => {
+            const tipo = tipos[n.tipoId];
+            const Icone = iconeDoTipo(tipo?.icone);
+            return (
+              <button
+                key={n.id}
+                type="button"
+                className="sugestao"
+                tabIndex={-1}
+                style={estiloDoTipo(tipo?.cor, escuro) as CSSProperties}
+                {...manterFoco}
+                onClick={() => {
+                  concluido.current = true;
+                  usarNotaExistente(noId, n.id);
+                }}
+              >
+                <span className="sugestao-icone">
+                  <Icone size={16} />
+                </span>
+                <span className="sugestao-nome">{n.titulo}</span>
+                <span className="sugestao-tipo">{tipo?.nome}{n.topico ? ' · tópico' : ''}</span>
+              </button>
+            );
+          })}
           {/* Um nó novo pode ser uma nota completa ou um tópico: um item de lista com recomendação curta. */}
           <div className="escolha-de-no" role="radiogroup" aria-label="O que criar">
             <button
@@ -181,31 +206,6 @@ function EdicaoDoTitulo({ noId, notaId, novo, inicial }: { noId: string; notaId:
               );
             })}
           </div>
-          {sugestoes.length > 0 && <div className="sugestoes-titulo">Usar uma nota que já existe</div>}
-          {sugestoes.map((n) => {
-            const tipo = tipos[n.tipoId];
-            const Icone = iconeDoTipo(tipo?.icone);
-            return (
-              <button
-                key={n.id}
-                type="button"
-                className="sugestao"
-                tabIndex={-1}
-                style={estiloDoTipo(tipo?.cor, escuro) as CSSProperties}
-                {...manterFoco}
-                onClick={() => {
-                  concluido.current = true;
-                  usarNotaExistente(noId, n.id);
-                }}
-              >
-                <span className="sugestao-icone">
-                  <Icone size={16} />
-                </span>
-                <span className="sugestao-nome">{n.titulo}</span>
-                <span className="sugestao-tipo">{tipo?.nome}{n.topico ? ' · tópico' : ''}</span>
-              </button>
-            );
-          })}
         </div>
       </BarraDoNo>
     </>

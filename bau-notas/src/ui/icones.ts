@@ -5,7 +5,7 @@
  */
 import {
   Activity, Ambulance, Apple, Baby, Bandage, Biohazard, Bone, BookOpen, Bookmark, Brain, Bug, Calculator,
-  CircleHelp, ClipboardList, Clock, Cross, Dna, Droplet, Ear, Eye, FileText, Flame, FlaskConical, Folder,
+  CircleHelp, ClipboardList, Cog, Clock, Cross, Dna, Droplet, Ear, Eye, FileText, Flame, FlaskConical, Folder,
   GraduationCap, Hand, HeartPulse, Hospital, Lightbulb, ListChecks, Microscope, Newspaper, PersonStanding,
   Pill, Pipette, Radiation, Ribbon, Scale, Scan, Scissors, ShieldPlus, Skull, Star, Stethoscope, Syringe,
   Tablets, Tag, TestTube, Thermometer, TriangleAlert, Users, Wind, Zap,
@@ -27,6 +27,7 @@ export const ICONES: Record<string, { nome: string; icone: LucideIcon }> = {
   pipeta: { nome: 'Pipeta', icone: Pipette },
   comprimidos: { nome: 'Comprimidos', icone: Tablets },
   atividade: { nome: 'Traçado', icone: Activity },
+  engrenagem: { nome: 'Engrenagem', icone: Cog },
   imagem: { nome: 'Exame de imagem', icone: Scan },
   radiacao: { nome: 'Radiação', icone: Radiation },
   cerebro: { nome: 'Cérebro', icone: Brain },

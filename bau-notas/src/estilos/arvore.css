@@ -255,6 +255,10 @@ html[data-tema='escuro'] .no-dobra.recolhido {
   box-shadow: var(--sombra-forte);
 }
 
+.sugestoes .sugestao:last-of-type {
+  margin-bottom: 6px;
+}
+
 .sugestoes-titulo {
   padding: 6px 10px;
   font-size: 12px;

@@ -8,7 +8,7 @@
  * RETURNING, sem colunas geradas e sem JSON1 garantido.
  */
 import type { Banco, Instrucao } from './banco';
-import { TIPO_CLASSE, TIPOS_PADRAO } from './tipos';
+import { TIPO_CLASSE, TIPO_MECANISMO, TIPOS_PADRAO } from './tipos';
 
 const MIGRACOES: Array<() => Instrucao[]> = [
   // 1: modelo inicial
@@ -98,6 +98,17 @@ const MIGRACOES: Array<() => Instrucao[]> = [
   // 4: tipo "Classe farmacológica", logo depois de Medicamento
   () => {
     const t = TIPOS_PADRAO.find((x) => x.id === TIPO_CLASSE)!;
+    return [
+      { sql: 'UPDATE tipos SET ordem = ordem + 1 WHERE ordem >= ? AND id <> ?', params: [t.ordem, t.id] },
+      {
+        sql: 'INSERT OR IGNORE INTO tipos (id, nome, cor, icone, ordem, padrao) VALUES (?, ?, ?, ?, ?, 1)',
+        params: [t.id, t.nome, t.cor, t.icone, t.ordem],
+      },
+    ];
+  },
+  // 5: tipo "Mecanismo de ação", logo depois de Classe farmacológica
+  () => {
+    const t = TIPOS_PADRAO.find((x) => x.id === TIPO_MECANISMO)!;
     return [
       { sql: 'UPDATE tipos SET ordem = ordem + 1 WHERE ordem >= ? AND id <> ?', params: [t.ordem, t.id] },
       {

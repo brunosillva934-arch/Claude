@@ -6,7 +6,7 @@ não tem conta, servidor nem nuvem, e o app **não declara nenhuma permissão**
 
 O arquivo para instalar é **`Bau.apk`**, nesta pasta.
 
-> Situação: **versão 0.4.0**. Etapa 1 de 5 (projeto, modelo de dados e árvore
+> Situação: **versão 0.5.0**. Etapa 1 de 5 (projeto, modelo de dados e árvore
 > visual), já com tópicos, busca e escolha de tema. O editor completo, os links
 > e o backup entram nas próximas etapas.
 
@@ -166,7 +166,7 @@ bash android/teste-jvm/testar.sh   # código Java, com Robolectric (precisa do r
 ## Modelo de dados
 
 - **Nota**: id, título, tipo, tópico (sim/não), recomendação (dos tópicos), conteúdo (JSON do editor), texto (para a busca), criadaEm, atualizadaEm.
-- **Tipo**: id, nome, cor, ícone (Doença, Medicamento, Classe farmacológica, Exame, Estudo/Artigo, Sintoma, Conduta/Procedimento, Geral; editáveis).
+- **Tipo**: id, nome, cor, ícone (Doença, Medicamento, Classe farmacológica, Mecanismo de ação, Exame, Estudo/Artigo, Sintoma, Conduta/Procedimento, Geral; editáveis).
 - **Árvore**: id, nome, nó raiz.
 - **Nó**: id, árvoreId, notaId, paiId, ordem, rótuloDoRamo, recolhido.
 - **Links**: origemId → destinoId, sempre pelo id da nota.

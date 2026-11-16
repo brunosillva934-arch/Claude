@@ -190,7 +190,8 @@ function Canvas() {
         // Para escrever o título o nó precisa estar em tamanho legível.
         zoom = 1;
         x = largura / 2 - (pos.x + LARGURA_NO / 2) * zoom;
-        y = altura * 0.4 - (pos.y + pos.altura / 2) * zoom;
+        // Perto do alto: embaixo do nó abrem as sugestões e a escolha de tipo.
+        y = altura * 0.22 - (pos.y + pos.altura / 2) * zoom;
       } else {
         const margemEsq = Math.min(24, largura / 8);
         const margemDir = Math.min(130, largura / 4); // espaço para o botão "+ Filho"

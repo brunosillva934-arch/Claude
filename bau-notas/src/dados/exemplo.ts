@@ -277,6 +277,23 @@ const NOTAS: Rascunho[] = [
       p('Reduzem a síntese dos fatores II, VII, IX e X. O efeito demora dias: no início, associar heparina.'),
     ],
   },
+  // Mecanismos de ação: cada um embaixo da sua classe.
+  {
+    chave: 'mec_at', titulo: 'Potencialização da antitrombina', tipoId: 'mecanismo',
+    doc: () => [p('A heparina se liga à antitrombina e acelera a inativação da trombina (IIa) e do fator Xa.')],
+  },
+  {
+    chave: 'mec_vkor', titulo: 'Inibição da vitamina K epóxido redutase', tipoId: 'mecanismo',
+    doc: () => [p('Impede a reciclagem da vitamina K e reduz a ativação dos fatores II, VII, IX e X (e das proteínas C e S).')],
+  },
+  {
+    chave: 'mec_xa', titulo: 'Inibição direta do fator Xa', tipoId: 'mecanismo',
+    doc: () => [p('Bloqueia o fator Xa livre e o ligado à protrombinase, sem depender da antitrombina.')],
+  },
+  {
+    chave: 'mec_iia', titulo: 'Inibição direta da trombina', tipoId: 'mecanismo',
+    doc: () => [p('Liga-se ao sítio ativo da trombina, livre ou ligada à fibrina.')],
+  },
   {
     chave: 'varfarina', titulo: 'Varfarina', tipoId: 'medicamento', topico: true,
     resumo: 'Ajustar pelo INR; alvo de 2 a 3 na maioria das indicações.', doc: () => [],
@@ -359,18 +376,22 @@ const ARVORES: Array<{ nome: string; raiz: Ramo }> = [
     // Cada classe é uma nota com o mecanismo; os medicamentos ficam embaixo, como tópicos.
     raiz: ['anticoagulantes', null, [
       ['heparinas', 'parenterais', [
+        ['mec_at', 'mecanismo'],
         ['enoxaparina', 'subcutânea'],
         ['hnf', 'venosa'],
       ]],
       ['avk', 'oral', [
+        ['mec_vkor', 'mecanismo'],
         ['varfarina', null, [['inr', 'controle']]],
       ]],
       ['xa', 'oral', [
+        ['mec_xa', 'mecanismo'],
         ['rivaroxabana', null],
         ['apixabana', null],
         ['edoxabana', null],
       ]],
       ['trombina', 'oral', [
+        ['mec_iia', 'mecanismo'],
         ['dabigatrana', null],
       ]],
     ]],
