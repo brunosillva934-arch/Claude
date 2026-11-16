@@ -74,6 +74,8 @@ export async function aguardarEscritas(): Promise<void> {
 // ---------------------------------------------------------------- leitura
 
 interface LinhaTipo { id: string; nome: string; cor: string; icone: string; ordem: number; padrao: number }
+type LinhaNota = Omit<NotaMeta, 'topico'> & { topico: number };
+type LinhaNotaCompleta = Omit<Nota, 'topico'> & { topico: number };
 interface LinhaNo {
   id: string; arvoreId: string; notaId: string; paiId: string | null; ordem: number;
   rotuloDoRamo: string | null; recolhido: number;
@@ -91,7 +93,7 @@ export async function carregarTudo(): Promise<DadosIniciais> {
   const b = bancoAtual();
   const [tipos, notas, arvores, nos, config] = await Promise.all([
     b.consultar<LinhaTipo>('SELECT id, nome, cor, icone, ordem, padrao FROM tipos ORDER BY ordem, nome'),
-    b.consultar<NotaMeta>('SELECT id, titulo, tipoId, criadaEm, atualizadaEm, excluidaEm FROM notas'),
+    b.consultar<LinhaNota>('SELECT id, titulo, tipoId, topico, criadaEm, atualizadaEm, excluidaEm FROM notas'),
     b.consultar<Arvore>(
       'SELECT id, nome, raizId, ordem, criadaEm, excluidaEm FROM arvores WHERE excluidaEm IS NULL ORDER BY ordem, criadaEm',
     ),
@@ -102,7 +104,7 @@ export async function carregarTudo(): Promise<DadosIniciais> {
   ]);
   return {
     tipos: tipos.map((t) => ({ ...t, padrao: t.padrao === 1 })),
-    notas,
+    notas: notas.map((n) => ({ ...n, topico: n.topico === 1 })),
     arvores,
     nos: nos.map((n) => ({ ...n, recolhido: n.recolhido === 1 })),
     config: Object.fromEntries(config.map((c) => [c.chave, c.valor])),
@@ -110,20 +112,31 @@ export async function carregarTudo(): Promise<DadosIniciais> {
 }
 
 export async function carregarNota(id: string): Promise<Nota | null> {
-  const linhas = await bancoAtual().consultar<Nota>(
-    'SELECT id, titulo, tipoId, conteudo, texto, criadaEm, atualizadaEm, excluidaEm FROM notas WHERE id = ?',
+  const linhas = await bancoAtual().consultar<LinhaNotaCompleta>(
+    'SELECT id, titulo, tipoId, topico, conteudo, texto, criadaEm, atualizadaEm, excluidaEm FROM notas WHERE id = ?',
     [id],
   );
-  return linhas[0] ?? null;
+  const linha = linhas[0];
+  return linha ? { ...linha, topico: linha.topico === 1 } : null;
+}
+
+/** Texto puro de todas as notas, para montar o índice da busca no conteúdo. */
+export async function carregarTextos(): Promise<Map<string, string>> {
+  const linhas = await bancoAtual().consultar<{ id: string; texto: string }>(
+    "SELECT id, texto FROM notas WHERE excluidaEm IS NULL AND topico = 0 AND texto <> ''",
+  );
+  return new Map(linhas.map((l) => [l.id, l.texto]));
 }
 
 // ---------------------------------------------------------------- gravação
 
 export function sqlInserirNota(n: Nota): Instrucao {
   return {
-    sql: `INSERT INTO notas (id, titulo, tipoId, conteudo, texto, criadaEm, atualizadaEm, excluidaEm)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-    params: [n.id, n.titulo, n.tipoId, n.conteudo, n.texto, n.criadaEm, n.atualizadaEm, n.excluidaEm],
+    sql: `INSERT INTO notas (id, titulo, tipoId, topico, conteudo, texto, criadaEm, atualizadaEm, excluidaEm)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    params: [
+      n.id, n.titulo, n.tipoId, n.topico ? 1 : 0, n.conteudo, n.texto, n.criadaEm, n.atualizadaEm, n.excluidaEm,
+    ],
   };
 }
 
@@ -131,7 +144,13 @@ export function sqlAtualizarNota(id: string, campos: Partial<Omit<Nota, 'id'>>):
   const nomes = Object.keys(campos) as Array<keyof typeof campos>;
   return {
     sql: `UPDATE notas SET ${nomes.map((c) => `${c} = ?`).join(', ')} WHERE id = ?`,
-    params: [...nomes.map((c) => campos[c] as Param), id],
+    params: [
+      ...nomes.map((c) => {
+        const v = campos[c];
+        return (typeof v === 'boolean' ? (v ? 1 : 0) : v) as Param;
+      }),
+      id,
+    ],
   };
 }
 

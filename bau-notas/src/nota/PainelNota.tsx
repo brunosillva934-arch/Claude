@@ -3,10 +3,16 @@
  * página, com o título e o texto num único contêiner de rolagem.
  */
 import { useEffect, useRef, useState, useSyncExternalStore, type CSSProperties } from 'react';
-import { ArrowLeft, Check, ChevronDown, LoaderCircle, Maximize2, Minimize2, PanelRightClose, TriangleAlert } from 'lucide-react';
+import {
+  ArrowLeft, Check, ChevronDown, FileText, Hash, LoaderCircle, Maximize2, Minimize2, PanelRightClose, Search,
+  TriangleAlert,
+} from 'lucide-react';
 import { aguardarEscritas, carregarNota } from '../dados/repositorio';
 import type { Nota } from '../dados/tipos';
-import { alternarPainel, expandirNota, indiceDe, renomearNota, useLoja } from '../estado/loja';
+import {
+  abrirBusca, alternarPainel, definirTopico, expandirNota, filhosDe, indiceDe, irParaNo, renomearNota, tituloDaNota,
+  useLoja,
+} from '../estado/loja';
 import { useVoltar } from '../estado/navegacao';
 import { abrirMenuDeTipos } from '../arvore/acoesNo';
 import { iconeDoTipo } from '../ui/icones';
@@ -102,7 +108,86 @@ function Titulo({ notaId }: { notaId: string }) {
   );
 }
 
+/**
+ * Painel de um tópico: não há texto. Mostra o título, o que há dentro do ramo e
+ * a opção de transformá-lo em nota.
+ */
+function PainelTopico({ notaId }: { notaId: string }) {
+  const escuro = useLoja((s) => s.escuro);
+  const nos = useLoja((s) => s.nos);
+  const notas = useLoja((s) => s.notas);
+  const tipos = useLoja((s) => s.tipos);
+  const selecionadoId = useLoja((s) => s.selecionadoId);
+
+  // O nó deste tópico que está selecionado (ou o primeiro, se a seleção for outra).
+  const usos = indiceDe(nos).porNota.get(notaId) ?? [];
+  const noId = selecionadoId && usos.includes(selecionadoId) ? selecionadoId : usos[0];
+  const filhos = noId ? filhosDe(nos, noId) : [];
+
+  return (
+    <div className="painel-nota" style={estiloDoTipo('#6B7785', escuro) as CSSProperties} data-nota={notaId} data-topico="">
+      <header className="nota-cabecalho">
+        <span className="seletor-tipo estatico">
+          <span className="seletor-tipo-icone">
+            <Hash size={18} />
+          </span>
+          <span className="seletor-tipo-nome">Tópico</span>
+        </span>
+        <span className="espaco" />
+        <button type="button" className="botao-icone" data-acao="fechar-painel" aria-label="Esconder o painel ao lado" onClick={alternarPainel}>
+          <PanelRightClose size={20} />
+        </button>
+      </header>
+      <div className="nota-rolagem">
+        <div className="nota-pagina sem-espaco">
+          <Titulo notaId={notaId} />
+          <p className="topico-explica">
+            Um tópico só organiza o ramo: tem título, mas não tem texto.
+          </p>
+          <button type="button" className="botao" data-acao="virar-nota" onClick={() => definirTopico(notaId, false)}>
+            <FileText size={18} />
+            Transformar em nota
+          </button>
+          {filhos.length > 0 && (
+            <>
+              <h3 className="topico-secao">Neste tópico</h3>
+              <div className="topico-filhos">
+                {filhos.map((id) => {
+                  const nota = notas[nos[id]!.notaId];
+                  const tipo = nota && !nota.topico ? tipos[nota.tipoId] : undefined;
+                  const Icone = nota?.topico ? Hash : iconeDoTipo(tipo?.icone);
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      className="topico-filho"
+                      style={estiloDoTipo(tipo?.cor ?? '#6B7785', escuro) as CSSProperties}
+                      onClick={() => irParaNo(id)}
+                    >
+                      <span className="linha-tipo-icone">
+                        <Icone size={18} />
+                      </span>
+                      <span className="linha-tipo-nome">{tituloDaNota(nota)}</span>
+                      {nos[id]!.rotuloDoRamo && <span className="linha-rotulo">{nos[id]!.rotuloDoRamo}</span>}
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function PainelNota({ notaId }: { notaId: string }) {
+  const topico = useLoja((s) => s.notas[notaId]?.topico === true);
+  if (topico) return <PainelTopico notaId={notaId} />;
+  return <PainelDaNota notaId={notaId} />;
+}
+
+function PainelDaNota({ notaId }: { notaId: string }) {
   const meta = useLoja((s) => s.notas[notaId]);
   const tipo = useLoja((s) => (s.notas[notaId] ? s.tipos[s.notas[notaId]!.tipoId] : undefined));
   const escuro = useLoja((s) => s.escuro);
@@ -163,6 +248,11 @@ export function PainelNota({ notaId }: { notaId: string }) {
         {usos > 1 && <span className="nota-usos">em {plural(usos, 'lugar', 'lugares')}</span>}
         <span className="espaco" />
         <EstadoDoSalvamento />
+        {expandida && (
+          <button type="button" className="botao-icone" data-acao="buscar" aria-label="Buscar notas" onClick={() => abrirBusca(true)}>
+            <Search size={20} />
+          </button>
+        )}
         {largo && (
           <button
             type="button"

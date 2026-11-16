@@ -4,7 +4,7 @@
  * e menu de ações são compartilhados, então as duas visões andam juntas.
  */
 import { memo, useEffect, useMemo, useRef, type CSSProperties } from 'react';
-import { ChevronDown, ChevronRight, Ellipsis, FileText, Link2, Plus } from 'lucide-react';
+import { ChevronDown, ChevronRight, Ellipsis, FileText, Hash, Link2, Plus } from 'lucide-react';
 import {
   alternarRecolhido, cancelarEdicao, confirmarTitulo, criarFilho, criarIrmao, expandirNota, filhosDe, indiceDe,
   moverNo, podeMover, selecionar, tituloDaNota, useLoja,
@@ -102,7 +102,8 @@ const Linha = memo(function Linha({ id, nivel }: { id: string; nivel: number }) 
 
   if (!no) return null;
   const titulo = tituloDaNota(nota);
-  const Icone = iconeDoTipo(tipo?.icone);
+  const topico = nota?.topico === true;
+  const Icone = topico ? Hash : iconeDoTipo(tipo?.icone);
   const raiz = !no.paiId;
 
   const menu = () => {
@@ -120,9 +121,10 @@ const Linha = memo(function Linha({ id, nivel }: { id: string; nivel: number }) 
         (selecionado ? ' selecionada' : '') +
         (noCaminho && !selecionado ? ' no-caminho' : '') +
         (emMovimento ? ' em-movimento' : '') +
-        (destinoPossivel ? ' destino-possivel' : '')
+        (destinoPossivel ? ' destino-possivel' : '') +
+        (topico ? ' topico' : '')
       }
-      style={{ ...(estiloDoTipo(tipo?.cor, escuro) as CSSProperties), paddingLeft: 8 + nivel * 26 }}
+      style={{ ...(estiloDoTipo(topico ? '#6B7785' : tipo?.cor, escuro) as CSSProperties), paddingLeft: 8 + nivel * 26 }}
       data-no={id}
       data-titulo={titulo}
       onPointerDown={(e) => {
@@ -167,7 +169,10 @@ const Linha = memo(function Linha({ id, nivel }: { id: string; nivel: number }) 
         const duplo = e.timeStamp - ultimoToque.current < 350;
         ultimoToque.current = duplo ? 0 : e.timeStamp;
         selecionar(id);
-        if (duplo) expandirNota(true);
+        if (duplo) {
+          if (topico) alternarRecolhido(id);
+          else expandirNota(true);
+        }
       }}
     >
       {temFilhos ? (
@@ -212,7 +217,7 @@ const Linha = memo(function Linha({ id, nivel }: { id: string; nivel: number }) 
               Irmão
             </button>
           )}
-          {!notaAoLado && (
+          {!notaAoLado && !topico && (
             <button type="button" className="acao-linha" data-acao="abrir" onClick={(e) => { e.stopPropagation(); expandirNota(true); }}>
               <FileText size={16} />
               Abrir

@@ -1,13 +1,16 @@
 /**
  * Menu lateral com todas as árvores.
  */
-import { Ellipsis, FlaskConical, Network, Pencil, Plus, Shapes, Trash2, X } from 'lucide-react';
 import {
-  abrirGaveta, abrirTipos, arvoresOrdenadas, criarArvore, criarArvoreDeTeste, excluirArvore, ramoDe, renomearArvore,
+  Ellipsis, FlaskConical, Moon, Network, Pencil, Plus, Search, Shapes, SunMedium, SunMoon, Trash2, X,
+} from 'lucide-react';
+import {
+  abrirBusca, abrirGaveta, abrirTipos, arvoresOrdenadas, criarArvore, criarArvoreDeTeste, excluirArvore, ramoDe, renomearArvore,
   resumoDaArvore, selecionarArvore, useLoja,
 } from '../estado/loja';
 import { useVoltar } from '../estado/navegacao';
 import { infoSistema } from '../nativo/ponte';
+import { escolherTema } from './tema';
 import { avisarDesfazer } from '../arvore/acoesNo';
 import { abrirMenu, confirmar, perguntarTexto } from '../ui/servico';
 import { plural } from '../util/texto';
@@ -48,6 +51,7 @@ export function Gaveta() {
   const nos = useLoja((s) => s.nos);
   const atual = useLoja((s) => s.arvoreAtualId);
   const armazenamento = useLoja((s) => s.armazenamento);
+  const tema = useLoja((s) => s.temaPreferido);
   useVoltar(aberta, () => abrirGaveta(false));
 
   if (!aberta) return null;
@@ -110,10 +114,38 @@ export function Gaveta() {
         </button>
 
         <div className="gaveta-secao">Organização</div>
+        <button type="button" className="gaveta-acao discreta" data-acao="buscar" onClick={() => abrirBusca(true)}>
+          <Search size={20} />
+          Buscar notas (nome, tipo, A–Z)
+        </button>
         <button type="button" className="gaveta-acao discreta" data-acao="tipos" onClick={() => abrirTipos(true)}>
           <Shapes size={20} />
           Tipos de nota
         </button>
+
+        <div className="gaveta-secao">Aparência</div>
+        <div className="gaveta-tema" role="radiogroup" aria-label="Tema">
+          {(
+            [
+              ['sistema', 'Sistema', SunMoon],
+              ['claro', 'Claro', SunMedium],
+              ['escuro', 'Escuro', Moon],
+            ] as const
+          ).map(([valor, rotulo, Icone]) => (
+            <button
+              key={valor}
+              type="button"
+              role="radio"
+              aria-checked={tema === valor}
+              className={'gaveta-tema-opcao' + (tema === valor ? ' ativa' : '')}
+              data-tema-opcao={valor}
+              onClick={() => escolherTema(valor)}
+            >
+              <Icone size={20} />
+              {rotulo}
+            </button>
+          ))}
+        </div>
 
         <div className="gaveta-secao">Ferramentas</div>
         <button

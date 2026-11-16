@@ -11,7 +11,7 @@ import './estilos/base.css';
 import './estilos/arvore.css';
 import './estilos/nota.css';
 import { App } from './app/App';
-import { ligarTema } from './app/tema';
+import { adotarTemaGravado, ligarTema } from './app/tema';
 import { iniciar } from './estado/loja';
 import { ligarVoltar } from './estado/navegacao';
 import { ligarSalvamento } from './nota/salvamento';
@@ -22,6 +22,7 @@ async function abrir(): Promise<void> {
   ligarVoltar();
   ligarSalvamento();
   await iniciar();
+  adotarTemaGravado();
   const raiz = document.getElementById('raiz')!;
   raiz.textContent = '';
   createRoot(raiz).render(<App />);

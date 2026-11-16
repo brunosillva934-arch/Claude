@@ -3,11 +3,11 @@
  * longo, o rótulo do ramo, a troca de tipo e a exclusão com desfazer.
  */
 import {
-  ChevronsDownUp, ChevronsUpDown, CornerDownRight, FileText, ListPlus, Move, Pencil, Shapes, Tag, Trash2,
+  ChevronsDownUp, ChevronsUpDown, CornerDownRight, FileText, Hash, ListPlus, Move, Pencil, Shapes, Tag, Trash2,
 } from 'lucide-react';
 import {
-  alternarRecolhido, criarFilho, criarIrmao, definirRotulo, desfazer, editarTitulo, excluirArvore, excluirNo,
-  expandirNota, filhosDe, iniciarMover, mudarTipoDaNota, resumoDaArvore, resumoDaExclusao, selecionar,
+  alternarRecolhido, criarFilho, criarIrmao, definirRotulo, definirTopico, desfazer, editarTitulo, excluirArvore,
+  excluirNo, expandirNota, filhosDe, iniciarMover, mudarTipoDaNota, resumoDaArvore, resumoDaExclusao, selecionar,
   tiposOrdenados, tituloDaNota, useLoja,
 } from '../estado/loja';
 import { abrirMenu, avisar, confirmar, perguntarTexto, type ItemMenu } from '../ui/servico';
@@ -110,24 +110,40 @@ export function abrirMenuDoNo(noId: string, x: number, y: number, aposSoltar = f
   const tipo = nota ? s.tipos[nota.tipoId] : undefined;
   const temFilhos = filhosDe(s.nos, noId).length > 0;
   const raiz = !no.paiId;
+  const topico = nota?.topico === true;
 
   const itens: ItemMenu[] = [
-    {
-      id: 'abrir',
-      rotulo: 'Abrir nota',
-      icone: FileText,
-      aoEscolher: () => {
-        selecionar(noId);
-        expandirNota(true);
-      },
-    },
+    ...(topico
+      ? []
+      : [
+          {
+            id: 'abrir',
+            rotulo: 'Abrir nota',
+            icone: FileText,
+            aoEscolher: () => {
+              selecionar(noId);
+              expandirNota(true);
+            },
+          },
+        ]),
     { id: 'renomear', rotulo: 'Renomear', icone: Pencil, aoEscolher: () => editarTitulo(noId) },
+    ...(topico
+      ? []
+      : [
+          {
+            id: 'tipo',
+            rotulo: 'Mudar o tipo',
+            icone: Shapes,
+            detalhe: tipo?.nome,
+            aoEscolher: () => abrirMenuDeTipos(no.notaId, x, y),
+          },
+        ]),
     {
-      id: 'tipo',
-      rotulo: 'Mudar o tipo',
-      icone: Shapes,
-      detalhe: tipo?.nome,
-      aoEscolher: () => abrirMenuDeTipos(no.notaId, x, y),
+      id: 'topico',
+      rotulo: topico ? 'Transformar em nota' : 'Transformar em tópico',
+      icone: topico ? FileText : Hash,
+      detalhe: topico ? 'passa a ter texto' : 'só o título',
+      aoEscolher: () => definirTopico(no.notaId, !topico),
     },
     {
       id: 'rotulo',
@@ -166,6 +182,12 @@ export function abrirMenuDoNo(noId: string, x: number, y: number, aposSoltar = f
       aoEscolher: () => void criarIrmao(noId),
     },
     {
+      id: 'topico-filho',
+      rotulo: 'Novo tópico (filho)',
+      icone: Hash,
+      aoEscolher: () => void criarFilho(noId, true),
+    },
+    {
       id: 'excluir',
       rotulo: raiz ? 'Excluir a árvore' : 'Excluir',
       icone: Trash2,
@@ -174,7 +196,7 @@ export function abrirMenuDoNo(noId: string, x: number, y: number, aposSoltar = f
       aoEscolher: () => void pedirExclusao(noId),
     },
   ];
-  abrirMenu({ titulo: tituloDaNota(nota), x, y, itens, aposSoltar });
+  abrirMenu({ titulo: (topico ? 'Tópico: ' : '') + tituloDaNota(nota), x, y, itens, aposSoltar });
 }
 
 export { avisarDesfazer };

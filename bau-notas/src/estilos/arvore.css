@@ -393,7 +393,7 @@ html[data-tema='escuro'] .no-dobra.recolhido {
   text-overflow: ellipsis;
 }
 
-.rotulo-longe.duas-linhas > span {
+.rotulo-longe.varias-linhas > span {
   white-space: normal;
   overflow-wrap: break-word;
   -webkit-hyphens: auto;
@@ -402,8 +402,8 @@ html[data-tema='escuro'] .no-dobra.recolhido {
   hyphenate-limit-chars: 11 5 4;
   display: -webkit-box;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
+  -webkit-line-clamp: var(--linhas, 2);
+  line-clamp: var(--linhas, 2);
   line-height: 1.15;
 }
 
@@ -718,4 +718,85 @@ html[data-tema='escuro'] {
     flex: 1 0 100%;
     padding-left: 48px;
   }
+}
+
+/* ------------------------------------------------------------------ tópicos */
+/* Tópico: só organiza o ramo. Sem faixa de cor, com cara de etiqueta. */
+.no.topico {
+  border: 1.5px dashed var(--borda-forte);
+  border-radius: 28px;
+  background: var(--superficie-2);
+  box-shadow: none;
+  padding-left: 12px;
+}
+
+.no.topico .no-icone {
+  width: 26px;
+  height: 26px;
+  background: none;
+  color: var(--texto-3);
+}
+
+.no.topico .no-titulo {
+  color: var(--texto-2);
+  font-weight: 700;
+}
+
+.no.topico.selecionado,
+.no.topico.editando {
+  border-style: solid;
+  border-color: var(--destaque);
+}
+
+.no.topico.no-caminho {
+  border-color: var(--destaque-medio);
+}
+
+.arvore[data-longe] .no.topico {
+  background: var(--cor-fraca);
+  border-color: var(--borda-forte);
+}
+
+.linha.topico .linha-icone {
+  background: none;
+  color: var(--texto-3);
+}
+
+.linha.topico .linha-titulo {
+  color: var(--texto-2);
+  font-weight: 700;
+}
+
+/* Escolha "Nota | Tópico" ao criar um nó. */
+.escolha-de-no {
+  display: flex;
+  gap: 6px;
+  padding: 2px;
+}
+
+.escolha {
+  flex: 1 1 0;
+  height: var(--toque);
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--texto-2);
+  background: var(--superficie-2);
+  border: 1.5px solid transparent;
+}
+
+.escolha.ativa {
+  background: var(--destaque-fraco);
+  border-color: var(--destaque);
+  color: var(--destaque);
+}
+
+.escolha-dica {
+  padding: 6px 10px 4px;
+  font-size: 12.5px;
+  color: var(--texto-3);
 }

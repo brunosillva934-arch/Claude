@@ -32,6 +32,7 @@ import { TIPO_GERAL, type Arvore, type No, type Nota, type NotaMeta, type TipoNo
 import { agora, uid } from '../util/texto';
 
 export type Visao = 'arvore' | 'lista';
+export type PreferenciaTema = 'sistema' | 'claro' | 'escuro';
 export type PosicaoSolta = 'dentro' | 'antes' | 'depois';
 
 export interface Arrasto {
@@ -77,10 +78,14 @@ export interface Estado {
   gavetaAberta: boolean;
   /** Tela de edição dos tipos de nota aberta. */
   tiposAbertos: boolean;
+  buscaAberta: boolean;
+  /** Tema escolhido nas preferências; "sistema" acompanha o Android. */
+  temaPreferido: PreferenciaTema;
 
   /** Contadores que a árvore observa para enquadrar tudo ou revelar um nó. */
   pedidoVerTudo: number;
-  pedidoRevelar: { noId: string; n: number } | null;
+  /** `suave`: não desfaz o "ver tudo" só para acomodar os botões do nó. */
+  pedidoRevelar: { noId: string; n: number; suave: boolean } | null;
 
   salvamento: 'salvo' | 'salvando' | 'erro';
 }
@@ -109,6 +114,8 @@ export const useLoja = create<Estado>(() => ({
   arrasto: null,
   gavetaAberta: false,
   tiposAbertos: false,
+  buscaAberta: false,
+  temaPreferido: 'sistema',
   pedidoVerTudo: 0,
   pedidoRevelar: null,
   salvamento: 'salvo',
@@ -233,12 +240,13 @@ export function desfazer(): string | null {
 
 // ------------------------------------------------------------------ início
 
-function novaNota(titulo: string, tipoId: string): Nota {
+function novaNota(titulo: string, tipoId: string, topico = false): Nota {
   const quando = agora();
   return {
     id: uid(),
     titulo,
     tipoId,
+    topico,
     conteudo: '',
     texto: '',
     criadaEm: quando,
@@ -252,6 +260,7 @@ function meta(n: Nota): NotaMeta {
     id: n.id,
     titulo: n.titulo,
     tipoId: n.tipoId,
+    topico: n.topico,
     criadaEm: n.criadaEm,
     atualizadaEm: n.atualizadaEm,
     excluidaEm: n.excluidaEm,
@@ -302,6 +311,7 @@ export async function iniciar(): Promise<void> {
     visao: dados.config.visao === 'lista' ? 'lista' : 'arvore',
     painelLigado: dados.config.painelLigado !== '0',
     proporcao: proporcao >= 0.25 && proporcao <= 0.75 ? proporcao : 0.56,
+    temaPreferido: dados.config.tema === 'claro' || dados.config.tema === 'escuro' ? dados.config.tema : 'sistema',
   });
 }
 
@@ -313,6 +323,17 @@ export function definirLargo(largo: boolean): void {
 
 export function definirEscuro(escuro: boolean): void {
   if (get().escuro !== escuro) set({ escuro });
+}
+
+/** Guarda a escolha de tema. Quem a aplica na tela é app/tema.ts. */
+export function definirTemaPreferido(tema: PreferenciaTema): void {
+  if (get().temaPreferido === tema) return;
+  set({ temaPreferido: tema });
+  guardarPreferencia('tema', tema);
+}
+
+export function abrirBusca(aberta: boolean): void {
+  if (get().buscaAberta !== aberta) set({ buscaAberta: aberta, gavetaAberta: false });
 }
 
 export function definirVisao(visao: Visao): void {
@@ -345,14 +366,16 @@ export function pedirVerTudo(): void {
   set({ pedidoVerTudo: get().pedidoVerTudo + 1 });
 }
 
-export function pedirRevelar(noId: string): void {
-  set({ pedidoRevelar: { noId, n: (get().pedidoRevelar?.n ?? 0) + 1 } });
+export function pedirRevelar(noId: string, suave = false): void {
+  set({ pedidoRevelar: { noId, n: (get().pedidoRevelar?.n ?? 0) + 1, suave } });
 }
 
 /** Abre a nota em tela cheia (paisagem) ou por cima da árvore (retrato). */
 export function expandirNota(expandida: boolean): void {
   const s = get();
   if (expandida && !s.notaAbertaId) return;
+  // Um tópico não tem texto: não há o que abrir em tela cheia.
+  if (expandida && s.notas[s.notaAbertaId!]?.topico) return;
   if (s.notaExpandida !== expandida) set({ notaExpandida: expandida });
 }
 
@@ -430,6 +453,7 @@ export function abrirNota(notaId: string, opcoes: { expandir?: boolean } = {}): 
   const destino = aqui ?? usos[0];
   if (destino) irParaNo(destino);
   else set({ selecionadoId: null, caminho: VAZIO, notaAbertaId: notaId, edicao: null });
+  if (s.notas[notaId]!.topico) return;
   if (opcoes.expandir || !get().largo || !get().painelLigado) set({ notaExpandida: true });
 }
 
@@ -445,11 +469,11 @@ function renumerar(nos: Record<string, No>, ids: string[], sql: Instrucao[]): vo
   });
 }
 
-function inserirNovoNo(paiId: string, indice: number): string | null {
+function inserirNovoNo(paiId: string, indice: number, topico: boolean): string | null {
   const s = get();
   const pai = s.nos[paiId];
   if (!pai) return null;
-  const nota = novaNota('', TIPO_GERAL);
+  const nota = novaNota('', TIPO_GERAL, topico);
   const no: No = {
     id: uid(),
     arvoreId: pai.arvoreId,
@@ -482,16 +506,34 @@ function inserirNovoNo(paiId: string, indice: number): string | null {
   return no.id;
 }
 
-/** Cria um filho no fim da lista de filhos. O nó entra com o título em edição. */
-export function criarFilho(paiId: string): string | null {
-  return inserirNovoNo(paiId, filhosDe(get().nos, paiId).length);
+/**
+ * Cria um filho no fim da lista de filhos. O nó entra com o título em edição.
+ * `topico`: cria um tópico (só título) em vez de uma nota.
+ */
+export function criarFilho(paiId: string, topico = false): string | null {
+  return inserirNovoNo(paiId, filhosDe(get().nos, paiId).length, topico);
 }
 
 /** Cria um irmão logo abaixo do nó. A raiz não tem irmãos. */
-export function criarIrmao(noId: string): string | null {
+export function criarIrmao(noId: string, topico = false): string | null {
   const no = get().nos[noId];
   if (!no || !no.paiId) return null;
-  return inserirNovoNo(no.paiId, no.ordem + 1);
+  return inserirNovoNo(no.paiId, no.ordem + 1, topico);
+}
+
+/**
+ * Transforma uma nota em tópico (só título, sem texto) ou um tópico em nota.
+ * O texto que a nota tinha fica guardado e volta se ela deixar de ser tópico.
+ */
+export function definirTopico(notaId: string, topico: boolean): void {
+  const s = get();
+  const nota = s.notas[notaId];
+  if (!nota || nota.topico === topico) return;
+  set({
+    notas: { ...s.notas, [notaId]: { ...nota, topico } },
+    notaExpandida: topico && s.notaAbertaId === notaId ? false : s.notaExpandida,
+  });
+  void enfileirar([sqlAtualizarNota(notaId, { topico })]);
 }
 
 export function editarTitulo(noId: string): void {
@@ -877,7 +919,9 @@ export function criarTipo(nome: string, cor: string, icone: string): string {
 
 export function notasDoTipo(tipoId: string): number {
   let n = 0;
-  for (const nota of Object.values(get().notas)) if (nota.tipoId === tipoId && !nota.excluidaEm) n++;
+  for (const nota of Object.values(get().notas)) {
+    if (nota.tipoId === tipoId && !nota.excluidaEm && !nota.topico) n++;
+  }
   return n;
 }
 

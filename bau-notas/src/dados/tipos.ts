@@ -24,6 +24,11 @@ export interface NotaMeta {
   id: string;
   titulo: string;
   tipoId: string;
+  /**
+   * Tópico: só organiza o ramo ("Exames", "Tratamento"). Tem título, mas não
+   * tem texto, não abre o editor e não entra na busca de notas.
+   */
+  topico: boolean;
   criadaEm: number;
   atualizadaEm: number;
   /** Preenchido quando a nota está na lixeira. */

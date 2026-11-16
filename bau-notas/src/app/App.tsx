@@ -11,7 +11,8 @@ import { Plus } from 'lucide-react';
 import { useAtalhosDaArvore } from '../arvore/atalhos';
 import { Lista } from '../arvore/Lista';
 import { VisaoArvore } from '../arvore/VisaoArvore';
-import { abrirGaveta, definirLargo, definirProporcao, useLoja } from '../estado/loja';
+import { Busca } from '../busca/Busca';
+import { abrirBusca, abrirGaveta, definirLargo, definirProporcao, useLoja } from '../estado/loja';
 import { PainelNota } from '../nota/PainelNota';
 import { Camadas } from '../ui/Camadas';
 import { avisar } from '../ui/servico';
@@ -88,6 +89,18 @@ export function App() {
     if (salvamento === 'erro') avisar('Não foi possível gravar a última alteração', { duracao: 6000 });
   }, [salvamento]);
 
+  // Ctrl+K abre a busca de qualquer lugar (teclado físico).
+  useEffect(() => {
+    const aoTeclar = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        abrirBusca(true);
+      }
+    };
+    window.addEventListener('keydown', aoTeclar);
+    return () => window.removeEventListener('keydown', aoTeclar);
+  }, []);
+
   const modo: 'arvore' | 'dividido' | 'nota' =
     notaAbertaId && notaExpandida ? 'nota' : notaAbertaId && largo && painelLigado ? 'dividido' : 'arvore';
 
@@ -126,6 +139,7 @@ export function App() {
       </div>
       <Gaveta />
       <TiposDeNota />
+      <Busca />
       <Camadas />
     </div>
   );

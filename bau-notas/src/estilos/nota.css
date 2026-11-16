@@ -329,3 +329,50 @@ html[data-tema='escuro'] .seletor-tipo-icone {
 .mencao.ProseMirror-selectednode {
   box-shadow: 0 0 0 2px var(--cor);
 }
+
+/* ------------------------------------------------------------------ painel de um tópico */
+.seletor-tipo.estatico {
+  cursor: default;
+  padding-right: 14px;
+}
+
+.nota-pagina.sem-espaco {
+  padding-bottom: 32px;
+  cursor: default;
+}
+
+.topico-explica {
+  margin: 0 0 16px;
+  color: var(--texto-2);
+  line-height: 1.5;
+}
+
+.topico-secao {
+  margin: 28px 0 8px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--texto-3);
+}
+
+.topico-filhos {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0 -8px;
+}
+
+.topico-filho {
+  min-height: 52px;
+  padding: 0 8px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+}
+
+.topico-filho:active {
+  background: var(--superficie-2);
+}

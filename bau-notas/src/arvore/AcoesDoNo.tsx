@@ -18,6 +18,7 @@ export function AcoesDoNo() {
   const temFilhos = useLoja((s) => (id ? filhosDe(s.nos, id).length > 0 : false));
   const letras = useLoja((s) => (id && s.nos[id] ? tituloDaNota(s.notas[s.nos[id]!.notaId]).length : 0));
   const notaAoLado = useLoja((s) => s.largo && s.painelLigado);
+  const topico = useLoja((s) => (id && s.nos[id] ? s.notas[s.nos[id]!.notaId]?.topico === true : false));
   // Em degraus, para não redesenhar a cada quadro da pinça.
   const zoom = useStore((s) => Math.round(s.transform[2] * 25) / 25);
 
@@ -44,7 +45,7 @@ export function AcoesDoNo() {
       )}
       <NodeToolbar nodeId={id} isVisible position={Position.Top} offset={10}>
         <div className="acoes-no-topo">
-          {!notaAoLado && (
+          {!notaAoLado && !topico && (
             <button type="button" className="acao-no suave" data-acao="abrir" onClick={() => expandirNota(true)}>
               <FileText size={18} />
               Abrir

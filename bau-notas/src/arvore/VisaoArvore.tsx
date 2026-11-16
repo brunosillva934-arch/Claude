@@ -20,6 +20,7 @@ import { coresDoTipo } from '../util/cores';
 import { AcoesDoNo } from './AcoesDoNo';
 import { ArestaRamo } from './ArestaRamo';
 import { contexto } from './contexto';
+import { enquadrarTudo } from './enquadrar';
 import { ALTURA_NO, DISPOSICAO_VAZIA, LARGURA_NO, dispor, type Disposicao } from './layout';
 import { NoArvore } from './NoArvore';
 import { RotulosDeLonge, ZOOM_DE_LONGE } from './RotulosDeLonge';
@@ -31,12 +32,6 @@ const TIPOS_DE_ARESTA = { ramo: ArestaRamo };
 const SEM_DADOS = {};
 const TAMANHO_MINIMAPA = { width: 172, height: 116 };
 const OPCOES_PRO = { hideAttribution: true };
-/**
- * Margens do "Ver tudo". Embaixo sobra a faixa dos botões fixos, para nada ficar escondido atrás deles.
- * À direita sobra espaço para os títulos das folhas, que no zoom reduzido passam da largura do nó.
- */
-const MARGEM_VER_TUDO = { top: '18px', right: '104px', bottom: '74px', left: '24px' } as const;
-
 function criarNo(id: string, x: number, y: number): Node {
   return {
     id,
@@ -146,19 +141,24 @@ function Canvas() {
 
   const verTudo = useCallback(
     (duracao: number) => {
+      const el = envoltorio.current;
+      if (!el) return;
+      const estado = useLoja.getState();
+      const alvo = enquadrarTudo(
+        disposicaoRef.current, estado.nos, estado.notas, el.clientWidth, el.clientHeight, ZOOM_MINIMO, 1.15,
+      );
+      if (!alvo) return;
       intocado.current = true;
-      const opcoes = { padding: MARGEM_VER_TUDO, duration: duracao, minZoom: ZOOM_MINIMO, maxZoom: 1.15 };
-      void rf.fitView(opcoes).then((ok) => {
-        // Na primeira abertura os nós podem ainda não estar registrados: tenta de novo no quadro seguinte.
-        if (!ok) requestAnimationFrame(() => void rf.fitView(opcoes));
-      });
+      void rf.setViewport(alvo, { duration: duracao });
     },
     [rf],
   );
 
   /** Traz um nó para dentro da área visível, movendo o canvas o mínimo necessário. */
   const revelar = useCallback(
-    (noId: string, animar: boolean) => {
+    (noId: string, animar: boolean, suave = false) => {
+      // Com a árvore inteira enquadrada o nó já está à vista: um simples toque não desfaz o "ver tudo".
+      if (suave && intocado.current) return;
       const pos = disposicaoRef.current.posicoes.get(noId);
       const el = envoltorio.current;
       if (!pos || !el) return;
@@ -209,7 +209,7 @@ function Canvas() {
 
   useEffect(() => {
     if (!pedidoRevelar) return;
-    const q = requestAnimationFrame(() => revelar(pedidoRevelar.noId, true));
+    const q = requestAnimationFrame(() => revelar(pedidoRevelar.noId, true, pedidoRevelar.suave));
     return () => cancelAnimationFrame(q);
   }, [pedidoRevelar, revelar]);
 
@@ -273,7 +273,7 @@ function Canvas() {
       const s = useLoja.getState();
       const no = s.nos[node.id];
       const nota = no ? s.notas[no.notaId] : undefined;
-      const tipo = nota ? s.tipos[nota.tipoId] : undefined;
+      const tipo = nota && !nota.topico ? s.tipos[nota.tipoId] : undefined;
       return coresDoTipo(tipo?.cor ?? '#6B7785', escuro).base;
     },
     [escuro],

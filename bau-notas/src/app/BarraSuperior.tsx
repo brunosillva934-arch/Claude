@@ -1,5 +1,5 @@
-import { ListTree, Menu, Network, PanelRightClose, PanelRightOpen } from 'lucide-react';
-import { abrirGaveta, alternarPainel, definirVisao, ramoDe, useLoja } from '../estado/loja';
+import { ListTree, Menu, Network, PanelRightClose, PanelRightOpen, Search } from 'lucide-react';
+import { abrirBusca, abrirGaveta, alternarPainel, definirVisao, ramoDe, useLoja } from '../estado/loja';
 import { plural } from '../util/texto';
 
 export function BarraSuperior() {
@@ -22,6 +22,9 @@ export function BarraSuperior() {
         {arvore && <span className="barra-contagem">{plural(total, 'nó', 'nós')}</span>}
       </button>
       <span className="espaco" />
+      <button type="button" className="botao-icone" data-acao="buscar" aria-label="Buscar notas" onClick={() => abrirBusca(true)}>
+        <Search size={24} />
+      </button>
       <div className="alternador" role="group" aria-label="Modo de visualização">
         <button
           type="button"

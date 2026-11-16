@@ -1,7 +1,7 @@
 /**
  * Dados de exemplo criados na primeira abertura: a árvore "Dor torácica", com
  * três níveis e doenças, exames e medicamentos interligados, e uma segunda
- * árvore que reaproveita as mesmas notas de medicamentos.
+ * árvore que reaproveita as mesmas notas de medicamentos e usa tópicos.
  *
  * O conteúdo é só ilustrativo, para testar o app.
  */
@@ -37,6 +37,8 @@ interface Rascunho {
   chave: string;
   titulo: string;
   tipoId: string;
+  /** Tópico: só o título, para organizar o ramo. */
+  topico?: boolean;
   doc: (id: Record<string, string>) => NoDoc[];
 }
 
@@ -254,6 +256,8 @@ const NOTAS: Rascunho[] = [
       ul([m(id.enoxaparina!)], [m(id.hnf!)], [m(id.varfarina!)], [m(id.rivaroxabana!)]),
     ],
   },
+  { chave: 'parenterais', titulo: 'Parenterais', tipoId: 'geral', topico: true, doc: () => [] },
+  { chave: 'orais', titulo: 'Orais', tipoId: 'geral', topico: true, doc: () => [] },
   {
     chave: 'varfarina', titulo: 'Varfarina', tipoId: 'medicamento',
     doc: (id) => [p('Antagonista da vitamina K, por via oral. Ajustada pelo ', m(id.inr!), '.')],
@@ -309,11 +313,16 @@ const ARVORES: Array<{ nome: string; raiz: Ramo }> = [
   },
   {
     nome: 'Anticoagulação',
+    // "Parenterais" e "Orais" são tópicos: organizam o ramo e não têm texto.
     raiz: ['anticoagulantes', null, [
-      ['enoxaparina', 'subcutânea'],
-      ['hnf', 'venosa'],
-      ['varfarina', 'oral', [['inr', 'controle']]],
-      ['rivaroxabana', 'oral'],
+      ['parenterais', null, [
+        ['enoxaparina', 'subcutânea'],
+        ['hnf', 'venosa'],
+      ]],
+      ['orais', null, [
+        ['varfarina', null, [['inr', 'controle']]],
+        ['rivaroxabana', null],
+      ]],
     ]],
   },
 ];
@@ -336,7 +345,8 @@ export function montarExemplo(): Exemplo {
       id: id[r.chave]!,
       titulo: r.titulo,
       tipoId: r.tipoId,
-      conteudo: JSON.stringify(doc),
+      topico: r.topico === true,
+      conteudo: r.topico ? '' : JSON.stringify(doc),
       texto: textoDoDocumento(doc, (notaId) => tituloPorId.get(notaId) ?? ''),
       criadaEm: quando,
       atualizadaEm: quando,

@@ -6,8 +6,9 @@ não tem conta, servidor nem nuvem, e o app **não declara nenhuma permissão**
 
 O arquivo para instalar é **`Bau.apk`**, nesta pasta.
 
-> Situação: **etapa 1 de 5** (projeto, modelo de dados e árvore visual).
-> O editor completo, os links, a busca e o backup entram nas próximas etapas.
+> Situação: **versão 0.2.0**. Etapa 1 de 5 (projeto, modelo de dados e árvore
+> visual), já com tópicos, busca e escolha de tema. O editor completo, os links
+> e o backup entram nas próximas etapas.
 
 ## Instalar no tablet
 
@@ -40,6 +41,23 @@ assinadas com a mesma chave (veja "Chave de assinatura").
   Espaço recolhe, Delete exclui, Ctrl+Z desfaz.
 - Tipos de nota editáveis (menu lateral → "Tipos de nota"): nome, cor e ícone
   de cada tipo, e criação de tipos novos.
+- **Tópicos**: nós só com título, sem texto, para organizar o ramo ("Exames",
+  "Tratamento", "Orais"…). Ao criar um nó, escolha "Nota" ou "Tópico"; pelo
+  toque longo dá para transformar um no outro (o texto de uma nota fica guardado
+  e volta se ela deixar de ser tópico). O painel de um tópico lista o que há
+  dentro dele; o toque duplo num tópico recolhe ou expande o ramo.
+- **Busca** (lupa na barra superior, ou Ctrl+K):
+  - por nome e no conteúdo das notas, ignorando acentos e maiúsculas e
+    tolerando erros de digitação, com o trecho encontrado em destaque;
+  - com o campo vazio, todas as notas em ordem alfabética, com o índice de A a Z
+    na lateral (dá para deslizar o dedo pelas letras);
+  - filtro por tipo (Doença, Medicamento, Exame, Estudo…), que pode ser
+    combinado, e um filtro só para tópicos;
+  - cada resultado mostra o tipo e em quais árvores a nota aparece; tocar abre a
+    nota e destaca o nó na árvore.
+- **Tema**: menu lateral → "Aparência": seguir o sistema, sempre claro ou sempre escuro.
+- Com a nota ao lado, o "Ver tudo" enquadra a árvore contando com os títulos,
+  sem cortar nada na borda.
 - Dados de exemplo: árvore "Dor torácica" e árvore "Anticoagulação", que
   reaproveita as mesmas notas.
 - No menu lateral há "Criar árvore de teste com 600 nós", para conferir a
@@ -114,6 +132,7 @@ mesma assinatura.
 npm run dev                     # abre em http://127.0.0.1:5173 (banco sql.js no navegador)
 npm run build && npm run previa # serve a versão final em http://127.0.0.1:4173
 node testes/etapa1.cjs          # teste de aceite da etapa 1 (Chromium, tamanho de tablet)
+node testes/etapa1b.cjs         # tópicos, busca, índice A–Z, filtro por tipo e tema
 
 npm run build:android
 npx vite preview --outDir dist-android --port 4174 &
@@ -128,13 +147,14 @@ bash android/teste-jvm/testar.sh   # código Java, com Robolectric (precisa do r
 | `src/estado` | Estado do app (`loja.ts`) e pilha do botão voltar |
 | `src/arvore` | Árvore visual, gestos, disposição, lista recuada, atalhos |
 | `src/nota` | Painel da nota, editor, menções e salvamento automático |
+| `src/busca` | Busca (MiniSearch), filtro por tipo e índice A–Z |
 | `src/nativo` | Ponte com a casca Android |
 | `android/` | Casca Android, recursos, `montar.sh`, chave e testes Java |
 | `testes/` | Testes automáticos no navegador |
 
 ## Modelo de dados
 
-- **Nota**: id, título, tipo, conteúdo (JSON do editor), texto (para a busca), criadaEm, atualizadaEm.
+- **Nota**: id, título, tipo, tópico (sim/não), conteúdo (JSON do editor), texto (para a busca), criadaEm, atualizadaEm.
 - **Tipo**: id, nome, cor, ícone (Doença, Medicamento, Exame, Estudo/Artigo, Sintoma, Conduta/Procedimento, Geral; editáveis).
 - **Árvore**: id, nome, nó raiz.
 - **Nó**: id, árvoreId, notaId, paiId, ordem, rótuloDoRamo, recolhido.

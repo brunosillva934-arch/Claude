@@ -7,8 +7,15 @@
 (function () {
   var html = document.documentElement;
   var escuro = false;
+  var escolha = null;
   try {
-    if (window.BauNativo && window.BauNativo.chamarSinc) {
+    // Tema escolhido no app (sempre claro ou sempre escuro); sem escolha, segue o sistema.
+    escolha = window.localStorage.getItem('bau-tema');
+  } catch (e) {}
+  try {
+    if (escolha === 'escuro' || escolha === 'claro') {
+      escuro = escolha === 'escuro';
+    } else if (window.BauNativo && window.BauNativo.chamarSinc) {
       var info = JSON.parse(window.BauNativo.chamarSinc('sistema.info', '{}'));
       escuro = !!(info && info.valor && info.valor.noturno);
     } else if (window.matchMedia) {

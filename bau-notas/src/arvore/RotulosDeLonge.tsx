@@ -10,7 +10,7 @@
  */
 import { memo, useMemo } from 'react';
 import { ViewportPortal, useStore } from '@xyflow/react';
-import type { LucideIcon } from 'lucide-react';
+import { Hash, type LucideIcon } from 'lucide-react';
 import { tituloDaNota, useLoja } from '../estado/loja';
 import { iconeDoTipo } from '../ui/icones';
 import { coresDoTipo } from '../util/cores';
@@ -35,7 +35,8 @@ interface Titulo {
   reserva: number;
   /** Folha: não há nada à direita, o título pode se estender. */
   folha: boolean;
-  duasLinhas: boolean;
+  /** Linhas que o título pode ocupar (1 a 3). */
+  linhas: number;
 }
 
 interface Ramo {
@@ -52,7 +53,7 @@ interface Caixa {
   y2: number;
 }
 
-const ALTURA_TITULO = 22;
+const DEGRAUS_POR_OITAVA = 24;
 const LARGURA_FOLHA = 340;
 const LARGURA_MINIMA = 132;
 const ALTURA_RAMO = 19;
@@ -66,14 +67,21 @@ function larguraDoRamo(rotulo: string | null): number {
   return rotulo ? encurtar(rotulo).length * 6.3 + 16 : 0;
 }
 
+/** Largura estimada, em pixels de tela, do título de uma folha no modo "de longe". */
+export function larguraDoTituloDeLonge(texto: string, nivel: number): number {
+  return Math.min(texto.length * fonteDoNivel(nivel) * 0.62 + 34, LARGURA_FOLHA);
+}
+
 function fonteDoNivel(nivel: number): number {
   return nivel === 0 ? 17 : nivel === 1 ? 15 : 13;
 }
 
 function RotulosDeLongeBase({ disposicao }: { disposicao: Disposicao }) {
-  // O zoom entra em degraus: os rótulos só são recalculados quando muda de degrau.
+  // O zoom entra em degraus finos (3% cada): os rótulos só são recalculados quando muda de degrau.
   // A conta usa o menor zoom do degrau; ao aproximar, as distâncias só aumentam.
-  const degrau = useStore((s) => (s.transform[2] < ZOOM_DE_LONGE ? Math.floor(Math.log2(s.transform[2]) * 6) : null));
+  const degrau = useStore((s) =>
+    s.transform[2] < ZOOM_DE_LONGE ? Math.floor(Math.log2(s.transform[2]) * DEGRAUS_POR_OITAVA) : null,
+  );
   const nos = useLoja((s) => s.nos);
   const notas = useLoja((s) => s.notas);
   const tipos = useLoja((s) => s.tipos);
@@ -86,7 +94,7 @@ function RotulosDeLongeBase({ disposicao }: { disposicao: Disposicao }) {
     const titulos: Titulo[] = [];
     const ramos: Ramo[] = [];
     if (degrau === null) return { titulos, ramos };
-    const zoom = Math.pow(2, degrau / 6);
+    const zoom = Math.pow(2, degrau / DEGRAUS_POR_OITAVA);
     const colocadas: Caixa[] = [];
     const livre = (c: Caixa) => {
       for (const o of colocadas) {
@@ -101,6 +109,8 @@ function RotulosDeLongeBase({ disposicao }: { disposicao: Disposicao }) {
       if (!pos || !no || id === editandoId) return;
       const nota = notas[no.notaId];
       const tipo = nota ? tipos[nota.tipoId] : undefined;
+      const topico = nota?.topico === true;
+      const cores = coresDoTipo(topico ? '#6B7785' : (tipo?.cor ?? '#6B7785'), escuro);
       const texto = tituloDaNota(nota);
       const fonte = fonteDoNivel(pos.nivel);
       const vao = disposicao.vaos[pos.nivel] ?? 96;
@@ -117,11 +127,16 @@ function RotulosDeLongeBase({ disposicao }: { disposicao: Disposicao }) {
       // Se, guardando o espaço dos rótulos, o título ficasse espremido, o título tem preferência:
       // os rótulos dos ramos desse nó só entram onde sobrar lugar.
       if (reserva > 0 && coluna * zoom - 8 - reserva < Math.min(necessaria, LARGURA_MINIMA)) reserva = 0;
-      const maxima = folha ? LARGURA_FOLHA : Math.max(coluna * zoom - 8 - reserva, LARGURA_MINIMA);
-      // Um nó com dois ou mais filhos tem altura livre ao redor: o título pode ocupar duas linhas.
-      const duasLinhas = !folha && filhos.length >= 2 && necessaria > maxima;
+      // Um nó com filhos nunca passa da própria coluna, para não cobrir o título dos filhos.
+      const daColuna = coluna * zoom - 8;
+      const maxima = folha ? LARGURA_FOLHA : Math.max(daColuna - reserva, Math.min(LARGURA_MINIMA, daColuna));
+      // Um nó com vários filhos tem altura livre ao redor: o título pode quebrar em
+      // duas linhas (dois filhos) ou três (três ou mais).
+      const linhas = !folha && necessaria > maxima ? Math.min(3, filhos.length) : 1;
       const largura = Math.min(necessaria, maxima);
-      const altura = duasLinhas ? ALTURA_TITULO * 2 - 4 : ALTURA_TITULO;
+      // Para a colisão vale a altura da letra, não a do fundo: os fundos podem se encostar.
+      const linha = fonte + 5;
+      const altura = linha * linhas - 2 * (linhas - 1);
       // Em coordenadas de tela (multiplicadas pelo zoom), para medir colisão.
       const x1 = pos.x * zoom;
       const yc = (pos.y + ALTURA_NO / 2) * zoom;
@@ -134,13 +149,13 @@ function RotulosDeLongeBase({ disposicao }: { disposicao: Disposicao }) {
         y: pos.y + ALTURA_NO / 2,
         texto,
         nivel: pos.nivel,
-        cor: coresDoTipo(tipo?.cor ?? '#6B7785', escuro).texto,
-        fundo: coresDoTipo(tipo?.cor ?? '#6B7785', escuro).fraca,
-        icone: iconeDoTipo(tipo?.icone),
+        cor: cores.texto,
+        fundo: cores.fraca,
+        icone: topico ? Hash : iconeDoTipo(tipo?.icone),
         coluna,
         reserva,
         folha,
-        duasLinhas,
+        linhas,
       });
     };
 
@@ -192,7 +207,7 @@ function RotulosDeLongeBase({ disposicao }: { disposicao: Disposicao }) {
             className={
               'rotulo-longe nivel-' +
               Math.min(t.nivel, 2) +
-              (t.duasLinhas ? ' duas-linhas' : '') +
+              (t.linhas > 1 ? ' varias-linhas' : '') +
               (t.id === selecionadoId ? ' selecionado' : '')
             }
             data-rotulo={t.texto}
@@ -200,8 +215,10 @@ function RotulosDeLongeBase({ disposicao }: { disposicao: Disposicao }) {
               transform: `translate(${t.x}px, ${t.y}px) scale(calc(1 / var(--zoom, 1))) translate(0, -50%)`,
               maxWidth: t.folha
                 ? LARGURA_FOLHA
-                : `max(${LARGURA_MINIMA}px, calc(var(--zoom, 1) * ${t.coluna}px - ${8 + t.reserva}px))`,
+                : `max(min(${LARGURA_MINIMA}px, calc(var(--zoom, 1) * ${t.coluna}px - 8px)), ` +
+                  `calc(var(--zoom, 1) * ${t.coluna}px - ${8 + t.reserva}px))`,
               color: t.cor,
+              ['--linhas' as string]: t.linhas,
               backgroundImage: `linear-gradient(${t.fundo}, ${t.fundo})`,
             }}
             onPointerDown={(e) => aoBaixarNoNo(t.id, e, false)}
