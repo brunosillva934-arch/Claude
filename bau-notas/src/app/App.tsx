@@ -17,6 +17,7 @@ import { Camadas } from '../ui/Camadas';
 import { avisar } from '../ui/servico';
 import { BarraSuperior } from './BarraSuperior';
 import { Gaveta } from './Gaveta';
+import { TiposDeNota } from './TiposDeNota';
 
 const LARGURA_DIVIDIDA = 900;
 
@@ -124,6 +125,7 @@ export function App() {
         )}
       </div>
       <Gaveta />
+      <TiposDeNota />
       <Camadas />
     </div>
   );

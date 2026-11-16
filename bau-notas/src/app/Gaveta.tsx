@@ -1,9 +1,9 @@
 /**
  * Menu lateral com todas as árvores.
  */
-import { Ellipsis, FlaskConical, Network, Pencil, Plus, Trash2, X } from 'lucide-react';
+import { Ellipsis, FlaskConical, Network, Pencil, Plus, Shapes, Trash2, X } from 'lucide-react';
 import {
-  abrirGaveta, arvoresOrdenadas, criarArvore, criarArvoreDeTeste, excluirArvore, ramoDe, renomearArvore,
+  abrirGaveta, abrirTipos, arvoresOrdenadas, criarArvore, criarArvoreDeTeste, excluirArvore, ramoDe, renomearArvore,
   resumoDaArvore, selecionarArvore, useLoja,
 } from '../estado/loja';
 import { useVoltar } from '../estado/navegacao';
@@ -107,6 +107,12 @@ export function Gaveta() {
         <button type="button" className="gaveta-acao" data-acao="nova-arvore" onClick={() => void novaArvore()}>
           <Plus size={20} />
           Nova árvore
+        </button>
+
+        <div className="gaveta-secao">Organização</div>
+        <button type="button" className="gaveta-acao discreta" data-acao="tipos" onClick={() => abrirTipos(true)}>
+          <Shapes size={20} />
+          Tipos de nota
         </button>
 
         <div className="gaveta-secao">Ferramentas</div>

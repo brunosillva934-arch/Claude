@@ -4,7 +4,7 @@
   framework do Android 14 e o SQLite de verdade, rodando na JVM do computador.
   Este projeto só serve para testar; o APK é montado por ../montar.sh.
 
-  uso: mvn -q -f android/teste-jvm/pom.xml test
+  uso: bash android/teste-jvm/testar.sh
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -61,6 +61,10 @@
         <version>3.5.2</version>
         <configuration>
           <trimStackTrace>false</trimStackTrace>
+          <!-- Classes extraídas das bibliotecas .aar por testar.sh. -->
+          <additionalClasspathElements>
+            <additionalClasspathElement>${project.build.directory}/aar-classes</additionalClasspathElement>
+          </additionalClasspathElements>
         </configuration>
       </plugin>
     </plugins>

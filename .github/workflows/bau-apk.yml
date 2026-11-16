@@ -44,7 +44,7 @@ jobs:
           sudo apt-get install -y aapt apksigner zipalign dalvik-exchange android-sdk-platform-23
 
       - name: Testes do código Java (banco, ponte e abertura da tela)
-        run: mvn -B -q -f bau-notas/android/teste-jvm/pom.xml test
+        run: bash bau-notas/android/teste-jvm/testar.sh
 
       - name: Montar o APK
         working-directory: bau-notas

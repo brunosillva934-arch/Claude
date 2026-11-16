@@ -38,6 +38,8 @@ assinadas com a mesma chave (veja "Chave de assinatura").
 - Menu lateral com todas as árvores; visão em lista recuada sincronizada.
 - Teclado físico: Tab cria filho, Enter cria irmão, F2 renomeia, setas navegam,
   Espaço recolhe, Delete exclui, Ctrl+Z desfaz.
+- Tipos de nota editáveis (menu lateral → "Tipos de nota"): nome, cor e ícone
+  de cada tipo, e criação de tipos novos.
 - Dados de exemplo: árvore "Dor torácica" e árvore "Anticoagulação", que
   reaproveita as mesmas notas.
 - No menu lateral há "Criar árvore de teste com 600 nós", para conferir a
@@ -117,7 +119,7 @@ npm run build:android
 npx vite preview --outDir dist-android --port 4174 &
 node testes/android-simulado.cjs   # o pacote exato do APK, com a ponte Android imitada
 
-mvn -q -f android/teste-jvm/pom.xml test   # código Java, com Robolectric
+bash android/teste-jvm/testar.sh   # código Java, com Robolectric (precisa do repositório Maven do Google)
 ```
 
 | Caminho | O que é |

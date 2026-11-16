@@ -75,6 +75,8 @@ export interface Estado {
   movendoId: string | null;
   arrasto: Arrasto | null;
   gavetaAberta: boolean;
+  /** Tela de edição dos tipos de nota aberta. */
+  tiposAbertos: boolean;
 
   /** Contadores que a árvore observa para enquadrar tudo ou revelar um nó. */
   pedidoVerTudo: number;
@@ -106,6 +108,7 @@ export const useLoja = create<Estado>(() => ({
   movendoId: null,
   arrasto: null,
   gavetaAberta: false,
+  tiposAbertos: false,
   pedidoVerTudo: 0,
   pedidoRevelar: null,
   salvamento: 'salvo',
@@ -332,6 +335,10 @@ export function definirProporcao(proporcao: number, gravar: boolean): void {
 
 export function abrirGaveta(aberta: boolean): void {
   set({ gavetaAberta: aberta });
+}
+
+export function abrirTipos(abertos: boolean): void {
+  set({ tiposAbertos: abertos, gavetaAberta: false });
 }
 
 export function pedirVerTudo(): void {
@@ -854,9 +861,43 @@ export function marcarNotaSalva(notaId: string, atualizadaEm: number): void {
 
 // ------------------------------------------------------------------ tipos
 
+/** Grava um tipo (novo ou editado). A cor e o ícone valem na árvore, nos chips e na busca. */
 export function salvarTipo(tipo: TipoNota): void {
   set({ tipos: { ...get().tipos, [tipo.id]: tipo } });
   void enfileirar([sqlSalvarTipo(tipo)]);
+}
+
+/** Cria um tipo novo, no fim da lista. */
+export function criarTipo(nome: string, cor: string, icone: string): string {
+  const ordem = Object.values(get().tipos).reduce((m, t) => Math.max(m, t.ordem), -1) + 1;
+  const tipo: TipoNota = { id: uid(), nome, cor, icone, ordem, padrao: false };
+  salvarTipo(tipo);
+  return tipo.id;
+}
+
+export function notasDoTipo(tipoId: string): number {
+  let n = 0;
+  for (const nota of Object.values(get().notas)) if (nota.tipoId === tipoId && !nota.excluidaEm) n++;
+  return n;
+}
+
+/** Exclui um tipo criado pelo usuário. As notas desse tipo passam a ser "Geral". */
+export function excluirTipo(tipoId: string): boolean {
+  const s = get();
+  const tipo = s.tipos[tipoId];
+  if (!tipo || tipo.padrao || tipoId === TIPO_GERAL) return false;
+  const tipos = { ...s.tipos };
+  delete tipos[tipoId];
+  const notas = { ...s.notas };
+  for (const id in notas) {
+    if (notas[id]!.tipoId === tipoId) notas[id] = { ...notas[id]!, tipoId: TIPO_GERAL };
+  }
+  set({ tipos, notas });
+  void enfileirar([
+    { sql: 'UPDATE notas SET tipoId = ? WHERE tipoId = ?', params: [TIPO_GERAL, tipoId] },
+    { sql: 'DELETE FROM tipos WHERE id = ?', params: [tipoId] },
+  ]);
+  return true;
 }
 
 // ------------------------------------------------------------------ árvores

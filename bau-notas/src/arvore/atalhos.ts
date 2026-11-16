@@ -77,7 +77,7 @@ export function useAtalhosDaArvore(ativo: boolean): void {
       const ui = useUi.getState();
       if (ui.menu || ui.dialogo) return;
       const s = useLoja.getState();
-      if (s.gavetaAberta || s.notaExpandida) return;
+      if (s.gavetaAberta || s.tiposAbertos || s.notaExpandida) return;
       const sel = s.selecionadoId;
 
       if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase() === 'z') {

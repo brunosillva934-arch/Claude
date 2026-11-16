@@ -6,3 +6,4 @@ android/chave.senha
 testes/telas/
 *.log
 Bau-teste.apk
+android/teste-jvm/target/
