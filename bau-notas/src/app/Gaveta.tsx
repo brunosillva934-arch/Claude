@@ -2,17 +2,17 @@
  * Menu lateral com todas as árvores.
  */
 import {
-  Ellipsis, FlaskConical, Moon, Network, Pencil, Plus, Search, Shapes, SunMedium, SunMoon, Trash2, X,
+  BookOpenCheck, Ellipsis, FlaskConical, Moon, Network, Pencil, Plus, Search, Shapes, SunMedium, SunMoon, Trash2, X,
 } from 'lucide-react';
 import {
-  abrirBusca, abrirGaveta, abrirTipos, arvoresOrdenadas, criarArvore, criarArvoreDeTeste, excluirArvore, ramoDe, renomearArvore,
+  abrirBusca, abrirGaveta, abrirTipos, adicionarExemplo, arvoresOrdenadas, criarArvore, criarArvoreDeTeste, excluirArvore, ramoDe, renomearArvore,
   resumoDaArvore, selecionarArvore, useLoja,
 } from '../estado/loja';
 import { useVoltar } from '../estado/navegacao';
 import { infoSistema } from '../nativo/ponte';
 import { escolherTema } from './tema';
 import { avisarDesfazer } from '../arvore/acoesNo';
-import { abrirMenu, confirmar, perguntarTexto } from '../ui/servico';
+import { abrirMenu, avisar, confirmar, perguntarTexto } from '../ui/servico';
 import { plural } from '../util/texto';
 
 async function novaArvore(): Promise<void> {
@@ -23,6 +23,23 @@ async function novaArvore(): Promise<void> {
     rotuloOk: 'Criar',
   });
   if (nome) criarArvore(nome);
+}
+
+async function adicionarArvoresDeExemplo(): Promise<void> {
+  const ok = await confirmar({
+    titulo: 'Adicionar as árvores de exemplo?',
+    texto:
+      'Cria cópias novas de “Dor torácica” e “Anticoagulação”, com notas próprias, para ver os tópicos em uso. ' +
+      'Suas árvores não mudam, e as cópias podem ser excluídas depois.',
+    rotuloOk: 'Adicionar',
+  });
+  if (!ok) return;
+  try {
+    await adicionarExemplo();
+    avisar('Árvores de exemplo adicionadas');
+  } catch {
+    avisar('Não foi possível adicionar os exemplos');
+  }
 }
 
 async function renomear(arvoreId: string, atual: string): Promise<void> {
@@ -148,6 +165,15 @@ export function Gaveta() {
         </div>
 
         <div className="gaveta-secao">Ferramentas</div>
+        <button
+          type="button"
+          className="gaveta-acao discreta"
+          data-acao="adicionar-exemplo"
+          onClick={() => void adicionarArvoresDeExemplo()}
+        >
+          <BookOpenCheck size={20} />
+          Adicionar as árvores de exemplo
+        </button>
         <button
           type="button"
           className="gaveta-acao discreta"

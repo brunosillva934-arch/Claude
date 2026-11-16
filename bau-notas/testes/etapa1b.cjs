@@ -1,4 +1,4 @@
-// Teste das novidades pedidas depois da etapa 1: tópicos (nós só com título),
+// Teste das novidades pedidas depois da etapa 1: tópicos (itens de lista com recomendação),
 // busca por nome e conteúdo, ordem alfabética com índice A–Z, filtro por tipo,
 // escolha de tema e a árvore inteira visível com a nota ao lado.
 // uso: npm run build && npm run previa &  ;  node testes/etapa1b.cjs [pasta-das-capturas]
@@ -41,55 +41,96 @@ const resultados = () => pagina.locator('.busca-linha').evaluateAll((els) => els
   confere('nenhum título cortado na borda', cortados.length === 0, cortados.join(', '));
   await pagina.screenshot({ path: `${saida}/30-dividida-sem-corte.png` });
 
-  console.log('\n2. Tópicos');
+  console.log('\n2. Tópicos: itens de lista com recomendação curta');
+  // IAM já está selecionado. Um tópico novo, do tipo Medicamento.
   await pagina.locator('.acao-no[data-acao="filho"]').tap();
   await pagina.waitForTimeout(350);
-  confere('escolha "Nota | Tópico" ao criar', await pagina.locator('.escolha[data-escolha="topico"]').isVisible());
+  confere('escolha "Nota | Tópico" e do tipo ao criar',
+    (await pagina.locator('.escolha[data-escolha="topico"]').isVisible()) && (await pagina.locator('.escolha-tipo[data-escolha-tipo="Medicamento"]').isVisible()));
   await pagina.locator('.escolha[data-escolha="topico"]').tap();
+  await pagina.locator('.escolha-tipo[data-escolha-tipo="Medicamento"]').tap();
   await pagina.waitForTimeout(150);
-  confere('campo continua em foco depois de escolher', await pagina.evaluate(() => document.activeElement?.classList.contains('no-entrada')));
-  await pagina.keyboard.type('Complicações');
+  confere('campo do nome continua em foco', await pagina.evaluate(() => document.activeElement?.classList.contains('no-entrada')));
+  await pagina.keyboard.type('Morfina');
   await pagina.screenshot({ path: `${saida}/31-criar-topico.png` });
   await pagina.keyboard.press('Enter');
   await pagina.waitForTimeout(400);
-  const topico = pagina.locator('.no[data-titulo="Complicações"], .rotulo-longe[data-rotulo="Complicações"]').first();
-  confere('tópico criado', (await topico.count()) === 1);
-  confere('painel do tópico, sem editor', (await pagina.locator('.painel-nota[data-topico]').count()) === 1 && (await pagina.locator('.texto-nota').count()) === 0);
-  confere('painel oferece transformar em nota', await pagina.locator('[data-acao="virar-nota"]').isVisible());
+  const morfina = pagina.locator('.no[data-titulo="Morfina"]');
+  confere('tópico criado com a cor do tipo (medicamento)',
+    (await morfina.getAttribute('class')).includes('topico') &&
+    (await pagina.evaluate(() => window.__bauTeste.tipoDe('Morfina'))) === 'medicamento');
+  confere('painel do tópico, com campo de recomendação e sem editor de texto longo',
+    (await pagina.locator('.painel-nota[data-topico] .campo.resumo').count()) === 1 && (await pagina.locator('.texto-nota').count()) === 0);
+  confere('painel mostra de qual nota é tópico', ((await pagina.locator('.topico-pai').textContent()) || '').includes('IAM com supra de ST'));
+  const alturaAntes = (await morfina.boundingBox()).height;
+  await pagina.locator('.campo.resumo').tap();
+  await pagina.keyboard.type('Só se a dor não ceder com nitrato.');
+  await pagina.waitForTimeout(300);
+  confere('recomendação aparece no cartão enquanto se digita',
+    ((await morfina.locator('.no-resumo').textContent()) || '').includes('Só se a dor não ceder'));
+  confere('o cartão cresce para mostrar a recomendação', (await morfina.boundingBox()).height > alturaAntes + 10);
+  await pagina.waitForTimeout(1100);
+  confere('recomendação gravada', (await pagina.locator('.estado-salvar').textContent()).includes('Salvo'));
   await pagina.screenshot({ path: `${saida}/32-painel-topico.png` });
 
-  // Filho do tópico (uma nota), para ver a lista "Neste tópico".
-  await pagina.locator('.acao-no[data-acao="filho"]').tap();
+  // "+ Irmão" de um tópico já vem como tópico do mesmo tipo: dá para listar em série.
+  await pagina.locator('.no[data-titulo="Morfina"]').tap();
   await pagina.waitForTimeout(300);
-  await pagina.keyboard.type('Choque cardiogênico');
-  await pagina.keyboard.press('Enter');
-  await pagina.waitForTimeout(300);
-  await rotuloOuNo('Complicações').tap();
+  await pagina.locator('.acao-no[data-acao="irmao"]').tap();
   await pagina.waitForTimeout(350);
-  confere('"Neste tópico" lista os filhos', (await pagina.locator('.topico-filho', { hasText: 'Choque cardiogênico' }).count()) === 1);
+  confere('irmão novo já vem como tópico e medicamento',
+    (await pagina.locator('.escolha[data-escolha="topico"]').getAttribute('aria-checked')) === 'true' &&
+    (await pagina.locator('.escolha-tipo[data-escolha-tipo="Medicamento"]').getAttribute('aria-checked')) === 'true');
+  await pagina.keyboard.type('Nitrato');
+  await pagina.keyboard.press('Enter');
+  await pagina.waitForTimeout(400);
 
-  // Menu do toque longo: transformar em nota e de volta.
+  // Pelo menu: escrever a recomendação.
   await pagina.locator('.acao-no[data-acao="mais"]').tap();
   await pagina.waitForTimeout(250);
   const itens = await pagina.locator('.menu-item').evaluateAll((e) => e.map((x) => x.dataset.item));
-  confere('menu do tópico não tem "Abrir nota" nem "Mudar o tipo"', !itens.includes('abrir') && !itens.includes('tipo'), itens.join(','));
-  await pagina.locator('.menu-item[data-item="topico"]').tap();
+  confere('menu do tópico: recomendação, tipo e "transformar em nota"',
+    ['resumo', 'tipo', 'topico'].every((i) => itens.includes(i)), itens.join(','));
+  await pagina.locator('.menu-item[data-item="resumo"]').tap();
+  await pagina.waitForTimeout(250);
+  await pagina.keyboard.type('Sublingual; evitar se PAS < 90 mmHg.');
+  await pagina.locator('.dialogo [data-acao="ok"]').tap();
+  await pagina.waitForTimeout(400);
+  confere('recomendação pelo menu aparece no cartão',
+    ((await pagina.locator('.no[data-titulo="Nitrato"] .no-resumo').textContent()) || '').includes('Sublingual'));
+
+  // A nota de cima lista os tópicos dela, com as recomendações.
+  await pagina.locator('[data-acao="ver-tudo"]').tap();
   await pagina.waitForTimeout(500);
-  confere('"Transformar em nota" abre o editor', (await pagina.locator('.texto-nota').count()) === 1);
+  await rotuloOuNo('IAM com supra de ST').tap();
+  await pagina.waitForTimeout(600);
+  const listados = await pagina.locator('.itens-do-ramo .item-do-ramo').evaluateAll((e) => e.map((x) => x.dataset.item));
+  confere('nota de cima mostra "2 tópicos neste ramo"', listados.join(',') === 'Morfina,Nitrato', listados.join(','));
+  confere('com as recomendações', ((await pagina.locator('.itens-do-ramo').textContent()) || '').includes('Sublingual'));
+  await pagina.screenshot({ path: `${saida}/33-nota-com-itens.png` });
+  await pagina.locator('.item-do-ramo[data-item="Morfina"]').tap();
+  await pagina.waitForTimeout(400);
+  confere('tocar no item leva a ele', (await pagina.locator('.nota-titulo').inputValue()) === 'Morfina');
+
+  // Tópico vira nota completa: a recomendação passa a ser o primeiro parágrafo.
+  await pagina.locator('[data-acao="virar-nota"]').tap();
+  await pagina.waitForTimeout(700);
+  confere('"Transformar em nota completa" abre o editor com a recomendação',
+    ((await pagina.locator('.texto-nota').textContent()) || '').includes('Só se a dor não ceder'));
   await pagina.locator('.acao-no[data-acao="mais"]').tap();
   await pagina.waitForTimeout(250);
   await pagina.locator('.menu-item[data-item="topico"]').tap();
   await pagina.waitForTimeout(400);
-  confere('e volta a ser tópico', (await pagina.locator('.painel-nota[data-topico]').count()) === 1);
+  confere('e volta a ser tópico, com a recomendação', (await pagina.locator('.campo.resumo').inputValue()).includes('Só se a dor'));
 
-  // Árvore de exemplo "Anticoagulação" já vem com tópicos.
+  // Árvore de exemplo "Anticoagulação": cada classe é nota, os medicamentos são tópicos.
   await pagina.locator('[data-acao="menu"]').tap();
   await pagina.waitForTimeout(200);
   await pagina.locator('.gaveta-arvore[data-arvore="Anticoagulação"]').tap();
-  await pagina.waitForTimeout(600);
-  confere('exemplo com tópicos "Parenterais" e "Orais"',
-    (await pagina.locator('.no.topico').evaluateAll((e) => e.map((x) => x.dataset.titulo))).sort().join(',') === 'Orais,Parenterais');
-  await pagina.screenshot({ path: `${saida}/33-arvore-com-topicos.png` });
+  await pagina.waitForTimeout(700);
+  const topicosDoExemplo = await pagina.evaluate(() => window.__bauTeste.topicosDaArvoreAtual());
+  confere('exemplo com 5 medicamentos em tópicos', topicosDoExemplo.join(',') === 'Apixabana,Dabigatrana,Edoxabana,Rivaroxabana,Varfarina', topicosDoExemplo.join(','));
+  await pagina.screenshot({ path: `${saida}/34-arvore-com-topicos.png` });
 
   console.log('\n3. Busca por nome');
   await pagina.locator('.barra-superior [data-acao="buscar"]').tap();
@@ -113,7 +154,11 @@ const resultados = () => pagina.locator('.busca-linha').evaluateAll((els) => els
   confere('procura no conteúdo das notas', r.includes('Dissecção de aorta'), r.join(' | '));
   confere('trecho encontrado em destaque', (await pagina.locator('.busca-trecho mark').count()) >= 1);
   confere('mostra o tipo e a árvore', ((await pagina.locator('.busca-linha').first().locator('.busca-detalhe').textContent()) || '').includes('em Dor torácica'));
-  await pagina.screenshot({ path: `${saida}/34-busca-conteudo.png` });
+  await pagina.locator('.busca-campo input').fill('idarucizumabe');
+  await pagina.waitForTimeout(250);
+  r = await resultados();
+  confere('procura na recomendação dos tópicos', r[0] === 'Dabigatrana' && (await pagina.locator('.busca-trecho mark').count()) >= 1, r.join(' | '));
+  await pagina.screenshot({ path: `${saida}/35-busca-recomendacao.png` });
 
   console.log('\n4. Filtro por tipo');
   await pagina.locator('.busca-campo input').fill('');
@@ -122,16 +167,21 @@ const resultados = () => pagina.locator('.busca-linha').evaluateAll((els) => els
   await pagina.waitForTimeout(250);
   r = await resultados();
   const tiposVistos = await pagina.locator('.busca-tipo').evaluateAll((e) => [...new Set(e.map((x) => x.textContent))]);
-  confere('só medicamentos', tiposVistos.join(',') === 'Medicamento' && r.length === 9, `${r.length}: ${tiposVistos.join(',')}`);
+  confere('só medicamentos, notas e tópicos', tiposVistos.every((t) => t.startsWith('Medicamento')) && r.length === 18 && r.includes('Apixabana'), `${r.length}: ${tiposVistos.join(',')}`);
   await pagina.locator('.chip[data-tipo="Exame"]').tap();
   await pagina.waitForTimeout(250);
-  const combinados = await pagina.locator('.busca-tipo').evaluateAll((e) => [...new Set(e.map((x) => x.textContent))].sort());
+  const combinados = await pagina.locator('.busca-tipo').evaluateAll((e) =>
+    [...new Set(e.map((x) => x.firstChild.textContent))].sort());
   confere('combina tipos (Medicamento + Exame)', combinados.join(',') === 'Exame,Medicamento', combinados.join(','));
-  await pagina.screenshot({ path: `${saida}/35-filtro-tipo.png` });
+  await pagina.screenshot({ path: `${saida}/36-filtro-tipo.png` });
+  await pagina.locator('.chip[data-tipo="Exame"]').tap();
   await pagina.locator('.chip[data-tipo="topicos"]').tap();
   await pagina.waitForTimeout(250);
   r = await resultados();
-  confere('filtro "Tópicos"', r.includes('Parenterais') && r.includes('Complicações') && r.every((t) => ['Parenterais', 'Orais', 'Complicações'].includes(t)), r.join(', '));
+  const marcados = await pagina.locator('.busca-linha .busca-marca-topico').count();
+  // 8 do exemplo (Esmolol, Ibuprofeno, Colchicina e os 5 anticoagulantes) + Morfina e Nitrato.
+  confere('"Só tópicos" com Medicamento', r.length === 10 && marcados === r.length && r.includes('Esmolol') && r.includes('Nitrato'), r.join(', '));
+  await pagina.locator('.chip[data-tipo="topicos"]').tap();
 
   console.log('\n5. Ordem alfabética e índice A–Z');
   await pagina.locator('.chip[data-tipo="todos"]').tap();
@@ -139,14 +189,14 @@ const resultados = () => pagina.locator('.busca-linha').evaluateAll((els) => els
   r = await resultados();
   const ordenado = [...r].sort((a, b) => a.localeCompare(b, 'pt-BR', { sensitivity: 'base' }));
   confere('lista em ordem alfabética', JSON.stringify(r) === JSON.stringify(ordenado));
-  confere('tópicos fora da lista de notas', !r.includes('Parenterais'));
+  confere('tópicos entram na lista, com a recomendação', r.includes('Apixabana') && (await pagina.locator('.busca-linha[data-resultado="Apixabana"] .busca-trecho').count()) === 1);
   confere('índice A–Z visível', await pagina.locator('.indice-az').isVisible());
   const letraE = await pagina.locator('.indice-letra[data-indice="E"]').boundingBox();
   const cdp = await pagina.context().newCDPSession(pagina);
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: letraE.x + letraE.width / 2, y: letraE.y + letraE.height / 2, id: 1 }] });
   await pagina.waitForTimeout(150);
   confere('bolha com a letra ao tocar', (await pagina.locator('.indice-bolha').textContent()) === 'E');
-  await pagina.screenshot({ path: `${saida}/36-indice-az.png` });
+  await pagina.screenshot({ path: `${saida}/37-indice-az.png` });
   // Desliza até a letra P.
   const letraP = await pagina.locator('.indice-letra[data-indice="P"]').boundingBox();
   for (let i = 1; i <= 8; i++) {
@@ -189,10 +239,10 @@ const resultados = () => pagina.locator('.busca-linha').evaluateAll((els) => els
   await pagina.locator('[data-tema-opcao="escuro"]').tap();
   await pagina.waitForTimeout(250);
   confere('escolher "Escuro" troca o tema na hora', (await pagina.locator('html').getAttribute('data-tema')) === 'escuro');
-  await pagina.screenshot({ path: `${saida}/37-gaveta-tema.png` });
+  await pagina.screenshot({ path: `${saida}/38-gaveta-tema.png` });
   await pagina.evaluate(() => window.__bau.voltar());
   await pagina.waitForTimeout(400);
-  await pagina.screenshot({ path: `${saida}/38-tema-escuro.png` });
+  await pagina.screenshot({ path: `${saida}/39-tema-escuro.png` });
   await pagina.locator('[data-acao="ver-tudo"]').tap();
   await pagina.waitForTimeout(500);
   const semTitulo = await pagina.evaluate(() => {
@@ -200,7 +250,7 @@ const resultados = () => pagina.locator('.busca-linha').evaluateAll((els) => els
     return [...document.querySelectorAll('.no')].map((n) => n.dataset.titulo).filter((t) => !titulos.has(t));
   });
   confere('com o zoom reduzido, todo nó tem título', semTitulo.length === 0, semTitulo.join(', '));
-  await pagina.screenshot({ path: `${saida}/39-tema-escuro-tudo.png` });
+  await pagina.screenshot({ path: `${saida}/40-tema-escuro-tudo.png` });
   confere('sem erros no console', erros.length === 0, erros.slice(0, 5).join(' || '));
   await navegador.close();
 

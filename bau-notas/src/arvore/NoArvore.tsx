@@ -5,19 +5,23 @@ import {
   memo, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode, type SyntheticEvent,
 } from 'react';
 import { Handle, NodeToolbar, Position, type NodeProps, type NodeToolbarProps } from '@xyflow/react';
-import { FileText, Hash, Link2, Minus } from 'lucide-react';
+import { CornerDownRight, FileText, Hash, Link2, Minus } from 'lucide-react';
 import {
   alternarRecolhido, cancelarEdicao, confirmarTitulo, contarDescendentes, criarFilho, definirTopico, filhosDe,
-  indiceDe, podeMover, tituloDaNota, usarNotaExistente, useLoja,
+  indiceDe, mudarTipoDaNota, podeMover, tiposOrdenados, tituloDaNota, usarNotaExistente, useLoja,
 } from '../estado/loja';
 import { useVoltar } from '../estado/navegacao';
 import { iconeDoTipo } from '../ui/icones';
 import { estiloDoTipo } from '../util/cores';
 import { compararTexto, normalizar } from '../util/texto';
 import { aoBaixarNoNo, aoClicarNoNo, aoMenuDeContexto } from './gestos';
+import { alturaDoCartao, linhasDoResumo } from './layout';
 
-/** Cor neutra dos tópicos, que não têm tipo. */
-export const COR_DO_TOPICO = '#6B7785';
+/** O botão tocado não pode tirar o foco do campo do título (o teclado fecharia). */
+const manterFoco = {
+  onPointerDown: (e: SyntheticEvent) => e.preventDefault(),
+  onMouseDown: (e: SyntheticEvent) => e.preventDefault(),
+};
 
 const parar = (e: SyntheticEvent) => e.stopPropagation();
 
@@ -44,6 +48,7 @@ function EdicaoDoTitulo({ noId, notaId, novo, inicial }: { noId: string; notaId:
   const tipos = useLoja((s) => s.tipos);
   const escuro = useLoja((s) => s.escuro);
   const topico = notas[notaId]?.topico === true;
+  const tipoAtual = notas[notaId]?.tipoId;
 
   useVoltar(true, () => {
     concluido.current = true;
@@ -60,20 +65,18 @@ function EdicaoDoTitulo({ noId, notaId, novo, inicial }: { noId: string; notaId:
   // Notas que já existem com nome parecido: tocar numa delas faz este nó
   // apontar para ela, em vez de criar uma nota duplicada.
   const sugestoes = useMemo(() => {
-    if (!novo || topico) return [];
+    if (!novo) return [];
     const termo = normalizar(valor);
     if (termo.length < 2) return [];
     return Object.values(notas)
-      .filter(
-        (n) => n.id !== notaId && !n.excluidaEm && !n.topico && n.titulo && normalizar(n.titulo).includes(termo),
-      )
+      .filter((n) => n.id !== notaId && !n.excluidaEm && n.titulo && normalizar(n.titulo).includes(termo))
       .sort((a, b) => {
         const ia = normalizar(a.titulo).startsWith(termo) ? 0 : 1;
         const ib = normalizar(b.titulo).startsWith(termo) ? 0 : 1;
         return ia - ib || compararTexto(a.titulo, b.titulo);
       })
       .slice(0, 5);
-  }, [novo, topico, valor, notas, notaId]);
+  }, [novo, valor, notas, notaId]);
 
   const confirmar = () => {
     if (concluido.current) return;
@@ -87,7 +90,7 @@ function EdicaoDoTitulo({ noId, notaId, novo, inicial }: { noId: string; notaId:
         ref={entrada}
         className="no-entrada nopan nodrag nowheel"
         value={valor}
-        placeholder={topico ? 'Título do tópico' : 'Título da nota'}
+        placeholder={topico ? 'Nome do item (ex.: medicamento)' : 'Título da nota'}
         enterKeyHint="done"
         autoCapitalize="sentences"
         autoComplete="off"
@@ -121,7 +124,7 @@ function EdicaoDoTitulo({ noId, notaId, novo, inicial }: { noId: string; notaId:
       />
       <BarraDoNo isVisible={novo} position={Position.Bottom} align="start" offset={6}>
         <div className="sugestoes">
-          {/* Um nó novo pode ser uma nota (com texto) ou só um tópico, que organiza o ramo. */}
+          {/* Um nó novo pode ser uma nota completa ou um tópico: um item de lista com recomendação curta. */}
           <div className="escolha-de-no" role="radiogroup" aria-label="O que criar">
             <button
               type="button"
@@ -130,8 +133,7 @@ function EdicaoDoTitulo({ noId, notaId, novo, inicial }: { noId: string; notaId:
               className={'escolha' + (!topico ? ' ativa' : '')}
               data-escolha="nota"
               tabIndex={-1}
-              onPointerDown={(e) => e.preventDefault()}
-              onMouseDown={(e) => e.preventDefault()}
+              {...manterFoco}
               onClick={() => definirTopico(notaId, false)}
             >
               <FileText size={18} />
@@ -144,8 +146,7 @@ function EdicaoDoTitulo({ noId, notaId, novo, inicial }: { noId: string; notaId:
               className={'escolha' + (topico ? ' ativa' : '')}
               data-escolha="topico"
               tabIndex={-1}
-              onPointerDown={(e) => e.preventDefault()}
-              onMouseDown={(e) => e.preventDefault()}
+              {...manterFoco}
               onClick={() => definirTopico(notaId, true)}
             >
               <Hash size={18} />
@@ -153,7 +154,32 @@ function EdicaoDoTitulo({ noId, notaId, novo, inicial }: { noId: string; notaId:
             </button>
           </div>
           <div className="escolha-dica">
-            {topico ? 'Tópico: só o título, sem texto. Serve para organizar o ramo.' : 'Nota: tem texto próprio.'}
+            {topico
+              ? 'Item de lista: só o nome e, se quiser, uma recomendação curta, que aparece na árvore.'
+              : 'Nota completa, com texto (mecanismo, quadro, conduta…).'}
+          </div>
+          <div className="escolha-tipos" role="radiogroup" aria-label="Tipo">
+            {tiposOrdenados(tipos).map((t) => {
+              const Icone = iconeDoTipo(t.icone);
+              const ativo = t.id === tipoAtual;
+              return (
+                <button
+                  key={t.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={ativo}
+                  className={'escolha-tipo' + (ativo ? ' ativa' : '')}
+                  data-escolha-tipo={t.nome}
+                  tabIndex={-1}
+                  style={estiloDoTipo(t.cor, escuro) as CSSProperties}
+                  {...manterFoco}
+                  onClick={() => mudarTipoDaNota(notaId, t.id)}
+                >
+                  <Icone size={16} />
+                  {t.nome}
+                </button>
+              );
+            })}
           </div>
           {sugestoes.length > 0 && <div className="sugestoes-titulo">Usar uma nota que já existe</div>}
           {sugestoes.map((n) => {
@@ -166,8 +192,7 @@ function EdicaoDoTitulo({ noId, notaId, novo, inicial }: { noId: string; notaId:
                 className="sugestao"
                 tabIndex={-1}
                 style={estiloDoTipo(tipo?.cor, escuro) as CSSProperties}
-                onPointerDown={(e) => e.preventDefault()}
-                onMouseDown={(e) => e.preventDefault()}
+                {...manterFoco}
                 onClick={() => {
                   concluido.current = true;
                   usarNotaExistente(noId, n.id);
@@ -177,7 +202,7 @@ function EdicaoDoTitulo({ noId, notaId, novo, inicial }: { noId: string; notaId:
                   <Icone size={16} />
                 </span>
                 <span className="sugestao-nome">{n.titulo}</span>
-                <span className="sugestao-tipo">{tipo?.nome}</span>
+                <span className="sugestao-tipo">{tipo?.nome}{n.topico ? ' · tópico' : ''}</span>
               </button>
             );
           })}
@@ -229,7 +254,8 @@ function NoArvoreBase({ id }: NodeProps) {
   const raiz = !no.paiId;
   const titulo = tituloDaNota(nota);
   const topico = nota?.topico === true;
-  const Icone = topico ? Hash : iconeDoTipo(tipo?.icone);
+  const Icone = iconeDoTipo(tipo?.icone);
+  const linhas = linhasDoResumo(nota);
   // As barras flutuantes pertencem ao nó para o React, mas não fazem parte dele na tela.
   const noProprioNo = (alvo: EventTarget) => elemento.current?.contains(alvo as Node) === true;
 
@@ -242,13 +268,20 @@ function NoArvoreBase({ id }: NodeProps) {
     (alvo ? ` alvo alvo-${alvo}` : '') +
     (destinoPossivel ? ' destino-possivel' : '') +
     (topico ? ' topico' : '') +
+    (linhas > 0 ? ' com-resumo' : '') +
     (raiz ? ' raiz' : '');
 
   return (
     <div
       ref={elemento}
       className={classes}
-      style={estiloDoTipo(topico ? COR_DO_TOPICO : tipo?.cor, escuro) as CSSProperties}
+      style={
+        {
+          ...estiloDoTipo(tipo?.cor, escuro),
+          height: alturaDoCartao(nota),
+          '--linhas': linhas || 1,
+        } as CSSProperties
+      }
       data-no={id}
       data-titulo={titulo}
       data-topico={topico ? '' : undefined}
@@ -271,6 +304,14 @@ function NoArvoreBase({ id }: NodeProps) {
       </span>
       {edicao ? (
         <EdicaoDoTitulo noId={id} notaId={no.notaId} novo={edicao.novo} inicial={nota?.titulo ?? ''} />
+      ) : linhas > 0 ? (
+        <span className="no-textos">
+          <span className="no-titulo">{titulo}</span>
+          <span className="no-resumo">
+            <CornerDownRight size={13} className="no-resumo-seta" />
+            {nota!.resumo.trim()}
+          </span>
+        </span>
       ) : (
         <span className="no-titulo">{titulo}</span>
       )}

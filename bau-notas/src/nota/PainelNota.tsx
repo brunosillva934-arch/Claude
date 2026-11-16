@@ -3,15 +3,16 @@
  * página, com o título e o texto num único contêiner de rolagem.
  */
 import { useEffect, useRef, useState, useSyncExternalStore, type CSSProperties } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 import {
-  ArrowLeft, Check, ChevronDown, FileText, Hash, LoaderCircle, Maximize2, Minimize2, PanelRightClose, Search,
-  TriangleAlert,
+  ArrowLeft, Check, ChevronDown, CornerDownRight, CornerLeftUp, FileText, Hash, LoaderCircle, Maximize2, Minimize2,
+  PanelRightClose, Plus, Search, TriangleAlert,
 } from 'lucide-react';
 import { aguardarEscritas, carregarNota } from '../dados/repositorio';
 import type { Nota } from '../dados/tipos';
 import {
-  abrirBusca, alternarPainel, definirTopico, expandirNota, filhosDe, indiceDe, irParaNo, renomearNota, tituloDaNota,
-  useLoja,
+  abrirBusca, alternarPainel, criarFilho, definirTopico, expandirNota, filhosDe, indiceDe, irParaNo, renomearNota,
+  tituloDaNota, useLoja,
 } from '../estado/loja';
 import { useVoltar } from '../estado/navegacao';
 import { abrirMenuDeTipos } from '../arvore/acoesNo';
@@ -19,7 +20,7 @@ import { iconeDoTipo } from '../ui/icones';
 import { estiloDoTipo } from '../util/cores';
 import { plural } from '../util/texto';
 import { CorpoDaNota } from './Editor';
-import { aoMudarPendencias, haPendencias } from './salvamento';
+import { aoMudarPendencias, gravarResumo, haPendencias, marcarResumo } from './salvamento';
 
 function EstadoDoSalvamento() {
   const pendente = useSyncExternalStore(aoMudarPendencias, () => haPendencias());
@@ -108,70 +109,252 @@ function Titulo({ notaId }: { notaId: string }) {
   );
 }
 
-/**
- * Painel de um tópico: não há texto. Mostra o título, o que há dentro do ramo e
- * a opção de transformá-lo em nota.
- */
-function PainelTopico({ notaId }: { notaId: string }) {
-  const escuro = useLoja((s) => s.escuro);
-  const nos = useLoja((s) => s.nos);
-  const notas = useLoja((s) => s.notas);
-  const tipos = useLoja((s) => s.tipos);
-  const selecionadoId = useLoja((s) => s.selecionadoId);
+/** Nó desta nota que está em foco: o selecionado, se for dela, ou o primeiro lugar em que ela aparece. */
+function useNoDaNota(notaId: string): string | undefined {
+  return useLoja((s) => {
+    const usos = indiceDe(s.nos).porNota.get(notaId) ?? [];
+    return s.selecionadoId && usos.includes(s.selecionadoId) ? s.selecionadoId : usos[0];
+  });
+}
 
-  // O nó deste tópico que está selecionado (ou o primeiro, se a seleção for outra).
-  const usos = indiceDe(nos).porNota.get(notaId) ?? [];
-  const noId = selecionadoId && usos.includes(selecionadoId) ? selecionadoId : usos[0];
-  const filhos = noId ? filhosDe(nos, noId) : [];
-
+/** Cabeçalho comum: tipo, estado do salvamento, tela cheia e fechar. */
+function Cabecalho({ notaId, topico }: { notaId: string; topico: boolean }) {
+  const tipo = useLoja((s) => (s.notas[notaId] ? s.tipos[s.notas[notaId]!.tipoId] : undefined));
+  const expandida = useLoja((s) => s.notaExpandida);
+  const largo = useLoja((s) => s.largo);
+  const usos = useLoja((s) => indiceDe(s.nos).porNota.get(notaId)?.length ?? 0);
+  const Icone = iconeDoTipo(tipo?.icone);
   return (
-    <div className="painel-nota" style={estiloDoTipo('#6B7785', escuro) as CSSProperties} data-nota={notaId} data-topico="">
-      <header className="nota-cabecalho">
-        <span className="seletor-tipo estatico">
-          <span className="seletor-tipo-icone">
-            <Hash size={18} />
-          </span>
-          <span className="seletor-tipo-nome">Tópico</span>
+    <header className="nota-cabecalho">
+      {expandida && (
+        <button type="button" className="botao-icone" aria-label="Voltar para a árvore" data-acao="voltar" onClick={() => expandirNota(false)}>
+          <ArrowLeft size={22} />
+        </button>
+      )}
+      <button
+        type="button"
+        className="seletor-tipo"
+        data-acao="tipo"
+        aria-label={`Tipo: ${tipo?.nome ?? ''}. Tocar para mudar`}
+        onClick={(e) => {
+          const r = e.currentTarget.getBoundingClientRect();
+          abrirMenuDeTipos(notaId, Math.round(r.left), Math.round(r.bottom + 6));
+        }}
+      >
+        <span className="seletor-tipo-icone">
+          <Icone size={18} />
         </span>
-        <span className="espaco" />
+        <span className="seletor-tipo-nome">{tipo?.nome ?? 'Tipo'}</span>
+        <ChevronDown size={16} />
+      </button>
+      {topico && (
+        <span className="selo-topico">
+          <Hash size={14} />
+          Tópico
+        </span>
+      )}
+      {usos > 1 && <span className="nota-usos">em {plural(usos, 'lugar', 'lugares')}</span>}
+      <span className="espaco" />
+      <EstadoDoSalvamento />
+      {expandida && (
+        <button type="button" className="botao-icone" data-acao="buscar" aria-label="Buscar notas" onClick={() => abrirBusca(true)}>
+          <Search size={20} />
+        </button>
+      )}
+      {largo && (
+        <button
+          type="button"
+          className="botao-icone"
+          data-acao="tela-cheia"
+          aria-label={expandida ? 'Voltar à tela dividida' : 'Tela cheia'}
+          onClick={() => expandirNota(!expandida)}
+        >
+          {expandida ? <Minimize2 size={20} /> : <Maximize2 size={20} />}
+        </button>
+      )}
+      {largo && !expandida && (
         <button type="button" className="botao-icone" data-acao="fechar-painel" aria-label="Esconder o painel ao lado" onClick={alternarPainel}>
           <PanelRightClose size={20} />
         </button>
-      </header>
+      )}
+    </header>
+  );
+}
+
+const LIMITE_RESUMO = 240;
+
+/** Campo da recomendação de um tópico. O cartão na árvore acompanha enquanto se digita. */
+function CampoResumo({ notaId }: { notaId: string }) {
+  const salvo = useLoja((s) => s.notas[notaId]?.resumo ?? '');
+  const [valor, setValor] = useState(salvo);
+  const emFoco = useRef(false);
+  const campo = useRef<HTMLTextAreaElement>(null);
+
+  // Mudou por fora (pelo menu do nó): o campo acompanha.
+  useEffect(() => {
+    if (!emFoco.current) setValor(salvo);
+  }, [salvo]);
+
+  useEffect(() => {
+    const el = campo.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${el.scrollHeight}px`;
+  }, [valor]);
+
+  useEffect(() => () => gravarResumo(notaId), [notaId]);
+
+  return (
+    <div className="campo-resumo">
+      <textarea
+        ref={campo}
+        id={`resumo-${notaId}`}
+        className="campo resumo"
+        rows={2}
+        value={valor}
+        maxLength={LIMITE_RESUMO}
+        placeholder="Ex.: tomar com alimento; ajustar pela função renal."
+        aria-label="Recomendação"
+        autoCapitalize="sentences"
+        onFocus={() => {
+          emFoco.current = true;
+        }}
+        onBlur={() => {
+          emFoco.current = false;
+          gravarResumo(notaId);
+        }}
+        onChange={(e) => {
+          // Sem quebras de linha: é uma recomendação curta, mostrada no cartão.
+          const texto = e.target.value.replace(/\n+/g, ' ');
+          setValor(texto);
+          marcarResumo(notaId, texto);
+        }}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            (e.target as HTMLTextAreaElement).blur();
+          }
+        }}
+      />
+      <span className="campo-resumo-contagem">
+        {valor.length}/{LIMITE_RESUMO}
+      </span>
+    </div>
+  );
+}
+
+/** Uma linha de item (tópico ou nota), com a recomendação, que leva ao nó na árvore. */
+function LinhaDeItem({ noId }: { noId: string }) {
+  const nota = useLoja((s) => (s.nos[noId] ? s.notas[s.nos[noId]!.notaId] : undefined));
+  const tipo = useLoja((s) => {
+    const n = s.nos[noId] ? s.notas[s.nos[noId]!.notaId] : undefined;
+    return n ? s.tipos[n.tipoId] : undefined;
+  });
+  const rotulo = useLoja((s) => s.nos[noId]?.rotuloDoRamo ?? null);
+  const escuro = useLoja((s) => s.escuro);
+  const Icone = iconeDoTipo(tipo?.icone);
+  const recomendacao = nota?.topico ? nota.resumo.trim() : '';
+  return (
+    <button
+      type="button"
+      className={'item-do-ramo' + (nota?.topico ? ' topico' : '')}
+      data-item={tituloDaNota(nota)}
+      style={estiloDoTipo(tipo?.cor, escuro) as CSSProperties}
+      onClick={() => irParaNo(noId)}
+    >
+      <span className="item-icone">
+        <Icone size={18} />
+      </span>
+      <span className="item-textos">
+        <span className="item-titulo">
+          {tituloDaNota(nota)}
+          {rotulo && <span className="linha-rotulo">{rotulo}</span>}
+        </span>
+        {recomendacao && (
+          <span className="item-resumo">
+            <CornerDownRight size={14} />
+            {recomendacao}
+          </span>
+        )}
+      </span>
+    </button>
+  );
+}
+
+/**
+ * Na nota de cima (a que explica o mecanismo), a lista dos tópicos que estão
+ * embaixo dela na árvore, com as recomendações. Fica logo abaixo do título.
+ */
+function ItensDoRamo({ notaId }: { notaId: string }) {
+  const noId = useNoDaNota(notaId);
+  const itens = useLoja(
+    useShallow((s) => (noId ? filhosDe(s.nos, noId).filter((id) => s.notas[s.nos[id]!.notaId]?.topico) : [])),
+  );
+  const expandida = useLoja((s) => s.notaExpandida);
+  if (!noId || itens.length === 0) return null;
+  return (
+    <section className="itens-do-ramo" aria-label="Tópicos deste ramo">
+      <h3 className="itens-titulo">
+        <Hash size={15} />
+        {plural(itens.length, 'tópico', 'tópicos')} neste ramo
+      </h3>
+      {itens.map((id) => (
+        <LinhaDeItem key={id} noId={id} />
+      ))}
+      {!expandida && (
+        <button type="button" className="item-novo" data-acao="novo-item" onClick={() => criarFilho(noId, true)}>
+          <Plus size={18} />
+          Adicionar tópico
+        </button>
+      )}
+    </section>
+  );
+}
+
+/**
+ * Painel de um tópico: o nome, a nota de que ele é item e a recomendação curta,
+ * que aparece no cartão da árvore.
+ */
+function PainelTopico({ notaId }: { notaId: string }) {
+  const tipo = useLoja((s) => (s.notas[notaId] ? s.tipos[s.notas[notaId]!.tipoId] : undefined));
+  const escuro = useLoja((s) => s.escuro);
+  const expandida = useLoja((s) => s.notaExpandida);
+  const noId = useNoDaNota(notaId);
+  const paiId = useLoja((s) => (noId ? (s.nos[noId]?.paiId ?? null) : null));
+  const tituloDoPai = useLoja((s) => (paiId && s.nos[paiId] ? tituloDaNota(s.notas[s.nos[paiId]!.notaId]) : null));
+  const filhos = useLoja(useShallow((s) => (noId ? filhosDe(s.nos, noId) : [])));
+  useVoltar(expandida, () => expandirNota(false));
+
+  return (
+    <div className="painel-nota" style={estiloDoTipo(tipo?.cor, escuro) as CSSProperties} data-nota={notaId} data-topico="">
+      <Cabecalho notaId={notaId} topico />
       <div className="nota-rolagem">
         <div className="nota-pagina sem-espaco">
           <Titulo notaId={notaId} />
+          {paiId && tituloDoPai && (
+            <button type="button" className="topico-pai" data-acao="ir-para-pai" onClick={() => irParaNo(paiId)}>
+              <CornerLeftUp size={16} />
+              Tópico de <strong>{tituloDoPai}</strong>
+            </button>
+          )}
+          <label className="rotulo-campo" htmlFor={`resumo-${notaId}`}>
+            Recomendação
+          </label>
+          <CampoResumo notaId={notaId} />
           <p className="topico-explica">
-            Um tópico só organiza o ramo: tem título, mas não tem texto.
+            Aparece no próprio tópico, na árvore. Para escrever mais, transforme em nota completa.
           </p>
           <button type="button" className="botao" data-acao="virar-nota" onClick={() => definirTopico(notaId, false)}>
             <FileText size={18} />
-            Transformar em nota
+            Transformar em nota completa
           </button>
           {filhos.length > 0 && (
             <>
-              <h3 className="topico-secao">Neste tópico</h3>
+              <h3 className="topico-secao">Dentro deste tópico</h3>
               <div className="topico-filhos">
-                {filhos.map((id) => {
-                  const nota = notas[nos[id]!.notaId];
-                  const tipo = nota && !nota.topico ? tipos[nota.tipoId] : undefined;
-                  const Icone = nota?.topico ? Hash : iconeDoTipo(tipo?.icone);
-                  return (
-                    <button
-                      key={id}
-                      type="button"
-                      className="topico-filho"
-                      style={estiloDoTipo(tipo?.cor ?? '#6B7785', escuro) as CSSProperties}
-                      onClick={() => irParaNo(id)}
-                    >
-                      <span className="linha-tipo-icone">
-                        <Icone size={18} />
-                      </span>
-                      <span className="linha-tipo-nome">{tituloDaNota(nota)}</span>
-                      {nos[id]!.rotuloDoRamo && <span className="linha-rotulo">{nos[id]!.rotuloDoRamo}</span>}
-                    </button>
-                  );
-                })}
+                {filhos.map((id) => (
+                  <LinhaDeItem key={id} noId={id} />
+                ))}
               </div>
             </>
           )}
@@ -192,8 +375,6 @@ function PainelDaNota({ notaId }: { notaId: string }) {
   const tipo = useLoja((s) => (s.notas[notaId] ? s.tipos[s.notas[notaId]!.tipoId] : undefined));
   const escuro = useLoja((s) => s.escuro);
   const expandida = useLoja((s) => s.notaExpandida);
-  const largo = useLoja((s) => s.largo);
-  const usos = useLoja((s) => indiceDe(s.nos).porNota.get(notaId)?.length ?? 0);
   const [nota, setNota] = useState<Nota | null>(null);
   const [falha, setFalha] = useState<string | null>(null);
   useVoltar(expandida, () => expandirNota(false));
@@ -219,65 +400,24 @@ function PainelDaNota({ notaId }: { notaId: string }) {
   }, [notaId]);
 
   if (!meta) return null;
-  const Icone = iconeDoTipo(tipo?.icone);
+  const cabecaDaPagina = (
+    <>
+      <Titulo notaId={notaId} />
+      <ItensDoRamo notaId={notaId} />
+    </>
+  );
 
   return (
     <div className="painel-nota" style={estiloDoTipo(tipo?.cor, escuro) as CSSProperties} data-nota={notaId}>
-      <header className="nota-cabecalho">
-        {expandida && (
-          <button type="button" className="botao-icone" aria-label="Voltar para a árvore" data-acao="voltar" onClick={() => expandirNota(false)}>
-            <ArrowLeft size={22} />
-          </button>
-        )}
-        <button
-          type="button"
-          className="seletor-tipo"
-          data-acao="tipo"
-          aria-label={`Tipo da nota: ${tipo?.nome ?? ''}. Tocar para mudar`}
-          onClick={(e) => {
-            const r = e.currentTarget.getBoundingClientRect();
-            abrirMenuDeTipos(notaId, Math.round(r.left), Math.round(r.bottom + 6));
-          }}
-        >
-          <span className="seletor-tipo-icone">
-            <Icone size={18} />
-          </span>
-          <span className="seletor-tipo-nome">{tipo?.nome ?? 'Tipo'}</span>
-          <ChevronDown size={16} />
-        </button>
-        {usos > 1 && <span className="nota-usos">em {plural(usos, 'lugar', 'lugares')}</span>}
-        <span className="espaco" />
-        <EstadoDoSalvamento />
-        {expandida && (
-          <button type="button" className="botao-icone" data-acao="buscar" aria-label="Buscar notas" onClick={() => abrirBusca(true)}>
-            <Search size={20} />
-          </button>
-        )}
-        {largo && (
-          <button
-            type="button"
-            className="botao-icone"
-            data-acao="tela-cheia"
-            aria-label={expandida ? 'Voltar à tela dividida' : 'Nota em tela cheia'}
-            onClick={() => expandirNota(!expandida)}
-          >
-            {expandida ? <Minimize2 size={20} /> : <Maximize2 size={20} />}
-          </button>
-        )}
-        {largo && !expandida && (
-          <button type="button" className="botao-icone" data-acao="fechar-painel" aria-label="Esconder a nota ao lado" onClick={alternarPainel}>
-            <PanelRightClose size={20} />
-          </button>
-        )}
-      </header>
+      <Cabecalho notaId={notaId} topico={false} />
       {nota ? (
-        <CorpoDaNota key={nota.id} notaId={nota.id} conteudo={nota.conteudo} titulo={<Titulo notaId={notaId} />} />
+        <CorpoDaNota key={nota.id} notaId={nota.id} conteudo={nota.conteudo} titulo={cabecaDaPagina} />
       ) : (
         <>
           <div className="nota-barra" />
           <div className="nota-rolagem">
             <div className="nota-pagina">
-              <Titulo notaId={notaId} />
+              {cabecaDaPagina}
               {falha && <p className="nota-falha">{falha}</p>}
             </div>
           </div>

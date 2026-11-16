@@ -91,8 +91,10 @@ const MIGRACOES: Array<() => Instrucao[]> = [
       params: [t.id, t.nome, t.cor, t.icone, t.ordem],
     })),
   ],
-  // 2: tópicos (nós só com título, sem texto)
+  // 2: tópicos (itens de lista dentro de um ramo)
   () => [{ sql: 'ALTER TABLE notas ADD COLUMN topico INTEGER NOT NULL DEFAULT 0' }],
+  // 3: recomendação curta dos tópicos, mostrada na árvore
+  () => [{ sql: "ALTER TABLE notas ADD COLUMN resumo TEXT NOT NULL DEFAULT ''" }],
 ];
 
 export const VERSAO_ESQUEMA = MIGRACOES.length;

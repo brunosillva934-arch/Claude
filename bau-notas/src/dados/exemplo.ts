@@ -1,7 +1,9 @@
 /**
  * Dados de exemplo criados na primeira abertura: a árvore "Dor torácica", com
  * três níveis e doenças, exames e medicamentos interligados, e uma segunda
- * árvore que reaproveita as mesmas notas de medicamentos e usa tópicos.
+ * árvore que reaproveita as mesmas notas e mostra os tópicos: cada classe de
+ * anticoagulante é uma nota com o mecanismo, e os medicamentos da classe ficam
+ * embaixo dela como tópicos, cada um com uma recomendação curta.
  *
  * O conteúdo é só ilustrativo, para testar o app.
  */
@@ -37,8 +39,9 @@ interface Rascunho {
   chave: string;
   titulo: string;
   tipoId: string;
-  /** Tópico: só o título, para organizar o ramo. */
+  /** Tópico: item de lista (ex.: um medicamento sob a nota da classe), com recomendação curta. */
   topico?: boolean;
+  resumo?: string;
   doc: (id: Record<string, string>) => NoDoc[];
 }
 
@@ -218,17 +221,18 @@ const NOTAS: Rascunho[] = [
       p('Usos: ', m(id.iam!), ' e ', m(id.tep!), '.'),
     ],
   },
+  // Tópicos: a nota de cima (Dissecção, Pericardite) já explica o porquê; aqui fica só a recomendação.
   {
-    chave: 'esmolol', titulo: 'Esmolol', tipoId: 'medicamento',
-    doc: (id) => [p('Betabloqueador venoso de ação ultracurta. Na ', m(id.disseccao!), ', reduz a frequência cardíaca e a pressão.')],
+    chave: 'esmolol', titulo: 'Esmolol', tipoId: 'medicamento', topico: true,
+    resumo: 'Alvo: FC ≤ 60 bpm e PAS entre 100 e 120 mmHg.', doc: () => [],
   },
   {
-    chave: 'ibuprofeno', titulo: 'Ibuprofeno', tipoId: 'medicamento',
-    doc: (id) => [p('Anti-inflamatório não esteroide. Primeira linha na ', m(id.pericardite!), ', com proteção gástrica.')],
+    chave: 'ibuprofeno', titulo: 'Ibuprofeno', tipoId: 'medicamento', topico: true,
+    resumo: 'Com proteção gástrica, por 1 a 2 semanas.', doc: () => [],
   },
   {
-    chave: 'colchicina', titulo: 'Colchicina', tipoId: 'medicamento',
-    doc: (id) => [p('Associada ao anti-inflamatório na ', m(id.pericardite!), ', reduz as recorrências.')],
+    chave: 'colchicina', titulo: 'Colchicina', tipoId: 'medicamento', topico: true,
+    resumo: 'Manter por 3 meses: reduz a recorrência.', doc: () => [],
   },
   {
     chave: 'angioplastia', titulo: 'Angioplastia primária', tipoId: 'conduta',
@@ -252,19 +256,58 @@ const NOTAS: Rascunho[] = [
   {
     chave: 'anticoagulantes', titulo: 'Anticoagulantes', tipoId: 'geral',
     doc: (id) => [
-      p('Visão geral dos anticoagulantes. Esta árvore reaproveita notas da árvore “Dor torácica”.'),
-      ul([m(id.enoxaparina!)], [m(id.hnf!)], [m(id.varfarina!)], [m(id.rivaroxabana!)]),
+      p('Visão geral. Cada classe tem uma nota com o mecanismo; os medicamentos da classe aparecem embaixo dela ',
+        'como tópicos, com uma recomendação curta.'),
+      ul([m(id.heparinas!)], [m(id.avk!)], [m(id.xa!)], [m(id.trombina!)]),
+      p('Esta árvore reaproveita notas da árvore “Dor torácica” (Enoxaparina e Heparina não fracionada).'),
     ],
   },
-  { chave: 'parenterais', titulo: 'Parenterais', tipoId: 'geral', topico: true, doc: () => [] },
-  { chave: 'orais', titulo: 'Orais', tipoId: 'geral', topico: true, doc: () => [] },
   {
-    chave: 'varfarina', titulo: 'Varfarina', tipoId: 'medicamento',
-    doc: (id) => [p('Antagonista da vitamina K, por via oral. Ajustada pelo ', m(id.inr!), '.')],
+    chave: 'heparinas', titulo: 'Heparinas', tipoId: 'medicamento',
+    doc: () => [
+      h(2, 'Mecanismo'),
+      p('Potencializam a antitrombina, que inativa a trombina e o fator Xa. As de baixo peso molecular agem ',
+        'sobretudo sobre o fator Xa.'),
+    ],
   },
   {
-    chave: 'rivaroxabana', titulo: 'Rivaroxabana', tipoId: 'medicamento',
-    doc: () => [p('Anticoagulante oral direto, inibidor do fator Xa. Não exige controle laboratorial de rotina.')],
+    chave: 'avk', titulo: 'Antagonistas da vitamina K', tipoId: 'medicamento',
+    doc: () => [
+      h(2, 'Mecanismo'),
+      p('Reduzem a síntese dos fatores II, VII, IX e X. O efeito demora dias: no início, associar heparina.'),
+    ],
+  },
+  {
+    chave: 'varfarina', titulo: 'Varfarina', tipoId: 'medicamento', topico: true,
+    resumo: 'Ajustar pelo INR; alvo de 2 a 3 na maioria das indicações.', doc: () => [],
+  },
+  {
+    chave: 'xa', titulo: 'Inibidores diretos do fator Xa', tipoId: 'medicamento',
+    doc: () => [
+      h(2, 'Mecanismo'),
+      p('Inibem o fator Xa diretamente, sem depender da antitrombina. Dose fixa, sem controle laboratorial ',
+        'de rotina. Ajustar pela função renal.'),
+    ],
+  },
+  {
+    chave: 'rivaroxabana', titulo: 'Rivaroxabana', tipoId: 'medicamento', topico: true,
+    resumo: 'Doses de 15 e 20 mg: tomar com alimento.', doc: () => [],
+  },
+  {
+    chave: 'apixabana', titulo: 'Apixabana', tipoId: 'medicamento', topico: true,
+    resumo: 'Duas vezes ao dia; a que menos depende do rim.', doc: () => [],
+  },
+  {
+    chave: 'edoxabana', titulo: 'Edoxabana', tipoId: 'medicamento', topico: true,
+    resumo: 'Na fibrilação atrial, evitar se o clearance de creatinina passar de 95 mL/min.', doc: () => [],
+  },
+  {
+    chave: 'trombina', titulo: 'Inibidor direto da trombina', tipoId: 'medicamento',
+    doc: () => [h(2, 'Mecanismo'), p('Liga-se diretamente à trombina, livre ou presa ao coágulo.')],
+  },
+  {
+    chave: 'dabigatrana', titulo: 'Dabigatrana', tipoId: 'medicamento', topico: true,
+    resumo: 'Antídoto: idarucizumabe. Não abrir a cápsula.', doc: () => [],
   },
   {
     chave: 'inr', titulo: 'INR', tipoId: 'exame',
@@ -313,15 +356,22 @@ const ARVORES: Array<{ nome: string; raiz: Ramo }> = [
   },
   {
     nome: 'Anticoagulação',
-    // "Parenterais" e "Orais" são tópicos: organizam o ramo e não têm texto.
+    // Cada classe é uma nota com o mecanismo; os medicamentos ficam embaixo, como tópicos.
     raiz: ['anticoagulantes', null, [
-      ['parenterais', null, [
+      ['heparinas', 'parenterais', [
         ['enoxaparina', 'subcutânea'],
         ['hnf', 'venosa'],
       ]],
-      ['orais', null, [
+      ['avk', 'oral', [
         ['varfarina', null, [['inr', 'controle']]],
+      ]],
+      ['xa', 'oral', [
         ['rivaroxabana', null],
+        ['apixabana', null],
+        ['edoxabana', null],
+      ]],
+      ['trombina', 'oral', [
+        ['dabigatrana', null],
       ]],
     ]],
   },
@@ -332,7 +382,8 @@ export interface Exemplo {
   primeiraArvoreId: string;
 }
 
-export function montarExemplo(): Exemplo {
+/** `sufixo` vai no nome das árvores (para adicionar uma cópia sem confundir com as atuais). */
+export function montarExemplo(sufixo = '', ordemInicial = 0): Exemplo {
   const quando = agora();
   const id: Record<string, string> = {};
   for (const r of NOTAS) id[r.chave] = uid();
@@ -346,6 +397,7 @@ export function montarExemplo(): Exemplo {
       titulo: r.titulo,
       tipoId: r.tipoId,
       topico: r.topico === true,
+      resumo: r.resumo ?? '',
       conteudo: r.topico ? '' : JSON.stringify(doc),
       texto: textoDoDocumento(doc, (notaId) => tituloPorId.get(notaId) ?? ''),
       criadaEm: quando,
@@ -381,7 +433,9 @@ export function montarExemplo(): Exemplo {
       return no.id;
     };
     const raizId = criar(a.raiz, null, 0);
-    const arvore: Arvore = { id: arvoreId, nome: a.nome, raizId, ordem, criadaEm: quando, excluidaEm: null };
+    const arvore: Arvore = {
+      id: arvoreId, nome: a.nome + sufixo, raizId, ordem: ordemInicial + ordem, criadaEm: quando, excluidaEm: null,
+    };
     instrucoes.push(sqlInserirArvore(arvore));
   });
 

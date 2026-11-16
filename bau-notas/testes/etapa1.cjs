@@ -67,6 +67,13 @@ const verTudo = async () => {
 const rotuloOuNo = (titulo) =>
   pagina.locator(`.rotulo-longe[data-rotulo="${titulo}"], .arvore:not([data-longe]) .no[data-titulo="${titulo}"]`).first();
 
+/** Toca no fundo da árvore: tira a seleção e os botões "+ Filho"/"+ Irmão" de cima dos vizinhos. */
+const soltarSelecao = async () => {
+  const caixa = await pagina.locator('.arvore').boundingBox();
+  await pagina.touchscreen.tap(caixa.x + 30, caixa.y + 30);
+  await pagina.waitForTimeout(450);
+};
+
 const centro = async (loc) => {
   const c = await loc.boundingBox();
   return { x: c.x + c.width / 2, y: c.y + c.height / 2 };
@@ -157,6 +164,7 @@ const paiDe = (pagina, titulo) =>
   confere('rótulo do ramo aparece sobre a linha', (await pagina.locator('.ramo-rotulo, .ramo-longe', { hasText: 'se alergia a AAS' }).count()) >= 1);
 
   await verTudo();
+  await soltarSelecao();
   c = await centro(no(pagina, 'Morfina'));
   await toqueLongo(pagina, c.x, c.y);
   await pagina.waitForTimeout(200);
@@ -167,6 +175,7 @@ const paiDe = (pagina, titulo) =>
   confere('tipo trocado para Medicamento', (await pagina.locator('.seletor-tipo-nome').textContent()) === 'Medicamento');
 
   await verTudo();
+  await soltarSelecao();
   c = await centro(no(pagina, 'Morfina'));
   await toqueLongo(pagina, c.x, c.y);
   await pagina.waitForTimeout(200);

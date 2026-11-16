@@ -331,6 +331,173 @@ html[data-tema='escuro'] .seletor-tipo-icone {
 }
 
 /* ------------------------------------------------------------------ painel de um tópico */
+.selo-topico {
+  flex: none;
+  height: 30px;
+  padding: 0 10px;
+  border-radius: 15px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--cor-texto);
+  border: 1.5px solid var(--cor-media);
+}
+
+.topico-pai {
+  min-height: var(--toque);
+  margin: -4px 0 10px -8px;
+  padding: 0 10px 0 8px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  color: var(--texto-2);
+}
+
+.topico-pai strong {
+  color: var(--texto);
+}
+
+.topico-pai:active {
+  background: var(--superficie-2);
+}
+
+.nota-pagina .rotulo-campo {
+  margin: 12px 0 8px;
+}
+
+.campo-resumo {
+  position: relative;
+}
+
+.campo.resumo {
+  height: auto;
+  min-height: 84px;
+  padding: 12px 14px 26px;
+  font-size: 17px;
+  line-height: 1.45;
+  resize: none;
+  overflow: hidden;
+  border-color: var(--cor-media);
+  background: var(--cor-fraca);
+}
+
+.campo.resumo:focus {
+  border-color: var(--cor);
+  box-shadow: 0 0 0 3px var(--cor-fraca);
+  background: var(--superficie);
+}
+
+.campo-resumo-contagem {
+  position: absolute;
+  right: 12px;
+  bottom: 6px;
+  font-size: 12px;
+  color: var(--texto-3);
+  pointer-events: none;
+}
+
+/* Tópicos de um ramo, mostrados na nota de cima, logo abaixo do título. */
+.itens-do-ramo {
+  margin: 4px 0 22px;
+  padding: 10px 10px 6px;
+  border-radius: 16px;
+  background: var(--superficie-2);
+}
+
+.itens-titulo {
+  margin: 0 0 4px;
+  padding: 0 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--texto-3);
+}
+
+.item-do-ramo {
+  width: 100%;
+  min-height: 52px;
+  padding: 8px 8px;
+  border-radius: 12px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.item-do-ramo:active {
+  background: var(--cor-fraca);
+}
+
+.item-icone {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 11px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--cor-fraca);
+  color: var(--cor);
+}
+
+.item-textos {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-top: 7px;
+}
+
+.item-titulo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  font-size: 16px;
+  font-weight: 650;
+  color: var(--texto);
+}
+
+.item-resumo {
+  font-size: 15px;
+  line-height: 1.4;
+  color: var(--cor-texto);
+}
+
+.item-resumo > svg {
+  display: inline-block;
+  vertical-align: -2px;
+  margin-right: 4px;
+  color: var(--cor);
+}
+
+.item-novo {
+  min-height: var(--toque);
+  margin-top: 2px;
+  padding: 0 10px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: var(--destaque);
+  cursor: pointer;
+}
+
+.item-novo:active {
+  background: var(--destaque-fraco);
+}
+
 .seletor-tipo.estatico {
   cursor: default;
   padding-right: 14px;

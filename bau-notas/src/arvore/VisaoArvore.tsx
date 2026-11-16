@@ -21,7 +21,7 @@ import { AcoesDoNo } from './AcoesDoNo';
 import { ArestaRamo } from './ArestaRamo';
 import { contexto } from './contexto';
 import { enquadrarTudo } from './enquadrar';
-import { ALTURA_NO, DISPOSICAO_VAZIA, LARGURA_NO, dispor, type Disposicao } from './layout';
+import { ALTURA_NO, DISPOSICAO_VAZIA, LARGURA_NO, alturaDoCartao, dispor, type Disposicao } from './layout';
 import { NoArvore } from './NoArvore';
 import { RotulosDeLonge, ZOOM_DE_LONGE } from './RotulosDeLonge';
 
@@ -32,20 +32,20 @@ const TIPOS_DE_ARESTA = { ramo: ArestaRamo };
 const SEM_DADOS = {};
 const TAMANHO_MINIMAPA = { width: 172, height: 116 };
 const OPCOES_PRO = { hideAttribution: true };
-function criarNo(id: string, x: number, y: number): Node {
+function criarNo(id: string, x: number, y: number, altura: number): Node {
   return {
     id,
     type: 'no',
     position: { x, y },
     data: SEM_DADOS,
-    // Tamanho fixo e declarado: o React Flow não precisa medir cada nó, e
-    // consegue saber o que está fora da tela sem desenhar.
+    // Tamanho declarado: o React Flow não precisa medir cada nó, e consegue
+    // saber o que está fora da tela sem desenhar.
     width: LARGURA_NO,
-    height: ALTURA_NO,
-    measured: { width: LARGURA_NO, height: ALTURA_NO },
+    height: altura,
+    measured: { width: LARGURA_NO, height: altura },
     handles: [
-      { type: 'target', position: Position.Left, x: 0, y: ALTURA_NO / 2 - 0.5, width: 1, height: 1 },
-      { type: 'source', position: Position.Right, x: LARGURA_NO - 1, y: ALTURA_NO / 2 - 0.5, width: 1, height: 1 },
+      { type: 'target', position: Position.Left, x: 0, y: altura / 2 - 0.5, width: 1, height: 1 },
+      { type: 'source', position: Position.Right, x: LARGURA_NO - 1, y: altura / 2 - 0.5, width: 1, height: 1 },
     ],
     draggable: false,
     selectable: false,
@@ -76,9 +76,24 @@ function Canvas() {
     return no ? tituloDaNota(s.notas[no.notaId]) : null;
   });
   const deLonge = useStore((s) => s.transform[2] < ZOOM_DE_LONGE);
+  // Cartões mais altos (tópicos com recomendação). A chave só muda quando alguma
+  // altura muda: digitar não redispõe a árvore a cada tecla.
+  const chaveDasAlturas = useLoja((s) => {
+    let chave = '';
+    for (const id in s.nos) {
+      const h = alturaDoCartao(s.notas[s.nos[id]!.notaId]);
+      if (h !== ALTURA_NO) chave += id + ':' + h + ';';
+    }
+    return chave;
+  });
 
   const { nodes, edges, disposicao } = useMemo(() => {
-    const d = raizId ? dispor(nos, raizId) : DISPOSICAO_VAZIA;
+    const alturas = new Map<string, number>();
+    for (const item of chaveDasAlturas.split(';')) {
+      const [id, h] = item.split(':');
+      if (id && h) alturas.set(id, Number(h));
+    }
+    const d = raizId ? dispor(nos, raizId, (id) => alturas.get(id) ?? ALTURA_NO) : DISPOSICAO_VAZIA;
     const novosNos = new Map<string, Node>();
     const novasArestas = new Map<string, Edge>();
     const nodes: Node[] = [];
@@ -86,7 +101,10 @@ function Canvas() {
     for (const id of d.ordem) {
       const p = d.posicoes.get(id)!;
       const antigo = cacheNos.current.get(id);
-      const node = antigo && antigo.position.x === p.x && antigo.position.y === p.y ? antigo : criarNo(id, p.x, p.y);
+      const node =
+        antigo && antigo.position.x === p.x && antigo.position.y === p.y && antigo.height === p.altura
+          ? antigo
+          : criarNo(id, p.x, p.y, p.altura);
       novosNos.set(id, node);
       nodes.push(node);
       const paiId = nos[id]!.paiId;
@@ -104,7 +122,7 @@ function Canvas() {
     cacheNos.current = novosNos;
     cacheArestas.current = novasArestas;
     return { nodes, edges, disposicao: d };
-  }, [nos, raizId]);
+  }, [nos, raizId, chaveDasAlturas]);
   disposicaoRef.current = disposicao;
 
   // O minimapa só aparece quando parte da árvore está fora da tela.
@@ -172,7 +190,7 @@ function Canvas() {
         // Para escrever o título o nó precisa estar em tamanho legível.
         zoom = 1;
         x = largura / 2 - (pos.x + LARGURA_NO / 2) * zoom;
-        y = altura * 0.4 - (pos.y + ALTURA_NO / 2) * zoom;
+        y = altura * 0.4 - (pos.y + pos.altura / 2) * zoom;
       } else {
         const margemEsq = Math.min(24, largura / 8);
         const margemDir = Math.min(130, largura / 4); // espaço para o botão "+ Filho"
@@ -186,7 +204,7 @@ function Canvas() {
           zoom < ZOOM_DE_LONGE ? Math.max(LARGURA_NO * zoom, Math.min(letras * 9 + 34, 300)) : LARGURA_NO * zoom;
         const dir = esq + larguraNaTela;
         const topo = pos.y * zoom + y;
-        const base = topo + ALTURA_NO * zoom;
+        const base = topo + pos.altura * zoom;
         if (dir - esq > largura - margemEsq - margemDir) x += margemEsq - esq;
         else if (esq < margemEsq) x += margemEsq - esq;
         else if (dir > largura - margemDir) x -= dir - (largura - margemDir);
@@ -273,7 +291,7 @@ function Canvas() {
       const s = useLoja.getState();
       const no = s.nos[node.id];
       const nota = no ? s.notas[no.notaId] : undefined;
-      const tipo = nota && !nota.topico ? s.tipos[nota.tipoId] : undefined;
+      const tipo = nota ? s.tipos[nota.tipoId] : undefined;
       return coresDoTipo(tipo?.cor ?? '#6B7785', escuro).base;
     },
     [escuro],

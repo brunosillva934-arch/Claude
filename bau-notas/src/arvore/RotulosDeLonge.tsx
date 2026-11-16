@@ -10,12 +10,12 @@
  */
 import { memo, useMemo } from 'react';
 import { ViewportPortal, useStore } from '@xyflow/react';
-import { Hash, type LucideIcon } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { tituloDaNota, useLoja } from '../estado/loja';
 import { iconeDoTipo } from '../ui/icones';
 import { coresDoTipo } from '../util/cores';
 import { aoBaixarNoNo, aoClicarNoNo, aoMenuDeContexto } from './gestos';
-import { ALTURA_NO, LARGURA_NO, MAX_ROTULO, filhosVisiveis, type Disposicao } from './layout';
+import { LARGURA_NO, MAX_ROTULO, filhosVisiveis, type Disposicao } from './layout';
 
 /** Abaixo deste zoom a árvore entra no modo "de longe". */
 export const ZOOM_DE_LONGE = 0.62;
@@ -37,6 +37,8 @@ interface Titulo {
   folha: boolean;
   /** Linhas que o título pode ocupar (1 a 3). */
   linhas: number;
+  /** Recomendação do tópico, numa segunda linha, quando há espaço para ela. */
+  resumo: string | null;
 }
 
 interface Ramo {
@@ -57,6 +59,8 @@ const DEGRAUS_POR_OITAVA = 24;
 const LARGURA_FOLHA = 340;
 const LARGURA_MINIMA = 132;
 const ALTURA_RAMO = 19;
+/** Altura extra da linha da recomendação de um tópico. */
+const ALTURA_RESUMO = 15;
 
 function encurtar(rotulo: string): string {
   return rotulo.length > MAX_ROTULO ? rotulo.slice(0, MAX_ROTULO - 1) + '…' : rotulo;
@@ -65,6 +69,11 @@ function encurtar(rotulo: string): string {
 /** Largura na tela, em px, do rótulo de um ramo no modo "de longe". */
 function larguraDoRamo(rotulo: string | null): number {
   return rotulo ? encurtar(rotulo).length * 6.3 + 16 : 0;
+}
+
+/** Largura estimada, em pixels de tela, da linha da recomendação de um tópico no modo "de longe". */
+export function larguraDoResumoDeLonge(resumo: string): number {
+  return resumo ? Math.min(resumo.length * 11.5 * 0.56 + 34, LARGURA_FOLHA) : 0;
 }
 
 /** Largura estimada, em pixels de tela, do título de uma folha no modo "de longe". */
@@ -109,8 +118,8 @@ function RotulosDeLongeBase({ disposicao }: { disposicao: Disposicao }) {
       if (!pos || !no || id === editandoId) return;
       const nota = notas[no.notaId];
       const tipo = nota ? tipos[nota.tipoId] : undefined;
-      const topico = nota?.topico === true;
-      const cores = coresDoTipo(topico ? '#6B7785' : (tipo?.cor ?? '#6B7785'), escuro);
+      const cores = coresDoTipo(tipo?.cor ?? '#6B7785', escuro);
+      const recomendacao = nota?.topico ? nota.resumo.trim() : '';
       const texto = tituloDaNota(nota);
       const fonte = fonteDoNivel(pos.nivel);
       const vao = disposicao.vaos[pos.nivel] ?? 96;
@@ -133,29 +142,41 @@ function RotulosDeLongeBase({ disposicao }: { disposicao: Disposicao }) {
       // Um nó com vários filhos tem altura livre ao redor: o título pode quebrar em
       // duas linhas (dois filhos) ou três (três ou mais).
       const linhas = !folha && necessaria > maxima ? Math.min(3, filhos.length) : 1;
-      const largura = Math.min(necessaria, maxima);
       // Para a colisão vale a altura da letra, não a do fundo: os fundos podem se encostar.
       const linha = fonte + 5;
       const altura = linha * linhas - 2 * (linhas - 1);
       // Em coordenadas de tela (multiplicadas pelo zoom), para medir colisão.
       const x1 = pos.x * zoom;
-      const yc = (pos.y + ALTURA_NO / 2) * zoom;
-      const caixa = { x1, y1: yc - altura / 2, x2: x1 + largura, y2: yc + altura / 2 };
+      const yc = (pos.y + pos.altura / 2) * zoom;
+      const caixaCom = (comResumo: boolean): Caixa => {
+        const larguraResumo = comResumo ? larguraDoResumoDeLonge(recomendacao) : 0;
+        const largura = Math.min(Math.max(necessaria, larguraResumo), maxima);
+        const h = altura + (comResumo ? ALTURA_RESUMO : 0);
+        return { x1, y1: yc - h / 2, x2: x1 + largura, y2: yc + h / 2 };
+      };
+      // Um tópico tenta mostrar a recomendação; se não couber, fica só o nome.
+      let comResumo = recomendacao !== '' && linhas === 1;
+      let caixa = caixaCom(comResumo);
+      if (comResumo && !obrigatorio && !livre(caixa)) {
+        comResumo = false;
+        caixa = caixaCom(false);
+      }
       if (!obrigatorio && !livre(caixa)) return;
       colocadas.push(caixa);
       titulos.push({
         id,
         x: pos.x,
-        y: pos.y + ALTURA_NO / 2,
+        y: pos.y + pos.altura / 2,
         texto,
         nivel: pos.nivel,
         cor: cores.texto,
         fundo: cores.fraca,
-        icone: topico ? Hash : iconeDoTipo(tipo?.icone),
+        icone: iconeDoTipo(tipo?.icone),
         coluna,
         reserva,
         folha,
         linhas,
+        resumo: comResumo ? recomendacao : null,
       });
     };
 
@@ -176,11 +197,11 @@ function RotulosDeLongeBase({ disposicao }: { disposicao: Disposicao }) {
       const vaoNaTela = (disposicao.vaos[pos.nivel - 1] ?? 96) * zoom;
       if (largura > vaoNaTela - 12) continue;
       const x2 = pos.x * zoom - 5;
-      const yc = (pos.y + ALTURA_NO / 2) * zoom;
+      const yc = (pos.y + pos.altura / 2) * zoom;
       const caixa = { x1: x2 - largura, y1: yc - ALTURA_RAMO / 2, x2, y2: yc + ALTURA_RAMO / 2 };
       if (!livre(caixa)) continue;
       colocadas.push(caixa);
-      ramos.push({ id, x: pos.x, y: pos.y + ALTURA_NO / 2, texto });
+      ramos.push({ id, x: pos.x, y: pos.y + pos.altura / 2, texto });
     }
     return { titulos, ramos };
   }, [degrau, disposicao, nos, notas, tipos, escuro, selecionadoId, editandoId]);
@@ -208,6 +229,7 @@ function RotulosDeLongeBase({ disposicao }: { disposicao: Disposicao }) {
               'rotulo-longe nivel-' +
               Math.min(t.nivel, 2) +
               (t.linhas > 1 ? ' varias-linhas' : '') +
+              (t.resumo ? ' com-resumo' : '') +
               (t.id === selecionadoId ? ' selecionado' : '')
             }
             data-rotulo={t.texto}
@@ -229,7 +251,14 @@ function RotulosDeLongeBase({ disposicao }: { disposicao: Disposicao }) {
             onContextMenu={(e) => aoMenuDeContexto(t.id, e)}
           >
             <Icone size={t.nivel === 0 ? 17 : 15} />
-            <span>{t.texto}</span>
+            {t.resumo ? (
+              <span className="rotulo-textos">
+                <span>{t.texto}</span>
+                <span className="rotulo-resumo">{t.resumo}</span>
+              </span>
+            ) : (
+              <span>{t.texto}</span>
+            )}
           </div>
         );
       })}

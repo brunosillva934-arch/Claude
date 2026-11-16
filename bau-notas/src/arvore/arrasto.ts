@@ -10,7 +10,7 @@ import {
 } from '../estado/loja';
 import { avisarDesfazer } from './acoesNo';
 import { contexto } from './contexto';
-import { ALTURA_NO, ESPACO_V, LARGURA_NO } from './layout';
+import { ESPACO_V, LARGURA_NO } from './layout';
 
 interface Ativo {
   noId: string;
@@ -33,10 +33,10 @@ function calcularAlvo(noId: string, x: number, y: number): Arrasto {
   for (const id of c.disposicao.ordem) {
     const pos = c.disposicao.posicoes.get(id)!;
     if (p.x < pos.x - 12 || p.x > pos.x + LARGURA_NO + 12) continue;
-    if (p.y < pos.y - ESPACO_V / 2 || p.y > pos.y + ALTURA_NO + ESPACO_V / 2) continue;
+    if (p.y < pos.y - ESPACO_V / 2 || p.y > pos.y + pos.altura + ESPACO_V / 2) continue;
     const alvo = nos[id];
     if (!alvo || id === noId) return nada;
-    const altura = (p.y - pos.y) / ALTURA_NO;
+    const altura = (p.y - pos.y) / pos.altura;
     let posicao: PosicaoSolta = altura < 0.26 ? 'antes' : altura > 0.74 ? 'depois' : 'dentro';
     if (!alvo.paiId) posicao = 'dentro';
     const novoPai = posicao === 'dentro' ? id : alvo.paiId!;

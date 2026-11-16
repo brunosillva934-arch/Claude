@@ -87,10 +87,10 @@ const ponteSimulada = `
   const consulta = (sql) => pagina.evaluate((s) => window.__mock.db.exec(s)[0]?.values ?? [], sql);
   confere('a página não pede nada fora do próprio app', externos.length === 0, externos.join(', '));
   confere('política de conteúdo presente', (await pagina.locator('meta[http-equiv="Content-Security-Policy"]').count()) === 1);
-  confere('esquema criado pela ponte (versão 2)', (await consulta('PRAGMA user_version'))[0][0] === 2);
-  confere('dados de exemplo gravados (28 notas e 2 tópicos)',
-    (await consulta('SELECT count(*), sum(topico) FROM notas'))[0].join(',') === '30,2',
-    (await consulta('SELECT count(*), sum(topico) FROM notas'))[0].join(','));
+  confere('esquema criado pela ponte (versão 3)', (await consulta('PRAGMA user_version'))[0][0] === 3);
+  confere('dados de exemplo gravados (35 notas, 8 delas tópicos com recomendação)',
+    (await consulta("SELECT count(*), sum(topico), sum(topico = 1 AND resumo <> '') FROM notas"))[0].join(',') === '35,8,8',
+    (await consulta("SELECT count(*), sum(topico), sum(topico = 1 AND resumo <> '') FROM notas"))[0].join(','));
   confere('árvore de exemplo na tela', (await pagina.locator('.no').count()) === 26);
   confere('barras do sistema pintadas', await pagina.evaluate(() => window.__mock.barras && window.__mock.barras.fundoClaro === true));
 

@@ -3,13 +3,15 @@
  * longo, o rótulo do ramo, a troca de tipo e a exclusão com desfazer.
  */
 import {
-  ChevronsDownUp, ChevronsUpDown, CornerDownRight, FileText, Hash, ListPlus, Move, Pencil, Shapes, Tag, Trash2,
+  ChevronsDownUp, ChevronsUpDown, CornerDownRight, FileText, Hash, ListPlus, MessageSquareText, Move, Pencil, Shapes,
+  Tag, Trash2,
 } from 'lucide-react';
 import {
   alternarRecolhido, criarFilho, criarIrmao, definirRotulo, definirTopico, desfazer, editarTitulo, excluirArvore,
   excluirNo, expandirNota, filhosDe, iniciarMover, mudarTipoDaNota, resumoDaArvore, resumoDaExclusao, selecionar,
   tiposOrdenados, tituloDaNota, useLoja,
 } from '../estado/loja';
+import { gravarResumoAgora } from '../nota/salvamento';
 import { abrirMenu, avisar, confirmar, perguntarTexto, type ItemMenu } from '../ui/servico';
 import { coresDoTipo } from '../util/cores';
 import { plural } from '../util/texto';
@@ -37,6 +39,20 @@ export async function pedirRotulo(noId: string): Promise<void> {
     permitirVazio: true,
   });
   if (resposta !== null) definirRotulo(noId, resposta);
+}
+
+/** Recomendação curta de um tópico, que aparece no cartão da árvore. */
+export async function pedirResumo(notaId: string): Promise<void> {
+  const nota = useLoja.getState().notas[notaId];
+  if (!nota) return;
+  const resposta = await perguntarTexto({
+    titulo: `Recomendação: ${tituloDaNota(nota)}`,
+    texto: 'Aparece no próprio tópico, na árvore. Deixe em branco para remover.',
+    valor: nota.resumo,
+    dica: 'ex.: tomar com alimento',
+    permitirVazio: true,
+  });
+  if (resposta !== null) gravarResumoAgora(notaId, resposta.replace(/\s+/g, ' ').trim());
 }
 
 export function abrirMenuDeTipos(notaId: string, x: number, y: number): void {
@@ -113,36 +129,39 @@ export function abrirMenuDoNo(noId: string, x: number, y: number, aposSoltar = f
   const topico = nota?.topico === true;
 
   const itens: ItemMenu[] = [
-    ...(topico
-      ? []
-      : [
-          {
-            id: 'abrir',
-            rotulo: 'Abrir nota',
-            icone: FileText,
-            aoEscolher: () => {
-              selecionar(noId);
-              expandirNota(true);
-            },
-          },
-        ]),
+    {
+      id: 'abrir',
+      rotulo: topico ? 'Abrir o tópico' : 'Abrir nota',
+      icone: FileText,
+      aoEscolher: () => {
+        selecionar(noId);
+        expandirNota(true);
+      },
+    },
     { id: 'renomear', rotulo: 'Renomear', icone: Pencil, aoEscolher: () => editarTitulo(noId) },
     ...(topico
-      ? []
-      : [
+      ? [
           {
-            id: 'tipo',
-            rotulo: 'Mudar o tipo',
-            icone: Shapes,
-            detalhe: tipo?.nome,
-            aoEscolher: () => abrirMenuDeTipos(no.notaId, x, y),
+            id: 'resumo',
+            rotulo: nota?.resumo.trim() ? 'Editar a recomendação' : 'Escrever uma recomendação',
+            icone: MessageSquareText,
+            detalhe: nota?.resumo.trim() || undefined,
+            aoEscolher: () => void pedirResumo(no.notaId),
           },
-        ]),
+        ]
+      : []),
+    {
+      id: 'tipo',
+      rotulo: 'Mudar o tipo',
+      icone: Shapes,
+      detalhe: tipo?.nome,
+      aoEscolher: () => abrirMenuDeTipos(no.notaId, x, y),
+    },
     {
       id: 'topico',
-      rotulo: topico ? 'Transformar em nota' : 'Transformar em tópico',
+      rotulo: topico ? 'Transformar em nota completa' : 'Transformar em tópico',
       icone: topico ? FileText : Hash,
-      detalhe: topico ? 'passa a ter texto' : 'só o título',
+      detalhe: topico ? 'para texto longo' : 'item com recomendação curta',
       aoEscolher: () => definirTopico(no.notaId, !topico),
     },
     {

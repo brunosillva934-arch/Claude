@@ -12,7 +12,7 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { ArrowLeft, Hash, Search, X } from 'lucide-react';
 import { carregarTextos, aguardarEscritas } from '../dados/repositorio';
 import type { NotaMeta } from '../dados/tipos';
-import { abrirBusca, abrirNota, indiceDe, irParaNo, tiposOrdenados, tituloDaNota, useLoja } from '../estado/loja';
+import { abrirBusca, abrirNota, indiceDe, tiposOrdenados, tituloDaNota, useLoja } from '../estado/loja';
 import { useVoltar } from '../estado/navegacao';
 import { gravarTudo } from '../nota/salvamento';
 import { iconeDoTipo } from '../ui/icones';
@@ -54,20 +54,20 @@ function Linha({ item, aoAbrir }: { item: Item; aoAbrir: (nota: NotaMeta) => voi
       const no = s.nos[id]!;
       let nome = s.arvores[no.arvoreId]?.nome;
       if (!nome) continue;
-      // Para um tópico, ajuda saber dentro de qual nó ele está.
+      // Para um tópico, ajuda saber de qual nota ele é item.
       if (nota.topico && no.paiId) nome += ' › ' + tituloDaNota(s.notas[s.nos[no.paiId]!.notaId]);
       if (!nomes.includes(nome)) nomes.push(nome);
     }
     return nomes.join(' · ');
   });
-  const Icone = nota.topico ? Hash : iconeDoTipo(tipo?.icone);
+  const Icone = iconeDoTipo(tipo?.icone);
 
   return (
     <button
       type="button"
       className="busca-linha"
       data-resultado={tituloDaNota(nota)}
-      style={estiloDoTipo(nota.topico ? '#6B7785' : tipo?.cor, escuro) as CSSProperties}
+      style={estiloDoTipo(tipo?.cor, escuro) as CSSProperties}
       onClick={() => aoAbrir(nota)}
     >
       <span className="busca-icone">
@@ -76,13 +76,19 @@ function Linha({ item, aoAbrir }: { item: Item; aoAbrir: (nota: NotaMeta) => voi
       <span className="busca-texto">
         <span className="busca-titulo">{achado?.titulo ? <Destaque trecho={achado.titulo} /> : tituloDaNota(nota)}</span>
         <span className="busca-detalhe">
-          <span className="busca-tipo">{nota.topico ? 'Tópico' : (tipo?.nome ?? 'Nota')}</span>
+          <span className="busca-tipo">
+            {tipo?.nome ?? 'Nota'}
+            {nota.topico && <span className="busca-marca-topico">tópico</span>}
+          </span>
           <span className="busca-onde">{onde ? `em ${onde}` : 'fora das árvores'}</span>
         </span>
-        {achado?.trecho && (
+        {achado?.trecho ? (
           <span className="busca-trecho">
             <Destaque trecho={achado.trecho} />
           </span>
+        ) : (
+          nota.topico &&
+          nota.resumo.trim() && <span className="busca-trecho recomendacao">{nota.resumo}</span>
         )}
       </span>
     </button>
@@ -127,8 +133,9 @@ function Painel() {
   const ativas = useMemo(() => Object.values(notas).filter((n) => !n.excluidaEm), [notas]);
   const indice = useMemo(() => new IndiceDeBusca(ativas, textos), [ativas, textos]);
 
+  // Tópicos entram junto com as notas do mesmo tipo (um medicamento é medicamento, seja nota ou tópico).
   const passa = (n: NotaMeta) =>
-    soTopicos ? n.topico : !n.topico && (tiposEscolhidos.length === 0 || tiposEscolhidos.includes(n.tipoId));
+    (!soTopicos || n.topico) && (tiposEscolhidos.length === 0 || tiposEscolhidos.includes(n.tipoId));
 
   const buscando = normalizar(consulta).length > 0;
   const itens: Item[] = useMemo(() => {
@@ -163,12 +170,7 @@ function Painel() {
 
   const abrir = (nota: NotaMeta) => {
     abrirBusca(false);
-    if (nota.topico) {
-      const usos = indiceDe(useLoja.getState().nos).porNota.get(nota.id) ?? [];
-      if (usos[0]) irParaNo(usos[0]);
-    } else {
-      abrirNota(nota.id);
-    }
+    abrirNota(nota.id);
   };
 
   const irParaLetra = (letra: string) => {
@@ -190,7 +192,6 @@ function Painel() {
   };
 
   const alternarTipo = (id: string) => {
-    setSoTopicos(false);
     setTiposEscolhidos((atual) => (atual.includes(id) ? atual.filter((t) => t !== id) : [...atual, id]));
   };
 
@@ -198,7 +199,7 @@ function Painel() {
     ? plural(itens.length, 'resultado', 'resultados')
     : soTopicos
       ? plural(itens.length, 'tópico', 'tópicos')
-      : plural(itens.length, 'nota', 'notas');
+      : plural(itens.length, 'item', 'itens');
 
   return (
     <div className="busca" role="dialog" aria-modal="true" aria-label="Buscar notas">
@@ -245,19 +246,16 @@ function Painel() {
       <div className="busca-tipos" role="group" aria-label="Filtrar por tipo">
         <button
           type="button"
-          className={'chip' + (!soTopicos && tiposEscolhidos.length === 0 ? ' ativo' : '')}
-          aria-pressed={!soTopicos && tiposEscolhidos.length === 0}
+          className={'chip' + (tiposEscolhidos.length === 0 ? ' ativo' : '')}
+          aria-pressed={tiposEscolhidos.length === 0}
           data-tipo="todos"
-          onClick={() => {
-            setSoTopicos(false);
-            setTiposEscolhidos([]);
-          }}
+          onClick={() => setTiposEscolhidos([])}
         >
           Todos
         </button>
         {tiposOrdenados(tipos).map((t) => {
           const Icone = iconeDoTipo(t.icone);
-          const ativo = !soTopicos && tiposEscolhidos.includes(t.id);
+          const ativo = tiposEscolhidos.includes(t.id);
           return (
             <button
               key={t.id}
@@ -278,13 +276,10 @@ function Painel() {
           className={'chip' + (soTopicos ? ' ativo' : '')}
           aria-pressed={soTopicos}
           data-tipo="topicos"
-          onClick={() => {
-            setSoTopicos(!soTopicos);
-            setTiposEscolhidos([]);
-          }}
+          onClick={() => setSoTopicos(!soTopicos)}
         >
           <Hash size={16} />
-          Tópicos
+          Só tópicos
         </button>
       </div>
 

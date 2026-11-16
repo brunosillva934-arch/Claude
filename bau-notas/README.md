@@ -6,7 +6,7 @@ não tem conta, servidor nem nuvem, e o app **não declara nenhuma permissão**
 
 O arquivo para instalar é **`Bau.apk`**, nesta pasta.
 
-> Situação: **versão 0.2.0**. Etapa 1 de 5 (projeto, modelo de dados e árvore
+> Situação: **versão 0.3.0**. Etapa 1 de 5 (projeto, modelo de dados e árvore
 > visual), já com tópicos, busca e escolha de tema. O editor completo, os links
 > e o backup entram nas próximas etapas.
 
@@ -41,18 +41,28 @@ assinadas com a mesma chave (veja "Chave de assinatura").
   Espaço recolhe, Delete exclui, Ctrl+Z desfaz.
 - Tipos de nota editáveis (menu lateral → "Tipos de nota"): nome, cor e ícone
   de cada tipo, e criação de tipos novos.
-- **Tópicos**: nós só com título, sem texto, para organizar o ramo ("Exames",
-  "Tratamento", "Orais"…). Ao criar um nó, escolha "Nota" ou "Tópico"; pelo
-  toque longo dá para transformar um no outro (o texto de uma nota fica guardado
-  e volta se ela deixar de ser tópico). O painel de um tópico lista o que há
-  dentro dele; o toque duplo num tópico recolhe ou expande o ramo.
+- **Tópicos**: itens de lista dentro de um ramo. Ex.: a nota "Inibidores diretos
+  do fator Xa" explica o mecanismo, e embaixo dela Rivaroxabana, Apixabana e
+  Edoxabana são tópicos. Um tópico tem tipo, cor e ícone como qualquer nota, mas
+  no lugar do texto longo leva só uma **recomendação curta**, escrita no próprio
+  cartão da árvore (e na lista, na busca e na nota de cima).
+  - O cartão do tópico é tingido na cor do tipo; a nota completa é branca.
+  - Ao criar um nó, escolha "Nota" ou "Tópico" e o tipo. "+ Irmão" de um tópico
+    já vem como tópico do mesmo tipo, para listar em série.
+  - A recomendação se escreve no painel ao lado (ou pelo toque longo,
+    "Escrever uma recomendação").
+  - A nota de cima mostra, logo abaixo do título, a lista dos seus tópicos com as
+    recomendações, e um botão "Adicionar tópico".
+  - Pelo toque longo, um tópico vira nota completa (a recomendação passa a ser o
+    primeiro parágrafo) e uma nota vira tópico, sem perder nada.
 - **Busca** (lupa na barra superior, ou Ctrl+K):
   - por nome e no conteúdo das notas, ignorando acentos e maiúsculas e
     tolerando erros de digitação, com o trecho encontrado em destaque;
   - com o campo vazio, todas as notas em ordem alfabética, com o índice de A a Z
     na lateral (dá para deslizar o dedo pelas letras);
   - filtro por tipo (Doença, Medicamento, Exame, Estudo…), que pode ser
-    combinado, e um filtro só para tópicos;
+    combinado; os tópicos entram junto com as notas do mesmo tipo, e há um
+    filtro "Só tópicos";
   - cada resultado mostra o tipo e em quais árvores a nota aparece; tocar abre a
     nota e destaca o nó na árvore.
 - **Tema**: menu lateral → "Aparência": seguir o sistema, sempre claro ou sempre escuro.
@@ -61,7 +71,8 @@ assinadas com a mesma chave (veja "Chave de assinatura").
 - Dados de exemplo: árvore "Dor torácica" e árvore "Anticoagulação", que
   reaproveita as mesmas notas.
 - No menu lateral há "Criar árvore de teste com 600 nós", para conferir a
-  fluidez no próprio tablet.
+  fluidez no próprio tablet, e "Adicionar as árvores de exemplo", que cria uma
+  cópia nova dos exemplos (útil para ver os tópicos depois de atualizar o app).
 
 ## Decisão de arquitetura: casca própria em vez de Capacitor
 
@@ -154,7 +165,7 @@ bash android/teste-jvm/testar.sh   # código Java, com Robolectric (precisa do r
 
 ## Modelo de dados
 
-- **Nota**: id, título, tipo, tópico (sim/não), conteúdo (JSON do editor), texto (para a busca), criadaEm, atualizadaEm.
+- **Nota**: id, título, tipo, tópico (sim/não), recomendação (dos tópicos), conteúdo (JSON do editor), texto (para a busca), criadaEm, atualizadaEm.
 - **Tipo**: id, nome, cor, ícone (Doença, Medicamento, Exame, Estudo/Artigo, Sintoma, Conduta/Procedimento, Geral; editáveis).
 - **Árvore**: id, nome, nó raiz.
 - **Nó**: id, árvoreId, notaId, paiId, ordem, rótuloDoRamo, recolhido.

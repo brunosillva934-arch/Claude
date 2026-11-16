@@ -27,6 +27,7 @@ export interface Achado {
 interface Documento {
   id: string;
   titulo: string;
+  resumo: string;
   texto: string;
 }
 
@@ -82,16 +83,17 @@ function recortar(texto: string, termos: string[], margemAntes: number, margemDe
 export class IndiceDeBusca {
   private readonly mini: MiniSearch<Documento>;
   private readonly titulos = new Map<string, string>();
+  private readonly resumos = new Map<string, string>();
   /** false enquanto o conteúdo das notas ainda não foi carregado (busca só nos títulos). */
   readonly comConteudo: boolean;
 
   constructor(notas: NotaMeta[], private readonly textos: Map<string, string> | null) {
     this.comConteudo = textos !== null;
     this.mini = new MiniSearch<Documento>({
-      fields: ['titulo', 'texto'],
+      fields: ['titulo', 'resumo', 'texto'],
       processTerm: (termo) => normalizar(termo) || null,
       searchOptions: {
-        boost: { titulo: 5 },
+        boost: { titulo: 5, resumo: 2 },
         prefix: true,
         fuzzy: (termo) => (termo.length > 3 ? 0.2 : false),
         combineWith: 'AND',
@@ -100,7 +102,9 @@ export class IndiceDeBusca {
     const documentos: Documento[] = [];
     for (const n of notas) {
       this.titulos.set(n.id, n.titulo);
-      documentos.push({ id: n.id, titulo: n.titulo, texto: textos?.get(n.id) ?? '' });
+      const resumo = n.topico ? n.resumo : '';
+      if (resumo) this.resumos.set(n.id, resumo);
+      documentos.push({ id: n.id, titulo: n.titulo, resumo, texto: n.topico ? '' : (textos?.get(n.id) ?? '') });
     }
     this.mini.addAll(documentos);
   }
@@ -109,10 +113,12 @@ export class IndiceDeBusca {
     if (!normalizar(consulta)) return [];
     return this.mini.search(consulta).map((r) => {
       const noTitulo: string[] = [];
+      const noResumo: string[] = [];
       const noTexto: string[] = [];
       for (const termo of Object.keys(r.match)) {
         const campos = r.match[termo]!;
         if (campos.includes('titulo')) noTitulo.push(termo);
+        if (campos.includes('resumo')) noResumo.push(termo);
         if (campos.includes('texto')) noTexto.push(termo);
       }
       const id = String(r.id);
@@ -120,7 +126,9 @@ export class IndiceDeBusca {
         notaId: id,
         pontos: r.score,
         titulo: recortar(this.titulos.get(id) ?? '', noTitulo, 1000, 1000),
-        trecho: recortar(this.textos?.get(id) ?? '', noTexto, 48, 90),
+        trecho:
+          recortar(this.resumos.get(id) ?? '', noResumo, 1000, 1000) ??
+          recortar(this.textos?.get(id) ?? '', noTexto, 48, 90),
       };
     });
   }

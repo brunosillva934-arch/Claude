@@ -6,7 +6,7 @@
  * linear no número de nós, mantém a ordem dos irmãos exatamente como o usuário
  * definiu e reserva em cada coluna o espaço que os rótulos dos ramos precisam.
  */
-import type { No } from '../dados/tipos';
+import type { No, NotaMeta } from '../dados/tipos';
 import { filhosDe } from '../estado/loja';
 
 export const LARGURA_NO = 232;
@@ -20,6 +20,8 @@ export const MAX_ROTULO = 26;
 export interface PosicaoNo {
   x: number;
   y: number;
+  /** Altura do cartão: maior nos tópicos com recomendação. */
+  altura: number;
   nivel: number;
   /** Faixa vertical ocupada pelo nó com todos os seus descendentes visíveis. */
   topo: number;
@@ -36,6 +38,22 @@ export interface Disposicao {
   altura: number;
 }
 
+/** Altura de cada linha da recomendação de um tópico, no cartão. */
+export const ALTURA_LINHA_RESUMO = 17;
+/** Letras que cabem, em média, numa linha da recomendação dentro do cartão. */
+const LETRAS_POR_LINHA = 20;
+
+/** Quantas linhas a recomendação ocupa no cartão (de 0 a 3; o resto vira "…"). */
+export function linhasDoResumo(nota: NotaMeta | undefined): number {
+  const texto = nota?.topico ? nota.resumo.trim() : '';
+  return texto ? Math.min(3, Math.ceil(texto.length / LETRAS_POR_LINHA)) : 0;
+}
+
+/** Altura do cartão de uma nota na árvore. */
+export function alturaDoCartao(nota: NotaMeta | undefined): number {
+  return ALTURA_NO + linhasDoResumo(nota) * ALTURA_LINHA_RESUMO;
+}
+
 export const DISPOSICAO_VAZIA: Disposicao = { posicoes: new Map(), ordem: [], vaos: [], largura: 0, altura: 0 };
 
 /** Largura estimada, em px, do rótulo de um ramo. */
@@ -49,7 +67,14 @@ export function filhosVisiveis(nos: Record<string, No>, id: string): string[] {
   return !no || no.recolhido ? [] : filhosDe(nos, id);
 }
 
-export function dispor(nos: Record<string, No>, raizId: string): Disposicao {
+/**
+ * `alturaDe` dá a altura de cada cartão; sem ela, todos têm a altura padrão.
+ */
+export function dispor(
+  nos: Record<string, No>,
+  raizId: string,
+  alturaDe: (id: string) => number = () => ALTURA_NO,
+): Disposicao {
   if (!nos[raizId]) return DISPOSICAO_VAZIA;
 
   // 1ª passada: ordem de leitura, nível de cada nó e o vão que cada coluna precisa.
@@ -77,35 +102,55 @@ export function dispor(nos: Record<string, No>, raizId: string): Disposicao {
     xDoNivel[n] = xDoNivel[n - 1]! + LARGURA_NO + (vaos[n - 1] ?? VAO_MINIMO);
   }
 
-  // 2ª passada (de trás para a frente): as folhas empilham de cima para baixo e
-  // cada pai fica centrado na altura dos filhos.
-  const posicoes = new Map<string, PosicaoNo>();
-  const passo = ALTURA_NO + ESPACO_V;
-  // As folhas são numeradas na ordem de leitura.
-  const linhaDaFolha = new Map<string, number>();
-  let folhas = 0;
-  for (const id of ordem) {
-    if (filhosVisiveis(nos, id).length === 0) linhaDaFolha.set(id, folhas++);
-  }
+  // 2ª passada (de trás para a frente, filhos antes dos pais): a faixa vertical
+  // que cada ramo precisa, isto é, o maior entre o próprio cartão e a pilha dos filhos.
+  const altura = new Map<string, number>();
+  const faixa = new Map<string, number>();
   for (let i = ordem.length - 1; i >= 0; i--) {
     const id = ordem[i]!;
-    const n = nivel.get(id)!;
+    const h = alturaDe(id);
+    altura.set(id, h);
+    const f = filhosVisiveis(nos, id);
+    let pilhaDosFilhos = 0;
+    for (const filho of f) pilhaDosFilhos += faixa.get(filho)!;
+    if (f.length > 1) pilhaDosFilhos += ESPACO_V * (f.length - 1);
+    faixa.set(id, Math.max(h, pilhaDosFilhos));
+  }
+
+  // 3ª passada (de cima para baixo): cada ramo recebe o topo da sua faixa; os
+  // filhos se empilham dentro dela, centrados.
+  const topoDaFaixa = new Map<string, number>([[raizId, 0]]);
+  for (const id of ordem) {
+    const f = filhosVisiveis(nos, id);
+    if (f.length === 0) continue;
+    let pilhaDosFilhos = ESPACO_V * (f.length - 1);
+    for (const filho of f) pilhaDosFilhos += faixa.get(filho)!;
+    let cursor = topoDaFaixa.get(id)! + (faixa.get(id)! - pilhaDosFilhos) / 2;
+    for (const filho of f) {
+      topoDaFaixa.set(filho, cursor);
+      cursor += faixa.get(filho)! + ESPACO_V;
+    }
+  }
+
+  // 4ª passada (de baixo para cima): cada pai fica centrado entre o primeiro e o
+  // último filho, como numa árvore de probabilidade.
+  const posicoes = new Map<string, PosicaoNo>();
+  for (let i = ordem.length - 1; i >= 0; i--) {
+    const id = ordem[i]!;
+    const h = altura.get(id)!;
+    const topo = topoDaFaixa.get(id)!;
+    const base = topo + faixa.get(id)!;
     const f = filhosVisiveis(nos, id);
     let y: number;
-    let topo: number;
-    let base: number;
     if (f.length === 0) {
-      y = linhaDaFolha.get(id)! * passo;
-      topo = y - ESPACO_V / 2;
-      base = y + ALTURA_NO + ESPACO_V / 2;
+      y = topo + (base - topo - h) / 2;
     } else {
       const primeiro = posicoes.get(f[0]!)!;
       const ultimo = posicoes.get(f[f.length - 1]!)!;
-      y = (primeiro.y + ultimo.y) / 2;
-      topo = primeiro.topo;
-      base = ultimo.base;
+      const centro = (primeiro.y + primeiro.altura / 2 + ultimo.y + ultimo.altura / 2) / 2;
+      y = Math.min(Math.max(centro - h / 2, topo), base - h);
     }
-    posicoes.set(id, { x: xDoNivel[n]!, y, nivel: n, topo, base });
+    posicoes.set(id, { x: xDoNivel[nivel.get(id)!]!, y, altura: h, nivel: nivel.get(id)!, topo, base });
   }
 
   return {
@@ -113,6 +158,6 @@ export function dispor(nos: Record<string, No>, raizId: string): Disposicao {
     ordem,
     vaos,
     largura: xDoNivel[xDoNivel.length - 1]! + LARGURA_NO,
-    altura: Math.max(folhas, 1) * passo - ESPACO_V,
+    altura: faixa.get(raizId)!,
   };
 }

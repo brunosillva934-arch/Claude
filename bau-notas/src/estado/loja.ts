@@ -247,6 +247,7 @@ function novaNota(titulo: string, tipoId: string, topico = false): Nota {
     titulo,
     tipoId,
     topico,
+    resumo: '',
     conteudo: '',
     texto: '',
     criadaEm: quando,
@@ -261,6 +262,7 @@ function meta(n: Nota): NotaMeta {
     titulo: n.titulo,
     tipoId: n.tipoId,
     topico: n.topico,
+    resumo: n.resumo,
     criadaEm: n.criadaEm,
     atualizadaEm: n.atualizadaEm,
     excluidaEm: n.excluidaEm,
@@ -374,8 +376,6 @@ export function pedirRevelar(noId: string, suave = false): void {
 export function expandirNota(expandida: boolean): void {
   const s = get();
   if (expandida && !s.notaAbertaId) return;
-  // Um tópico não tem texto: não há o que abrir em tela cheia.
-  if (expandida && s.notas[s.notaAbertaId!]?.topico) return;
   if (s.notaExpandida !== expandida) set({ notaExpandida: expandida });
 }
 
@@ -453,7 +453,6 @@ export function abrirNota(notaId: string, opcoes: { expandir?: boolean } = {}): 
   const destino = aqui ?? usos[0];
   if (destino) irParaNo(destino);
   else set({ selecionadoId: null, caminho: VAZIO, notaAbertaId: notaId, edicao: null });
-  if (s.notas[notaId]!.topico) return;
   if (opcoes.expandir || !get().largo || !get().painelLigado) set({ notaExpandida: true });
 }
 
@@ -469,11 +468,20 @@ function renumerar(nos: Record<string, No>, ids: string[], sql: Instrucao[]): vo
   });
 }
 
-function inserirNovoNo(paiId: string, indice: number, topico: boolean): string | null {
+/**
+ * Cria o nó com uma nota nova. Sem indicação, a nota copia o tipo e o formato
+ * (nota ou tópico) do irmão logo acima: numa lista de medicamentos, cada
+ * "+ Irmão" já vem como medicamento.
+ */
+function inserirNovoNo(paiId: string, indice: number, topico?: boolean): string | null {
   const s = get();
   const pai = s.nos[paiId];
   if (!pai) return null;
-  const nota = novaNota('', TIPO_GERAL, topico);
+  const irmaosAtuais = filhosDe(s.nos, paiId);
+  const vizinhoId = irmaosAtuais[Math.min(indice, irmaosAtuais.length) - 1] ?? irmaosAtuais[0];
+  const vizinho = vizinhoId ? s.notas[s.nos[vizinhoId]!.notaId] : undefined;
+  const tipoId = vizinho && s.tipos[vizinho.tipoId] ? vizinho.tipoId : TIPO_GERAL;
+  const nota = novaNota('', tipoId, topico ?? vizinho?.topico ?? false);
   const no: No = {
     id: uid(),
     arvoreId: pai.arvoreId,
@@ -508,32 +516,48 @@ function inserirNovoNo(paiId: string, indice: number, topico: boolean): string |
 
 /**
  * Cria um filho no fim da lista de filhos. O nó entra com o título em edição.
- * `topico`: cria um tópico (só título) em vez de uma nota.
+ * `topico`: true cria um tópico, false uma nota; sem indicação, copia o irmão acima.
  */
-export function criarFilho(paiId: string, topico = false): string | null {
+export function criarFilho(paiId: string, topico?: boolean): string | null {
   return inserirNovoNo(paiId, filhosDe(get().nos, paiId).length, topico);
 }
 
 /** Cria um irmão logo abaixo do nó. A raiz não tem irmãos. */
-export function criarIrmao(noId: string, topico = false): string | null {
+export function criarIrmao(noId: string, topico?: boolean): string | null {
   const no = get().nos[noId];
   if (!no || !no.paiId) return null;
   return inserirNovoNo(no.paiId, no.ordem + 1, topico);
 }
 
 /**
- * Transforma uma nota em tópico (só título, sem texto) ou um tópico em nota.
- * O texto que a nota tinha fica guardado e volta se ela deixar de ser tópico.
+ * Transforma uma nota em tópico ou um tópico em nota completa.
+ * Nada se perde: o texto longo de uma nota fica guardado enquanto ela é tópico,
+ * e a recomendação de um tópico vira o primeiro parágrafo da nota completa
+ * (se a nota ainda não tiver texto).
  */
 export function definirTopico(notaId: string, topico: boolean): void {
   const s = get();
   const nota = s.notas[notaId];
   if (!nota || nota.topico === topico) return;
-  set({
-    notas: { ...s.notas, [notaId]: { ...nota, topico } },
-    notaExpandida: topico && s.notaAbertaId === notaId ? false : s.notaExpandida,
-  });
-  void enfileirar([sqlAtualizarNota(notaId, { topico })]);
+  set({ notas: { ...s.notas, [notaId]: { ...nota, topico } } });
+  const sql: Instrucao[] = [sqlAtualizarNota(notaId, { topico })];
+  const resumo = nota.resumo.trim();
+  if (!topico && resumo) {
+    const doc = { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: resumo }] }] };
+    sql.push({
+      sql: "UPDATE notas SET conteudo = ?, texto = ? WHERE id = ? AND conteudo = ''",
+      params: [JSON.stringify(doc), resumo, notaId],
+    });
+  }
+  void enfileirar(sql);
+}
+
+/** Recomendação de um tópico: muda na tela na hora. Quem grava é nota/salvamento.ts. */
+export function definirResumoNaTela(notaId: string, resumo: string): void {
+  const s = get();
+  const nota = s.notas[notaId];
+  if (!nota || nota.resumo === resumo) return;
+  set({ notas: { ...s.notas, [notaId]: { ...nota, resumo } } });
 }
 
 export function editarTitulo(noId: string): void {
@@ -920,7 +944,7 @@ export function criarTipo(nome: string, cor: string, icone: string): string {
 export function notasDoTipo(tipoId: string): number {
   let n = 0;
   for (const nota of Object.values(get().notas)) {
-    if (nota.tipoId === tipoId && !nota.excluidaEm && !nota.topico) n++;
+    if (nota.tipoId === tipoId && !nota.excluidaEm) n++;
   }
   return n;
 }
@@ -1094,8 +1118,16 @@ export function criarArvoreDeTeste(total: number): string {
     return semente / 4294967296;
   };
   const rotulos = ['se positivo', '30%', 'se negativo', '70%', 'grave', 'leve', null, null, null];
+  const recomendacoes = ['Tomar com alimento.', 'Ajustar pela função renal; rever a dose a cada consulta.', 'Evitar na gestação.'];
   const criar = (titulo: string, tipoId: string, paiId: string | null, ordem: number): string => {
-    const nota: Nota = { ...novaNota(titulo, tipoId), criadaEm: quando, atualizadaEm: quando };
+    // Cerca de um quarto dos nós são tópicos, a maioria com recomendação.
+    const topico = paiId !== null && sorteio() < 0.25;
+    const nota: Nota = {
+      ...novaNota(titulo, tipoId, topico),
+      resumo: topico && sorteio() < 0.8 ? recomendacoes[Math.floor(sorteio() * recomendacoes.length)]! : '',
+      criadaEm: quando,
+      atualizadaEm: quando,
+    };
     const no: No = {
       id: uid(),
       arvoreId,
@@ -1134,6 +1166,22 @@ export function criarArvoreDeTeste(total: number): string {
 }
 
 // ------------------------------------------------------------------ gravação
+
+/** Adiciona uma cópia nova das árvores de exemplo (ferramenta do menu lateral). */
+export async function adicionarExemplo(): Promise<void> {
+  const s = get();
+  const ordem = Object.values(s.arvores).reduce((m, a) => Math.max(m, a.ordem), -1) + 1;
+  const exemplo = montarExemplo(' (exemplo)', ordem);
+  await enfileirar(exemplo.instrucoes);
+  const dados = await carregarTudo();
+  set({
+    tipos: porId(dados.tipos),
+    notas: porId(dados.notas),
+    arvores: porId(dados.arvores),
+    nos: porId(dados.nos),
+  });
+  selecionarArvore(exemplo.primeiraArvoreId);
+}
 
 /** Espera a fila de escrita esvaziar. */
 export function aguardarGravacao(): Promise<void> {

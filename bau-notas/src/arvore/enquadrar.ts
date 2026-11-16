@@ -10,7 +10,7 @@
 import type { No, NotaMeta } from '../dados/tipos';
 import { tituloDaNota } from '../estado/loja';
 import { LARGURA_NO, filhosVisiveis, type Disposicao } from './layout';
-import { ZOOM_DE_LONGE, larguraDoTituloDeLonge } from './RotulosDeLonge';
+import { ZOOM_DE_LONGE, larguraDoResumoDeLonge, larguraDoTituloDeLonge } from './RotulosDeLonge';
 
 export interface Enquadramento {
   x: number;
@@ -42,7 +42,13 @@ export function enquadrarTudo(
     if (p.x > ultimaColuna) ultimaColuna = p.x;
     if (filhosVisiveis(nos, id).length === 0) {
       const no = nos[id];
-      folhas.push([p.x, larguraDoTituloDeLonge(tituloDaNota(no ? notas[no.notaId] : undefined), p.nivel)]);
+      const nota = no ? notas[no.notaId] : undefined;
+      // Um tópico pode ter, embaixo do nome, a recomendação, às vezes mais larga que ele.
+      const resumo = nota?.topico ? nota.resumo.trim() : '';
+      folhas.push([
+        p.x,
+        Math.max(larguraDoTituloDeLonge(tituloDaNota(nota), p.nivel), larguraDoResumoDeLonge(resumo)),
+      ]);
     }
   }
   /** Largura, em pixels de tela, que a árvore ocupa com o zoom dado. */

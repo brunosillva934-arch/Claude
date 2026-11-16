@@ -12,6 +12,8 @@ declare global {
       totalNos(): number;
       nosDaArvoreAtual(): number;
       nosVisiveis(): number;
+      tipoDe(titulo: string): string | null;
+      topicosDaArvoreAtual(): string[];
     };
   }
 }
@@ -28,6 +30,21 @@ window.__bauTeste = {
   },
   totalNos() {
     return Object.keys(useLoja.getState().nos).length;
+  },
+  tipoDe(titulo) {
+    const s = useLoja.getState();
+    return Object.values(s.notas).find((n) => n.titulo === titulo)?.tipoId ?? null;
+  },
+  /** Títulos dos tópicos da árvore atual, em ordem alfabética. */
+  topicosDaArvoreAtual() {
+    const s = useLoja.getState();
+    const arvore = s.arvoreAtualId ? s.arvores[s.arvoreAtualId] : undefined;
+    if (!arvore) return [];
+    return ramoDe(s.nos, arvore.raizId)
+      .map((id) => s.notas[s.nos[id]!.notaId]!)
+      .filter((n) => n.topico)
+      .map((n) => n.titulo)
+      .sort();
   },
   /** Nós da árvore atual que não estão dentro de um ramo recolhido. */
   nosVisiveis() {

@@ -93,7 +93,9 @@ export async function carregarTudo(): Promise<DadosIniciais> {
   const b = bancoAtual();
   const [tipos, notas, arvores, nos, config] = await Promise.all([
     b.consultar<LinhaTipo>('SELECT id, nome, cor, icone, ordem, padrao FROM tipos ORDER BY ordem, nome'),
-    b.consultar<LinhaNota>('SELECT id, titulo, tipoId, topico, criadaEm, atualizadaEm, excluidaEm FROM notas'),
+    b.consultar<LinhaNota>(
+      'SELECT id, titulo, tipoId, topico, resumo, criadaEm, atualizadaEm, excluidaEm FROM notas',
+    ),
     b.consultar<Arvore>(
       'SELECT id, nome, raizId, ordem, criadaEm, excluidaEm FROM arvores WHERE excluidaEm IS NULL ORDER BY ordem, criadaEm',
     ),
@@ -113,7 +115,7 @@ export async function carregarTudo(): Promise<DadosIniciais> {
 
 export async function carregarNota(id: string): Promise<Nota | null> {
   const linhas = await bancoAtual().consultar<LinhaNotaCompleta>(
-    'SELECT id, titulo, tipoId, topico, conteudo, texto, criadaEm, atualizadaEm, excluidaEm FROM notas WHERE id = ?',
+    'SELECT id, titulo, tipoId, topico, resumo, conteudo, texto, criadaEm, atualizadaEm, excluidaEm FROM notas WHERE id = ?',
     [id],
   );
   const linha = linhas[0];
@@ -132,10 +134,11 @@ export async function carregarTextos(): Promise<Map<string, string>> {
 
 export function sqlInserirNota(n: Nota): Instrucao {
   return {
-    sql: `INSERT INTO notas (id, titulo, tipoId, topico, conteudo, texto, criadaEm, atualizadaEm, excluidaEm)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    sql: `INSERT INTO notas (id, titulo, tipoId, topico, resumo, conteudo, texto, criadaEm, atualizadaEm, excluidaEm)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     params: [
-      n.id, n.titulo, n.tipoId, n.topico ? 1 : 0, n.conteudo, n.texto, n.criadaEm, n.atualizadaEm, n.excluidaEm,
+      n.id, n.titulo, n.tipoId, n.topico ? 1 : 0, n.resumo, n.conteudo, n.texto, n.criadaEm, n.atualizadaEm,
+      n.excluidaEm,
     ],
   };
 }

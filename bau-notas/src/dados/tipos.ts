@@ -25,10 +25,13 @@ export interface NotaMeta {
   titulo: string;
   tipoId: string;
   /**
-   * Tópico: só organiza o ramo ("Exames", "Tratamento"). Tem título, mas não
-   * tem texto, não abre o editor e não entra na busca de notas.
+   * Tópico: um item de lista dentro do ramo (ex.: um medicamento sob a nota que
+   * explica o mecanismo). Tem tipo, cor e ícone como qualquer nota, mas no lugar
+   * do texto longo leva só uma recomendação curta, mostrada na própria árvore.
    */
   topico: boolean;
+  /** Recomendação curta de um tópico (texto simples). Vazia nas notas completas. */
+  resumo: string;
   criadaEm: number;
   atualizadaEm: number;
   /** Preenchido quando a nota está na lixeira. */
