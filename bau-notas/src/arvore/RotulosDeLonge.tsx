@@ -54,6 +54,7 @@ interface Caixa {
 
 const ALTURA_TITULO = 22;
 const LARGURA_FOLHA = 340;
+const LARGURA_MINIMA = 132;
 const ALTURA_RAMO = 19;
 
 function encurtar(rotulo: string): string {
@@ -113,7 +114,10 @@ function RotulosDeLongeBase({ disposicao }: { disposicao: Disposicao }) {
         if (l > 0 && l <= vao * zoom - 12 && l + 14 > reserva) reserva = l + 14;
       }
       const necessaria = texto.length * fonte * 0.6 + 34;
-      const maxima = folha ? LARGURA_FOLHA : Math.max(coluna * zoom - 8 - reserva, 96);
+      // Se, guardando o espaço dos rótulos, o título ficasse espremido, o título tem preferência:
+      // os rótulos dos ramos desse nó só entram onde sobrar lugar.
+      if (reserva > 0 && coluna * zoom - 8 - reserva < Math.min(necessaria, LARGURA_MINIMA)) reserva = 0;
+      const maxima = folha ? LARGURA_FOLHA : Math.max(coluna * zoom - 8 - reserva, LARGURA_MINIMA);
       // Um nó com dois ou mais filhos tem altura livre ao redor: o título pode ocupar duas linhas.
       const duasLinhas = !folha && filhos.length >= 2 && necessaria > maxima;
       const largura = Math.min(necessaria, maxima);
@@ -196,7 +200,7 @@ function RotulosDeLongeBase({ disposicao }: { disposicao: Disposicao }) {
               transform: `translate(${t.x}px, ${t.y}px) scale(calc(1 / var(--zoom, 1))) translate(0, -50%)`,
               maxWidth: t.folha
                 ? LARGURA_FOLHA
-                : `max(96px, calc(var(--zoom, 1) * ${t.coluna}px - ${8 + t.reserva}px))`,
+                : `max(${LARGURA_MINIMA}px, calc(var(--zoom, 1) * ${t.coluna}px - ${8 + t.reserva}px))`,
               color: t.cor,
               backgroundImage: `linear-gradient(${t.fundo}, ${t.fundo})`,
             }}

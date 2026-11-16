@@ -7,7 +7,7 @@
  *  - com mouse: botão direito abre o menu e arrastar move o nó.
  */
 import type { MouseEvent as EventoMouse, PointerEvent as EventoPonteiro } from 'react';
-import { expandirNota, moverNo, podeMover, selecionar, tituloDaNota, useLoja } from '../estado/loja';
+import { expandirNota, moverNo, pedirRevelar, podeMover, selecionar, tituloDaNota, useLoja } from '../estado/loja';
 import { toqueHaptico } from '../nativo/ponte';
 import { avisar, fecharMenu } from '../ui/servico';
 import { abrirMenuDoNo, avisarDesfazer } from './acoesNo';
@@ -162,6 +162,8 @@ export function aoClicarNoNo(noId: string, e: EventoMouse): void {
   ultimoToque = { id: noId, quando: duplo ? 0 : agora };
   selecionar(noId);
   if (duplo) expandirNota(true);
+  // Se o nó estiver na beira da tela, o canvas desliza o mínimo para os botões de ação caberem.
+  else pedirRevelar(noId);
 }
 
 /** Botão direito do mouse. No toque, quem abre o menu é o temporizador do toque longo. */

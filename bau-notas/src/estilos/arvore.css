@@ -395,7 +395,7 @@ html[data-tema='escuro'] .no-dobra.recolhido {
 
 .rotulo-longe.duas-linhas > span {
   white-space: normal;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
   -webkit-hyphens: auto;
   hyphens: auto;
   /* Só palavras longas são hifenizadas ("Tromboembo-lismo"), nunca as curtas. */

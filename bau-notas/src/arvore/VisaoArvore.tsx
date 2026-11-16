@@ -17,6 +17,7 @@ import { Maximize, Minus, Plus, X } from 'lucide-react';
 import { iniciarMover, selecionar, tituloDaNota, useLoja } from '../estado/loja';
 import { useVoltar } from '../estado/navegacao';
 import { coresDoTipo } from '../util/cores';
+import { AcoesDoNo } from './AcoesDoNo';
 import { ArestaRamo } from './ArestaRamo';
 import { contexto } from './contexto';
 import { ALTURA_NO, DISPOSICAO_VAZIA, LARGURA_NO, dispor, type Disposicao } from './layout';
@@ -30,8 +31,11 @@ const TIPOS_DE_ARESTA = { ramo: ArestaRamo };
 const SEM_DADOS = {};
 const TAMANHO_MINIMAPA = { width: 172, height: 116 };
 const OPCOES_PRO = { hideAttribution: true };
-/** Margens do "Ver tudo". Embaixo sobra a faixa dos botões fixos, para nada ficar escondido atrás deles. */
-const MARGEM_VER_TUDO = { top: '18px', right: '24px', bottom: '74px', left: '24px' } as const;
+/**
+ * Margens do "Ver tudo". Embaixo sobra a faixa dos botões fixos, para nada ficar escondido atrás deles.
+ * À direita sobra espaço para os títulos das folhas, que no zoom reduzido passam da largura do nó.
+ */
+const MARGEM_VER_TUDO = { top: '18px', right: '104px', bottom: '74px', left: '24px' } as const;
 
 function criarNo(id: string, x: number, y: number): Node {
   return {
@@ -174,7 +178,13 @@ function Canvas() {
         const margemDir = Math.min(130, largura / 4); // espaço para o botão "+ Filho"
         const margemV = Math.min(72, altura / 5); // espaço para "Abrir" e "+ Irmão"
         const esq = pos.x * zoom + x;
-        const dir = esq + LARGURA_NO * zoom;
+        // Com o zoom reduzido o que aparece é o título, mais largo que o bloco do nó.
+        const estado = useLoja.getState();
+        const no = estado.nos[noId];
+        const letras = no ? tituloDaNota(estado.notas[no.notaId]).length : 0;
+        const larguraNaTela =
+          zoom < ZOOM_DE_LONGE ? Math.max(LARGURA_NO * zoom, Math.min(letras * 9 + 34, 300)) : LARGURA_NO * zoom;
+        const dir = esq + larguraNaTela;
         const topo = pos.y * zoom + y;
         const base = topo + ALTURA_NO * zoom;
         if (dir - esq > largura - margemEsq - margemDir) x += margemEsq - esq;
@@ -328,6 +338,7 @@ function Canvas() {
           />
         )}
         <RotulosDeLonge disposicao={disposicao} />
+        <AcoesDoNo />
       </ReactFlow>
 
       <div className="controles-arvore">

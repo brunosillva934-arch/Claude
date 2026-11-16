@@ -1,0 +1,66 @@
+# Monta o APK do Baú (bau-notas/) e roda os testes do código Java.
+#
+# Serve só para gerar o arquivo sem precisar montar ambiente Android no
+# computador. O app instalado não tem permissão de internet e nunca se
+# conecta a nada.
+#
+# Para o APK sair assinado com a chave do projeto (e poder atualizar um Baú já
+# instalado), cadastre a senha da chave em
+#   Settings > Secrets and variables > Actions > New repository secret
+# com o nome BAU_SENHA_CHAVE. Sem ela, o APK sai com uma chave temporária.
+name: Baú - montar o APK
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'bau-notas/**'
+      - '.github/workflows/bau-apk.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  apk:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: bau-notas/package-lock.json
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Ferramentas de empacotamento
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y aapt apksigner zipalign dalvik-exchange android-sdk-platform-23
+
+      - name: Testes do código Java (banco, ponte e abertura da tela)
+        run: mvn -B -q -f bau-notas/android/teste-jvm/pom.xml test
+
+      - name: Montar o APK
+        working-directory: bau-notas
+        env:
+          BAU_SENHA_CHAVE: ${{ secrets.BAU_SENHA_CHAVE }}
+        run: |
+          npm ci --no-audit --no-fund
+          if [ -n "$BAU_SENHA_CHAVE" ]; then
+            bash android/montar.sh
+          else
+            echo "::warning::Segredo BAU_SENHA_CHAVE não cadastrado: APK assinado com chave temporária."
+            bash android/montar.sh --teste
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Bau-apk
+          path: bau-notas/Bau*.apk
+          if-no-files-found: error

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Baú: notas médicas em árvore.
+
+  Este app NÃO declara nenhuma permissão. Em especial, não existe
+  android.permission.INTERNET: o sistema não deixa o app abrir conexões de rede.
+  O montar.sh confere isso no APK pronto e falha se alguma permissão aparecer.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="app.bau.notas">
+
+    <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
+
+    <!--
+      allowBackup="false"      nada vai para o backup do Google (nuvem);
+      fullBackupContent        o mesmo, para Android 11 e anteriores;
+      dataExtractionRules      Android 12+: nem nuvem nem transferência entre aparelhos;
+      hasFragileUserData       ao desinstalar, o Android pergunta se quer manter os dados;
+      usesCleartextTraffic     reforço: nenhum tráfego HTTP (já não há permissão de rede).
+    -->
+    <application
+        android:label="@string/nome_app"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher"
+        android:theme="@style/Tema"
+        android:allowBackup="false"
+        android:fullBackupContent="false"
+        android:dataExtractionRules="@xml/regras_extracao"
+        android:hasFragileUserData="true"
+        android:usesCleartextTraffic="false"
+        android:hardwareAccelerated="true"
+        android:resizeableActivity="true"
+        android:supportsRtl="false">
+
+        <!--
+          windowSoftInputMode="adjustResize": quando o teclado abre, o Android
+          redimensiona a janela uma única vez (não quadro a quadro) e o WebView
+          passa a ocupar só a área acima do teclado.
+          configChanges: girar a tela, ligar um teclado físico ou trocar o tema
+          não recria a tela, então nada do que está sendo escrito se perde.
+        -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:windowSoftInputMode="adjustResize|stateUnspecified"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboard|keyboardHidden|navigation|uiMode|density|fontScale|locale|layoutDirection|touchscreen">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>

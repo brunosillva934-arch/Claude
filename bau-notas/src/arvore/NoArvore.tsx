@@ -5,16 +5,16 @@ import {
   memo, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode, type SyntheticEvent,
 } from 'react';
 import { Handle, NodeToolbar, Position, type NodeProps, type NodeToolbarProps } from '@xyflow/react';
-import { Ellipsis, FileText, Link2, Minus, Plus } from 'lucide-react';
+import { Link2, Minus } from 'lucide-react';
 import {
-  alternarRecolhido, cancelarEdicao, confirmarTitulo, contarDescendentes, criarFilho, criarIrmao, expandirNota,
-  filhosDe, indiceDe, podeMover, tituloDaNota, usarNotaExistente, useLoja,
+  alternarRecolhido, cancelarEdicao, confirmarTitulo, contarDescendentes, criarFilho, filhosDe, indiceDe, podeMover,
+  tituloDaNota, usarNotaExistente, useLoja,
 } from '../estado/loja';
 import { useVoltar } from '../estado/navegacao';
 import { iconeDoTipo } from '../ui/icones';
 import { estiloDoTipo } from '../util/cores';
 import { compararTexto, normalizar } from '../util/texto';
-import { aoBaixarNoNo, aoClicarNoNo, aoMenuDeContexto, menuDoNo } from './gestos';
+import { aoBaixarNoNo, aoClicarNoNo, aoMenuDeContexto } from './gestos';
 
 const parar = (e: SyntheticEvent) => e.stopPropagation();
 
@@ -166,15 +166,12 @@ function NoArvoreBase({ id }: NodeProps) {
   const arrastado = useLoja((s) => s.arrasto?.noId === id);
   const emMovimento = useLoja((s) => s.movendoId === id);
   const destinoPossivel = useLoja((s) => s.movendoId !== null && s.movendoId !== id && podeMover(s.movendoId, id));
-  const mostrarAcoes = useLoja((s) => s.selecionadoId === id && !s.edicao && !s.arrasto && !s.movendoId);
   const qtdFilhos = useLoja((s) => filhosDe(s.nos, id).length);
   const ocultos = useLoja((s) => (s.nos[id]?.recolhido ? contarDescendentes(s.nos, id) : 0));
   const repetida = useLoja((s) => {
     const n = s.nos[id];
     return n ? (indiceDe(s.nos).porNota.get(n.notaId)?.length ?? 0) > 1 : false;
   });
-  const notaAoLado = useLoja((s) => s.largo && s.painelLigado);
-
   const elemento = useRef<HTMLDivElement>(null);
 
   // Com mouse, arrastar sobre o nó move o nó, não o canvas: o mousedown não chega ao React Flow.
@@ -253,40 +250,6 @@ function NoArvoreBase({ id }: NodeProps) {
           {no.recolhido ? <span className="no-dobra-qtd">+{ocultos}</span> : <Minus size={14} />}
         </button>
       )}
-
-      <BarraDoNo isVisible={mostrarAcoes} position={Position.Right} offset={qtdFilhos > 0 ? 22 : 10}>
-        <button type="button" className="acao-no" data-acao="filho" onClick={() => criarFilho(id)}>
-          <Plus size={18} />
-          Filho
-        </button>
-      </BarraDoNo>
-      <BarraDoNo isVisible={mostrarAcoes && !raiz} position={Position.Bottom} offset={8}>
-        <button type="button" className="acao-no" data-acao="irmao" onClick={() => criarIrmao(id)}>
-          <Plus size={18} />
-          Irmão
-        </button>
-      </BarraDoNo>
-      <BarraDoNo isVisible={mostrarAcoes} position={Position.Top} offset={8}>
-        <div className="acoes-no-topo">
-          {!notaAoLado && (
-            <button type="button" className="acao-no suave" data-acao="abrir" onClick={() => expandirNota(true)}>
-              <FileText size={18} />
-              Abrir
-            </button>
-          )}
-          <button
-            type="button"
-            className="acao-no suave so-icone"
-            data-acao="mais"
-            aria-label="Mais ações"
-            onClick={() => {
-              if (elemento.current) menuDoNo(id, elemento.current);
-            }}
-          >
-            <Ellipsis size={20} />
-          </button>
-        </div>
-      </BarraDoNo>
     </div>
   );
 }
