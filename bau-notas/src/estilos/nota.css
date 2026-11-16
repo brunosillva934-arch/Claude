@@ -543,3 +543,319 @@ html[data-tema='escuro'] .seletor-tipo-icone {
 .topico-filho:active {
   background: var(--superficie-2);
 }
+
+/* ------------------------------------------------------------------ etapa 2: corpo da nota */
+/* Área do texto + sumário. O texto continua sendo o único contêiner que rola. */
+.nota-corpo {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  position: relative;
+}
+
+.nota-corpo > .nota-rolagem {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.contador-palavras {
+  flex: none;
+  padding: 0 6px;
+  font-size: 12.5px;
+  color: var(--texto-3);
+  white-space: nowrap;
+}
+
+.botao-editor.com-texto {
+  width: auto;
+  min-width: var(--toque);
+  padding: 0 10px;
+}
+
+.botao-editor-texto {
+  font-size: 15px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------------------------------------------ texto: elementos do editor completo */
+.texto-nota h4 {
+  font-size: 1.02em;
+}
+
+.texto-nota mark {
+  padding: 0 1px;
+  border-radius: 3px;
+  color: inherit;
+}
+
+.texto-nota sup,
+.texto-nota sub {
+  font-size: 0.72em;
+  line-height: 0;
+}
+
+.texto-nota img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 0.6em 0 0.9em;
+  border-radius: 10px;
+}
+
+.texto-nota img.ProseMirror-selectednode {
+  outline: 3px solid var(--destaque);
+  outline-offset: 2px;
+}
+
+/* Tabelas: rolam na horizontal dentro da própria caixa se forem largas. */
+.texto-nota .tableWrapper {
+  margin: 0.4em 0 1em;
+  overflow-x: auto;
+}
+
+.texto-nota table {
+  border-collapse: collapse;
+  width: 100%;
+  table-layout: fixed;
+}
+
+.texto-nota th,
+.texto-nota td {
+  border: 1px solid var(--borda-forte);
+  padding: 8px 10px;
+  vertical-align: top;
+  min-width: 80px;
+  position: relative;
+}
+
+.texto-nota th {
+  background: var(--superficie-2);
+  font-weight: 700;
+  text-align: left;
+}
+
+.texto-nota th > p,
+.texto-nota td > p {
+  margin: 0;
+}
+
+.texto-nota .selectedCell::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--destaque-fraco);
+  pointer-events: none;
+}
+
+/* Lista de verificação. */
+.texto-nota ul[data-type='taskList'] {
+  list-style: none;
+  padding-left: 0.2em;
+}
+
+.texto-nota ul[data-type='taskList'] li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.texto-nota ul[data-type='taskList'] li > label {
+  flex: none;
+  margin-top: 0.22em;
+  user-select: none;
+}
+
+.texto-nota ul[data-type='taskList'] li > label input {
+  width: 22px;
+  height: 22px;
+  margin: 0;
+  accent-color: var(--destaque);
+}
+
+.texto-nota ul[data-type='taskList'] li > div {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.texto-nota ul[data-type='taskList'] li[data-checked='true'] > div {
+  color: var(--texto-3);
+  text-decoration: line-through;
+}
+
+/* ------------------------------------------------------------------ sumário */
+.sumario {
+  display: flex;
+  flex-direction: column;
+  background: var(--superficie);
+  min-height: 0;
+}
+
+.sumario.fixo {
+  flex: 0 0 280px;
+  border-left: 1px solid var(--borda);
+}
+
+.sumario.deslizante {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 6;
+  width: min(340px, 86%);
+  box-shadow: var(--sombra-forte);
+  animation: sumario-entra 0.16s ease-out;
+}
+
+@keyframes sumario-entra {
+  from {
+    transform: translateX(24px);
+    opacity: 0.4;
+  }
+}
+
+.sumario-veu {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  background: var(--veu);
+}
+
+.sumario-topo {
+  flex: none;
+  min-height: 52px;
+  padding: 0 6px 0 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--texto-3);
+  border-bottom: 1px solid var(--borda);
+}
+
+.sumario-lista {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 6px 6px 24px;
+}
+
+.sumario-vazio {
+  margin: 0;
+  padding: 14px 10px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--texto-3);
+}
+
+.sumario-item {
+  width: 100%;
+  min-height: var(--toque);
+  padding: 6px 10px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  text-align: left;
+  font-size: 15px;
+  line-height: 1.3;
+  color: var(--texto-2);
+  border-left: 3px solid transparent;
+}
+
+.sumario-item.nivel-1 {
+  font-weight: 700;
+  color: var(--texto);
+}
+
+.sumario-item.nivel-2 {
+  padding-left: 22px;
+  font-weight: 600;
+}
+
+.sumario-item.nivel-3 {
+  padding-left: 36px;
+}
+
+.sumario-item.nivel-4 {
+  padding-left: 50px;
+  font-size: 14px;
+}
+
+.sumario-item.atual {
+  color: var(--destaque);
+  background: var(--destaque-fraco);
+  border-left-color: var(--destaque);
+}
+
+.sumario-item:active {
+  background: var(--superficie-2);
+}
+
+/* ------------------------------------------------------------------ modo foco */
+.app[data-foco] .area-nota {
+  background: var(--superficie);
+}
+
+/*
+ * Só o texto, numa coluna centralizada de ~70 caracteres por linha. Em texto
+ * corrido a letra média tem cerca de meio "em", então 70 caracteres ≈ 35em
+ * (a unidade "ch" mede o algarismo 0, mais largo, e daria ~90 por linha).
+ */
+.nota-corpo.em-foco .nota-pagina {
+  font-size: 17px;
+  max-width: calc(35em + 56px);
+  padding-top: 48px;
+}
+
+/* Esmaecer: só o parágrafo em edição fica com contraste total. */
+.nota-corpo.foco-esmaecer .texto-nota > * {
+  opacity: 0.3;
+  transition: opacity 0.18s;
+}
+
+.nota-corpo.foco-esmaecer .texto-nota > .bloco-atual,
+.nota-corpo.foco-esmaecer .texto-nota:not(.ProseMirror-focused) > * {
+  opacity: 1;
+}
+
+/* Máquina de escrever: espaço em cima para a primeira linha também chegar ao meio. */
+.nota-corpo.foco-maquina .nota-pagina {
+  padding-top: 45dvh;
+}
+
+.controles-foco {
+  position: absolute;
+  top: 10px;
+  right: 14px;
+  z-index: 4;
+  display: flex;
+  gap: 6px;
+  opacity: 0.35;
+  transition: opacity 0.18s;
+}
+
+.controles-foco:hover,
+.controles-foco:focus-within,
+.controles-foco:active {
+  opacity: 1;
+}
+
+.controle-foco {
+  width: var(--toque);
+  height: var(--toque);
+  border-radius: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--texto-2);
+  background: var(--superficie-2);
+}
+
+.controle-foco.ligado {
+  color: var(--destaque);
+  background: var(--destaque-fraco);
+}

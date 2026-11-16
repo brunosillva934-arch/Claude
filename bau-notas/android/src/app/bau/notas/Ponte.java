@@ -42,6 +42,17 @@ final class Ponte {
     /** Chamada assíncrona: a resposta volta por window.__bau.r(id, ok, valor). */
     @JavascriptInterface
     public void chamar(final int id, final String metodo, final String args) {
+        // Escolher imagem espera o usuário (galeria ou câmera): não pode segurar a fila do banco.
+        if ("imagem.escolher".equals(metodo)) {
+            boolean camera = false;
+            try {
+                camera = new JSONObject(args).optBoolean("camera", false);
+            } catch (Exception e) {
+                // sem argumentos: galeria
+            }
+            atividade.escolherImagem(id, camera);
+            return;
+        }
         fila.execute(new Runnable() {
             @Override
             public void run() {
@@ -104,6 +115,10 @@ final class Ponte {
         }
         if ("sistema.toque".equals(metodo)) {
             atividade.toqueHaptico();
+            return "true";
+        }
+        if ("sistema.imersivo".equals(metodo)) {
+            atividade.definirImersivo(args.getBoolean("ligado"));
             return "true";
         }
         if ("sistema.minimizar".equals(metodo)) {

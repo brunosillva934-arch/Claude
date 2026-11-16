@@ -144,6 +144,14 @@ export function pintarBarras(status: string, navegacao: string, fundoClaro: bool
   if (temNativo) void chamar('sistema.barras', { status, navegacao, fundoClaro }).catch(() => undefined);
 }
 
+/**
+ * Modo imersivo do Android: esconde a barra de status e a de navegação (que
+ * voltam por um instante ao deslizar o dedo da borda). Usado no modo foco.
+ */
+export function modoImersivo(ligado: boolean): void {
+  if (temNativo) void chamar('sistema.imersivo', { ligado }).catch(() => undefined);
+}
+
 /** Manda o app para segundo plano (sem encerrá-lo). */
 export function minimizarApp(): void {
   if (temNativo) void chamar('sistema.minimizar').catch(() => undefined);

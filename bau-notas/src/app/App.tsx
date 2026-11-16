@@ -12,7 +12,8 @@ import { useAtalhosDaArvore } from '../arvore/atalhos';
 import { Lista } from '../arvore/Lista';
 import { VisaoArvore } from '../arvore/VisaoArvore';
 import { Busca } from '../busca/Busca';
-import { abrirBusca, abrirGaveta, definirLargo, definirProporcao, useLoja } from '../estado/loja';
+import { abrirBusca, abrirGaveta, alternarFoco, definirLargo, definirProporcao, useLoja } from '../estado/loja';
+import { modoImersivo } from '../nativo/ponte';
 import { PainelNota } from '../nota/PainelNota';
 import { Camadas } from '../ui/Camadas';
 import { avisar } from '../ui/servico';
@@ -63,6 +64,7 @@ export function App() {
   const notaExpandida = useLoja((s) => s.notaExpandida);
   const proporcao = useLoja((s) => s.proporcao);
   const salvamento = useLoja((s) => s.salvamento);
+  const foco = useLoja((s) => s.foco);
 
   useEffect(() => {
     // Altura da tela sem o teclado, por orientação. Serve de base para o espaço
@@ -89,12 +91,21 @@ export function App() {
     if (salvamento === 'erro') avisar('Não foi possível gravar a última alteração', { duracao: 6000 });
   }, [salvamento]);
 
-  // Ctrl+K abre a busca de qualquer lugar (teclado físico).
+  // Modo foco: o Android esconde as barras do sistema.
+  useEffect(() => {
+    modoImersivo(foco);
+  }, [foco]);
+
+  // Teclado físico: Ctrl+K abre a busca; Ctrl+Shift+F entra e sai do modo foco.
   useEffect(() => {
     const aoTeclar = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === 'k') {
+      const ctrl = e.ctrlKey || e.metaKey;
+      if (ctrl && !e.altKey && !e.shiftKey && e.key.toLowerCase() === 'k') {
         e.preventDefault();
         abrirBusca(true);
+      } else if (ctrl && e.shiftKey && e.key.toLowerCase() === 'f') {
+        e.preventDefault();
+        alternarFoco();
       }
     };
     window.addEventListener('keydown', aoTeclar);
@@ -107,7 +118,7 @@ export function App() {
   useAtalhosDaArvore(modo !== 'nota' && temArvore);
 
   return (
-    <div className="app" data-modo={modo} data-largo={largo ? '' : undefined}>
+    <div className="app" data-modo={modo} data-largo={largo ? '' : undefined} data-foco={foco ? '' : undefined}>
       {modo !== 'nota' && <BarraSuperior />}
       <div className="corpo">
         <section

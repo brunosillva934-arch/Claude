@@ -6,9 +6,10 @@ não tem conta, servidor nem nuvem, e o app **não declara nenhuma permissão**
 
 O arquivo para instalar é **`Bau.apk`**, nesta pasta.
 
-> Situação: **versão 0.5.0**. Etapa 1 de 5 (projeto, modelo de dados e árvore
-> visual), já com tópicos, busca e escolha de tema. O editor completo, os links
-> e o backup entram nas próximas etapas.
+> Situação: **versão 0.6.0**. Etapas 1 e 2 de 5: árvore visual, tópicos, busca,
+> tema, e o editor completo com sumário, modo foco e estabilidade da escrita.
+> Os links entre notas (etapa 3), o filtro por tipo na árvore (etapa 4) e o
+> backup (etapa 5) vêm a seguir.
 
 ## Instalar no tablet
 
@@ -74,6 +75,73 @@ assinadas com a mesma chave (veja "Chave de assinatura").
   fluidez no próprio tablet, e "Adicionar as árvores de exemplo", que cria uma
   cópia nova dos exemplos (útil para ver os tópicos depois de atualizar o app).
 
+## Árvores
+
+- Uma tela pode ter **várias árvores**, uma embaixo da outra: botão "+ Árvore"
+  no canto da tela (e no fim da lista recuada). A primeira dá nome à tela; as
+  outras podem ser excluídas sozinhas, ir para dentro de um nó ("Pôr dentro de
+  outro nó") ou nascer de um ramo ("Separar como árvore própria").
+- **Nó entre dois existentes**: com um nó selecionado, "+ Entre" (à esquerda
+  dele) cria um nó entre ele e o de cima; o rótulo do ramo vai junto. Numa raiz,
+  o botão vira "+ Pai". Também pelo toque longo.
+
+## Editor (etapa 2)
+
+- Barra fixa no topo, com botões de 48 dp e rolagem horizontal: desfazer,
+  refazer, fonte (sem serifa, com serifa, monoespaçada, todas embutidas),
+  tamanho, negrito, itálico, sublinhado, tachado, cor do texto, marca-texto,
+  títulos H1 a H4, listas com marcadores, numerada e de verificação, recuo
+  (Tab / Shift+Tab), alinhamento, citação, tabela (com linhas e colunas),
+  linha horizontal, imagem da galeria ou da câmera, sobrescrito, subscrito,
+  limpar formatação e modo foco.
+- Atalhos com teclado físico: Ctrl+B, Ctrl+I, Ctrl+U, Ctrl+Z, Ctrl+Y,
+  Ctrl+Alt+1 a 4 (títulos), Ctrl+Shift+F (foco), Ctrl+K (busca).
+- **Colar** do Word, do Google Docs e do navegador mantém negrito, itálico,
+  sublinhado, títulos, listas e tabelas, e tira fontes, cores, estilos e
+  metadados.
+- **Imagens** (ex.: foto de exame) ficam dentro do app, reduzidas a 1600 px e
+  com a rotação da câmera corrigida. A câmera é chamada pelo app de câmera do
+  tablet: o Baú não precisa da permissão de câmera.
+- Seletor do tipo no cabeçalho e contador de palavras discreto.
+- **Sumário** automático com os títulos, recuado por nível, atualizado enquanto
+  se escreve. Tocar num item leva até o título; a seção atual fica destacada.
+  Em tela cheia, painel fixo à direita (o botão do cabeçalho recolhe); na tela
+  dividida e em retrato, painel deslizante.
+- **Modo foco**: só o texto, numa coluna de ~70 caracteres, com as barras do
+  Android escondidas (modo imersivo). Opções: esmaecer os parágrafos fora de
+  edição e máquina de escrever (a linha atual no meio da tela). Sai pelo botão
+  discreto do canto, pelo voltar do Android, por Esc ou por Ctrl+Shift+F.
+
+### Estabilidade da escrita
+
+- Um único contêiner de rolagem por nota; nada de textarea de altura fixa,
+  rolagem aninhada ou redimensionamento por JavaScript a cada tecla.
+- Espaço livre de ~45% da tela (medida sem teclado) embaixo do texto.
+- **Teclado**: `windowSoftInputMode="adjustResize"` faz o Android encolher a
+  janela uma única vez quando o teclado abre (não quadro a quadro). A página
+  usa `100dvh`, então a área do texto acompanha esse tamanho; quando a janela
+  assenta (`visualViewport` + `resize`, com 140 ms de espera), se o cursor
+  ficou escondido, a nota rola uma única vez, sem animação. Escolhi isso no
+  lugar de "pan" (que empurraria a tela inteira para cima, barra incluída) e de
+  "nothing" (que deixaria o texto atrás do teclado).
+- Enquanto se digita, quem acompanha o cursor é o próprio ProseMirror, e só
+  quando ele chega a 96 px da borda de baixo (ou 56 px da de cima); nada de
+  `scrollIntoView` a cada tecla.
+- O editor não é controlado pelo React: digitar não redesenha o app. Salvamento
+  (800 ms), contador e sumário (400 ms) vêm com atraso, fora da digitação.
+- CSS: `overflow-anchor: none` na área do texto, `dvh` no lugar de `vh`,
+  nenhuma transição de altura.
+- No Android 10 o modo foco esconde só a barra de navegação: esconder também a
+  de status faria o teclado deixar de redimensionar a janela nessa versão.
+
+Testado no Chromium em tamanho de tablet, em paisagem e em retrato, com o
+"teclado" simulado pelo encolhimento da janela (`testes/etapa2.cjs`): 10 páginas
+digitadas, 5.000 palavras coladas e escrita no fim, teclado abrindo e fechando
+no meio do texto. Em todos: cursor sempre visível, rolagem só para baixo e no
+máximo um ajuste por abertura do teclado. **Ainda falta** o teste num tablet de
+verdade com Gboard e Samsung Keyboard (sugestões, correção automática, digitação
+por gesto e acentos), que só dá para fazer no aparelho.
+
 ## Decisão de arquitetura: casca própria em vez de Capacitor
 
 A interface é exatamente a pilha sugerida: **React + TypeScript + Vite**, árvore
@@ -100,7 +168,9 @@ própria o APK é montado aqui mesmo, sem Gradle. De quebra:
 
 Os plugins do Capacitor citados na especificação são substituídos por código
 equivalente da casca: Keyboard → `adjustResize`; App → `onBackPressed`;
-StatusBar → `pintarBarras`; Filesystem, Share e Camera entram nas etapas 2 e 5.
+StatusBar → `pintarBarras`; Camera → `escolherImagem` (galeria por
+`ACTION_GET_CONTENT`, câmera por `ACTION_IMAGE_CAPTURE` com um provedor de
+arquivo privado); Filesystem e Share entram na etapa 5.
 
 ## Montar o APK
 
@@ -144,6 +214,8 @@ npm run dev                     # abre em http://127.0.0.1:5173 (banco sql.js no
 npm run build && npm run previa # serve a versão final em http://127.0.0.1:4173
 node testes/etapa1.cjs          # teste de aceite da etapa 1 (Chromium, tamanho de tablet)
 node testes/etapa1b.cjs         # tópicos, busca, índice A–Z, filtro por tipo e tema
+node testes/telas.cjs           # várias árvores na mesma tela e nó entre dois
+node testes/etapa2.cjs          # editor, sumário, modo foco e estabilidade da escrita
 
 npm run build:android
 npx vite preview --outDir dist-android --port 4174 &

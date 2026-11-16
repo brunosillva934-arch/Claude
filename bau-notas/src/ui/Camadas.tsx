@@ -44,7 +44,11 @@ function Menu({ menu }: { menu: MenuAberto }) {
     <div
       className="camada-menu"
       onPointerDown={(e) => {
+        if (menu.manterFoco) e.preventDefault();
         if (e.target === e.currentTarget) fecharMenu();
+      }}
+      onMouseDown={(e) => {
+        if (menu.manterFoco) e.preventDefault();
       }}
       onContextMenu={(e) => e.preventDefault()}
     >

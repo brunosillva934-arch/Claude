@@ -1,7 +1,7 @@
 {
   "name": "bau-notas",
   "private": true,
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "Baú: notas médicas em árvore, 100% offline, para tablet Android",
   "type": "module",
   "scripts": {

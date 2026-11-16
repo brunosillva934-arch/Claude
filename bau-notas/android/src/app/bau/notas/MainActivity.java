@@ -1,17 +1,22 @@
 package app.bau.notas;
 
 import android.app.Activity;
+import android.content.ActivityNotFoundException;
+import android.content.ClipData;
+import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.res.Configuration;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.view.HapticFeedbackConstants;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.view.WindowInsets;
 import android.view.WindowInsetsController;
 import android.view.WindowManager;
 import android.webkit.ConsoleMessage;
@@ -28,6 +33,8 @@ import android.webkit.WebViewClient;
 import org.json.JSONObject;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
@@ -118,6 +125,18 @@ public final class MainActivity extends Activity {
             String caminho = endereco.getPath();
             if (caminho == null || caminho.isEmpty() || "/".equals(caminho)) {
                 caminho = "/index.html";
+            }
+            // Imagens das notas, guardadas na área privada do app.
+            if (caminho.startsWith("/" + Imagens.PASTA + "/")) {
+                File arquivo = Imagens.arquivo(MainActivity.this, caminho.substring(Imagens.PASTA.length() + 2));
+                if (arquivo == null) {
+                    return vazia(404, "Not Found");
+                }
+                try {
+                    return new WebResourceResponse("image/jpeg", null, new FileInputStream(arquivo));
+                } catch (IOException e) {
+                    return vazia(404, "Not Found");
+                }
             }
             if (caminho.contains("..")) {
                 return vazia(404, "Not Found");
@@ -283,6 +302,137 @@ public final class MainActivity extends Activity {
                 }
             }
         });
+    }
+
+    // ------------------------------------------------------------------ imagens
+
+    private static final int PEDIDO_IMAGEM = 41;
+    private int chamadaDeImagem = -1;
+    private boolean imagemDaCamera;
+
+    /**
+     * Abre a galeria ou a câmera. A câmera é chamada por intent (o app não pede
+     * a permissão de câmera) e grava a foto no arquivo entregue pelo Provedor.
+     */
+    void escolherImagem(final int id, final boolean camera) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (chamadaDeImagem != -1) {
+                    responder(chamadaDeImagem, true, "null");
+                }
+                chamadaDeImagem = id;
+                imagemDaCamera = camera;
+                Intent pedido;
+                if (camera) {
+                    Uri destino = Provedor.uriDaFoto();
+                    pedido = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                    pedido.putExtra(MediaStore.EXTRA_OUTPUT, destino);
+                    pedido.setClipData(ClipData.newRawUri("", destino));
+                    pedido.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                } else {
+                    pedido = new Intent(Intent.ACTION_GET_CONTENT);
+                    pedido.setType("image/*");
+                    pedido.addCategory(Intent.CATEGORY_OPENABLE);
+                }
+                try {
+                    startActivityForResult(pedido, PEDIDO_IMAGEM);
+                } catch (ActivityNotFoundException e) {
+                    chamadaDeImagem = -1;
+                    responder(id, false, JSONObject.quote(camera
+                            ? "Nenhum app de câmera encontrado"
+                            : "Nenhum app de galeria encontrado"));
+                }
+            }
+        });
+    }
+
+    @Override
+    protected void onActivityResult(int pedido, int resultado, Intent dados) {
+        if (pedido != PEDIDO_IMAGEM) {
+            super.onActivityResult(pedido, resultado, dados);
+            return;
+        }
+        final int id = chamadaDeImagem;
+        chamadaDeImagem = -1;
+        if (id == -1) {
+            return;
+        }
+        final Uri origem;
+        if (resultado != RESULT_OK) {
+            origem = null;
+        } else if (imagemDaCamera) {
+            origem = Uri.fromFile(Provedor.arquivoDaFoto(getCacheDir()));
+        } else {
+            origem = dados == null ? null : dados.getData();
+        }
+        if (origem == null) {
+            responder(id, true, "null");
+            return;
+        }
+        // Reduzir e gravar fora da linha principal.
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    String nome = Imagens.salvar(MainActivity.this, origem);
+                    responder(id, true, "{\"caminho\":" + JSONObject.quote("/" + Imagens.PASTA + "/" + nome) + "}");
+                } catch (Exception e) {
+                    responder(id, false, JSONObject.quote("Não foi possível guardar a imagem: " + e.getMessage()));
+                } finally {
+                    if (imagemDaCamera) {
+                        Provedor.arquivoDaFoto(getCacheDir()).delete();
+                    }
+                }
+            }
+        }).start();
+    }
+
+    // ------------------------------------------------------------------ modo imersivo
+
+    private volatile boolean imersivo;
+
+    /** Modo foco: esconde as barras do sistema (voltam por um instante ao deslizar da borda). */
+    void definirImersivo(final boolean ligado) {
+        imersivo = ligado;
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                aplicarImersivo();
+            }
+        });
+    }
+
+    private void aplicarImersivo() {
+        Window janela = getWindow();
+        if (Build.VERSION.SDK_INT >= 30) {
+            WindowInsetsController controle = janela.getInsetsController();
+            if (controle == null) {
+                return;
+            }
+            if (imersivo) {
+                controle.setSystemBarsBehavior(WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+                controle.hide(WindowInsets.Type.systemBars());
+            } else {
+                controle.show(WindowInsets.Type.systemBars());
+            }
+        } else {
+            // Android 10: esconde só a barra de navegação. Esconder também a de status
+            // (FULLSCREEN) faria o teclado deixar de redimensionar a tela.
+            View decoracao = janela.getDecorView();
+            int marcas = decoracao.getSystemUiVisibility();
+            int imersivas = View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY;
+            decoracao.setSystemUiVisibility(imersivo ? (marcas | imersivas) : (marcas & ~imersivas));
+        }
+    }
+
+    @Override
+    public void onWindowFocusChanged(boolean temFoco) {
+        super.onWindowFocusChanged(temFoco);
+        // Depois de um diálogo ou de voltar ao app, o Android pode ter mostrado as barras de novo.
+        if (temFoco && imersivo) {
+            aplicarImersivo();
+        }
     }
 
     /** Manda o app para segundo plano, sem encerrá-lo. */

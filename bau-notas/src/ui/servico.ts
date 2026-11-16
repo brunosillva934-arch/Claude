@@ -31,6 +31,11 @@ export interface MenuAberto {
    * a valer depois que o dedo é levantado, para o ato de soltar não escolher nada.
    */
   aposSoltar?: boolean;
+  /**
+   * Menu aberto a partir da barra do editor: tocar nele não tira o foco do
+   * texto, para o teclado não fechar e reabrir a cada escolha.
+   */
+  manterFoco?: boolean;
 }
 
 export interface DialogoAberto {

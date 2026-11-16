@@ -6,12 +6,12 @@ import { useEffect, useRef, useState, useSyncExternalStore, type CSSProperties }
 import { useShallow } from 'zustand/react/shallow';
 import {
   ArrowLeft, Check, ChevronDown, CornerDownRight, CornerLeftUp, FileText, Hash, LoaderCircle, Maximize2, Minimize2,
-  PanelRightClose, Plus, Search, TriangleAlert,
+  PanelRightClose, Plus, Search, TableOfContents, TriangleAlert,
 } from 'lucide-react';
 import { aguardarEscritas, carregarNota } from '../dados/repositorio';
 import type { Nota } from '../dados/tipos';
 import {
-  abrirBusca, alternarPainel, criarFilho, definirTopico, expandirNota, filhosDe, indiceDe, irParaNo, renomearNota,
+  abrirBusca, alternarPainel, alternarSumario, criarFilho, definirTopico, expandirNota, filhosDe, indiceDe, irParaNo, renomearNota,
   tituloDaNota, useLoja,
 } from '../estado/loja';
 import { useVoltar } from '../estado/navegacao';
@@ -21,6 +21,7 @@ import { estiloDoTipo } from '../util/cores';
 import { plural } from '../util/texto';
 import { CorpoDaNota } from './Editor';
 import { aoMudarPendencias, gravarResumo, haPendencias, marcarResumo } from './salvamento';
+import { useTextoVivo } from './textoVivo';
 
 function EstadoDoSalvamento() {
   const pendente = useSyncExternalStore(aoMudarPendencias, () => haPendencias());
@@ -117,6 +118,32 @@ function useNoDaNota(notaId: string): string | undefined {
   });
 }
 
+/** Contador de palavras, discreto, atualizado com atraso. */
+function ContadorDePalavras({ notaId }: { notaId: string }) {
+  const texto = useTextoVivo();
+  if (texto.notaId !== notaId) return null;
+  return <span className="contador-palavras">{plural(texto.palavras, 'palavra', 'palavras')}</span>;
+}
+
+/** Abre o sumário: painel fixo em tela cheia, painel deslizante nos outros casos. */
+function BotaoDoSumario() {
+  const aberto = useLoja((s) => (s.notaExpandida && s.largo ? s.sumarioFixo : s.sumarioAberto));
+  return (
+    <button
+      type="button"
+      className={'botao-icone' + (aberto ? ' ligado' : '')}
+      data-acao="sumario"
+      aria-pressed={aberto}
+      aria-label="Sumário"
+      title="Sumário"
+      onPointerDown={(e) => e.preventDefault()}
+      onClick={alternarSumario}
+    >
+      <TableOfContents size={20} />
+    </button>
+  );
+}
+
 /** Cabeçalho comum: tipo, estado do salvamento, tela cheia e fechar. */
 function Cabecalho({ notaId, topico }: { notaId: string; topico: boolean }) {
   const tipo = useLoja((s) => (s.notas[notaId] ? s.tipos[s.notas[notaId]!.tipoId] : undefined));
@@ -155,7 +182,9 @@ function Cabecalho({ notaId, topico }: { notaId: string; topico: boolean }) {
       )}
       {usos > 1 && <span className="nota-usos">em {plural(usos, 'lugar', 'lugares')}</span>}
       <span className="espaco" />
+      {!topico && <ContadorDePalavras notaId={notaId} />}
       <EstadoDoSalvamento />
+      {!topico && <BotaoDoSumario />}
       {expandida && (
         <button type="button" className="botao-icone" data-acao="buscar" aria-label="Buscar notas" onClick={() => abrirBusca(true)}>
           <Search size={20} />
@@ -375,9 +404,11 @@ function PainelDaNota({ notaId }: { notaId: string }) {
   const tipo = useLoja((s) => (s.notas[notaId] ? s.tipos[s.notas[notaId]!.tipoId] : undefined));
   const escuro = useLoja((s) => s.escuro);
   const expandida = useLoja((s) => s.notaExpandida);
+  const foco = useLoja((s) => s.foco);
   const [nota, setNota] = useState<Nota | null>(null);
   const [falha, setFalha] = useState<string | null>(null);
-  useVoltar(expandida, () => expandirNota(false));
+  // No modo foco, quem responde ao voltar são os controles do foco.
+  useVoltar(expandida && !foco, () => expandirNota(false));
 
   useEffect(() => {
     let vivo = true;
@@ -409,7 +440,7 @@ function PainelDaNota({ notaId }: { notaId: string }) {
 
   return (
     <div className="painel-nota" style={estiloDoTipo(tipo?.cor, escuro) as CSSProperties} data-nota={notaId}>
-      <Cabecalho notaId={notaId} topico={false} />
+      {!foco && <Cabecalho notaId={notaId} topico={false} />}
       {nota ? (
         <CorpoDaNota key={nota.id} notaId={nota.id} conteudo={nota.conteudo} titulo={cabecaDaPagina} />
       ) : (

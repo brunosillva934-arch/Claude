@@ -50,5 +50,15 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!--
+          Só para a câmera gravar a foto pedida pelo app (um arquivo temporário).
+          Não é exportado: a câmera recebe permissão de escrita só para aquele pedido.
+        -->
+        <provider
+            android:name=".Provedor"
+            android:authorities="app.bau.notas.arquivos"
+            android:exported="false"
+            android:grantUriPermissions="true" />
     </application>
 </manifest>

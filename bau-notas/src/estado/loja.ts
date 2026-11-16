@@ -82,6 +82,17 @@ export interface Estado {
   /** Tema escolhido nas preferências; "sistema" acompanha o Android. */
   temaPreferido: PreferenciaTema;
 
+  /** Modo foco: só o texto, sem barras, com o Android em tela imersiva. */
+  foco: boolean;
+  /** No modo foco: esmaecer os parágrafos fora de edição. */
+  focoEsmaecer: boolean;
+  /** No modo foco: a linha atual fica no meio da tela (máquina de escrever). */
+  focoMaquina: boolean;
+  /** Com a nota em tela cheia, o sumário fica num painel fixo à direita (preferência). */
+  sumarioFixo: boolean;
+  /** Na tela dividida e em retrato, o sumário abre por cima, deslizando. */
+  sumarioAberto: boolean;
+
   /** Contadores que a árvore observa para enquadrar tudo ou revelar um nó. */
   pedidoVerTudo: number;
   /** `suave`: não desfaz o "ver tudo" só para acomodar os botões do nó. */
@@ -116,6 +127,11 @@ export const useLoja = create<Estado>(() => ({
   tiposAbertos: false,
   buscaAberta: false,
   temaPreferido: 'sistema',
+  foco: false,
+  focoEsmaecer: false,
+  focoMaquina: false,
+  sumarioFixo: true,
+  sumarioAberto: false,
   pedidoVerTudo: 0,
   pedidoRevelar: null,
   salvamento: 'salvo',
@@ -349,6 +365,9 @@ export async function iniciar(): Promise<void> {
     painelLigado: dados.config.painelLigado !== '0',
     proporcao: proporcao >= 0.25 && proporcao <= 0.75 ? proporcao : 0.56,
     temaPreferido: dados.config.tema === 'claro' || dados.config.tema === 'escuro' ? dados.config.tema : 'sistema',
+    focoEsmaecer: dados.config.focoEsmaecer === '1',
+    focoMaquina: dados.config.focoMaquina === '1',
+    sumarioFixo: dados.config.sumarioFixo !== '0',
   });
 }
 
@@ -367,6 +386,50 @@ export function definirTemaPreferido(tema: PreferenciaTema): void {
   if (get().temaPreferido === tema) return;
   set({ temaPreferido: tema });
   guardarPreferencia('tema', tema);
+}
+
+let expandidaAntesDoFoco = false;
+
+/** Entra no modo foco com a nota aberta (só notas completas, que têm texto). */
+export function entrarFoco(): void {
+  const s = get();
+  const nota = s.notaAbertaId ? s.notas[s.notaAbertaId] : undefined;
+  if (!nota || nota.topico || s.foco) return;
+  expandidaAntesDoFoco = s.notaExpandida;
+  set({ foco: true, notaExpandida: true, sumarioAberto: false, gavetaAberta: false, buscaAberta: false });
+}
+
+export function sairFoco(): void {
+  if (!get().foco) return;
+  set({ foco: false, notaExpandida: expandidaAntesDoFoco });
+}
+
+export function alternarFoco(): void {
+  if (get().foco) sairFoco();
+  else entrarFoco();
+}
+
+export function definirOpcaoDoFoco(opcao: 'focoEsmaecer' | 'focoMaquina', ligada: boolean): void {
+  set({ [opcao]: ligada } as Partial<Estado>);
+  guardarPreferencia(opcao, ligada ? '1' : '0');
+}
+
+/**
+ * Botão "Sumário" do cabeçalho: em tela cheia, mostra ou esconde o painel fixo
+ * (e lembra a escolha); nos outros casos, abre ou fecha o painel deslizante.
+ */
+export function alternarSumario(): void {
+  const s = get();
+  if (s.notaExpandida && s.largo && !s.foco) {
+    set({ sumarioFixo: !s.sumarioFixo });
+    guardarPreferencia('sumarioFixo', s.sumarioFixo ? '0' : '1');
+  } else {
+    set({ sumarioAberto: !s.sumarioAberto });
+  }
+}
+
+export function fecharSumario(): void {
+  if (get().sumarioAberto) set({ sumarioAberto: false });
 }
 
 export function abrirBusca(aberta: boolean): void {

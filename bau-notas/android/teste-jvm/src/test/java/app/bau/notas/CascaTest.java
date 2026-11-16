@@ -153,6 +153,31 @@ public class CascaTest {
         assertTrue(shadowOf(web).getLastEvaluatedJavascript().contains("__bau.voltar"));
     }
 
+    @Test
+    public void imagensSoComNomeValido() throws Exception {
+        android.content.Context contexto = RuntimeEnvironment.getApplication();
+        java.io.File pasta = Imagens.pasta(contexto);
+        String nome = java.util.UUID.randomUUID().toString() + ".jpg";
+        java.io.FileOutputStream saida = new java.io.FileOutputStream(new java.io.File(pasta, nome));
+        saida.write(new byte[] {1, 2, 3});
+        saida.close();
+        assertNotNull(Imagens.arquivo(contexto, nome));
+        // Nada fora da pasta de imagens, nem nomes inventados.
+        assertEquals(null, Imagens.arquivo(contexto, "../" + nome));
+        assertEquals(null, Imagens.arquivo(contexto, "../../databases/bau.db"));
+        assertEquals(null, Imagens.arquivo(contexto, "qualquer.jpg"));
+        assertEquals(null, Imagens.arquivo(contexto, java.util.UUID.randomUUID().toString() + ".jpg"));
+    }
+
+    @Test
+    public void imersivoNaoQuebra() throws Exception {
+        RuntimeEnvironment.getApplication().getApplicationInfo().targetSdkVersion = ALVO_DO_APK;
+        MainActivity tela = Robolectric.buildActivity(MainActivity.class).setup().get();
+        assertTrue(new JSONObject(tela.ponte.chamarSinc("sistema.imersivo", "{\"ligado\":true}")).getBoolean("ok"));
+        assertTrue(new JSONObject(tela.ponte.chamarSinc("sistema.imersivo", "{\"ligado\":false}")).getBoolean("ok"));
+        shadowOf(Looper.getMainLooper()).idle();
+    }
+
     /** Espera a fila da ponte processar e a resposta ser entregue ao WebView. */
     private static String esperarResposta(WebView web) throws Exception {
         String antes = shadowOf(web).getLastEvaluatedJavascript();
