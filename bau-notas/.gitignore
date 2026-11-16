@@ -1,0 +1,7 @@
+node_modules/
+dist/
+dist-android/
+android/.montagem/
+android/chave.senha
+testes/telas/
+*.log

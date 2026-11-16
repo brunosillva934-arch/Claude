@@ -1,0 +1,331 @@
+/* ------------------------------------------------------------------ painel da nota */
+.painel-nota {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--superficie);
+}
+
+.nota-cabecalho {
+  flex: 0 0 var(--barra);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 8px 0 10px;
+  border-bottom: 1px solid var(--borda);
+}
+
+.seletor-tipo {
+  min-width: 0;
+  height: 40px;
+  padding: 0 10px 0 6px;
+  border-radius: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--cor-fraca);
+  color: var(--cor-texto);
+  font-size: 14px;
+  font-weight: 700;
+  position: relative;
+}
+
+/* Alvo de toque de 48 px, mesmo com o desenho menor. */
+.seletor-tipo::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -4px;
+  bottom: -4px;
+}
+
+.seletor-tipo-icone {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--cor);
+  color: #fff;
+}
+
+html[data-tema='escuro'] .seletor-tipo-icone {
+  color: #10141a;
+}
+
+.seletor-tipo-nome {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nota-usos {
+  flex: none;
+  font-size: 12.5px;
+  color: var(--texto-3);
+  margin-left: 4px;
+}
+
+.estado-salvar {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 8px;
+  font-size: 13px;
+  color: var(--texto-3);
+}
+
+.estado-salvar.salvo {
+  color: var(--sucesso);
+}
+
+.estado-salvar.erro {
+  color: var(--perigo);
+  font-weight: 700;
+}
+
+/* Barra de formatação: fixa, de altura constante, com rolagem horizontal se não couber. */
+.nota-barra {
+  flex: 0 0 56px;
+  height: 56px;
+  border-bottom: 1px solid var(--borda);
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+}
+
+.nota-barra::-webkit-scrollbar {
+  display: none;
+}
+
+.barra-editor {
+  height: 100%;
+  width: max-content;
+  min-width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 8px;
+}
+
+.botao-editor {
+  flex: none;
+  width: var(--toque);
+  height: var(--toque);
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--texto-2);
+}
+
+.botao-editor.com-separador {
+  margin-left: 13px;
+  position: relative;
+}
+
+.botao-editor.com-separador::before {
+  content: '';
+  position: absolute;
+  left: -8px;
+  top: 12px;
+  bottom: 12px;
+  border-left: 1px solid var(--borda);
+}
+
+.botao-editor.ativo {
+  background: var(--destaque-fraco);
+  color: var(--destaque);
+}
+
+.botao-editor:active:not(:disabled) {
+  background: var(--superficie-2);
+}
+
+/*
+ * O único contêiner de rolagem da nota.
+ * - overflow-anchor: none  -> o navegador não "reancora" a rolagem enquanto o texto muda;
+ * - overscroll-behavior    -> sem efeito elástico nem repasse da rolagem para a página;
+ * - nenhuma transição de altura.
+ */
+.nota-rolagem {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overflow-anchor: none;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+.nota-pagina {
+  max-width: 46rem;
+  min-height: 100%;
+  margin: 0 auto;
+  padding: 22px 28px 0;
+  /* Espaço livre abaixo do texto: cerca de 45% da altura da tela, medido sem o
+     teclado, para o cursor nunca ficar colado na borda inferior. */
+  padding-bottom: calc(var(--altura-cheia, 100vh) * 0.45);
+  cursor: text;
+}
+
+.nota-titulo {
+  display: block;
+  width: 100%;
+  margin: 0 0 10px;
+  padding: 0;
+  border: 0;
+  outline: none;
+  resize: none;
+  overflow: hidden;
+  background: transparent;
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1.22;
+  letter-spacing: -0.01em;
+  color: var(--texto);
+}
+
+.nota-titulo::placeholder {
+  color: var(--texto-3);
+}
+
+.nota-falha {
+  color: var(--perigo);
+}
+
+/* ------------------------------------------------------------------ texto */
+.texto-nota {
+  outline: none;
+  font-size: 17px;
+  line-height: 1.65;
+  color: var(--texto);
+  caret-color: var(--destaque);
+  -webkit-user-select: text;
+  user-select: text;
+  overflow-wrap: break-word;
+  word-break: normal;
+  cursor: text;
+}
+
+.texto-nota > *:first-child {
+  margin-top: 0;
+}
+
+.texto-nota p {
+  margin: 0 0 0.7em;
+}
+
+.texto-nota h1,
+.texto-nota h2,
+.texto-nota h3,
+.texto-nota h4 {
+  margin: 1.3em 0 0.45em;
+  line-height: 1.25;
+  font-weight: 700;
+}
+
+.texto-nota h1 {
+  font-size: 1.65em;
+}
+
+.texto-nota h2 {
+  font-size: 1.35em;
+}
+
+.texto-nota h3 {
+  font-size: 1.15em;
+}
+
+.texto-nota h4 {
+  font-size: 1em;
+  color: var(--texto-2);
+}
+
+.texto-nota ul,
+.texto-nota ol {
+  margin: 0 0 0.7em;
+  padding-left: 1.6em;
+}
+
+.texto-nota li > p {
+  margin-bottom: 0.25em;
+}
+
+.texto-nota blockquote {
+  margin: 0 0 0.9em;
+  padding: 2px 0 2px 16px;
+  border-left: 4px solid var(--borda-forte);
+  color: var(--texto-2);
+}
+
+.texto-nota blockquote > p:last-child {
+  margin-bottom: 0;
+}
+
+.texto-nota hr {
+  border: 0;
+  border-top: 2px solid var(--borda);
+  margin: 1.4em 0;
+}
+
+.texto-nota code {
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--superficie-2);
+  font-size: 0.92em;
+}
+
+.texto-nota pre {
+  margin: 0 0 0.9em;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--superficie-2);
+  overflow-x: auto;
+  font-size: 0.9em;
+}
+
+.texto-nota pre code {
+  padding: 0;
+  background: none;
+}
+
+.texto-nota p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  color: var(--texto-3);
+  pointer-events: none;
+}
+
+.texto-nota ::selection {
+  background: var(--destaque-fraco);
+}
+
+/* Menção a outra nota: um "chip" na cor do tipo. */
+.mencao {
+  padding: 1px 8px 2px;
+  border-radius: 8px;
+  background: var(--cor-fraca);
+  color: var(--cor-texto);
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.mencao.ausente {
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+
+.mencao.ProseMirror-selectednode {
+  box-shadow: 0 0 0 2px var(--cor);
+}

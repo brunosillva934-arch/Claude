@@ -1,0 +1,721 @@
+/* ------------------------------------------------------------------ canvas */
+.arvore {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--fundo);
+  touch-action: none;
+  --zoom: 1;
+}
+
+.arvore .react-flow {
+  background: transparent;
+  --xy-background-pattern-color-default: var(--borda);
+  --xy-background-pattern-dots-color-default: var(--borda);
+}
+
+.arvore .react-flow__pane {
+  cursor: default;
+  touch-action: none;
+}
+
+.arvore .react-flow__node {
+  cursor: pointer;
+  touch-action: none;
+}
+
+.alca.react-flow__handle {
+  width: 1px;
+  height: 1px;
+  min-width: 0;
+  min-height: 0;
+  border: 0;
+  background: transparent;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ------------------------------------------------------------------ nó */
+.no {
+  position: relative;
+  /* O React Flow desliga os eventos dos nós que não são arrastáveis por ele; os gestos aqui são nossos. */
+  pointer-events: auto;
+  width: 232px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 12px 0 9px;
+  border-radius: 14px;
+  background: var(--superficie);
+  border: 1.5px solid var(--borda);
+  border-left: 6px solid var(--cor);
+  box-shadow: 0 1px 2px rgba(20, 30, 50, 0.07);
+  color: var(--texto);
+}
+
+.no.raiz {
+  border-width: 2px;
+  border-left-width: 6px;
+  border-color: var(--cor);
+}
+
+.no-icone {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 11px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--cor-fraca);
+  color: var(--cor);
+}
+
+.no-titulo {
+  flex: 1 1 auto;
+  min-width: 0;
+  /* Entre o zoom normal e o modo "de longe" a letra cresce um pouco para não ficar miúda na tela. */
+  font-size: clamp(15px, calc(10.5px / var(--zoom)), 17px);
+  font-weight: 600;
+  line-height: 1.2;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+
+.no-repetida {
+  flex: none;
+  display: inline-flex;
+  color: var(--texto-3);
+}
+
+.no.no-caminho {
+  border-color: var(--destaque-medio);
+  border-left-color: var(--cor);
+}
+
+.no.selecionado {
+  border-color: var(--destaque);
+  border-left-color: var(--cor);
+  box-shadow: 0 0 0 4px var(--destaque-fraco), 0 4px 14px rgba(20, 30, 50, 0.16);
+}
+
+.no.em-movimento {
+  opacity: 0.4;
+}
+
+.no.destino-possivel {
+  border-style: dashed;
+  border-color: var(--destaque-medio);
+  border-left-style: solid;
+  border-left-color: var(--cor);
+}
+
+.no.alvo-dentro {
+  border-color: var(--destaque);
+  background: var(--destaque-fraco);
+  box-shadow: 0 0 0 4px var(--destaque-fraco);
+}
+
+.no.alvo-antes::before,
+.no.alvo-depois::after {
+  content: '';
+  position: absolute;
+  left: -4px;
+  right: -4px;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--destaque);
+}
+
+.no.alvo-antes::before {
+  top: -11px;
+}
+
+.no.alvo-depois::after {
+  bottom: -11px;
+}
+
+/* Botão de recolher/expandir, na borda direita do nó. */
+.no-dobra {
+  position: absolute;
+  right: -15px;
+  top: 50%;
+  transform: translateY(-50%);
+  min-width: 28px;
+  height: 28px;
+  padding: 0 6px;
+  border-radius: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--superficie);
+  border: 1.5px solid var(--borda-forte);
+  color: var(--texto-2);
+  font-size: 12px;
+  font-weight: 700;
+  z-index: 2;
+}
+
+/* A área de toque é maior que o desenho. */
+.no-dobra::after {
+  content: '';
+  position: absolute;
+  left: -8px;
+  right: -12px;
+  top: -10px;
+  bottom: -10px;
+}
+
+.no-dobra.recolhido {
+  background: var(--cor);
+  border-color: var(--cor);
+  color: #fff;
+}
+
+html[data-tema='escuro'] .no-dobra.recolhido {
+  color: #10141a;
+}
+
+/* Edição do título direto no nó. */
+.no.editando {
+  border-color: var(--destaque);
+  border-left-color: var(--cor);
+  box-shadow: 0 0 0 4px var(--destaque-fraco);
+}
+
+.no-entrada {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 40px;
+  padding: 0 4px;
+  border: 0;
+  outline: none;
+  background: transparent;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--texto);
+}
+
+.no-entrada::placeholder {
+  color: var(--texto-3);
+  font-weight: 500;
+}
+
+/* ------------------------------------------------------------------ botões ao lado do nó selecionado */
+.acao-no {
+  height: var(--toque);
+  min-width: var(--toque);
+  padding: 0 18px 0 14px;
+  border-radius: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 15px;
+  font-weight: 700;
+  white-space: nowrap;
+  background: var(--destaque);
+  color: var(--destaque-texto);
+  box-shadow: 0 3px 12px rgba(20, 30, 50, 0.28);
+}
+
+.acao-no.suave {
+  background: var(--superficie);
+  color: var(--texto);
+  border: 1.5px solid var(--borda-forte);
+}
+
+.acao-no.so-icone {
+  padding: 0;
+}
+
+.barra-do-no {
+  display: flex;
+}
+
+.acoes-no-topo {
+  display: flex;
+  gap: 8px;
+}
+
+.sugestoes {
+  width: 300px;
+  padding: 6px;
+  border-radius: 14px;
+  background: var(--superficie);
+  border: 1px solid var(--borda);
+  box-shadow: var(--sombra-forte);
+}
+
+.sugestoes-titulo {
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--texto-3);
+}
+
+.sugestao {
+  width: 100%;
+  min-height: var(--toque);
+  padding: 0 10px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+}
+
+.sugestao:active {
+  background: var(--superficie-2);
+}
+
+.sugestao-icone {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--cor-fraca);
+  color: var(--cor);
+}
+
+.sugestao-nome {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sugestao-tipo {
+  flex: none;
+  font-size: 12px;
+  color: var(--cor-texto);
+}
+
+/* ------------------------------------------------------------------ conectores */
+.arvore .react-flow__edge-path.ramo {
+  fill: none;
+  stroke: var(--ramo);
+  /* Com o zoom reduzido a linha engrossa na mesma medida: continua visível na tela. */
+  stroke-width: max(2.25px, calc(1.5px / var(--zoom)));
+  stroke-linecap: round;
+}
+
+.arvore .react-flow__edge-path.ramo.no-caminho {
+  stroke: var(--destaque);
+  stroke-width: max(3.25px, calc(2.4px / var(--zoom)));
+}
+
+.arvore .react-flow__edge-path.ramo.tracejada {
+  stroke-dasharray: 8 7;
+}
+
+.ramo-rotulo {
+  position: absolute;
+  left: 0;
+  top: 0;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: var(--fundo);
+  border: 1px solid var(--borda);
+  color: var(--texto-2);
+  font-size: clamp(12.5px, calc(9.5px / var(--zoom)), 15.5px);
+  font-weight: 600;
+  line-height: 1.3;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.ramo-rotulo.no-caminho {
+  border-color: var(--destaque-medio);
+  color: var(--destaque);
+}
+
+/* ------------------------------------------------------------------ zoom bem reduzido */
+.arvore[data-longe] .no {
+  background: var(--cor-media);
+  border-color: transparent;
+  border-left-color: var(--cor);
+  box-shadow: none;
+}
+
+.arvore[data-longe] .no.selecionado {
+  border-color: var(--destaque);
+  box-shadow: 0 0 0 calc(4px / var(--zoom)) var(--destaque-medio);
+}
+
+.arvore[data-longe] .no-icone,
+.arvore[data-longe] .no-titulo,
+.arvore[data-longe] .no-repetida,
+.arvore[data-longe] .no-dobra,
+.arvore[data-longe] .ramo-rotulo {
+  visibility: hidden;
+}
+
+.rotulo-longe {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 7px 2px 5px;
+  border-radius: 7px;
+  background: var(--fundo);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 18px;
+  white-space: nowrap;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.rotulo-longe > svg {
+  flex: none;
+}
+
+.rotulo-longe > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rotulo-longe.duas-linhas > span {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  -webkit-hyphens: auto;
+  hyphens: auto;
+  /* Só palavras longas são hifenizadas ("Tromboembo-lismo"), nunca as curtas. */
+  hyphenate-limit-chars: 11 5 4;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  line-height: 1.15;
+}
+
+.rotulo-longe.nivel-1 {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.rotulo-longe.nivel-0 {
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.rotulo-longe.selecionado {
+  background: var(--destaque);
+  background-image: none !important;
+  color: var(--destaque-texto) !important;
+  z-index: 3;
+}
+
+/* Rótulo do ramo no modo "de longe": termina encostado no nó filho. */
+.ramo-longe {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+  padding: 1px 6px;
+  border-radius: 8px;
+  background: var(--fundo);
+  border: 1px solid var(--borda);
+  color: var(--texto-2);
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 15px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.ramo-longe.no-caminho {
+  border-color: var(--destaque-medio);
+  color: var(--destaque);
+}
+
+.arvore[data-longe] .no.editando {
+  background: var(--superficie);
+}
+
+.arvore[data-longe] .no.editando .no-icone {
+  visibility: visible;
+}
+
+/* ------------------------------------------------------------------ controles fixos e minimapa */
+.controles-arvore {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  z-index: 5;
+  display: flex;
+  gap: 8px;
+}
+
+.controle {
+  width: var(--toque);
+  height: var(--toque);
+  border-radius: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--superficie);
+  border: 1px solid var(--borda);
+  box-shadow: var(--sombra);
+  color: var(--texto);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.controle.com-texto {
+  width: auto;
+  padding: 0 16px 0 13px;
+}
+
+.controle:active {
+  background: var(--superficie-2);
+}
+
+.arvore .react-flow__minimap.minimapa {
+  margin: 12px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--superficie);
+  border: 1px solid var(--borda);
+  box-shadow: var(--sombra);
+  --xy-minimap-background-color-default: var(--superficie);
+  --xy-minimap-mask-background-color-default: var(--veu-minimapa);
+  --xy-minimap-mask-stroke-color-default: var(--destaque);
+  --xy-minimap-mask-stroke-width-default: 2;
+}
+
+html[data-tema='claro'] {
+  --veu-minimapa: rgba(210, 217, 227, 0.6);
+}
+
+html[data-tema='escuro'] {
+  --veu-minimapa: rgba(8, 10, 14, 0.62);
+}
+
+
+.faixa-mover {
+  position: absolute;
+  left: 50%;
+  top: 12px;
+  transform: translateX(-50%);
+  z-index: 6;
+  max-width: calc(100% - 24px);
+  min-height: 52px;
+  padding: 4px 6px 4px 18px;
+  border-radius: 26px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--destaque);
+  color: var(--destaque-texto);
+  box-shadow: var(--sombra-forte);
+  font-size: 15px;
+}
+
+.faixa-mover > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.faixa-mover-cancelar {
+  flex: none;
+  height: 44px;
+  padding: 0 14px;
+  border-radius: 22px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+  color: inherit;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.fantasma {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 20;
+  max-width: 260px;
+  padding: 10px 16px;
+  border-radius: 14px;
+  background: var(--destaque);
+  color: var(--destaque-texto);
+  box-shadow: var(--sombra-forte);
+  font-size: 15px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+}
+
+/* ------------------------------------------------------------------ lista recuada */
+.lista {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 8px 8px 96px;
+  background: var(--fundo);
+}
+
+.linha {
+  min-height: 52px;
+  padding-right: 6px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1.5px solid transparent;
+  /* Linhas fora da tela não são desenhadas. */
+  content-visibility: auto;
+  contain-intrinsic-size: auto 52px;
+}
+
+.linha.no-caminho {
+  background: var(--destaque-fraco);
+}
+
+.linha.selecionada {
+  background: var(--superficie);
+  border-color: var(--destaque);
+  box-shadow: 0 0 0 3px var(--destaque-fraco);
+}
+
+.linha.em-movimento {
+  opacity: 0.4;
+}
+
+.linha.destino-possivel {
+  border-style: dashed;
+  border-color: var(--destaque-medio);
+}
+
+.linha-dobra {
+  flex: none;
+  width: 40px;
+  height: var(--toque);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--texto-2);
+  border-radius: 10px;
+}
+
+.linha-icone {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--cor-fraca);
+  color: var(--cor);
+}
+
+.linha-titulo {
+  flex: 0 1 auto;
+  min-width: 0;
+  font-size: 16px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.linha-repetida {
+  flex: none;
+  display: inline-flex;
+  color: var(--texto-3);
+}
+
+.linha-rotulo {
+  flex: 0 1 auto;
+  min-width: 0;
+  padding: 2px 8px;
+  border-radius: 10px;
+  border: 1px solid var(--borda);
+  color: var(--texto-2);
+  font-size: 12.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.linha-entrada {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 40px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 8px;
+  outline: none;
+  background: var(--superficie-2);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.linha-acoes {
+  margin-left: auto;
+  flex: none;
+  display: flex;
+  gap: 6px;
+  padding-left: 8px;
+}
+
+.acao-linha {
+  height: 40px;
+  min-width: 44px;
+  padding: 0 12px 0 9px;
+  border-radius: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: 14px;
+  font-weight: 700;
+  background: var(--destaque);
+  color: var(--destaque-texto);
+}
+
+.acao-linha.so-icone {
+  padding: 0;
+  background: var(--superficie-2);
+  color: var(--texto);
+}
+
+@media (max-width: 620px) {
+  .linha.selecionada {
+    flex-wrap: wrap;
+    padding-bottom: 6px;
+  }
+  .linha.selecionada .linha-acoes {
+    flex: 1 0 100%;
+    padding-left: 48px;
+  }
+}
