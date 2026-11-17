@@ -87,13 +87,14 @@ const ponteSimulada = `
   const consulta = (sql) => pagina.evaluate((s) => window.__mock.db.exec(s)[0]?.values ?? [], sql);
   confere('a página não pede nada fora do próprio app', externos.length === 0, externos.join(', '));
   confere('política de conteúdo presente', (await pagina.locator('meta[http-equiv="Content-Security-Policy"]').count()) === 1);
-  confere('esquema criado pela ponte (versão 5)', (await consulta('PRAGMA user_version'))[0][0] === 5);
+  confere('esquema criado pela ponte (versão 6)', (await consulta('PRAGMA user_version'))[0][0] === 6);
+  confere('exemplo com 3 seções', (await consulta('SELECT count(*) FROM notas WHERE secao = 1'))[0][0] === 3);
   confere('tipo "Mecanismo de ação" com os 4 mecanismos do exemplo',
     (await consulta("SELECT count(*) FROM notas WHERE tipoId = 'mecanismo'"))[0][0] === 4);
   confere('tipo "Classe farmacológica" com as 4 classes do exemplo',
     (await consulta("SELECT count(*) FROM notas WHERE tipoId = 'classe'"))[0][0] === 4);
-  confere('dados de exemplo gravados (39 notas, 8 delas tópicos com recomendação)',
-    (await consulta("SELECT count(*), sum(topico), sum(topico = 1 AND resumo <> '') FROM notas"))[0].join(',') === '39,8,8',
+  confere('dados de exemplo gravados (42 notas, 8 delas tópicos com recomendação)',
+    (await consulta("SELECT count(*), sum(topico), sum(topico = 1 AND resumo <> '') FROM notas"))[0].join(',') === '42,8,8',
     (await consulta("SELECT count(*), sum(topico), sum(topico = 1 AND resumo <> '') FROM notas"))[0].join(','));
   confere('árvore de exemplo na tela', (await pagina.locator('.no').count()) === 26);
   confere('barras do sistema pintadas', await pagina.evaluate(() => window.__mock.barras && window.__mock.barras.fundoClaro === true));

@@ -4,15 +4,16 @@
  */
 import {
   BetweenHorizontalStart as Between, ChevronsDownUp, ChevronsUpDown, CornerDownRight, FileText, GitBranchPlus, Hash,
-  ListPlus, MessageSquareText, Move, Pencil, Shapes, Tag, Trash2,
+  Heading, ListPlus, MessageSquareText, Move, Pencil, Shapes, Tag, Trash2,
 } from 'lucide-react';
+import { formaDe, type Forma } from '../dados/tipos';
 import {
-  alternarRecolhido, criarFilho, criarIrmao, definirRotulo, definirTopico, desfazer, editarTitulo, excluirArvore,
+  alternarRecolhido, criarFilho, criarIrmao, definirForma, definirRotulo, desfazer, editarTitulo, excluirArvore,
   excluirNo, expandirNota, filhosDe, iniciarMover, inserirEntre, mudarTipoDaNota, resumoDaArvore, resumoDaExclusao,
-  selecionar, separarComoArvore,
-  tiposOrdenados, tituloDaNota, useLoja,
+  selecionar, separarComoArvore, tiposOrdenados, tituloDaNota, useLoja,
 } from '../estado/loja';
 import { gravarResumoAgora } from '../nota/salvamento';
+import { FORMAS } from './formas';
 import { abrirMenu, avisar, confirmar, perguntarTexto, type ItemMenu } from '../ui/servico';
 import { coresDoTipo } from '../util/cores';
 import { plural } from '../util/texto';
@@ -54,6 +55,31 @@ export async function pedirResumo(notaId: string): Promise<void> {
     permitirVazio: true,
   });
   if (resposta !== null) gravarResumoAgora(notaId, resposta.replace(/\s+/g, ' ').trim());
+}
+
+/** Nota completa, tópico ou seção. Nada se perde ao trocar. */
+export function abrirMenuDeFormato(notaId: string, x: number, y: number): void {
+  const nota = useLoja.getState().notas[notaId];
+  if (!nota) return;
+  const atual = formaDe(nota);
+  const detalhes: Record<Forma, string> = {
+    nota: 'texto completo',
+    topico: 'item com recomendação curta',
+    secao: 'só título, em destaque',
+  };
+  abrirMenu({
+    titulo: 'Formato',
+    x,
+    y,
+    itens: FORMAS.map((f) => ({
+      id: 'formato-' + f.id,
+      rotulo: f.nome,
+      icone: f.icone,
+      detalhe: detalhes[f.id],
+      marcado: f.id === atual,
+      aoEscolher: () => definirForma(notaId, f.id),
+    })),
+  });
 }
 
 export function abrirMenuDeTipos(notaId: string, x: number, y: number): void {
@@ -129,11 +155,12 @@ export function abrirMenuDoNo(noId: string, x: number, y: number, aposSoltar = f
   const raiz = !no.paiId;
   const principal = raiz && s.arvores[no.arvoreId]?.raizId === noId;
   const topico = nota?.topico === true;
+  const secao = nota?.secao === true;
 
   const itens: ItemMenu[] = [
     {
       id: 'abrir',
-      rotulo: topico ? 'Abrir o tópico' : 'Abrir nota',
+      rotulo: secao ? 'Abrir a seção' : topico ? 'Abrir o tópico' : 'Abrir nota',
       icone: FileText,
       aoEscolher: () => {
         selecionar(noId);
@@ -152,19 +179,23 @@ export function abrirMenuDoNo(noId: string, x: number, y: number, aposSoltar = f
           },
         ]
       : []),
+    ...(secao
+      ? []
+      : [
+          {
+            id: 'tipo',
+            rotulo: 'Mudar o tipo',
+            icone: Shapes,
+            detalhe: tipo?.nome,
+            aoEscolher: () => abrirMenuDeTipos(no.notaId, x, y),
+          },
+        ]),
     {
-      id: 'tipo',
-      rotulo: 'Mudar o tipo',
-      icone: Shapes,
-      detalhe: tipo?.nome,
-      aoEscolher: () => abrirMenuDeTipos(no.notaId, x, y),
-    },
-    {
-      id: 'topico',
-      rotulo: topico ? 'Transformar em nota completa' : 'Transformar em tópico',
-      icone: topico ? FileText : Hash,
-      detalhe: topico ? 'para texto longo' : 'item com recomendação curta',
-      aoEscolher: () => definirTopico(no.notaId, !topico),
+      id: 'formato',
+      rotulo: 'Mudar o formato',
+      icone: secao ? Heading : topico ? Hash : FileText,
+      detalhe: secao ? 'seção' : topico ? 'tópico' : 'nota',
+      aoEscolher: () => abrirMenuDeFormato(no.notaId, x, y),
     },
     {
       id: 'rotulo',
@@ -225,7 +256,7 @@ export function abrirMenuDoNo(noId: string, x: number, y: number, aposSoltar = f
       id: 'topico-filho',
       rotulo: 'Novo tópico (filho)',
       icone: Hash,
-      aoEscolher: () => void criarFilho(noId, true),
+      aoEscolher: () => void criarFilho(noId, 'topico'),
     },
     {
       id: 'excluir',
@@ -236,7 +267,13 @@ export function abrirMenuDoNo(noId: string, x: number, y: number, aposSoltar = f
       aoEscolher: () => void pedirExclusao(noId),
     },
   ];
-  abrirMenu({ titulo: (topico ? 'Tópico: ' : '') + tituloDaNota(nota), x, y, itens, aposSoltar });
+  abrirMenu({
+    titulo: (secao ? 'Seção: ' : topico ? 'Tópico: ' : '') + tituloDaNota(nota),
+    x,
+    y,
+    itens,
+    aposSoltar,
+  });
 }
 
 export { avisarDesfazer };

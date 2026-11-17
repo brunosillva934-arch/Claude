@@ -15,6 +15,7 @@ declare global {
       tipoDe(titulo: string): string | null;
       topicosDaArvoreAtual(): string[];
       raizes(): string[];
+      formaDe(titulo: string): string | null;
       rotulo(titulo: string): string;
       posicao(titulo: string): { x: number; y: number };
     };
@@ -37,6 +38,15 @@ window.__bauTeste = {
   tipoDe(titulo) {
     const s = useLoja.getState();
     return Object.values(s.notas).find((n) => n.titulo === titulo)?.tipoId ?? null;
+  },
+  /** Formato (nota, tópico, seção) da primeira nota com esse título na árvore atual. */
+  formaDe(titulo) {
+    const s = useLoja.getState();
+    const no = Object.values(s.nos).find(
+      (n) => n.arvoreId === s.arvoreAtualId && tituloDaNota(s.notas[n.notaId]) === titulo,
+    );
+    const nota = no ? s.notas[no.notaId] : undefined;
+    return nota ? (nota.secao ? 'secao' : nota.topico ? 'topico' : 'nota') : null;
   },
   /** Títulos das árvores da tela atual, a principal primeiro. */
   raizes() {

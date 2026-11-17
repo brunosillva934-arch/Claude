@@ -32,6 +32,11 @@ export interface NotaMeta {
   topico: boolean;
   /** Recomendação curta de um tópico (texto simples). Vazia nas notas completas. */
   resumo: string;
+  /**
+   * Seção: só um título, em destaque na árvore, que agrupa ramos (ex.: "Dor
+   * torácica" dentro de "Grandes síndromes clínicas"). Não tem texto nem tipo.
+   */
+  secao: boolean;
   criadaEm: number;
   atualizadaEm: number;
   /** Preenchido quando a nota está na lixeira. */
@@ -71,6 +76,13 @@ export interface No {
 }
 
 export const TIPO_GERAL = 'geral';
+
+/** Formato de um nó: nota completa, tópico (item com recomendação) ou seção (título). */
+export type Forma = 'nota' | 'topico' | 'secao';
+
+export function formaDe(nota: { topico: boolean; secao: boolean } | undefined): Forma {
+  return nota?.secao ? 'secao' : nota?.topico ? 'topico' : 'nota';
+}
 /** Classe farmacológica (ex.: "Inibidores diretos do fator Xa"): a nota que explica o mecanismo. */
 export const TIPO_CLASSE = 'classe';
 /** Mecanismo de ação (ex.: "Inibição direta do fator Xa"). */

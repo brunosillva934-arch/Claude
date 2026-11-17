@@ -89,8 +89,8 @@ const resultados = () => pagina.locator('.busca-linha').evaluateAll((els) => els
   await pagina.locator('.acao-no[data-acao="mais"]').tap();
   await pagina.waitForTimeout(250);
   const itens = await pagina.locator('.menu-item').evaluateAll((e) => e.map((x) => x.dataset.item));
-  confere('menu do tópico: recomendação, tipo e "transformar em nota"',
-    ['resumo', 'tipo', 'topico'].every((i) => itens.includes(i)), itens.join(','));
+  confere('menu do tópico: recomendação, tipo e formato',
+    ['resumo', 'tipo', 'formato'].every((i) => itens.includes(i)), itens.join(','));
   await pagina.locator('.menu-item[data-item="resumo"]').tap();
   await pagina.waitForTimeout(250);
   await pagina.keyboard.type('Sublingual; evitar se PAS < 90 mmHg.');
@@ -119,7 +119,9 @@ const resultados = () => pagina.locator('.busca-linha').evaluateAll((els) => els
     ((await pagina.locator('.texto-nota').textContent()) || '').includes('Só se a dor não ceder'));
   await pagina.locator('.acao-no[data-acao="mais"]').tap();
   await pagina.waitForTimeout(250);
-  await pagina.locator('.menu-item[data-item="topico"]').tap();
+  await pagina.locator('.menu-item[data-item="formato"]').tap();
+  await pagina.waitForTimeout(250);
+  await pagina.locator('.menu-item[data-item="formato-topico"]').tap();
   await pagina.waitForTimeout(400);
   confere('e volta a ser tópico, com a recomendação', (await pagina.locator('.campo.resumo').inputValue()).includes('Só se a dor'));
 

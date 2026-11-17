@@ -42,6 +42,8 @@ interface Rascunho {
   /** Tópico: item de lista (ex.: um medicamento sob a nota da classe), com recomendação curta. */
   topico?: boolean;
   resumo?: string;
+  /** Seção: só um título em destaque, que agrupa ramos. */
+  secao?: boolean;
   doc: (id: Record<string, string>) => NoDoc[];
 }
 
@@ -326,6 +328,10 @@ const NOTAS: Rascunho[] = [
     chave: 'dabigatrana', titulo: 'Dabigatrana', tipoId: 'medicamento', topico: true,
     resumo: 'Antídoto: idarucizumabe. Não abrir a cápsula.', doc: () => [],
   },
+  // Seções: só títulos, para agrupar. As doenças embaixo delas são as mesmas notas da árvore "Dor torácica".
+  { chave: 'gsc', titulo: 'Grandes síndromes clínicas', tipoId: 'geral', secao: true, doc: () => [] },
+  { chave: 'sec_dor', titulo: 'Dor torácica', tipoId: 'geral', secao: true, doc: () => [] },
+  { chave: 'sec_dispneia', titulo: 'Dispneia', tipoId: 'geral', secao: true, doc: () => [] },
   {
     chave: 'inr', titulo: 'INR', tipoId: 'exame',
     doc: (id) => [p('Padroniza o tempo de protrombina. Usado para ajustar a ', m(id.varfarina!), '.')],
@@ -396,6 +402,24 @@ const ARVORES: Array<{ nome: string; raiz: Ramo }> = [
       ]],
     ]],
   },
+  {
+    nome: 'Grandes síndromes clínicas',
+    // "Dor torácica" e "Dispneia" aqui são seções: só títulos, para ramificar.
+    raiz: ['gsc', null, [
+      ['sec_dor', null, [
+        ['iam', 'supra de ST'],
+        ['tep', 'dispneia súbita'],
+        ['disseccao', 'dor lancinante'],
+        ['pericardite', 'piora ao deitar'],
+        ['pneumotorax', 'murmúrio abolido'],
+      ]],
+      ['sec_dispneia', null, [
+        ['tep', 'súbita'],
+        ['pneumotorax', 'com hipotensão'],
+        ['iam', 'equivalente anginoso'],
+      ]],
+    ]],
+  },
 ];
 
 export interface Exemplo {
@@ -418,8 +442,9 @@ export function montarExemplo(sufixo = '', ordemInicial = 0): Exemplo {
       titulo: r.titulo,
       tipoId: r.tipoId,
       topico: r.topico === true,
+      secao: r.secao === true,
       resumo: r.resumo ?? '',
-      conteudo: r.topico ? '' : JSON.stringify(doc),
+      conteudo: r.topico || r.secao ? '' : JSON.stringify(doc),
       texto: textoDoDocumento(doc, (notaId) => tituloPorId.get(notaId) ?? ''),
       criadaEm: quando,
       atualizadaEm: quando,

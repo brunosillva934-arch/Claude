@@ -157,7 +157,7 @@ export function TiposDeNota() {
   if (!aberto) return null;
   const contagem = new Map<string, number>();
   for (const n of Object.values(notas)) {
-    if (!n.excluidaEm) contagem.set(n.tipoId, (contagem.get(n.tipoId) ?? 0) + 1);
+    if (!n.excluidaEm && !n.secao) contagem.set(n.tipoId, (contagem.get(n.tipoId) ?? 0) + 1);
   }
 
   return (

@@ -117,6 +117,8 @@ const MIGRACOES: Array<() => Instrucao[]> = [
       },
     ];
   },
+  // 6: seções (nós que são só um título em destaque, sem texto e sem tipo)
+  () => [{ sql: 'ALTER TABLE notas ADD COLUMN secao INTEGER NOT NULL DEFAULT 0' }],
 ];
 
 export const VERSAO_ESQUEMA = MIGRACOES.length;

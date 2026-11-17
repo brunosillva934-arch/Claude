@@ -104,7 +104,8 @@ export class IndiceDeBusca {
       this.titulos.set(n.id, n.titulo);
       const resumo = n.topico ? n.resumo : '';
       if (resumo) this.resumos.set(n.id, resumo);
-      documentos.push({ id: n.id, titulo: n.titulo, resumo, texto: n.topico ? '' : (textos?.get(n.id) ?? '') });
+      const texto = n.topico || n.secao ? '' : (textos?.get(n.id) ?? '');
+      documentos.push({ id: n.id, titulo: n.titulo, resumo, texto });
     }
     this.mini.addAll(documentos);
   }

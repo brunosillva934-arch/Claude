@@ -9,7 +9,7 @@
  *   podem ser combinados.
  */
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
-import { ArrowLeft, Hash, Search, X } from 'lucide-react';
+import { ArrowLeft, Hash, Heading, Search, X } from 'lucide-react';
 import { carregarTextos, aguardarEscritas } from '../dados/repositorio';
 import type { NotaMeta } from '../dados/tipos';
 import { abrirBusca, abrirNota, indiceDe, tiposOrdenados, tituloDaNota, useLoja } from '../estado/loja';
@@ -60,14 +60,14 @@ function Linha({ item, aoAbrir }: { item: Item; aoAbrir: (nota: NotaMeta) => voi
     }
     return nomes.join(' · ');
   });
-  const Icone = iconeDoTipo(tipo?.icone);
+  const Icone = nota.secao ? Heading : iconeDoTipo(tipo?.icone);
 
   return (
     <button
       type="button"
       className="busca-linha"
       data-resultado={tituloDaNota(nota)}
-      style={estiloDoTipo(tipo?.cor, escuro) as CSSProperties}
+      style={estiloDoTipo(nota.secao ? '#243042' : tipo?.cor, escuro) as CSSProperties}
       onClick={() => aoAbrir(nota)}
     >
       <span className="busca-icone">
@@ -77,7 +77,7 @@ function Linha({ item, aoAbrir }: { item: Item; aoAbrir: (nota: NotaMeta) => voi
         <span className="busca-titulo">{achado?.titulo ? <Destaque trecho={achado.titulo} /> : tituloDaNota(nota)}</span>
         <span className="busca-detalhe">
           <span className="busca-tipo">
-            {tipo?.nome ?? 'Nota'}
+            {nota.secao ? 'Seção' : (tipo?.nome ?? 'Nota')}
             {nota.topico && <span className="busca-marca-topico">tópico</span>}
           </span>
           <span className="busca-onde">{onde ? `em ${onde}` : 'fora das árvores'}</span>
@@ -134,8 +134,9 @@ function Painel() {
   const indice = useMemo(() => new IndiceDeBusca(ativas, textos), [ativas, textos]);
 
   // Tópicos entram junto com as notas do mesmo tipo (um medicamento é medicamento, seja nota ou tópico).
+  // Seções não têm tipo: aparecem só sem filtro.
   const passa = (n: NotaMeta) =>
-    (!soTopicos || n.topico) && (tiposEscolhidos.length === 0 || tiposEscolhidos.includes(n.tipoId));
+    (!soTopicos || n.topico) && (tiposEscolhidos.length === 0 || (!n.secao && tiposEscolhidos.includes(n.tipoId)));
 
   const buscando = normalizar(consulta).length > 0;
   const itens: Item[] = useMemo(() => {

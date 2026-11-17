@@ -945,3 +945,104 @@ html[data-tema='escuro'] {
 .lista-nova-arvore:active {
   background: var(--destaque-fraco);
 }
+
+/* ------------------------------------------------------------------ seções */
+/*
+ * Seção: só um título, que agrupa ramos. Cartão cheio (escuro no tema claro,
+ * claro no escuro), letra maior e em negrito: se destaca das notas (brancas) e
+ * dos tópicos (tingidos na cor do tipo).
+ */
+.no.secao {
+  background: var(--secao-fundo);
+  border: 2px solid var(--secao-borda);
+  border-left-width: 2px;
+  border-radius: 16px;
+  color: var(--secao-texto);
+  box-shadow: 0 2px 8px rgba(15, 23, 34, 0.25);
+}
+
+.no.secao .no-icone {
+  background: rgba(255, 255, 255, 0.14);
+  color: var(--secao-texto);
+}
+
+html[data-tema='escuro'] .no.secao .no-icone {
+  background: rgba(15, 23, 34, 0.1);
+}
+
+.no.secao .no-titulo {
+  font-size: clamp(17px, calc(12px / var(--zoom)), 19px);
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.no.secao .no-entrada {
+  color: var(--secao-texto);
+}
+
+.no.secao .no-entrada::placeholder {
+  color: var(--secao-texto);
+  opacity: 0.6;
+}
+
+.no.secao .no-repetida {
+  color: var(--secao-texto);
+  opacity: 0.7;
+}
+
+.no.secao.selecionado,
+.no.secao.editando {
+  border-color: var(--destaque);
+  box-shadow: 0 0 0 4px var(--destaque-medio);
+}
+
+.no.secao.no-caminho {
+  border-color: var(--destaque-medio);
+}
+
+.arvore[data-longe] .no.secao {
+  background: var(--secao-fundo);
+  border-color: var(--secao-borda);
+}
+
+.rotulo-longe.secao {
+  font-size: 17px;
+  font-weight: 800;
+  padding: 3px 10px 3px 8px;
+  border-radius: 9px;
+}
+
+.rotulo-longe.secao.selecionado {
+  background: var(--destaque);
+}
+
+.linha.secao {
+  background: var(--secao-fundo);
+  color: var(--secao-texto);
+  margin: 4px 0;
+}
+
+.linha.secao .linha-icone {
+  background: rgba(255, 255, 255, 0.14);
+  color: var(--secao-texto);
+}
+
+.linha.secao .linha-titulo {
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.linha.secao .linha-dobra {
+  color: var(--secao-texto);
+}
+
+.linha.secao.selecionada {
+  background: var(--secao-fundo);
+  border-color: var(--destaque);
+}
+
+/* Escolha "Nota | Tópico | Seção" ao criar um nó: três colunas. */
+.escolha-de-no .escolha {
+  padding: 0 6px;
+  font-size: 14.5px;
+}

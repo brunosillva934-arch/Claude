@@ -10,7 +10,7 @@
  */
 import { memo, useMemo } from 'react';
 import { ViewportPortal, useStore } from '@xyflow/react';
-import type { LucideIcon } from 'lucide-react';
+import { Heading, type LucideIcon } from 'lucide-react';
 import { tituloDaNota, useLoja } from '../estado/loja';
 import { iconeDoTipo } from '../ui/icones';
 import { coresDoTipo } from '../util/cores';
@@ -22,6 +22,8 @@ export const ZOOM_DE_LONGE = 0.62;
 
 interface Titulo {
   id: string;
+  /** Seção: título em destaque, com fundo cheio. */
+  secao: boolean;
   x: number;
   y: number;
   texto: string;
@@ -118,10 +120,12 @@ function RotulosDeLongeBase({ disposicao }: { disposicao: Disposicao }) {
       if (!pos || !no || id === editandoId) return;
       const nota = notas[no.notaId];
       const tipo = nota ? tipos[nota.tipoId] : undefined;
+      const secao = nota?.secao === true;
       const cores = coresDoTipo(tipo?.cor ?? '#6B7785', escuro);
       const recomendacao = nota?.topico ? nota.resumo.trim() : '';
       const texto = tituloDaNota(nota);
-      const fonte = fonteDoNivel(pos.nivel);
+      // Uma seção aparece com a letra do primeiro nível, onde quer que esteja.
+      const fonte = secao ? fonteDoNivel(0) : fonteDoNivel(pos.nivel);
       const vao = disposicao.vaos[pos.nivel] ?? 96;
       const coluna = LARGURA_NO + vao;
       const filhos = filhosVisiveis(nos, id);
@@ -169,9 +173,10 @@ function RotulosDeLongeBase({ disposicao }: { disposicao: Disposicao }) {
         y: pos.y + pos.altura / 2,
         texto,
         nivel: pos.nivel,
-        cor: cores.texto,
-        fundo: cores.fraca,
-        icone: iconeDoTipo(tipo?.icone),
+        secao,
+        cor: secao ? 'var(--secao-texto)' : cores.texto,
+        fundo: secao ? 'var(--secao-fundo)' : cores.fraca,
+        icone: secao ? Heading : iconeDoTipo(tipo?.icone),
         coluna,
         reserva,
         folha,
@@ -230,6 +235,7 @@ function RotulosDeLongeBase({ disposicao }: { disposicao: Disposicao }) {
               Math.min(t.nivel, 2) +
               (t.linhas > 1 ? ' varias-linhas' : '') +
               (t.resumo ? ' com-resumo' : '') +
+              (t.secao ? ' secao' : '') +
               (t.id === selecionadoId ? ' selecionado' : '')
             }
             data-rotulo={t.texto}

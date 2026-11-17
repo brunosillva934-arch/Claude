@@ -5,15 +5,17 @@ import {
   memo, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode, type SyntheticEvent,
 } from 'react';
 import { Handle, NodeToolbar, Position, type NodeProps, type NodeToolbarProps } from '@xyflow/react';
-import { CornerDownRight, FileText, Hash, Link2, Minus } from 'lucide-react';
+import { CornerDownRight, Heading, Link2, Minus } from 'lucide-react';
+import { formaDe } from '../dados/tipos';
 import {
-  alternarRecolhido, cancelarEdicao, confirmarTitulo, contarDescendentes, criarFilho, definirTopico, filhosDe,
+  alternarRecolhido, cancelarEdicao, confirmarTitulo, contarDescendentes, criarFilho, definirForma, filhosDe,
   indiceDe, mudarTipoDaNota, podeMover, tiposOrdenados, tituloDaNota, usarNotaExistente, useLoja,
 } from '../estado/loja';
 import { useVoltar } from '../estado/navegacao';
 import { iconeDoTipo } from '../ui/icones';
 import { estiloDoTipo } from '../util/cores';
 import { compararTexto, normalizar } from '../util/texto';
+import { FORMAS } from './formas';
 import { aoBaixarNoNo, aoClicarNoNo, aoMenuDeContexto } from './gestos';
 import { alturaDoCartao, linhasDoResumo } from './layout';
 
@@ -47,7 +49,7 @@ function EdicaoDoTitulo({ noId, notaId, novo, inicial }: { noId: string; notaId:
   const notas = useLoja((s) => s.notas);
   const tipos = useLoja((s) => s.tipos);
   const escuro = useLoja((s) => s.escuro);
-  const topico = notas[notaId]?.topico === true;
+  const forma = formaDe(notas[notaId]);
   const tipoAtual = notas[notaId]?.tipoId;
 
   useVoltar(true, () => {
@@ -65,7 +67,8 @@ function EdicaoDoTitulo({ noId, notaId, novo, inicial }: { noId: string; notaId:
   // Notas que já existem com nome parecido: tocar numa delas faz este nó
   // apontar para ela, em vez de criar uma nota duplicada.
   const sugestoes = useMemo(() => {
-    if (!novo) return [];
+    // Seção é um título novo: não há nota existente para reaproveitar.
+    if (!novo || forma === 'secao') return [];
     const termo = normalizar(valor);
     if (termo.length < 2) return [];
     return Object.values(notas)
@@ -90,7 +93,9 @@ function EdicaoDoTitulo({ noId, notaId, novo, inicial }: { noId: string; notaId:
         ref={entrada}
         className="no-entrada nopan nodrag nowheel"
         value={valor}
-        placeholder={topico ? 'Nome do item (ex.: medicamento)' : 'Título da nota'}
+        placeholder={
+          forma === 'secao' ? 'Título da seção (ex.: Dor torácica)' : forma === 'topico' ? 'Nome do item (ex.: medicamento)' : 'Título da nota'
+        }
         enterKeyHint="done"
         autoCapitalize="sentences"
         autoComplete="off"
@@ -149,40 +154,30 @@ function EdicaoDoTitulo({ noId, notaId, novo, inicial }: { noId: string; notaId:
               </button>
             );
           })}
-          {/* Um nó novo pode ser uma nota completa ou um tópico: um item de lista com recomendação curta. */}
+          {/* Um nó novo pode ser uma nota completa, um tópico (item com recomendação) ou uma seção (só título). */}
           <div className="escolha-de-no" role="radiogroup" aria-label="O que criar">
-            <button
-              type="button"
-              role="radio"
-              aria-checked={!topico}
-              className={'escolha' + (!topico ? ' ativa' : '')}
-              data-escolha="nota"
-              tabIndex={-1}
-              {...manterFoco}
-              onClick={() => definirTopico(notaId, false)}
-            >
-              <FileText size={18} />
-              Nota
-            </button>
-            <button
-              type="button"
-              role="radio"
-              aria-checked={topico}
-              className={'escolha' + (topico ? ' ativa' : '')}
-              data-escolha="topico"
-              tabIndex={-1}
-              {...manterFoco}
-              onClick={() => definirTopico(notaId, true)}
-            >
-              <Hash size={18} />
-              Tópico
-            </button>
+            {FORMAS.map((f) => {
+              const I = f.icone;
+              return (
+                <button
+                  key={f.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={forma === f.id}
+                  className={'escolha' + (forma === f.id ? ' ativa' : '')}
+                  data-escolha={f.id}
+                  tabIndex={-1}
+                  {...manterFoco}
+                  onClick={() => definirForma(notaId, f.id)}
+                >
+                  <I size={18} />
+                  {f.nome}
+                </button>
+              );
+            })}
           </div>
-          <div className="escolha-dica">
-            {topico
-              ? 'Item de lista: só o nome e, se quiser, uma recomendação curta, que aparece na árvore.'
-              : 'Nota completa, com texto (mecanismo, quadro, conduta…).'}
-          </div>
+          <div className="escolha-dica">{FORMAS.find((f) => f.id === forma)!.dica}</div>
+          {forma !== 'secao' && (
           <div className="escolha-tipos" role="radiogroup" aria-label="Tipo">
             {tiposOrdenados(tipos).map((t) => {
               const Icone = iconeDoTipo(t.icone);
@@ -206,6 +201,7 @@ function EdicaoDoTitulo({ noId, notaId, novo, inicial }: { noId: string; notaId:
               );
             })}
           </div>
+          )}
         </div>
       </BarraDoNo>
     </>
@@ -254,7 +250,8 @@ function NoArvoreBase({ id }: NodeProps) {
   const raiz = !no.paiId;
   const titulo = tituloDaNota(nota);
   const topico = nota?.topico === true;
-  const Icone = iconeDoTipo(tipo?.icone);
+  const secao = nota?.secao === true;
+  const Icone = secao ? Heading : iconeDoTipo(tipo?.icone);
   const linhas = linhasDoResumo(nota);
   // As barras flutuantes pertencem ao nó para o React, mas não fazem parte dele na tela.
   const noProprioNo = (alvo: EventTarget) => elemento.current?.contains(alvo as Node) === true;
@@ -268,6 +265,7 @@ function NoArvoreBase({ id }: NodeProps) {
     (alvo ? ` alvo alvo-${alvo}` : '') +
     (destinoPossivel ? ' destino-possivel' : '') +
     (topico ? ' topico' : '') +
+    (secao ? ' secao' : '') +
     (linhas > 0 ? ' com-resumo' : '') +
     (raiz ? ' raiz' : '');
 

@@ -6,7 +6,7 @@ não tem conta, servidor nem nuvem, e o app **não declara nenhuma permissão**
 
 O arquivo para instalar é **`Bau.apk`**, nesta pasta.
 
-> Situação: **versão 0.6.0**. Etapas 1 e 2 de 5: árvore visual, tópicos, busca,
+> Situação: **versão 0.7.0**. Etapas 1 e 2 de 5: árvore visual, tópicos, busca,
 > tema, e o editor completo com sumário, modo foco e estabilidade da escrita.
 > Os links entre notas (etapa 3), o filtro por tipo na árvore (etapa 4) e o
 > backup (etapa 5) vêm a seguir.
@@ -76,6 +76,18 @@ assinadas com a mesma chave (veja "Chave de assinatura").
   cópia nova dos exemplos (útil para ver os tópicos depois de atualizar o app).
 
 ## Árvores
+
+Cada nó tem um de três **formatos**, escolhido ao criar (e mudado depois pelo
+toque longo → "Mudar o formato", sem perder nada):
+
+| Formato | Para quê | Na árvore |
+| --- | --- | --- |
+| **Nota** | Texto completo (mecanismo, quadro, conduta) | Cartão branco com a faixa da cor do tipo |
+| **Tópico** | Item de lista com recomendação curta (ex.: um medicamento) | Cartão tingido na cor do tipo, com a recomendação embaixo do nome |
+| **Seção** | Só um título que agrupa ramos (ex.: "Dor torácica" dentro de "Grandes síndromes clínicas") | Cartão cheio, escuro (claro no tema escuro), título grande em negrito |
+
+A seção não tem texto nem tipo; o painel ao lado mostra o que há dentro dela e
+um botão "Adicionar nesta seção". "+ Irmão" de uma seção já vem como seção.
 
 - Uma tela pode ter **várias árvores**, uma embaixo da outra: botão "+ Árvore"
   no canto da tela (e no fim da lista recuada). A primeira dá nome à tela; as

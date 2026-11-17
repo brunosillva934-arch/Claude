@@ -28,7 +28,7 @@ import {
   sqlSalvarTipo,
   usarBanco,
 } from '../dados/repositorio';
-import { TIPO_GERAL, type Arvore, type No, type Nota, type NotaMeta, type TipoNota } from '../dados/tipos';
+import { TIPO_GERAL, formaDe, type Arvore, type Forma, type No, type Nota, type NotaMeta, type TipoNota } from '../dados/tipos';
 import { agora, uid } from '../util/texto';
 
 export type Visao = 'arvore' | 'lista';
@@ -291,13 +291,14 @@ export function desfazer(): string | null {
 
 // ------------------------------------------------------------------ início
 
-function novaNota(titulo: string, tipoId: string, topico = false): Nota {
+function novaNota(titulo: string, tipoId: string, forma: Forma = 'nota'): Nota {
   const quando = agora();
   return {
     id: uid(),
     titulo,
     tipoId,
-    topico,
+    topico: forma === 'topico',
+    secao: forma === 'secao',
     resumo: '',
     conteudo: '',
     texto: '',
@@ -313,6 +314,7 @@ function meta(n: Nota): NotaMeta {
     titulo: n.titulo,
     tipoId: n.tipoId,
     topico: n.topico,
+    secao: n.secao,
     resumo: n.resumo,
     criadaEm: n.criadaEm,
     atualizadaEm: n.atualizadaEm,
@@ -394,7 +396,7 @@ let expandidaAntesDoFoco = false;
 export function entrarFoco(): void {
   const s = get();
   const nota = s.notaAbertaId ? s.notas[s.notaAbertaId] : undefined;
-  if (!nota || nota.topico || s.foco) return;
+  if (!nota || nota.topico || nota.secao || s.foco) return;
   expandidaAntesDoFoco = s.notaExpandida;
   set({ foco: true, notaExpandida: true, sumarioAberto: false, gavetaAberta: false, buscaAberta: false });
 }
@@ -571,15 +573,16 @@ function renumerar(nos: Record<string, No>, ids: string[], sql: Instrucao[]): vo
  * (nota ou tópico) do irmão logo acima: numa lista de medicamentos, cada
  * "+ Irmão" já vem como medicamento.
  */
-function inserirNovoNo(paiId: string, indice: number, topico?: boolean): string | null {
+function inserirNovoNo(paiId: string, indice: number, forma?: Forma): string | null {
   const s = get();
+  selecaoAntesDeCriar = s.selecionadoId;
   const pai = s.nos[paiId];
   if (!pai) return null;
   const irmaosAtuais = filhosDe(s.nos, paiId);
   const vizinhoId = irmaosAtuais[Math.min(indice, irmaosAtuais.length) - 1] ?? irmaosAtuais[0];
   const vizinho = vizinhoId ? s.notas[s.nos[vizinhoId]!.notaId] : undefined;
   const tipoId = vizinho && s.tipos[vizinho.tipoId] ? vizinho.tipoId : TIPO_GERAL;
-  const nota = novaNota('', tipoId, topico ?? vizinho?.topico ?? false);
+  const nota = novaNota('', tipoId, forma ?? (vizinho ? formaDe(vizinho) : 'nota'));
   const no: No = {
     id: uid(),
     arvoreId: pai.arvoreId,
@@ -614,17 +617,17 @@ function inserirNovoNo(paiId: string, indice: number, topico?: boolean): string 
 
 /**
  * Cria um filho no fim da lista de filhos. O nó entra com o título em edição.
- * `topico`: true cria um tópico, false uma nota; sem indicação, copia o irmão acima.
+ * `forma`: nota, tópico ou seção; sem indicação, copia o irmão acima.
  */
-export function criarFilho(paiId: string, topico?: boolean): string | null {
-  return inserirNovoNo(paiId, filhosDe(get().nos, paiId).length, topico);
+export function criarFilho(paiId: string, forma?: Forma): string | null {
+  return inserirNovoNo(paiId, filhosDe(get().nos, paiId).length, forma);
 }
 
 /** Cria um irmão logo abaixo do nó. A raiz não tem irmãos. */
-export function criarIrmao(noId: string, topico?: boolean): string | null {
+export function criarIrmao(noId: string, forma?: Forma): string | null {
   const no = get().nos[noId];
   if (!no || !no.paiId) return null;
-  return inserirNovoNo(no.paiId, no.ordem + 1, topico);
+  return inserirNovoNo(no.paiId, no.ordem + 1, forma);
 }
 
 /**
@@ -634,13 +637,29 @@ export function criarIrmao(noId: string, topico?: boolean): string | null {
  * (se a nota ainda não tiver texto).
  */
 export function definirTopico(notaId: string, topico: boolean): void {
+  definirForma(notaId, topico ? 'topico' : 'nota');
+}
+
+/**
+ * Muda o formato do nó: nota completa, tópico ou seção. Nada se perde: o texto
+ * de uma nota e a recomendação de um tópico ficam guardados e voltam se o
+ * formato voltar.
+ */
+export function definirForma(notaId: string, forma: Forma): void {
   const s = get();
   const nota = s.notas[notaId];
-  if (!nota || nota.topico === topico) return;
-  set({ notas: { ...s.notas, [notaId]: { ...nota, topico } } });
-  const sql: Instrucao[] = [sqlAtualizarNota(notaId, { topico })];
+  if (!nota || formaDe(nota) === forma) return;
+  const topico = forma === 'topico';
+  const secao = forma === 'secao';
+  set({
+    notas: { ...s.notas, [notaId]: { ...nota, topico, secao } },
+    // Seção não tem texto: se estava em tela cheia ou no foco, volta para a árvore.
+    notaExpandida: secao && s.notaAbertaId === notaId && s.foco ? false : s.notaExpandida,
+    foco: secao && s.notaAbertaId === notaId ? false : s.foco,
+  });
+  const sql: Instrucao[] = [sqlAtualizarNota(notaId, { topico, secao })];
   const resumo = nota.resumo.trim();
-  if (!topico && resumo) {
+  if (forma === 'nota' && nota.topico && resumo) {
     const doc = { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: resumo }] }] };
     sql.push({
       sql: "UPDATE notas SET conteudo = ?, texto = ? WHERE id = ? AND conteudo = ''",
@@ -666,6 +685,9 @@ export function editarTitulo(noId: string): void {
 }
 
 /** Remove de vez um nó recém-criado que ficou sem título, junto com a nota vazia dele. */
+/** Nó que estava selecionado antes de criar um nó novo: volta a ser o selecionado se a criação for cancelada. */
+let selecaoAntesDeCriar: string | null = null;
+
 function descartarNovo(noId: string): void {
   const s = get();
   const no = s.nos[noId];
@@ -696,7 +718,8 @@ function descartarNovo(noId: string): void {
     arvores = { ...s.arvores, [arvore.id]: { ...arvore, raizId: filhos[0] } };
     sql.push(sqlAtualizarArvore(arvore.id, { raizId: filhos[0] }));
   }
-  const voltarPara = filhos[0] ?? (no.paiId && nos[no.paiId] ? no.paiId : null);
+  const anterior = selecaoAntesDeCriar && selecaoAntesDeCriar !== noId && nos[selecaoAntesDeCriar] ? selecaoAntesDeCriar : null;
+  const voltarPara = anterior ?? filhos[0] ?? (no.paiId && nos[no.paiId] ? no.paiId : null);
   set({
     nos,
     notas,
@@ -708,6 +731,7 @@ function descartarNovo(noId: string): void {
       s.notaAbertaId === no.notaId ? (voltarPara ? nos[voltarPara]!.notaId : null) : s.notaAbertaId,
   });
   void enfileirar(sql);
+  if (voltarPara) pedirRevelar(voltarPara);
 }
 
 /**
@@ -716,6 +740,7 @@ function descartarNovo(noId: string): void {
  */
 export function criarArvoreNaTela(): string | null {
   const s = get();
+  selecaoAntesDeCriar = s.selecionadoId;
   const arvore = s.arvoreAtualId ? s.arvores[s.arvoreAtualId] : undefined;
   if (!arvore) return null;
   const nota = novaNota('', TIPO_GERAL);
@@ -750,6 +775,7 @@ export function criarArvoreNaTela(): string | null {
  */
 export function inserirEntre(noId: string): string | null {
   const s = get();
+  selecaoAntesDeCriar = s.selecionadoId;
   const no = s.nos[noId];
   if (!no) return null;
   const nota = novaNota('', TIPO_GERAL);
@@ -1183,7 +1209,7 @@ export function criarTipo(nome: string, cor: string, icone: string): string {
 export function notasDoTipo(tipoId: string): number {
   let n = 0;
   for (const nota of Object.values(get().notas)) {
-    if (nota.tipoId === tipoId && !nota.excluidaEm) n++;
+    if (nota.tipoId === tipoId && !nota.excluidaEm && !nota.secao) n++;
   }
   return n;
 }
@@ -1362,7 +1388,7 @@ export function criarArvoreDeTeste(total: number): string {
     // Cerca de um quarto dos nós são tópicos, a maioria com recomendação.
     const topico = paiId !== null && sorteio() < 0.25;
     const nota: Nota = {
-      ...novaNota(titulo, tipoId, topico),
+      ...novaNota(titulo, tipoId, topico ? 'topico' : 'nota'),
       resumo: topico && sorteio() < 0.8 ? recomendacoes[Math.floor(sorteio() * recomendacoes.length)]! : '',
       criadaEm: quando,
       atualizadaEm: quando,

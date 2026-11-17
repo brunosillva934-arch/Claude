@@ -292,7 +292,7 @@ const paiDe = (pagina, titulo) =>
   console.log('\n11. Menu lateral e nota compartilhada');
   await pagina.locator('[data-acao="menu"]').tap();
   await pagina.waitForTimeout(250);
-  confere('gaveta lista as árvores', (await pagina.locator('.gaveta-arvore').count()) === 2);
+  confere('gaveta lista as árvores', (await pagina.locator('.gaveta-arvore').count()) === 3);
   await pagina.screenshot({ path: `${saida}/12-gaveta.png` });
   await pagina.locator('.gaveta-arvore[data-arvore="Anticoagulação"]').tap();
   await pagina.waitForTimeout(500);

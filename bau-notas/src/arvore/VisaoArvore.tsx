@@ -295,6 +295,7 @@ function Canvas() {
       const s = useLoja.getState();
       const no = s.nos[node.id];
       const nota = no ? s.notas[no.notaId] : undefined;
+      if (nota?.secao) return escuro ? '#E3E9F1' : '#243042';
       const tipo = nota ? s.tipos[nota.tipoId] : undefined;
       return coresDoTipo(tipo?.cor ?? '#6B7785', escuro).base;
     },

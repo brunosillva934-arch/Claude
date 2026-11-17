@@ -30,6 +30,10 @@ html[data-tema='claro'] {
   --aviso-fundo: #1d2632;
   --aviso-texto: #f4f6f9;
   --aviso-acao: #8db8ff;
+  /* Seção: título em destaque na árvore (cartão escuro no tema claro). */
+  --secao-fundo: #243042;
+  --secao-borda: #111827;
+  --secao-texto: #ffffff;
 }
 
 html[data-tema='escuro'] {
@@ -56,6 +60,10 @@ html[data-tema='escuro'] {
   --aviso-fundo: #e9edf2;
   --aviso-texto: #18202b;
   --aviso-acao: #1f5fd1;
+  /* Seção: cartão claro no tema escuro. */
+  --secao-fundo: #e3e9f1;
+  --secao-borda: #ffffff;
+  --secao-texto: #0f1722;
 }
 
 /* ------------------------------------------------------------------ base */

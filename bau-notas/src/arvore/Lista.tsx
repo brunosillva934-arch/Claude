@@ -4,7 +4,7 @@
  * e menu de ações são compartilhados, então as duas visões andam juntas.
  */
 import { memo, useEffect, useMemo, useRef, type CSSProperties } from 'react';
-import { ChevronDown, ChevronRight, CornerDownRight, Ellipsis, FileText, Link2, Plus } from 'lucide-react';
+import { ChevronDown, ChevronRight, CornerDownRight, Ellipsis, FileText, Heading, Link2, Plus } from 'lucide-react';
 import { useShallow } from 'zustand/react/shallow';
 import {
   alternarRecolhido, criarArvoreNaTela, raizesDe, cancelarEdicao, confirmarTitulo, criarFilho, criarIrmao, expandirNota, filhosDe, indiceDe,
@@ -104,7 +104,8 @@ const Linha = memo(function Linha({ id, nivel }: { id: string; nivel: number }) 
   if (!no) return null;
   const titulo = tituloDaNota(nota);
   const topico = nota?.topico === true;
-  const Icone = iconeDoTipo(tipo?.icone);
+  const secao = nota?.secao === true;
+  const Icone = secao ? Heading : iconeDoTipo(tipo?.icone);
   const recomendacao = topico ? nota!.resumo.trim() : '';
   const raiz = !no.paiId;
 
@@ -124,7 +125,8 @@ const Linha = memo(function Linha({ id, nivel }: { id: string; nivel: number }) 
         (noCaminho && !selecionado ? ' no-caminho' : '') +
         (emMovimento ? ' em-movimento' : '') +
         (destinoPossivel ? ' destino-possivel' : '') +
-        (topico ? ' topico' : '')
+        (topico ? ' topico' : '') +
+        (secao ? ' secao' : '')
       }
       style={{ ...(estiloDoTipo(tipo?.cor, escuro) as CSSProperties), paddingLeft: 8 + nivel * 26 }}
       data-no={id}

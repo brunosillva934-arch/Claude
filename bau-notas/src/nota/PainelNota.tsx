@@ -5,17 +5,18 @@
 import { useEffect, useRef, useState, useSyncExternalStore, type CSSProperties } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import {
-  ArrowLeft, Check, ChevronDown, CornerDownRight, CornerLeftUp, FileText, Hash, LoaderCircle, Maximize2, Minimize2,
+  ArrowLeft, Check, ChevronDown, CornerDownRight, CornerLeftUp, FileText, Hash, Heading, LoaderCircle, Maximize2, Minimize2,
   PanelRightClose, Plus, Search, TableOfContents, TriangleAlert,
 } from 'lucide-react';
 import { aguardarEscritas, carregarNota } from '../dados/repositorio';
 import type { Nota } from '../dados/tipos';
 import {
-  abrirBusca, alternarPainel, alternarSumario, criarFilho, definirTopico, expandirNota, filhosDe, indiceDe, irParaNo, renomearNota,
+  abrirBusca, alternarPainel, alternarSumario, criarFilho, definirForma, definirTopico, expandirNota, filhosDe, indiceDe, irParaNo, renomearNota,
   tituloDaNota, useLoja,
 } from '../estado/loja';
 import { useVoltar } from '../estado/navegacao';
-import { abrirMenuDeTipos } from '../arvore/acoesNo';
+import { abrirMenuDeFormato, abrirMenuDeTipos } from '../arvore/acoesNo';
+import { formaDe, type Forma } from '../dados/tipos';
 import { iconeDoTipo } from '../ui/icones';
 import { estiloDoTipo } from '../util/cores';
 import { plural } from '../util/texto';
@@ -145,7 +146,8 @@ function BotaoDoSumario() {
 }
 
 /** Cabeçalho comum: tipo, estado do salvamento, tela cheia e fechar. */
-function Cabecalho({ notaId, topico }: { notaId: string; topico: boolean }) {
+function Cabecalho({ notaId, forma }: { notaId: string; forma: Forma }) {
+  const topico = forma === 'topico';
   const tipo = useLoja((s) => (s.notas[notaId] ? s.tipos[s.notas[notaId]!.tipoId] : undefined));
   const expandida = useLoja((s) => s.notaExpandida);
   const largo = useLoja((s) => s.largo);
@@ -158,22 +160,40 @@ function Cabecalho({ notaId, topico }: { notaId: string; topico: boolean }) {
           <ArrowLeft size={22} />
         </button>
       )}
-      <button
-        type="button"
-        className="seletor-tipo"
-        data-acao="tipo"
-        aria-label={`Tipo: ${tipo?.nome ?? ''}. Tocar para mudar`}
-        onClick={(e) => {
-          const r = e.currentTarget.getBoundingClientRect();
-          abrirMenuDeTipos(notaId, Math.round(r.left), Math.round(r.bottom + 6));
-        }}
-      >
-        <span className="seletor-tipo-icone">
-          <Icone size={18} />
-        </span>
-        <span className="seletor-tipo-nome">{tipo?.nome ?? 'Tipo'}</span>
-        <ChevronDown size={16} />
-      </button>
+      {forma === 'secao' ? (
+        // Seção não tem tipo: o selo leva ao menu de formato.
+        <button
+          type="button"
+          className="selo-secao"
+          data-acao="formato"
+          aria-label="Seção. Tocar para mudar o formato"
+          onClick={(e) => {
+            const r = e.currentTarget.getBoundingClientRect();
+            abrirMenuDeFormato(notaId, Math.round(r.left), Math.round(r.bottom + 6));
+          }}
+        >
+          <Heading size={16} />
+          Seção
+          <ChevronDown size={16} />
+        </button>
+      ) : (
+        <button
+          type="button"
+          className="seletor-tipo"
+          data-acao="tipo"
+          aria-label={`Tipo: ${tipo?.nome ?? ''}. Tocar para mudar`}
+          onClick={(e) => {
+            const r = e.currentTarget.getBoundingClientRect();
+            abrirMenuDeTipos(notaId, Math.round(r.left), Math.round(r.bottom + 6));
+          }}
+        >
+          <span className="seletor-tipo-icone">
+            <Icone size={18} />
+          </span>
+          <span className="seletor-tipo-nome">{tipo?.nome ?? 'Tipo'}</span>
+          <ChevronDown size={16} />
+        </button>
+      )}
       {topico && (
         <span className="selo-topico">
           <Hash size={14} />
@@ -182,9 +202,9 @@ function Cabecalho({ notaId, topico }: { notaId: string; topico: boolean }) {
       )}
       {usos > 1 && <span className="nota-usos">em {plural(usos, 'lugar', 'lugares')}</span>}
       <span className="espaco" />
-      {!topico && <ContadorDePalavras notaId={notaId} />}
+      {forma === 'nota' && <ContadorDePalavras notaId={notaId} />}
       <EstadoDoSalvamento />
-      {!topico && <BotaoDoSumario />}
+      {forma === 'nota' && <BotaoDoSumario />}
       {expandida && (
         <button type="button" className="botao-icone" data-acao="buscar" aria-label="Buscar notas" onClick={() => abrirBusca(true)}>
           <Search size={20} />
@@ -281,12 +301,12 @@ function LinhaDeItem({ noId }: { noId: string }) {
   });
   const rotulo = useLoja((s) => s.nos[noId]?.rotuloDoRamo ?? null);
   const escuro = useLoja((s) => s.escuro);
-  const Icone = iconeDoTipo(tipo?.icone);
+  const Icone = nota?.secao ? Heading : iconeDoTipo(tipo?.icone);
   const recomendacao = nota?.topico ? nota.resumo.trim() : '';
   return (
     <button
       type="button"
-      className={'item-do-ramo' + (nota?.topico ? ' topico' : '')}
+      className={'item-do-ramo' + (nota?.topico ? ' topico' : '') + (nota?.secao ? ' secao' : '')}
       data-item={tituloDaNota(nota)}
       style={estiloDoTipo(tipo?.cor, escuro) as CSSProperties}
       onClick={() => irParaNo(noId)}
@@ -331,7 +351,7 @@ function ItensDoRamo({ notaId }: { notaId: string }) {
         <LinhaDeItem key={id} noId={id} />
       ))}
       {!expandida && (
-        <button type="button" className="item-novo" data-acao="novo-item" onClick={() => criarFilho(noId, true)}>
+        <button type="button" className="item-novo" data-acao="novo-item" onClick={() => criarFilho(noId, 'topico')}>
           <Plus size={18} />
           Adicionar tópico
         </button>
@@ -356,7 +376,7 @@ function PainelTopico({ notaId }: { notaId: string }) {
 
   return (
     <div className="painel-nota" style={estiloDoTipo(tipo?.cor, escuro) as CSSProperties} data-nota={notaId} data-topico="">
-      <Cabecalho notaId={notaId} topico />
+      <Cabecalho notaId={notaId} forma="topico" />
       <div className="nota-rolagem">
         <div className="nota-pagina sem-espaco">
           <Titulo notaId={notaId} />
@@ -393,9 +413,54 @@ function PainelTopico({ notaId }: { notaId: string }) {
   );
 }
 
+/**
+ * Painel de uma seção: só o título e o que há dentro dela, com um atalho para
+ * acrescentar mais um nó.
+ */
+function PainelSecao({ notaId }: { notaId: string }) {
+  const escuro = useLoja((s) => s.escuro);
+  const expandida = useLoja((s) => s.notaExpandida);
+  const noId = useNoDaNota(notaId);
+  const filhos = useLoja(useShallow((s) => (noId ? filhosDe(s.nos, noId) : [])));
+  useVoltar(expandida, () => expandirNota(false));
+
+  return (
+    <div className="painel-nota" style={estiloDoTipo('#243042', escuro) as CSSProperties} data-nota={notaId} data-secao="">
+      <Cabecalho notaId={notaId} forma="secao" />
+      <div className="nota-rolagem">
+        <div className="nota-pagina sem-espaco">
+          <Titulo notaId={notaId} />
+          <p className="topico-explica">
+            Seção: só um título, em destaque na árvore, para agrupar os ramos. Não tem texto nem tipo.
+          </p>
+          <h3 className="topico-secao">
+            {filhos.length ? plural(filhos.length, 'item nesta seção', 'itens nesta seção') : 'Nada nesta seção ainda'}
+          </h3>
+          <div className="topico-filhos">
+            {filhos.map((id) => (
+              <LinhaDeItem key={id} noId={id} />
+            ))}
+          </div>
+          {noId && !expandida && (
+            <button type="button" className="item-novo" data-acao="novo-na-secao" onClick={() => criarFilho(noId)}>
+              <Plus size={18} />
+              Adicionar nesta seção
+            </button>
+          )}
+          <button type="button" className="botao" data-acao="virar-nota" onClick={() => definirForma(notaId, 'nota')}>
+            <FileText size={18} />
+            Transformar em nota completa
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function PainelNota({ notaId }: { notaId: string }) {
-  const topico = useLoja((s) => s.notas[notaId]?.topico === true);
-  if (topico) return <PainelTopico notaId={notaId} />;
+  const forma = useLoja((s) => formaDe(s.notas[notaId]));
+  if (forma === 'secao') return <PainelSecao notaId={notaId} />;
+  if (forma === 'topico') return <PainelTopico notaId={notaId} />;
   return <PainelDaNota notaId={notaId} />;
 }
 
@@ -440,7 +505,7 @@ function PainelDaNota({ notaId }: { notaId: string }) {
 
   return (
     <div className="painel-nota" style={estiloDoTipo(tipo?.cor, escuro) as CSSProperties} data-nota={notaId}>
-      {!foco && <Cabecalho notaId={notaId} topico={false} />}
+      {!foco && <Cabecalho notaId={notaId} forma="nota" />}
       {nota ? (
         <CorpoDaNota key={nota.id} notaId={nota.id} conteudo={nota.conteudo} titulo={cabecaDaPagina} />
       ) : (

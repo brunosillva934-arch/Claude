@@ -859,3 +859,41 @@ html[data-tema='escuro'] .seletor-tipo-icone {
   color: var(--destaque);
   background: var(--destaque-fraco);
 }
+
+/* ------------------------------------------------------------------ painel de uma seção */
+.selo-secao {
+  flex: none;
+  height: 40px;
+  padding: 0 10px 0 12px;
+  border-radius: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--secao-texto);
+  background: var(--secao-fundo);
+  position: relative;
+}
+
+.selo-secao::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -4px;
+  bottom: -4px;
+}
+
+.item-do-ramo.secao .item-icone {
+  background: var(--secao-fundo);
+  color: var(--secao-texto);
+}
+
+.item-do-ramo.secao .item-titulo {
+  font-weight: 800;
+}
+
+.painel-nota[data-secao] .botao[data-acao='virar-nota'] {
+  margin-top: 18px;
+}
