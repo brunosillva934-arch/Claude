@@ -4,7 +4,8 @@
 (function () {
   "use strict";
 
-  var A = window.Android || null;
+  /* a ponte com o aparelho: o app Android (window.Android) ou a versão web/PWA (window.Ponte) */
+  var A = window.Ponte || window.Android || null;
   var app = document.getElementById("app");
   var folhaEl = document.getElementById("folha");
   var avisoEl = document.getElementById("aviso");
@@ -266,6 +267,14 @@
   }
   window.__voltar = voltar;
   window.__pausa = function () { salvarExames(true); };
+  window.__aviso = function (msg, rotulo, fn) { aviso(msg, rotulo, fn); };
+  /* na web as fotos chegam do IndexedDB depois da primeira tela */
+  window.__fotosCarregadas = function () {
+    MINIS = {};
+    desenhar(true);
+    if (S.folha && S.folha.tipo === "visor") desenharVisor(S.folha);
+    limparFotosOrfas();
+  };
 
   /* ── ícones ────────────────────────────────────────────────────── */
   function svg(d, t) {
@@ -312,6 +321,13 @@
     var src = srcFoto(f, mini);
     if (!src) return '<span class="' + (classe || "") + ' sem-img">sem imagem</span>';
     return '<img class="' + (classe || "") + (/\.svg$/.test(f.a || "") ? " ilus" : "") + '" src="' + esc(src) + '" alt="' + esc(alt || f.legenda || "") + '"' + (mini ? ' loading="lazy"' : "") + ">";
+  }
+  /* a foto inteira em base64, para a cópia de segurança (na web a leitura é assíncrona) */
+  function base64Foto(nome) {
+    try {
+      if (A && A.fotoBase64Async) return A.fotoBase64Async(nome);
+      return Promise.resolve(A && A.fotoBase64 ? A.fotoBase64(nome) : (window.localStorage.getItem(chaveLocal(nome, false)) || "").replace(/^data:[^,]*,/, ""));
+    } catch (e) { return Promise.resolve(""); }
   }
   function apagarArquivoFoto(nome) {
     delete MINIS[nome + "_m"];
@@ -763,6 +779,8 @@
         '<button class="item-menu" data-a="importar"><span class="cresce"><div>Restaurar de uma cópia</div><div class="sub">Substitui o que está no aparelho</div></span></button>' +
         '<button class="item-menu" data-a="repor"><span class="cresce"><div>Repor o conteúdo inicial</div><div class="sub">Volta o roteiro ao que veio com o app</div></span></button>' +
         '<button class="item-menu" data-a="creditos"><span class="cresce"><div>Créditos das imagens</div><div class="sub">Autor, licença e origem das imagens do app</div></span></button>' +
+        (A && A.podeInstalar && A.podeInstalar() ? '<button class="item-menu" data-a="instalar"><span class="cresce"><div>Instalar o app</div><div class="sub">Ícone na tela inicial, abre sem o navegador e funciona sem internet</div></span></button>' : "") +
+        (A && A.dicaInstalar && A.dicaInstalar() ? '<p class="dica" style="margin-top:12px">' + esc(A.dicaInstalar()) + "</p>" : "") +
         '<p class="dica" style="margin-top:16px">Exame físico' + (A && A.versao ? " " + esc(A.versao()) : "") + ", conteúdo na versão " + SV + ". Funciona sem internet; nada sai do aparelho. O conteúdo inicial é um ponto de partida para estudo: confira com as suas referências e ajuste como quiser.</p>";
     } else if (f.tipo === "foto-origem") {
       h = cabFolha("Acrescentar imagem") +
@@ -1125,6 +1143,7 @@
     "rev-area": function (d) { S.rev.area = d.id; sortear(); desenhar(true); },
     "rev-modo": function (d) { S.rev.modo = d.m; sortear(); desenhar(true); },
     creditos: function () { fecharFolha(); ir({ v: "creditos" }); },
+    instalar: function () { fecharFolha(); if (A && A.instalar) A.instalar(); },
 
     "nova-foto": function (d) { abrirFolha({ tipo: "foto-origem", id: d.id }); },
     "foto-camera": function () { pedirFoto(true); },
@@ -1177,12 +1196,12 @@
       fecharFolha();
       var d = new Date(), dia = d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2);
       salvarExames(true);
-      var fotos = {}, l = fotosSuas(base), i, b64;
-      for (i = 0; i < l.length; i++) {
-        try { b64 = A && A.fotoBase64 ? A.fotoBase64(l[i]) : (window.localStorage.getItem(chaveLocal(l[i], false)) || "").replace(/^data:[^,]*,/, ""); } catch (e) { b64 = ""; }
-        if (b64) fotos[l[i]] = b64;
-      }
-      salvarArquivo("exame-fisico-" + dia + ".json", JSON.stringify({ tipo: "exame-fisico", v: 1, feito: d.toISOString(), base: base, exames: exames, fotos: fotos }), "application/json");
+      var fotos = {}, l = fotosSuas(base);
+      Promise.all(l.map(function (n) {
+        return base64Foto(n).then(function (b64) { if (b64) fotos[n] = b64; }, function () { /* foto ilegível fica de fora */ });
+      })).then(function () {
+        salvarArquivo("exame-fisico-" + dia + ".json", JSON.stringify({ tipo: "exame-fisico", v: 1, feito: d.toISOString(), base: base, exames: exames, fotos: fotos }), "application/json");
+      });
     },
     importar: function () {
       fecharFolha();

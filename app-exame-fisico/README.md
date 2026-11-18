@@ -94,6 +94,53 @@ que já existe, e vê um aviso com quantos itens entraram:
   encontra onde entrar e fica de fora (use "Repor o conteúdo inicial", depois de
   salvar uma cópia, se quiser tudo).
 
+## Versão web (PWA) para o Netlify
+
+A mesma página do app, para abrir no navegador e instalar como app no Android, no
+iPhone ou no computador. Funciona sem internet depois da primeira visita, e os
+dados (roteiro, exames e fotos) ficam no navegador do aparelho, como no APK.
+
+O site pronto está em **`site/`** e, compactado, em **`Exame-fisico-site.zip`**.
+
+### Publicar
+
+- **Arrastando** (mais simples): entre em app.netlify.com/drop e solte a pasta
+  `site/` (ou o zip). O Netlify devolve um endereço `https://…netlify.app`.
+- **Pelo GitHub**: no Netlify, "Add new site" → "Import an existing project" →
+  este repositório. O `netlify.toml` na raiz já aponta para `app-exame-fisico/site`
+  e não precisa de comando de build. Cada envio ao branch publica de novo.
+- **Pela linha de comando**: `netlify deploy --prod --dir app-exame-fisico/site`.
+
+Precisa ser servido por HTTPS (o Netlify já faz): sem isso o navegador não
+instala o app nem o deixa funcionar sem internet.
+
+### Usar no celular
+
+- **Android (Chrome)**: abra o endereço; no menu do app (⋮ dentro dele) aparece
+  "Instalar o app", ou use "Instalar app" no menu do Chrome.
+- **iPhone (Safari)**: Compartilhar → "Adicionar à Tela de Início". Use o app
+  pelo ícone: o Safari pode apagar dados de sites abertos só no navegador depois
+  de semanas sem uso, mas não os de apps adicionados à tela de início.
+- A câmera abre pelo próprio seletor de arquivos ("Tirar foto"); a foto é reduzida
+  e guardada no IndexedDB do navegador. O app pede ao navegador armazenamento
+  persistente, para os dados não serem apagados quando falta espaço.
+- Para levar os dados do APK para o PWA (ou de um aparelho para outro): "Salvar
+  cópia de segurança" num, "Restaurar de uma cópia" no outro. O arquivo é o mesmo.
+
+### Como funciona
+
+| Caminho | O que é |
+| --- | --- |
+| `pwa/ponte-web.js` | Faz no navegador o que `MainActivity.java` faz no Android: guardar dados, fotos (IndexedDB), câmera e galeria, compartilhar, botão voltar, instalação, aviso de versão nova |
+| `pwa/sw.js` | Service worker: guarda o app inteiro e passa a abrir sem internet |
+| `pwa/manifest.webmanifest`, `pwa/icones/`, `pwa/telas/` | Nome, ícones e telas da instalação (`node icone.js --pwa` refaz os ícones) |
+| `pwa/_headers` | Cabeçalhos do Netlify: sem cache para app, service worker e manifesto; segurança |
+| `montar-pwa.py` | Monta `site/` e o zip a partir de `web/` e `pwa/` |
+
+Depois de mudar o app, rode `python3 montar-pwa.py` e publique de novo. A versão
+do service worker muda junto com qualquer arquivo; quem já usa o app recebe o aviso
+"Há uma versão nova do app" com o botão "Atualizar", sem perder dados.
+
 ## Montar de novo
 
 Sem Gradle nem Android Studio; bastam pacotes do Ubuntu/Debian:
@@ -144,6 +191,14 @@ atualização foi testada partindo de um roteiro da versão 1 com edições,
 apagamentos, área renomeada e área própria, e partindo da versão 1.1. As fotos
 foram testadas no navegador (escolher, reduzir, legenda, apagar, cópia de
 segurança e restauração); a câmera, a galeria e a leitura do EXIF do Android
-só foram compiladas, não executadas. O APK foi conferido por
-dentro (manifesto, assinatura, conteúdo). Ele **não foi executado em aparelho
-nem em emulador** no ambiente em que foi montado.
+só foram compiladas, não executadas.
+
+A versão web foi testada no Chromium servida por HTTP local: service worker
+instalado e controlando a página, os 82 arquivos guardados, abertura e navegação
+sem internet, manifesto e ícones, foto acrescentada e mantida depois de recarregar
+(IndexedDB), cópia de segurança baixada com a foto, botão voltar navegando dentro
+do app e aviso de versão nova com atualização sem perder o exame. Não foi testada
+no Safari do iPhone nem num celular de verdade.
+
+O APK foi conferido por dentro (manifesto, assinatura, conteúdo). Ele **não foi
+executado em aparelho nem em emulador** no ambiente em que foi montado.

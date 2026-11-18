@@ -1,5 +1,7 @@
 /* Desenha o ícone do app: um estetoscópio em traço branco sobre o verde do app.
-   uso: node icone.js   (precisa do Playwright; os PNG gerados já estão em res/) */
+   uso: node icone.js         ícones do Android, em res/
+        node icone.js --pwa   ícones da versão web, em pwa/icones/
+   (precisa do Playwright; os PNG gerados já estão no repositório) */
 const { chromium } = require('playwright');
 const fs = require('fs');
 const path = require('path');
@@ -33,6 +35,21 @@ html,body{margin:0;background:transparent}
     await p.screenshot({ path: arquivo, omitBackground: true });
     await p.close();
   };
+  if (process.argv[2] === '--pwa') {
+    const P = n => path.join(RAIZ, 'pwa/icones', n);
+    await tirar(P('icone-192.png'), 192, 1.15, VERDE, Math.round(192 * 0.22));
+    await tirar(P('icone-512.png'), 512, 1.15, VERDE, Math.round(512 * 0.22));
+    /* "maskable": fundo até a borda, desenho dentro do círculo central de 80% */
+    await tirar(P('icone-mascara-512.png'), 512, 0.9, VERDE, 0);
+    /* iPhone: quadrado cheio, o sistema arredonda os cantos */
+    await tirar(P('apple-touch-icon.png'), 180, 1.1, VERDE, 0);
+    await tirar(P('favicon-32.png'), 32, 1.25, VERDE, 7);
+    fs.writeFileSync(P('icone.svg'), `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="22" fill="${VERDE}"/>` +
+      `<g transform="translate(50 50) scale(1.15) translate(-50 -50)">${DESENHO}</g></svg>\n`);
+    await b.close();
+    console.log('ícones da versão web gerados');
+    return;
+  }
   /* ícone adaptável (Android 8+): 108 dp, com o desenho dentro dos 66 dp centrais */
   await tirar(path.join(RAIZ, 'res/mipmap-xxhdpi/ic_frente.png'), 324, 0.6, 'transparent', 0);
   /* ícone antigo, um por densidade */

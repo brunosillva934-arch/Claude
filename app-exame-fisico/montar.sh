@@ -5,8 +5,8 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
-NOME=1.2     # versão que a pessoa vê
-CODIGO=3     # aumente a cada versão: o Android só instala por cima se não for menor
+NOME=1.2.1     # versão que a pessoa vê
+CODIGO=4     # aumente a cada versão: o Android só instala por cima se não for menor
 MINIMO=21    # Android 5.0
 ALVO=34      # Android 14
 ANDROID_JAR=${ANDROID_JAR:-/usr/lib/android-sdk/platforms/android-23/android.jar}

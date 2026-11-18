@@ -1,0 +1,25 @@
+{
+  "id": "./",
+  "name": "Exame físico",
+  "short_name": "Exame físico",
+  "description": "Roteiro de exame físico com achados esperados e anormais, os motivos de cada achado, imagens e exames. Funciona sem internet; os dados ficam no aparelho.",
+  "lang": "pt-BR",
+  "dir": "ltr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f2f5f4",
+  "theme_color": "#ffffff",
+  "categories": ["medical", "education"],
+  "icons": [
+    { "src": "icones/icone-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icones/icone-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icones/icone-mascara-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "icones/icone.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ],
+  "screenshots": [
+    { "src": "telas/roteiro.png", "sizes": "780x1688", "type": "image/png", "form_factor": "narrow", "label": "Áreas do exame físico" },
+    { "src": "telas/achado.png", "sizes": "780x1688", "type": "image/png", "form_factor": "narrow", "label": "Achado com imagem e motivos" },
+    { "src": "telas/exame.png", "sizes": "780x1688", "type": "image/png", "form_factor": "narrow", "label": "Exame em andamento" }
+  ]
+}

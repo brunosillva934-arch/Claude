@@ -1,0 +1,7 @@
+# Publica a versão web (PWA) do Exame físico no Netlify.
+# O site já vem montado em app-exame-fisico/site; nenhum comando de build é preciso.
+# Depois de mudar o app: cd app-exame-fisico && python3 montar-pwa.py, e envie o resultado.
+# Os cabeçalhos (cache, segurança) ficam em app-exame-fisico/site/_headers.
+[build]
+  base = "app-exame-fisico"
+  publish = "site"
