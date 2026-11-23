@@ -409,6 +409,27 @@ th{font-size:.68rem;text-transform:uppercase;color:var(--ink-3);font-weight:700;
 .rv-ai li.mine{color:var(--ink);font-weight:600}
 .rv-ai .tip{background:var(--brand-soft);border-radius:10px;padding:8px 11px;font-size:.92rem}
 #plAiLine .meter{width:120px}
+.ttrace.xp i{background:var(--mon-amber)}
+.panel .ttrace{background:var(--surface-3)} .panel .ttrace.xp i{background:var(--warn)}
+.lvl-n{font-family:var(--display);font-weight:800;font-size:1.05rem}
+.lvl-t{font-weight:600;color:var(--mon-ink-2)}
+.panel .lvl-t{color:var(--ink-2)}
+.grade{display:grid;place-items:center;width:68px;height:68px;border-radius:20px;font-family:var(--display);font-weight:800;font-size:2.4rem;line-height:1;background:var(--mon-surface-2);color:var(--gc);border:2px solid var(--gc);flex:none}
+.xplist{display:flex;flex-direction:column;gap:3px;font-size:.86rem;color:var(--mon-ink-2)}
+.xplist div{display:flex;justify-content:space-between;gap:12px}
+.xplist b{font-family:var(--mono);color:var(--mon-amber);font-weight:600;white-space:nowrap}
+.mis{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;align-items:center;padding-block:11px;border-top:1px solid var(--rule)}
+.mis:first-child{border-top:0}
+.mis .meter{grid-column:1 / -1}
+.mis.done b{color:var(--ok)}
+.achs{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px}
+.ach{border:1px solid var(--rule);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:2px;background:var(--surface)}
+.ach b{font-size:.9rem} .ach span{font-size:.76rem;color:var(--ink-3)}
+.ach.on{border-color:color-mix(in srgb,var(--warn) 50%,transparent);background:var(--warn-soft)} .ach.on b{color:var(--warn)}
+.ach.off{opacity:.62}
+.mon .chip:disabled{opacity:.5;cursor:not-allowed}
+.unlock{display:flex;flex-wrap:wrap;gap:6px}
+.unlock span{font-size:.78rem;font-weight:700;padding:3px 10px;border-radius:999px;background:var(--mon-surface-2);color:var(--mon-amber)}
 .pause{position:absolute;inset:0;background:rgb(9 16 27 / .94);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:2}
 
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--surface);padding:10px 16px;border-radius:12px;font-size:.88rem;font-weight:600;z-index:50;max-width:calc(100% - 32px);box-shadow:0 8px 24px rgb(0 0 0 / .2)}
@@ -2996,14 +3017,16 @@ function plStart() {
 }
 function plCountdown() { PL.state = "count"; PL.countEnd = Date.now() + 3000; renderPlantao(); }
 function plBegin() {
-  PL.g = { log: [], tema: PL.tema, lives: 3, score: 0, streak: 0, best: 0, correct: 0, answered: 0, hourIdx: 0, used: new Set(), errors: [], times: [], q: null, T: 15, acc: 0, t0: 0, running: false, phase: "q", emerg: false, lastTipo: null, paused: false, survived: false, aiUsed: 0, startedAt: Date.now() };
+  const mode = PL_MODES.find(m => m.id === PL.mode && plModeOk(m)) || PL_MODES[0];
+  PL.g = { log: [], mode: mode.id, start: mode.start, maxLives: mode.lives, modeMult: mode.mult, tema: PL.tema, lives: mode.lives, score: 0, streak: 0, best: 0, correct: 0, answered: 0, hourIdx: mode.start, used: new Set(), errors: [], times: [], q: null, T: 15, acc: 0, t0: 0, running: false, phase: "q", emerg: false, lastTipo: null, paused: false, survived: false, aiUsed: 0, startedAt: Date.now(),
+    emergOk: 0, fast3: 0, fast2: 0, coffees: 0, firstLoss: null, temaOk: {}, temaN: {}, tipoOk: {}, misToast: {} };
   PL.state = "play"; plNext();
 }
 function plNext() {
   const g = PL.g; clearTimeout(g.adv);
   g.emerg = g.answered > 0 && (g.answered + 1) % 7 === 0;
   const q = plPick(g); g.used.add(q.id); g.lastTipo = q.tipo; if (q.src === "ia") g.aiUsed++;
-  Object.assign(g, { q: plView(q), T: 0, acc: 0, t0: performance.now(), running: true, phase: "q", chosen: null, lastPts: 0, hourUp: false, coffee: false });
+  Object.assign(g, { q: plView(q), T: 0, acc: 0, t0: performance.now(), running: true, phase: "q", chosen: null, lastPts: 0, hourUp: false, coffee: false, coffeeBonus: false, justSurvived: false });
   g.T = plTime(g, q);
   renderPlantao();
   if (CAP.sample && PL.inflight < 2 && plFreshAI(g.tema) < 12 && (g.batches || 0) < 16) { g.batches = (g.batches || 0) + 1; plFetch(g.tema); }
@@ -3015,13 +3038,17 @@ function plAnswer(i) {
   const ok = i === g.q.ans; g.answered++; g.phase = "fb"; g.chosen = i; g.times.push(g.T - left);
   g.log.push({ q: plSlimQ(g.q), chosen: i, ok, t: Math.round((g.T - left) * 10) / 10, T: g.T, hour: g.hourIdx, emerg: g.emerg });
   const src = PL.pool.find(x => x.id === g.q.id); if (src) { src.seen = (src.seen || 0) + 1; if (!ok) src.wrong = (src.wrong || 0) + 1; }
+  const tq = g.q.tema || "geral"; g.temaN[tq] = (g.temaN[tq] || 0) + 1;
   if (ok) {
     g.streak++; g.best = Math.max(g.best, g.streak); g.correct++;
+    g.temaOk[tq] = (g.temaOk[tq] || 0) + 1; g.tipoOk[g.q.tipo] = (g.tipoOk[g.q.tipo] || 0) + 1;
+    const took = g.T - left; if (took < 3) g.fast3++; if (took < 2) g.fast2++; if (g.emerg) g.emergOk++;
     const mult = 1 + Math.min(3, Math.floor(g.streak / 5));
-    g.lastPts = Math.round((100 * mult + left * 10) * (g.emerg ? 2 : 1)); g.score += g.lastPts;
-    if (g.streak % 10 === 0 && g.lives < 3) { g.lives++; g.coffee = true; }
-    const h = Math.floor(g.correct / 5); if (h > g.hourIdx) { g.hourIdx = h; g.hourUp = true; if (h === 12) g.survived = true; }
-  } else { g.lives--; g.streak = 0; g.errors.push({ q: g.q, chosen: i }); }
+    g.lastPts = Math.round((100 * mult + left * 10) * (g.emerg ? 2 : 1) * (g.modeMult || 1)); g.score += g.lastPts;
+    if (g.streak % 10 === 0) { g.coffee = true; g.coffees++; if (g.lives < g.maxLives) g.lives++; else { g.coffeeBonus = true; g.score += 300; } }
+    const h = g.start + Math.floor(g.correct / 5); if (h > g.hourIdx) { g.hourIdx = h; g.hourUp = true; if (h >= 12 && !g.survived) { g.survived = true; g.justSurvived = true; } }
+  } else { if (g.firstLoss == null) g.firstLoss = g.hourIdx; g.lives--; g.streak = 0; g.errors.push({ q: g.q, chosen: i }); }
+  plLiveMissions(g);
   renderPlantao();
   g.adv = setTimeout(plContinue, ok ? (g.hourUp || g.coffee ? 1500 : 800) : 4200);
 }
@@ -3037,12 +3064,12 @@ function plPause(on) {
 }
 function plOver() {
   const g = PL.g; PL.state = "over"; ls.set("plPool", PL.pool);
-  P.surv = P.surv || { best: [] };
-  const rec = { score: g.score, h: g.hourIdx, c: g.correct, n: g.answered, at: Date.now(), tema: g.tema, best: g.best };
-  const prevTop = (P.surv.best[0] || {}).score || 0;
-  P.surv.best = [...P.surv.best, rec].sort((a, b) => b.score - a.score).slice(0, 10);
-  PL.last = { rec, record: g.score > prevTop && g.score > 0 };
-  const rh = { id: Date.now().toString(36), at: Date.now(), tema: g.tema, score: g.score, h: g.hourIdx, c: g.correct, n: g.answered, best: g.best, survived: g.survived, log: g.log.slice(-150), ai: {} };
+  const S = plS(); const prog = plProgress(g);
+  const rec = { score: g.score, h: g.hourIdx, c: g.correct, n: g.answered, at: Date.now(), tema: g.tema, best: g.best, mode: g.mode, grade: prog.grade };
+  const prevTop = (S.best[0] || {}).score || 0;
+  S.best = [...S.best, rec].sort((a, b) => b.score - a.score).slice(0, 10);
+  PL.last = { rec, record: g.score > prevTop && g.score > 0, prog };
+  const rh = { id: Date.now().toString(36), at: Date.now(), tema: g.tema, score: g.score, h: g.hourIdx, c: g.correct, n: g.answered, best: g.best, survived: g.survived, mode: g.mode, grade: prog.grade, xp: prog.gain, log: g.log.slice(-150), ai: {} };
   PL.hist = [...PL.hist, rh]; plSaveHist(); plCloudSave(rh, 0); if (PL.cloud && PL.cloud.length >= PL_KEEP) plPrune(); PL.revRec = rh; PL.revFilter = "todas";
   markDay(); touch(); updateHeader(); renderPlantao(); window.scrollTo(0, 0);
   if (rh.log.length) plExplainStart(rh, plOrder(rh));
@@ -3089,6 +3116,146 @@ function renderPlantao() {
   if (PL.state === "over" && PL.g) return renderPlOver(v);
   renderPlHome(v);
 }
+/* --- progressão do Plantão: carreira (XP e níveis), nota, missões do dia, conquistas, especialidades e modos --- */
+const PL_RANKS = [[0, "1º período"], [500, "Monitoria de semiologia"], [1500, "Internato · 5º ano"], [3000, "Internato · 6º ano"], [5000, "Residência · R1"], [8000, "Residência · R2"], [12000, "Residência · R3"], [17000, "Plantonista"], [23000, "Preceptoria"], [30000, "Chefia de plantão"]];
+function plLevel(xp) {
+  xp = xp || 0; let i = 0; while (i + 1 < PL_RANKS.length && xp >= PL_RANKS[i + 1][0]) i++;
+  if (i < PL_RANKS.length - 1) return { n: i + 1, title: PL_RANKS[i][1], from: PL_RANKS[i][0], to: PL_RANKS[i + 1][0], xp };
+  const base = PL_RANKS[i][0]; const extra = Math.floor((xp - base) / 10000);
+  return { n: i + 1 + extra, title: extra ? `Lenda do plantão${extra > 1 ? " ★" + extra : ""}` : PL_RANKS[i][1], from: base + extra * 10000, to: base + (extra + 1) * 10000, xp };
+}
+const PL_MODES = [
+  { id: "normal", nome: "Plantão", curto: "Plantão", desc: "3 vidas, das 19h às 7h.", lvl: 1, lives: 3, start: 0, mult: 1, xp: 1 },
+  { id: "residente", nome: "Plantão de residente", curto: "Residente", desc: "Começa às 23h, com menos tempo e perguntas mais difíceis. Pontos ×1,5 e XP ×1,25.", lvl: 5, lives: 3, start: 4, mult: 1.5, xp: 1.25 },
+  { id: "chefe", nome: "Plantão do chefe", curto: "Chefe", desc: "Uma vida só. Pontos ×2 e XP ×1,5.", lvl: 8, lives: 1, start: 0, mult: 2, xp: 1.5 }
+];
+PL.mode = ls.get("plMode", "normal");
+function plS() { const d = { best: [], xp: 0, games: 0, emergOk: 0, tema: {}, ach: {}, mis: null, lastDay: "" }; if (!P.surv) P.surv = {}; for (const k in d) if (P.surv[k] === undefined) P.surv[k] = d[k]; return P.surv; }
+const plModeOk = m => plLevel(plS().xp).n >= m.lvl;
+const PL_TEMA_NOME = Object.fromEntries(PL_TEMAS);
+const PL_MIS = [
+  { id: "hora4", txt: "Chegue às 23:00 num plantão", kind: "max", key: "hour", goal: 4, xp: 150 },
+  { id: "hora8", txt: "Chegue às 03:00 num plantão", kind: "max", key: "hour", goal: 8, xp: 300 },
+  { id: "seq10", txt: "Faça 10 acertos seguidos", kind: "max", key: "best", goal: 10, xp: 150 },
+  { id: "seq20", txt: "Faça 20 acertos seguidos", kind: "max", key: "best", goal: 20, xp: 300 },
+  { id: "pts10k", txt: "Faça 10.000 pontos num plantão", kind: "max", key: "score", goal: 10000, xp: 200 },
+  { id: "emerg3", txt: "Acerte 3 emergências", kind: "sum", key: "emergOk", goal: 3, xp: 200 },
+  { id: "caso5", txt: "Acerte 5 casos relâmpago", kind: "sum", key: "tipo:caso", goal: 5, xp: 200 },
+  { id: "trad8", txt: "Acerte 8 traduções do leigo para o termo técnico", kind: "sum", key: "tipo:traducao", goal: 8, xp: 150 },
+  { id: "rap10", txt: "Acerte 10 perguntas em menos de 3 s", kind: "sum", key: "fast3", goal: 10, xp: 200 },
+  { id: "jogos2", txt: "Termine 2 plantões hoje", kind: "sum", key: "games", goal: 2, xp: 150 },
+  { id: "ac40", txt: "Acerte 40 perguntas hoje", kind: "sum", key: "correct", goal: 40, xp: 200 },
+  { id: "tema", txt: "Acerte 12 perguntas de {t}", kind: "sum", key: "tema:{t}", goal: 12, xp: 200 }
+];
+function plTodayMissions() {
+  const S = plS(); const d = todayStr();
+  if (!S.mis || S.mis.d !== d) S.mis = { d, prog: {}, done: {} };
+  const t = seededShuffle(PL_TEMAS.filter(x => x[0] !== "tudo").map(x => x[0]), "t" + d)[0];
+  return seededShuffle(PL_MIS, d).slice(0, 3).map(m => m.id === "tema" ? { ...m, txt: m.txt.replace("{t}", PL_TEMA_NOME[t].toLowerCase()), key: "tema:" + t } : m);
+}
+function plMetric(g, key, final) {
+  if (!g) return 0;
+  if (key === "hour") return g.hourIdx; if (key === "best") return g.best; if (key === "score") return g.score;
+  if (key === "emergOk") return g.emergOk || 0; if (key === "fast3") return g.fast3 || 0; if (key === "correct") return g.correct;
+  if (key === "games") return final ? 1 : 0;
+  if (key.startsWith("tipo:")) return (g.tipoOk || {})[key.slice(5)] || 0;
+  if (key.startsWith("tema:")) return (g.temaOk || {})[key.slice(5)] || 0;
+  return 0;
+}
+function plMisValue(m, g, final) { const S = plS(); const prev = (S.mis && S.mis.prog[m.id]) || 0; const v = plMetric(g, m.key, final); return m.kind === "max" ? Math.max(prev, v) : prev + v; }
+function plGrade(g) {
+  const acc = g.answered ? g.correct / g.answered : 0;
+  if (g.survived && acc >= 0.9) return "S";
+  if (g.hourIdx >= 8 && acc >= 0.8) return "A";
+  if (g.hourIdx >= 4 && acc >= 0.7) return "B";
+  if (g.hourIdx >= 2) return "C";
+  return "D";
+}
+const PL_ACH = [
+  ["primeiro", "Primeiro plantão", "Termine seu primeiro plantão.", (g, S) => S.games >= 1],
+  ["madrugada", "Madrugada adentro", "Chegue às 03:00.", g => g.hourIdx >= 8],
+  ["virou", "Virou a noite", "Sobreviva até as 07:00.", g => g.survived],
+  ["horaextra", "Hora extra", "Chegue às 09:00.", g => g.hourIdx >= 14],
+  ["combo", "Combo máximo", "Chegue ao ×4: 15 acertos seguidos.", g => g.best >= 15],
+  ["firme", "Mão firme", "30 acertos seguidos.", g => g.best >= 30],
+  ["rapida", "Mão rápida", "10 acertos em menos de 2 s num plantão.", g => (g.fast2 || 0) >= 10],
+  ["intacto", "Sem arranhão", "Chegue às 22:00 sem perder vida.", g => (g.firstLoss == null ? g.hourIdx : g.firstLoss) >= 3],
+  ["cafe2", "Café duplo", "Ganhe 2 cafés num plantão.", g => (g.coffees || 0) >= 2],
+  ["emerg", "Emergencista", "Acerte 10 emergências, somando plantões.", (g, S) => S.emergOk >= 10],
+  ["notaS", "Nota S", "Tire nota S num plantão.", g => plGrade(g) === "S"],
+  ["pts20", "20 mil", "Faça 20.000 pontos num plantão.", g => g.score >= 20000],
+  ["pts50", "50 mil", "Faça 50.000 pontos num plantão.", g => g.score >= 50000],
+  ["fiel", "Plantonista fiel", "Termine 10 plantões.", (g, S) => S.games >= 10],
+  ["veterano", "Veterano", "Termine 50 plantões.", (g, S) => S.games >= 50],
+  ["semana", "Semana de plantão", "Treine 7 dias seguidos.", () => streak() >= 7],
+  ["residente", "Residência", "Chegue às 03:00 no Plantão de residente.", g => g.mode === "residente" && g.hourIdx >= 8],
+  ["chefe", "Chefia", "Chegue às 23:00 no Plantão do chefe.", g => g.mode === "chefe" && g.hourIdx >= 4],
+  ...PL_TEMAS.filter(t => t[0] !== "tudo").map(([k, n]) => ["esp_" + k, "Especialista: " + n.split(",")[0], `100 acertos de ${n.toLowerCase()}.`, (g, S) => ((S.tema[k] || {}).c || 0) >= 100])
+];
+const PL_TIERS = [[25, "bronze", "--c-abd"], [100, "prata", "--ink-3"], [250, "ouro", "--warn"]];
+function plTier(c) { let t = null; for (const x of PL_TIERS) if (c >= x[0]) t = x; const next = PL_TIERS.find(x => c < x[0]); return { t, next }; }
+function plProgress(g) {
+  const S = plS(); const lvBefore = plLevel(S.xp); const d = todayStr();
+  const mis = plTodayMissions(); const misDone = [];
+  for (const m of mis) { if (S.mis.done[m.id]) continue; const v = plMisValue(m, g, true); S.mis.prog[m.id] = v; if (v >= m.goal) { S.mis.done[m.id] = true; misDone.push(m); } }
+  S.games++; S.emergOk += g.emergOk || 0;
+  for (const [t, n] of Object.entries(g.temaN || {})) { const x = Object.assign({ c: 0, n: 0 }, S.tema[t]); x.n += n; x.c += (g.temaOk || {})[t] || 0; S.tema[t] = x; }
+  const mode = PL_MODES.find(m => m.id === g.mode) || PL_MODES[0];
+  const base = Math.round(g.score / 20) + 40 * Math.max(0, g.hourIdx - (g.start || 0)) + (g.survived ? 300 : 0);
+  const parts = [[mode.xp > 1 ? `Plantão (modo ×${String(mode.xp).replace(".", ",")})` : "Pontos e horas do plantão", Math.round(base * mode.xp)]];
+  if (S.lastDay !== d) { S.lastDay = d; parts.push(["Primeiro plantão do dia", 100]); }
+  for (const m of misDone) parts.push(["Missão: " + m.txt, m.xp]);
+  const achNew = [];
+  for (const [id, nome, desc, fn] of PL_ACH) { if (S.ach[id]) continue; let ok = false; try { ok = fn(g, S); } catch {} if (ok) { S.ach[id] = Date.now(); achNew.push([id, nome, desc]); parts.push(["Conquista: " + nome, 100]); } }
+  const gain = parts.reduce((a, p) => a + p[1], 0);
+  S.xp += gain;
+  const lvAfter = plLevel(S.xp);
+  const unlocked = PL_MODES.filter(m => m.lvl > lvBefore.n && m.lvl <= lvAfter.n);
+  return { parts, gain, lvBefore, lvAfter, misDone, achNew, grade: plGrade(g), unlocked };
+}
+function plLiveMissions(g) {
+  const S = plS();
+  for (const m of plTodayMissions()) { if (S.mis.done[m.id] || g.misToast[m.id]) continue; if (plMisValue(m, g, false) >= m.goal) { g.misToast[m.id] = true; toast(`Missão cumprida: ${m.txt} · +${m.xp} XP`); } }
+}
+function xpBar(lv, cls) {
+  const span = lv.to - lv.from; const v = span ? (lv.xp - lv.from) / span : 1;
+  return el("div", { class: "ttrace " + (cls || "xp"), role: "meter", "aria-valuemin": "0", "aria-valuemax": "100", "aria-valuenow": String(Math.round(v * 100)), "aria-label": "Progresso de nível" }, el("i", { style: `width:${Math.max(2, Math.round(v * 100))}%` }));
+}
+function plCareerBlock(onMon) {
+  const lv = plLevel(plS().xp); const next = PL_MODES.find(m => m.lvl > lv.n);
+  return el("div", { class: "stack", style: "gap:6px" },
+    el("div", { class: "bar" }, el("span", {}, el("b", { class: "lvl-n", text: `Nível ${lv.n}` }), el("span", { class: "lvl-t", text: " · " + lv.title })),
+      el("span", { class: "mono", style: `font-size:.8rem;color:var(${onMon ? "--mon-ink-2" : "--ink-3"})`, text: `${lv.xp.toLocaleString("pt-BR")} / ${lv.to.toLocaleString("pt-BR")} XP` })),
+    xpBar(lv),
+    next ? el("span", { class: "meta", text: `Nível ${next.lvl} libera o ${next.nome}.` }) : null);
+}
+function plMissionsPanel() {
+  const S = plS(); const mis = plTodayMissions();
+  return el("div", { class: "panel" }, el("div", { class: "bar" }, el("span", { class: "label", text: "Missões do dia" }), el("span", { class: "meta", text: "renovam à meia-noite" })),
+    el("div", {}, mis.map(m => {
+      const done = !!S.mis.done[m.id]; const v = Math.min(m.goal, (S.mis.prog[m.id] || 0));
+      const shown = m.key === "hour" ? `${plHourLabel(Math.min(v, m.goal))} de ${plHourLabel(m.goal)}` : m.key === "score" ? `${v.toLocaleString("pt-BR")} / ${m.goal.toLocaleString("pt-BR")}` : `${v}/${m.goal}`;
+      return el("div", { class: "mis" + (done ? " done" : "") }, el("b", { text: (done ? "✓ " : "") + m.txt }), el("span", { class: "badge " + (done ? "ok" : "warn"), text: `+${m.xp} XP` }),
+        el("span", { class: "meta", text: done ? "Cumprida" : m.key === "hour" && !v ? "Ainda não" : shown }), meter(done ? 1 : v / m.goal));
+    })));
+}
+function plAchPanel() {
+  const S = plS(); const on = PL_ACH.filter(a => S.ach[a[0]]); const off = PL_ACH.filter(a => !S.ach[a[0]]);
+  const list = PL.achAll ? [...on, ...off] : [...on, ...off.slice(0, Math.max(4, 8 - on.length))];
+  return el("div", { class: "panel" }, el("div", { class: "bar" }, el("span", { class: "label", text: "Conquistas" }), el("span", { class: "badge acc", text: `${on.length} de ${PL_ACH.length}` })),
+    el("div", { class: "achs" }, list.map(a => el("div", { class: "ach " + (S.ach[a[0]] ? "on" : "off") }, el("b", { text: a[1] }), el("span", { text: a[2] })))),
+    PL_ACH.length > list.length || PL.achAll ? el("div", {}, el("button", { class: "link", type: "button", text: PL.achAll ? "Mostrar menos" : `Ver todas (${PL_ACH.length})`, onclick: () => { PL.achAll = !PL.achAll; renderPlantao(); } })) : null);
+}
+function plSpecPanel() {
+  const S = plS();
+  return el("div", { class: "panel" }, el("div", { class: "bar" }, el("span", { class: "label", text: "Especialidades" }), el("span", { class: "meta", text: "bronze 25 · prata 100 · ouro 250 acertos" })),
+    el("div", {}, PL_TEMAS.filter(t => t[0] !== "tudo").map(([k, n]) => {
+      const x = S.tema[k] || { c: 0, n: 0 }; const { t, next } = plTier(x.c);
+      return el("div", { class: "mis" }, el("b", { text: n }), t ? el("span", { class: "badge", style: `background:color-mix(in srgb,var(${t[2]}) 16%,transparent);color:var(${t[2]})`, text: t[1] }) : el("span", { class: "badge", text: "sem medalha" }),
+        el("span", { class: "meta", text: `${x.c} acertos${x.n ? ` · ${Math.round(x.c / x.n * 100)}% de acerto` : ""}${next ? ` · faltam ${next[0] - x.c} para ${next[1]}` : " · nível máximo"}` }), meter(next ? x.c / next[0] : 1));
+    })));
+}
+
 function renderPlHome(v) {
   const best = ((P.surv || {}).best || [])[0];
   const temas = el("div", { class: "chips" }, PL_TEMAS.map(([k, t]) => el("button", { class: "chip", type: "button", "aria-pressed": String(k === PL.tema), text: t, onclick: () => { PL.tema = k; ls.set("plTema", k); renderPlantao(); } })));
@@ -3096,13 +3263,24 @@ function renderPlHome(v) {
     el("span", { class: "label", text: "Jogo de sobrevivência" }),
     el("div", { class: "ttl" }, "Plantão ", el("em", { text: "19h → 7h" })),
     ECG(),
+    plCareerBlock(true),
     el("p", { class: "meta", text: best ? `Seu recorde: ${best.score.toLocaleString("pt-BR")} pontos, chegou às ${plHourLabel(best.h)}.` : "Sobreviva à noite inteira: 60 acertos, 3 vidas, cada vez menos tempo." }),
+    el("span", { class: "label", text: "Modo" }),
+    el("div", { class: "chips" }, PL_MODES.map(md => { const ok = plModeOk(md); return el("button", { class: "chip", type: "button", disabled: !ok, title: md.desc, "aria-pressed": String(PL.mode === md.id && ok), text: ok ? md.nome : `${md.nome} · nível ${md.lvl}`, onclick: () => { PL.mode = md.id; ls.set("plMode", md.id); renderPlantao(); } }); })),
+    el("p", { class: "meta", text: ((PL_MODES.find(x => x.id === PL.mode && plModeOk(x)) || PL_MODES[0]).desc) }),
     el("span", { class: "label", text: "Tema do plantão" }), temas,
     el("p", { class: "meta", id: "plPoolLine", text: plPoolLine() }),
     el("div", { class: "row" }, el("button", { class: "btn primary big", type: "button", text: "Começar plantão", onclick: plStart }),
       CAP.sample ? el("button", { class: "link", type: "button", text: "Preparar mais 32 perguntas agora", onclick: async () => { toast("A IA está preparando dois lotes…"); const n = await plFetch2(PL.tema); toast(n ? `${n} perguntas novas prontas.` : PL.fetchErr || "Nenhuma pergunta nova desta vez."); refreshPlFoot(); } }) : null)));
-  v.append(el("div", { class: "panel" }, el("span", { class: "label", text: "Como funciona" }),
-    el("ul", { class: "rules" },
+  v.append(plMissionsPanel());
+  v.append(plAchPanel());
+  v.append(plSpecPanel());
+  v.append(el("details", { class: "panel" }, el("summary", { class: "label", text: "Como funciona: regras, pontos e progressão" }),
+    el("ul", { class: "rules", style: "margin-top:10px" },
+      el("li", { text: "Nota do plantão: S (sobreviveu com 90% ou mais de acerto), A (chegou às 03:00 com 80%), B (23:00 com 70%), C (21:00), D." }),
+      el("li", { text: "Experiência: pontos ÷ 20, mais 40 por hora sobrevivida e 300 por virar a noite. O primeiro plantão do dia vale +100; missões e conquistas dão XP extra." }),
+      el("li", { text: "Carreira: do 1º período à Chefia de plantão, e depois Lenda. O nível 5 libera o Plantão de residente; o nível 8, o Plantão do chefe." }),
+      el("li", { text: "Especialidades: acertos em cada sistema rendem medalhas de bronze (25), prata (100) e ouro (250)." }),
       el("li", { text: "Você tem 3 vidas. Errou ou o tempo acabou, perde uma." }),
       el("li", { text: "A cada 5 acertos passa uma hora: sobreviver das 19h às 7h exige 60 acertos. Depois vem a hora extra, sem fim." }),
       el("li", { text: "O tempo por pergunta cai de 15 s para 6 s ao longo da noite, e as perguntas ficam mais difíceis." }),
@@ -3134,10 +3312,10 @@ function renderPlPrep(v) {
 function renderPlPlay(v) {
   const g = PL.g; const q = g.q;
   const m = el("div", { class: "mon" });
-  const lives = el("div", { class: "lives", "aria-label": `${g.lives} vidas` }, [0, 1, 2].map(i => HEART(i < g.lives)));
+  const lives = el("div", { class: "lives", "aria-label": `${g.lives} vidas` }, Array.from({ length: g.maxLives || 3 }, (_, i) => HEART(i < g.lives)));
   const mult = 1 + Math.min(3, Math.floor(g.streak / 5));
   m.append(el("div", { class: "hud" },
-    el("div", { class: "clock" }, el("span", { class: "label", text: "Plantão" }), el("b", { text: plHourLabel(g.hourIdx) })),
+    el("div", { class: "clock" }, el("span", { class: "label", text: (PL_MODES.find(m => m.id === g.mode) || PL_MODES[0]).curto }), el("b", { text: plHourLabel(g.hourIdx) })),
     lives,
     el("div", { class: "score" }, el("span", { class: "label", text: "Pontos" }), el("b", { text: g.score.toLocaleString("pt-BR") }), el("div", { class: "combo", text: g.streak ? `×${mult} · ${g.streak} seguidas` : "" })),
     el("button", { class: "btn small", type: "button", "aria-label": "Pausar", text: g.paused ? "▶" : "Ⅱ", onclick: () => plPause(!g.paused) })));
@@ -3158,8 +3336,8 @@ function renderPlPlay(v) {
     if (ok) fb.append(el("span", { class: "pts", text: `+${g.lastPts.toLocaleString("pt-BR")}` }));
     else fb.append(el("span", { class: "miss", text: g.chosen === -1 ? "Tempo esgotado. −1 vida" : "Errou. −1 vida" }), el("p", {}, el("b", { text: "Resposta: " }), q.opts[q.ans]));
     if (q.exp) fb.append(el("p", { class: "meta", text: q.exp }));
-    if (g.hourUp) fb.append(el("span", { class: "banner", text: g.survived ? "07:00 — você sobreviveu ao plantão! Agora é hora extra." : `Passou uma hora: ${plHourLabel(g.hourIdx)}. O tempo encurta.` }));
-    if (g.coffee) fb.append(el("span", { class: "banner", text: "Café! +1 vida por 10 acertos seguidos." }));
+    if (g.hourUp) fb.append(el("span", { class: "banner", text: g.justSurvived ? "07:00 — você sobreviveu ao plantão! Agora é hora extra." : `Passou uma hora: ${plHourLabel(g.hourIdx)}. O tempo encurta.` }));
+    if (g.coffee) fb.append(el("span", { class: "banner", text: g.coffeeBonus ? "Café! Vidas cheias: +300 pontos." : "Café! +1 vida por 10 acertos seguidos." }));
     if (!ok) fb.append(el("div", {}, el("button", { class: "btn small", type: "button", text: g.lives <= 0 ? "Ver resultado" : "Continuar (Enter)", onclick: plContinue })));
     m.append(fb);
   }
@@ -3238,8 +3416,8 @@ function plHistPanel() {
     del.addEventListener("click", () => { if (!del.dataset.armed) { del.dataset.armed = "1"; del.textContent = "Confirmar"; del.style.color = "var(--bad)"; setTimeout(() => { if (del.isConnected) { delete del.dataset.armed; del.textContent = "Excluir"; del.style.color = "var(--ink-3)"; } }, 4000); return; } plDeleteRec(r); });
     return el("div", { class: "weak", style: "align-items:center;flex-wrap:wrap" },
       el("span", { style: "flex:1;min-width:200px" }, el("b", { class: "mono", text: r.score.toLocaleString("pt-BR") + " pts" }),
-        el("span", { class: "meta", text: ` · ${fmtDate(r.at)} · até ${plHourLabel(r.h)} · ${r.c}/${r.n} acertos · explicações ${plAiCount(r)}/${r.log.length}` })),
-      el("span", { class: "row", style: "gap:12px" }, del, el("button", { class: "btn small", type: "button", text: "Revisar", onclick: () => plOpenRec(r) })));
+        el("span", { class: "meta", text: `${r.grade ? " · nota " + r.grade : ""} · ${fmtDate(r.at)} · até ${plHourLabel(r.h)} · ${r.c}/${r.n} acertos · explicações ${plAiCount(r)}/${r.log.length}` })),
+      el("span", { class: "row", style: "gap:12px;font-family:var(--body);color:var(--ink)" }, del, el("button", { class: "btn small", type: "button", text: "Revisar", onclick: () => plOpenRec(r) })));
   })));
   if (all.length > 10) box.append(el("div", {}, el("button", { class: "link", type: "button", text: PL.showAll ? "Mostrar menos" : `Mostrar todos (${all.length})`, onclick: () => { PL.showAll = !PL.showAll; refreshPlHist(); } })));
   if (cloud) box.append(el("p", { class: "meta", text: `Guardamos os últimos ${PL_KEEP} plantões na sua conta, num espaço só seu.` }));
@@ -3356,17 +3534,27 @@ function renderPlRevScreen(v) {
   v.append(renderPlReview(r)); plRefreshAiLine();
 }
 function renderPlOver(v) {
-  const g = PL.g; const { rec, record } = PL.last || { rec: {}, record: false };
+  const g = PL.g; const { rec, record, prog } = PL.last || { rec: {}, record: false, prog: null };
   const avg = g.times.length ? g.times.reduce((a, b) => a + b, 0) / g.times.length : 0;
+  const GC = { S: "--mon-amber", A: "--mon-ecg", B: "--mon-trace", C: "--mon-ink-2", D: "--mon-alarm" };
   const m = el("div", { class: "mon" },
-    el("span", { class: "label", text: "Fim do plantão" }),
-    el("div", { class: "ttl", text: g.survived ? "Você sobreviveu ao plantão!" : `Você caiu às ${plHourLabel(g.hourIdx)}` }),
+    el("span", { class: "label", text: "Fim do plantão · " + (PL_MODES.find(x => x.id === g.mode) || PL_MODES[0]).nome }),
+    el("div", { class: "row", style: "gap:16px;flex-wrap:nowrap;align-items:center" }, prog ? el("div", { class: "grade", style: `--gc:var(${GC[prog.grade]})`, title: "Nota do plantão", text: prog.grade }) : null,
+      el("div", { class: "ttl", style: "font-size:1.6rem", text: g.survived ? "Você sobreviveu ao plantão!" : `Você caiu às ${plHourLabel(g.hourIdx)}` })),
     el("div", { class: "score-row" },
       el("div", { class: "kv" }, el("span", { class: "label", text: "Pontos" }), el("span", { class: "big", style: "color:var(--mon-trace)", text: g.score.toLocaleString("pt-BR") })),
       el("div", { class: "kv" }, el("span", { class: "label", text: "Acertos" }), el("span", { class: "mid", text: `${g.correct}/${g.answered}` })),
       el("div", { class: "kv" }, el("span", { class: "label", text: "Maior sequência" }), el("span", { class: "mid", text: String(g.best) })),
       el("div", { class: "kv" }, el("span", { class: "label", text: "Resposta média" }), el("span", { class: "mid", text: dec(avg) + " s" }))),
     record ? el("span", { class: "banner", text: "Novo recorde pessoal!" }) : null,
+    prog ? el("div", { class: "stack", style: "gap:8px" },
+      el("div", { class: "bar" }, el("span", { class: "label", text: "Experiência ganha" }), el("b", { class: "mono", style: "color:var(--mon-amber);font-size:1.2rem", text: `+${prog.gain.toLocaleString("pt-BR")} XP` })),
+      el("div", { class: "xplist" }, prog.parts.map(([t, x]) => el("div", {}, el("span", { text: t }), el("b", { text: "+" + x.toLocaleString("pt-BR") })))),
+      plCareerBlock(true),
+      prog.lvAfter.n > prog.lvBefore.n ? el("span", { class: "banner", text: `Subiu para o nível ${prog.lvAfter.n}: ${prog.lvAfter.title}!` }) : null,
+      prog.unlocked.length ? el("span", { class: "banner", text: "Liberado: " + prog.unlocked.map(x => x.nome).join(", ") + "." }) : null,
+      prog.achNew.length ? el("div", { class: "unlock" }, prog.achNew.map(a => el("span", { title: a[2], text: "Conquista: " + a[1] }))) : null,
+      prog.misDone.length ? el("div", { class: "unlock" }, prog.misDone.map(x => el("span", { text: "Missão cumprida: " + x.txt }))) : null) : null,
     el("div", { class: "row" }, el("button", { class: "btn primary big", type: "button", text: "Novo plantão", onclick: plStart }),
       el("button", { class: "btn", type: "button", text: "Voltar", onclick: () => { PL.state = "home"; renderPlantao(); } })));
   v.append(m);
@@ -3516,7 +3704,7 @@ const vital = (lbl, val, sub, c) => el("div", { class: "vital", style: `--vc:var
 function plMonCard(href) {
   const best = ((P.surv || {}).best || [])[0];
   return el("a", { class: "mon", href }, el("div", { class: "bar" }, el("div", { class: "stack", style: "gap:4px" }, el("span", { class: "label", text: "Jogo de sobrevivência" }), el("div", { class: "ttl" }, "Plantão ", el("em", { text: "19h → 7h" }))), el("span", { class: "go", text: "Jogar →" })),
-    ECG(), el("p", { class: "meta", text: best ? `Recorde: ${best.score.toLocaleString("pt-BR")} pontos, até ${plHourLabel(best.h)}. Perguntas rápidas preparadas pela IA, 3 vidas e cada vez menos tempo.` : "Perguntas rápidas preparadas pela IA, 3 vidas e cada vez menos tempo. Sobreviva até as 7h." }));
+    ECG(), (() => { const lv = plLevel(plS().xp); return el("p", { class: "meta", text: `Nível ${lv.n} · ${lv.title}${best ? ` · recorde ${best.score.toLocaleString("pt-BR")} pontos, até ${plHourLabel(best.h)}` : ""}. Perguntas rápidas preparadas pela IA, missões do dia e conquistas.` }); })());
 }
 function renderJogos() {
   const v = $("#view-jogos"); if (!v) return; const { due, fresh } = todayQueue();
@@ -3542,7 +3730,7 @@ function renderProgresso() {
     vital("Sequência", String(st), st === 1 ? "dia de treino" : "dias seguidos", "--c-geral"),
     vital("Domínio", ms.length ? pct(ms.reduce((a, b) => a + b, 0) / ms.length) : "—", "média dos roteiros", "--c-resp"),
     vital("Cartões", String(due.length + fresh.length), "para hoje", "--c-abd"),
-    vital("Plantão", best ? best.score.toLocaleString("pt-BR") : "—", best ? `recorde · até ${plHourLabel(best.h)}` : "sem recorde ainda", "--c-cardio")));
+    (() => { const lv = plLevel(plS().xp); return vital("Plantão", `Nv ${lv.n}`, lv.title, "--c-cardio"); })()));
   const sug = suggestRoteiro("Exame físico");
   const act = (t, d, c, go, on) => el(on.href ? "a" : "button", { class: "action", type: on.href ? null : "button", href: on.href || null, style: `--cat:var(${c})`, onclick: on.click || null }, el("b", { text: t }), el("span", { class: "meta", text: d }), el("span", { class: "go", text: go + " →" }));
   v.append(el("div", { class: "qa" }, plMonCard("#plantao"),
