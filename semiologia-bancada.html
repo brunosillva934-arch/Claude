@@ -2250,44 +2250,6 @@ function placar() {
   return m;
 }
 
-/* --- sala ao vivo --- */
-async function leaveRoom() { const r = DU.room; DU.room = null; DU.peers = []; if (r) try { await r.leave(); } catch {} }
-async function joinRoom() {
-  DU.roomErr = ""; await capsReady;
-  const ch = DU.ch; if (!ch) return;
-  if (!CAP.room) { DU.roomErr = "unavailable"; if (DU.ch === ch) renderDuelo(); return; }
-  try {
-    const rm = await CAP.room.join("duelo-" + ch.id);
-    if (DU.ch !== ch) { rm.leave().catch(() => {}); return; }
-    DU.room = rm;
-    rm.onPeers(({ peers }) => { if (DU.ch !== ch) return; DU.peers = peers.filter(p => !p.isMe && p.presence && p.presence.duel === ch.id); onPeersChanged(); },
-      () => { if (DU.ch === ch) { DU.room = null; DU.roomErr = "lost"; renderDuelo(); } });
-    duPresence();
-  } catch (e) { DU.roomErr = e && e.code === "not_permitted" ? "not_permitted" : "unavailable"; }
-  if (DU.ch === ch && DU.view !== "play") renderDuelo();
-}
-function duPresence() {
-  if (!DU.room || !DU.ch) return;
-  const st = DU.view === "play" ? "playing" : DU.view === "done" ? "done" : DU.ready ? "ready" : "lobby";
-  DU.room.presence({ duel: DU.ch.id, nick: DU.nick.slice(0, 40), st, ri: DU.ri, n: DU.ch.rounds.length, pts: sumPts(), res: DU.view === "done" ? DU.res : null }).catch(() => {});
-}
-function onPeersChanged() {
-  const fresh = DU.peers.map(p => p.presence.res).filter(r => r && r.cid === DU.ch.id);
-  if (fresh.length) { const before = JSON.stringify(DU.others); DU.others = mergeOthers(DU.others, fresh); if (JSON.stringify(DU.others) !== before) saveDuel(); }
-  if (DU.view === "lobby") {
-    const others = DU.peers.filter(p => p.presence.st !== "done");
-    const allReady = DU.ready && others.length >= 1 && others.every(p => p.presence.st === "ready" || p.presence.st === "playing");
-    if (allReady && !DU.countdownEnd) DU.countdownEnd = Date.now() + 3000;
-    if (!allReady) DU.countdownEnd = 0;
-    renderDuelo();
-  } else if (DU.view === "play") renderOpp();
-  else if (DU.view === "done") renderDuelo();
-}
-function oppLine() {
-  return DU.peers.map(p => { const s = p.presence; const nm = str(s.nick) || "Jogador"; return s.st === "done" ? `${nm}: terminou, ${s.res ? s.res.total : s.pts} pts` : s.st === "playing" ? `${nm}: rodada ${(+s.ri || 0) + 1} de ${s.n}, ${s.pts || 0} pts` : `${nm}: ${s.st === "ready" ? "pronto" : "na sala"}`; });
-}
-function renderOpp() { const e = $("#duOpp"); if (!e) return; const l = oppLine(); e.replaceChildren(...[`Você: ${sumPts()} pts`, ...l].map(t => el("span", { class: "rd", text: t }))); }
-
 /* --- criar, abrir, jogar --- */
 async function createDuel() {
   if (!duNickOk()) return;
@@ -2305,13 +2267,11 @@ async function createDuel() {
   const ch = { v: 1, id: Math.random().toString(36).slice(2, 8), by: DU.nick.trim(), at: Date.now(), what: DSET.what, cen, fmt: DSET.fmt, lim: DSET.lim, rounds: rids.map((rid, i) => ({ rid, case: cases ? cases[i] : null })), res: null };
   openDuel(ch, true);
 }
-async function openDuel(ch, mine) {
-  await leaveRoom();
+function openDuel(ch, mine) {
   Object.assign(DU, { ch, mine: !!mine, res: null, others: ch.res && ch.res.nick ? [ch.res] : [], ri: 0, rounds: [], phase: "input", view: "lobby", ready: false, countdownEnd: 0, recId: ch.id, pasteErr: "" });
   const past = duelRec(ch.id);
   if (past && past.me) { DU.res = past.me; DU.others = mergeOthers(past.others || [], DU.others); DU.view = "done"; }
-  saveDuel(); renderDuelo(); window.scrollTo(0, 0);
-  joinRoom();
+  saveDuel(); initLobby(); duPresence(); syncDuelPeers(); renderDuelo(); window.scrollTo(0, 0);
 }
 async function openPasted(text) {
   DU.pasteErr = "";
@@ -2372,10 +2332,15 @@ function duFinish(gaveUp) {
   DU.view = "done"; DU.recId = DU.ch.id; saveDuel(); markDay(); touch(); duPresence(); updateHeader(); renderDuelo(); window.scrollTo(0, 0);
 }
 function duTick() {
-  if (DU.view === "lobby" && DU.countdownEnd) {
+  if (DU.view === "lobby" && DU.ch && DU.countdownEnd) {
     const left = Math.ceil((DU.countdownEnd - Date.now()) / 1000); const e = $("#duCount");
     if (e) e.textContent = left > 0 ? `Começa em ${left}…` : "Valendo!";
     if (left <= 0) startPlay();
+  } else if (DU.view === "lobby" && DU.ch && DU.ch.startAt) {
+    const left = (DU.ch.startAt - Date.now()) / 1000; const e = $("#duSched");
+    if (left > 0) { if (e) e.textContent = `Largada às ${hhmm(DU.ch.startAt)} · faltam ${fmtSec(Math.ceil(left))}`; }
+    else if (left > -120) startPlay();
+    else if (e) e.textContent = "A largada marcada já passou. Jogue agora ou marque outro horário.";
   }
   if (DU.view === "play" && DU.phase === "input" && DU.t0) {
     const secs = (Date.now() - DU.t0) / 1000; const e = $("#dTimer");
@@ -2397,8 +2362,10 @@ function renderDuHome(v) {
   v.replaceChildren(el("div", { class: "stack" }, el("h2", { text: "Duelo" }),
     el("p", { class: "lead", text: "Desafie um amigo no mesmo roteiro e nos mesmos pacientes. Vence quem fizer mais pontos; no empate, o mais rápido. Funciona por código, cada um no seu Claude, ou ao vivo, com os dois neste mesmo artefato." })));
   const nick = el("input", { type: "text", id: "duNick", maxlength: "40", placeholder: "Como seu amigo vai te ver no placar" }); nick.value = DU.nick;
-  nick.addEventListener("input", () => { DU.nick = nick.value; ls.set("duelNick", DU.nick); });
-  v.append(el("div", { class: "panel" }, el("div", { class: "field" }, el("label", { for: "duNick", text: "Seu nome no duelo" }), nick)));
+  const pres = debounce(duPresence, 500);
+  nick.addEventListener("input", () => { DU.nick = nick.value; ls.set("duelNick", DU.nick); pres(); });
+  const online = el("div", { id: "duOnline" }); renderOnline(online);
+  v.append(el("div", { class: "panel" }, el("div", { class: "field" }, el("label", { for: "duNick", text: "Seu nome no duelo" }), nick), online));
   // criar
   const sel = el("select", { id: "duWhat" },
     el("optgroup", { label: "Circuitos (uma rodada por roteiro)" }, Object.entries(CIRC).map(([id, c]) => el("option", { value: id, text: c.nome }))),
@@ -2454,28 +2421,99 @@ function codeBox(label, getCode, hint) {
   box.append(out, el("div", { class: "row" }, btn, hint ? el("span", { class: "meta", text: hint }) : null));
   return box;
 }
+/* --- sala ao vivo: a sala geral do artefato; cada um publica em qual desafio está --- */
+let LOBBY = [], lobbyOn = false, lobbyConn = null;
+const LIVE_ERR = {
+  not_granted: "A plataforma não admitiu esta conta na sala ao vivo deste artefato. Isso costuma acontecer com quem entra por link público: o ao vivo só conecta quem foi convidado pelo e-mail para este mesmo artefato, no menu Compartilhar do dono.",
+  revoked: "O acesso ao vivo foi retirado (o compartilhamento mudou). Recarregue a página.",
+  lost: "A conexão ao vivo caiu. Recarregue a página para tentar de novo.",
+  unavailable: "Esta visualização não tem acesso à sala ao vivo (abra o artefato no Claude, no navegador ou no app de computador)."
+};
+function liveFail(e) { const c = e && e.code; DU.roomErr = c === "not_granted" || c === "revoked" ? c : "lost"; lobbyOn = false; LOBBY = []; syncDuelPeers(); }
+function initLobby() {
+  if (lobbyOn || !CAP.room) { if (CAP.ready && !CAP.room) DU.roomErr = "unavailable"; return; }
+  lobbyOn = true; DU.roomErr = "";
+  try {
+    CAP.room.onPeers(({ peers }) => { LOBBY = peers.filter(p => !p.sameTab && p.kind !== "agent"); syncDuelPeers(); }, liveFail);
+    if (typeof CAP.room.onConnection === "function") CAP.room.onConnection(c => { lobbyConn = c; refreshLive(); }, liveFail);
+  } catch (e) { liveFail(e); return; }
+  duPresence();
+}
+function syncDuelPeers() { DU.peers = DU.ch ? LOBBY.filter(p => p.presence && p.presence.duel === DU.ch.id) : []; onPeersChanged(); }
+function leaveDuel() { DU.ch = null; DU.peers = []; DU.ready = false; DU.countdownEnd = 0; duPresence(); }
+function duPresence() {
+  if (!CAP.room || !lobbyOn) return;
+  const st = !DU.ch ? "home" : DU.view === "play" ? "playing" : DU.view === "done" ? "done" : DU.ready ? "ready" : "lobby";
+  CAP.room.presence({ nick: DU.nick.trim().slice(0, 40) || null, duel: DU.ch ? DU.ch.id : null, st, ri: DU.ri, n: DU.ch ? DU.ch.rounds.length : 0, pts: sumPts(),
+    res: DU.ch && DU.view === "done" && DU.res && DU.res.cid === DU.ch.id ? DU.res : null }).catch(e => { if (e && (e.code === "not_granted" || e.code === "revoked")) liveFail(e); });
+}
+function onPeersChanged() {
+  if (DU.ch) {
+    const fresh = DU.peers.map(p => p.presence.res).filter(r => r && r.cid === DU.ch.id);
+    if (fresh.length) { const before = JSON.stringify(DU.others); DU.others = mergeOthers(DU.others, fresh); if (JSON.stringify(DU.others) !== before) { saveDuel(); if (DU.view === "done") renderDuelo(); } }
+  }
+  if (DU.view === "lobby" && DU.ch) {
+    const others = DU.peers.filter(p => p.presence.st !== "done");
+    const allReady = DU.ready && others.length >= 1 && others.every(p => p.presence.st === "ready" || p.presence.st === "playing");
+    if (allReady && !DU.countdownEnd) DU.countdownEnd = Date.now() + 3000;
+    if (!allReady) DU.countdownEnd = 0;
+  }
+  refreshLive();
+}
+function refreshLive() { if (DU.view === "play") renderOpp(); const l = $("#duLive"); if (l) renderLivePanel(l); const o = $("#duOnline"); if (o) renderOnline(o); }
+const peerName = p => (str(p.presence && p.presence.nick) || "alguém sem nome") + (p.isMe ? " (você, outra aba ou aparelho)" : p.guest ? " (convidado)" : "");
+const liveConnected = () => lobbyConn != null ? lobbyConn : (CAP.room && typeof CAP.room.connected === "function" ? CAP.room.connected() : false);
+function renderOnline(box) {
+  box.replaceChildren();
+  if (!CAP.ready) return box.append(el("p", { class: "meta", text: "Conectando à sala ao vivo…" }));
+  if (!CAP.room || !lobbyOn) return box.append(el("p", { class: "meta", text: "Sala ao vivo: " + (LIVE_ERR[DU.roomErr] || LIVE_ERR.unavailable) + " O duelo por código funciona normalmente." }));
+  box.append(el("p", { class: "meta", text: `Sala ao vivo: ${liveConnected() ? "conectado" : "conectando…"}. ` + (LOBBY.length ? `Com este artefato aberto agora: ${LOBBY.map(peerName).join(", ")}.` : "Ninguém mais está com este artefato aberto agora.") }));
+}
+function oppLine() {
+  return DU.peers.map(p => { const s = p.presence; const nm = str(s.nick) || "Jogador"; return s.st === "done" ? `${nm}: terminou, ${s.res ? s.res.total : s.pts} pts` : s.st === "playing" ? `${nm}: rodada ${(+s.ri || 0) + 1} de ${s.n}, ${s.pts || 0} pts` : `${nm}: ${s.st === "ready" ? "pronto" : "na sala"}`; });
+}
+function renderOpp() { const e = $("#duOpp"); if (!e) return; const l = oppLine(); e.replaceChildren(...[`Você: ${sumPts()} pts`, ...l].map(t => el("span", { class: "rd", text: t }))); }
+function renderLivePanel(box) {
+  box.replaceChildren(el("span", { class: "label", text: "Ao vivo" }));
+  if (!CAP.ready) return box.append(el("p", { class: "meta", text: "Conectando…" }));
+  if (!CAP.room || !lobbyOn) return box.append(el("div", { class: "note", text: (LIVE_ERR[DU.roomErr] || LIVE_ERR.unavailable) + " Vocês ainda podem jogar juntos com a largada marcada, logo abaixo, e trocar os códigos de resultado no fim." }));
+  box.append(el("p", { class: "meta", text: `${liveConnected() ? "Conectado" : "Conectando…"} · este desafio é o #${DU.ch.id}` }));
+  box.append(el("div", { class: "stack", style: "gap:6px" },
+    el("div", { class: "weak" }, el("span", { text: `${DU.nick || "Você"} (você)` }), el("span", { style: "color:var(--" + (DU.ready ? "ok" : "ink-3") + ")", text: DU.ready ? "pronto" : "na sala" })),
+    DU.peers.map(p => el("div", { class: "weak" }, el("span", { text: peerName(p) }), el("span", { style: "color:var(--" + (p.presence.st === "ready" ? "ok" : "ink-3") + ")", text: { ready: "pronto", playing: "jogando", done: "terminou", lobby: "na sala" }[p.presence.st] || "na sala" })))));
+  const elsewhere = LOBBY.filter(p => !(p.presence && p.presence.duel === DU.ch.id));
+  if (elsewhere.length) box.append(el("p", { class: "meta", text: "Também com o artefato aberto: " + elsewhere.map(p => peerName(p) + (p.presence && p.presence.duel ? ` (no desafio #${p.presence.duel})` : " (sem desafio aberto)")).join("; ") + ". Para jogarem juntos, os dois precisam abrir o mesmo código." }));
+  if (!LOBBY.length) box.append(el("div", { class: "note" }, "Ninguém mais está com este artefato aberto agora. ", el("b", { text: "O ao vivo só conecta quem abre este mesmo artefato" }), ", convidado pelo e-mail no menu Compartilhar. Se seu amigo usa uma cópia própria ou entrou por link público, as salas não se enxergam: usem a largada marcada e troquem os códigos de resultado."));
+  if (DU.peers.length) {
+    const ready = el("button", { class: "btn" + (DU.ready ? "" : " primary"), type: "button", text: DU.ready ? "Cancelar pronto" : "Estou pronto", onclick: () => { DU.ready = !DU.ready; if (!DU.ready) DU.countdownEnd = 0; duPresence(); onPeersChanged(); } });
+    box.append(el("p", { class: "meta", text: "A largada é automática quando todos neste desafio estiverem prontos." }), el("div", { class: "row" }, ready, el("span", { id: "duCount", class: "mid", text: DU.countdownEnd ? "Começa em…" : "" })));
+  }
+}
+const hhmm = ms => { const d = new Date(ms); return pad2(d.getHours()) + ":" + pad2(d.getMinutes()); };
+function renderSchedPanel() {
+  const ch = DU.ch; const def = new Date(Date.now() + 120000);
+  const t = el("input", { type: "time", id: "duTime", style: "width:auto" }); t.value = ch.startAt && ch.startAt > Date.now() ? hhmm(ch.startAt) : hhmm(def.getTime());
+  const msg = el("span", { id: "duSched", class: "mid", style: "font-size:1rem", text: ch.startAt ? `Largada às ${hhmm(ch.startAt)}` : "" });
+  return el("div", { class: "panel" }, el("span", { class: "label", text: "Largada marcada" }),
+    el("p", { class: "meta", text: "Funciona mesmo sem conexão ao vivo: combinem um horário, marquem o mesmo aqui e os dois começam juntos pelo relógio de cada aparelho." + (DU.mine ? " Se você marcar antes de copiar o código, o horário já vai junto." : "") }),
+    el("div", { class: "row" }, el("label", { for: "duTime", class: "meta", text: "Começar às" }), t,
+      el("button", { class: "btn", type: "button", text: "Marcar", onclick: () => {
+        const [h, m] = String(t.value || "").split(":").map(Number); if (!isFinite(h) || !isFinite(m)) { toast("Escolha um horário."); return; }
+        const d = new Date(); d.setHours(h, m, 0, 0); if (d.getTime() < Date.now() - 30000) { toast("Esse horário já passou. Escolha um horário à frente."); return; }
+        ch.startAt = d.getTime(); renderDuelo(); toast(`Largada marcada para as ${hhmm(ch.startAt)}.`); } }),
+      ch.startAt ? el("button", { class: "link", type: "button", text: "Cancelar", onclick: () => { delete ch.startAt; renderDuelo(); } }) : null),
+    msg);
+}
 function renderDuLobby(v) {
   const ch = DU.ch;
-  v.replaceChildren(el("div", {}, el("button", { class: "btn ghost small", type: "button", text: "← Duelos", onclick: async () => { await leaveRoom(); DU.view = "home"; DU.ch = null; renderDuelo(); } })));
-  const head = el("div", { class: "panel" }, el("span", { class: "label", text: DU.mine ? "Seu desafio" : `Desafio de ${str(ch.by) || "um amigo"}` }), el("h3", { text: exName(ch.what) }), el("p", { class: "meta", text: duelLabel(ch) }));
+  v.replaceChildren(el("div", {}, el("button", { class: "btn ghost small", type: "button", text: "← Duelos", onclick: () => { DU.view = "home"; leaveDuel(); renderDuelo(); } })));
+  const head = el("div", { class: "panel" }, el("span", { class: "label", text: (DU.mine ? "Seu desafio" : `Desafio de ${str(ch.by) || "um amigo"}`) + ` · #${ch.id}` }), el("h3", { text: exName(ch.what) }), el("p", { class: "meta", text: duelLabel(ch) }));
   if (ch.res) head.append(el("p", {}, el("b", { text: "Meta: " }), `${ch.res.nick} fez ${ch.res.total} pontos em ${fmtSec(ch.res.time)}.`));
-  if (DU.mine) head.append(codeBox("Código do desafio", () => encodeCode("SEMIO", ch), "Mande agora para jogarem ao vivo, ou jogue primeiro: no fim sai um código já com o seu resultado."));
+  if (DU.mine) head.append(codeBox("Código do desafio", () => encodeCode("SEMIO", ch), "Mande para seu amigo. Para jogarem ao vivo, ele abre este código neste mesmo artefato; ou jogue primeiro e mande o código com o seu resultado."));
   v.append(head);
-  const live = el("div", { class: "panel" }, el("span", { class: "label", text: "Ao vivo" }));
-  if (DU.room) {
-    const ready = el("button", { class: "btn" + (DU.ready ? "" : " primary"), type: "button", text: DU.ready ? "Cancelar pronto" : "Estou pronto", onclick: () => { DU.ready = !DU.ready; if (!DU.ready) DU.countdownEnd = 0; duPresence(); onPeersChanged(); } });
-    live.append(el("div", { class: "stack", style: "gap:6px" },
-      el("div", { class: "weak" }, el("span", { text: `${DU.nick || "Você"} (você)` }), el("span", { style: "color:var(--" + (DU.ready ? "ok" : "ink-3") + ")", text: DU.ready ? "pronto" : "na sala" })),
-      DU.peers.map(p => el("div", { class: "weak" }, el("span", { text: str(p.presence.nick) || "Jogador" + (p.guest ? " (convidado)" : "") }), el("span", { style: "color:var(--" + (p.presence.st === "ready" ? "ok" : "ink-3") + ")", text: { ready: "pronto", playing: "jogando", done: "terminou", lobby: "na sala" }[p.presence.st] || "na sala" })))));
-    live.append(el("p", { class: "meta", text: DU.peers.length ? "A largada é automática quando todos na sala estiverem prontos." : "Ninguém mais nesta sala agora. Quando seu amigo abrir este mesmo desafio neste artefato, ele aparece aqui." }),
-      el("div", { class: "row" }, ready, el("span", { id: "duCount", class: "mid", text: DU.countdownEnd ? "Começa em…" : "" })));
-  } else {
-    const why = { not_permitted: "Sua conta não pode usar salas ao vivo neste artefato.", lost: "A conexão ao vivo caiu. Volte e abra o desafio de novo." }[DU.roomErr]
-      || (DU.roomErr ? "Ao vivo só funciona com os dois neste mesmo artefato, abertos no Claude. O dono do artefato convida o e-mail do amigo pelo menu Compartilhar; quem entra por link público não entra na sala. O desafio por código funciona do mesmo jeito." : "Conectando à sala…");
-    live.append(el("p", { class: "meta", text: why }));
-  }
-  v.append(live);
-  v.append(el("div", { class: "row" }, el("button", { class: "btn" + (DU.room && DU.peers.length ? "" : " primary"), type: "button", text: "Jogar agora, sem esperar", onclick: startPlay })));
+  const live = el("div", { class: "panel", id: "duLive" }); renderLivePanel(live); v.append(live);
+  v.append(renderSchedPanel());
+  v.append(el("div", { class: "row" }, el("button", { class: "btn" + (DU.peers.length ? "" : " primary"), type: "button", text: "Jogar agora, sem esperar", onclick: startPlay })));
 }
 function renderDuPlay(v) {
   const ch = DU.ch; const spec = ch.rounds[DU.ri]; const r = RMAP[spec.rid]; const single = ch.fmt === "unico" || r.etapas.length === 1; const c = spec.case;
@@ -2532,7 +2570,7 @@ function renderDuDone(v) {
   const rec = duelRec(DU.recId); const isCur = DU.ch && DU.ch.id === rec.id;
   const me = rec.me; const others = rec.others || [];
   const rows = rank([...(me ? [{ ...me, you: true }] : []), ...others]);
-  v.replaceChildren(el("div", {}, el("button", { class: "btn ghost small", type: "button", text: "← Duelos", onclick: async () => { await leaveRoom(); DU.view = "home"; DU.ch = null; renderDuelo(); } })));
+  v.replaceChildren(el("div", {}, el("button", { class: "btn ghost small", type: "button", text: "← Duelos", onclick: () => { DU.view = "home"; leaveDuel(); renderDuelo(); } })));
   const panel = el("div", { class: "panel" }, el("span", { class: "label", text: `Resultado · desafio de ${str(rec.by)}` }), el("h3", { text: exName(rec.what) }), el("p", { class: "meta", text: duelLabel(rec) }));
   if (rows.length > 1) { const w = rows[0]; panel.append(el("p", { class: "mid", style: "font-family:var(--display);font-size:1.3rem", text: w.you ? "Você venceu." : `${w.nick} venceu.` })); }
   const nR = rec.n || 0;
@@ -2571,7 +2609,7 @@ function renderDuDone(v) {
   }
   v.append(el("div", { class: "row" },
     el("button", { class: "btn primary", type: "button", text: "Revanche (novo desafio, mesmas regras)", onclick: async () => {
-      await leaveRoom(); Object.assign(DSET, { what: rec.what, cen: rec.cen, fmt: rec.fmt, lim: rec.lim, n: CIRC[rec.what] ? DSET.n : rec.n }); DU.view = "home"; DU.ch = null; renderDuelo(); createDuel(); } })));
+      leaveDuel(); Object.assign(DSET, { what: rec.what, cen: rec.cen, fmt: rec.fmt, lim: rec.lim, n: CIRC[rec.what] ? DSET.n : rec.n }); DU.view = "home"; renderDuelo(); createDuel(); } })));
 }
 
 /* =====================================================================
@@ -2812,7 +2850,7 @@ function refreshPassive() {
 initCasos();
 renderAnamnese(); renderHost("Exame físico"); route();
 capsReady.then(async () => {
-  setupDictation(); updateHeader();
+  setupDictation(); updateHeader(); initLobby(); refreshLive();
   if (CAP.tts && AN.tab === "paciente" && PS.step === "setup") renderPaciente();
   startHistory();
   await loadProgress();
