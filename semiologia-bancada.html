@@ -254,8 +254,8 @@ th{font-family:var(--mono);font-size:.68rem;text-transform:uppercase;color:var(-
 
 /* abas no celular: grade de 5 colunas, sem rolagem lateral */
 @media (max-width:560px){
-  nav.tabs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));margin-inline:0;overflow:visible}
-  nav.tabs a{padding:8px 2px 9px;font-size:.78rem;text-align:center;white-space:normal;line-height:1.2;display:flex;align-items:center;justify-content:center}
+  nav.tabs{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));margin-inline:0;overflow:visible}
+  nav.tabs a{padding:8px 1px 9px;font-size:.74rem;text-align:center;white-space:normal;line-height:1.2;display:flex;align-items:center;justify-content:center}
 }
 /* exaustão */
 .how{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:5px;color:var(--ink-2)}
@@ -287,6 +287,7 @@ th{font-family:var(--mono);font-size:.68rem;text-transform:uppercase;color:var(-
       <a href="#exame" data-view="exame">Exame físico</a>
       <a href="#anamnese" data-view="anamnese">Anamnese</a>
       <a href="#exaustao" data-view="exaustao">Exaustão</a>
+      <a href="#duelo" data-view="duelo">Duelo</a>
       <a href="#casos" data-view="casos">Casos reais</a>
       <a href="#progresso" data-view="progresso">Progresso</a>
     </nav>
@@ -297,6 +298,7 @@ th{font-family:var(--mono);font-size:.68rem;text-transform:uppercase;color:var(-
   <section class="view" id="view-exame"></section>
   <section class="view" id="view-anamnese" hidden></section>
   <section class="view" id="view-exaustao" hidden></section>
+  <section class="view" id="view-duelo" hidden></section>
 
   <section class="view" id="view-casos" hidden>
     <div class="stack">
@@ -859,13 +861,13 @@ const TOPICOS = [
 /* =====================================================================
    3. CAPACIDADES DO CLAUDE
    ===================================================================== */
-const CAP = { ready: false, sample: null, db: null, uid: null, dict: null, tts: null };
+const CAP = { ready: false, sample: null, db: null, uid: null, dict: null, tts: null, room: null };
 const capsReady = (async () => {
   const c = window.claude;
   if (!c || typeof c.use !== "function") { CAP.ready = true; return; }
   const get = n => c.use(n).catch(() => null);
-  const [s, d, u, di, t] = await Promise.all([get("sample"), get("db"), get("user"), get("dictation"), get("tts")]);
-  CAP.sample = s; CAP.dict = di; CAP.tts = t;
+  const [s, d, u, di, t, rm] = await Promise.all([get("sample"), get("db"), get("user"), get("dictation"), get("tts"), get("room")]);
+  CAP.sample = s; CAP.dict = di; CAP.tts = t; CAP.room = rm;
   if (d && u) { try { CAP.uid = await u.id(); } catch {} if (CAP.uid) CAP.db = d; }
   CAP.ready = true;
 })();
@@ -944,7 +946,7 @@ function speak(text) {
 /* =====================================================================
    4. PROGRESSO DO ALUNO (db privado do usuário, com cópia local)
    ===================================================================== */
-const blankP = () => ({ v: 2, uid: null, upd: 0, items: {}, runs: {}, cards: {}, custom: [], seq: {}, days: [], nd: { d: "", n: 0 }, exs: [] });
+const blankP = () => ({ v: 2, uid: null, upd: 0, items: {}, runs: {}, cards: {}, custom: [], seq: {}, days: [], nd: { d: "", n: 0 }, exs: [], duels: [] });
 let P = (() => { const l = ls.get("P", null); return l && l.v === 2 ? Object.assign(blankP(), l) : blankP(); })();
 let progRef = null, saveT = null, saveChain = Promise.resolve();
 function touch() {
@@ -1042,7 +1044,7 @@ function addCustomCards(list, src) {
 /* =====================================================================
    5. ROTEAMENTO E RELÓGIO
    ===================================================================== */
-const VIEWS = ["exame", "anamnese", "exaustao", "casos", "progresso"];
+const VIEWS = ["exame", "anamnese", "exaustao", "duelo", "casos", "progresso"];
 const ALIAS = { recitar: "exame", reflexos: "exaustao", paciente: "anamnese", historico: "progresso" };
 function curView() { const h = location.hash.slice(1); const v = ALIAS[h] || h; return VIEWS.includes(v) ? v : "exame"; }
 function route() {
@@ -1055,6 +1057,7 @@ function route() {
   if (v === "exaustao" && !(RF.game && RF.game.running)) renderExaustao();
   if (v === "exame" && !(RS.rid && RMAP[RS.rid].grupo === "Exame físico")) renderHost("Exame físico");
   if (v === "anamnese" && !$("#anHost")) renderAnamnese();
+  if (v === "duelo" && DU.view !== "play") renderDuelo();
   updateHeader();
 }
 addEventListener("hashchange", () => { route(); window.scrollTo(0, 0); });
@@ -1566,18 +1569,21 @@ async function exLoadCase() {
   if (curView() === "exaustao" && RF.tab === "roteiros" && X.phase === "input") { renderExaustao(); const ta = $("#view-exaustao textarea"); if (ta) ta.focus(); }
   if (X.case) exPrefetch(rid);
 }
-async function exCheckAlt(X, per, rd, rid) {
-  const c = rd.alt.case; const r = RMAP[rid];
-  const txt = rd.prova || r.etapas.map((s, i) => (rd.texts[i] || "").trim() ? `${s.n}: ${rd.texts[i].trim()}` : "").filter(Boolean).join("\n");
+function altCheckCall(c, txt, interp) {
   const prompt = `Compare a descrição de exame físico de um estudante de medicina brasileiro com os achados alterados de referência. Para cada achado: "ok" se descrito com termo técnico, localização e graduação adequados (sinônimos técnicos e abreviações consagradas valem), "parcial" se citado de forma vaga ou com termo ou graduação imprecisos, "falta" se ausente ou errado. Avalie também a síndrome e hipótese do aluno. Comentários de até 12 palavras.
 ACHADOS ALTERADOS (id | etapa | achado):
 ${arr(c.achados_alterados).map(a => `${a.id} | ${a.etapa} | ${a.achado}`).join("\n")}
 SÍNDROME DE REFERÊNCIA: ${c.sindrome} · DIAGNÓSTICO: ${c.diagnostico}
 TEXTO DO ALUNO:
 ${txt}
-SÍNDROME E HIPÓTESE DO ALUNO: ${rd.alt.interp || "(em branco)"}
+SÍNDROME E HIPÓTESE DO ALUNO: ${interp || "(em branco)"}
 Responda só com JSON: {"alterados":[{"id":"a1","status":"ok|parcial|falta","comentario":"..."}],"interpretacao":{"status":"ok|parcial|falta","comentario":"..."}}`;
-  try { rd.alt.res = await CAP.sample.json(prompt, { modelTier: "quick", cache: false }); rd.alt.state = "done"; }
+  return CAP.sample.json(prompt, { modelTier: "quick", cache: false });
+}
+async function exCheckAlt(X, per, rd, rid) {
+  const c = rd.alt.case; const r = RMAP[rid];
+  const txt = rd.prova || r.etapas.map((s, i) => (rd.texts[i] || "").trim() ? `${s.n}: ${rd.texts[i].trim()}` : "").filter(Boolean).join("\n");
+  try { rd.alt.res = await altCheckCall(c, txt, rd.alt.interp); rd.alt.state = "done"; }
   catch { rd.alt.state = "failed"; }
   finalizeRound(rd, rid, X.target); per.done = critMet(per, X.crit);
   const isLast = per.rounds[per.rounds.length - 1] === rd;
@@ -2171,6 +2177,401 @@ function renderPacReport(res, live) {
   if (res.registro_modelo) box.append(el("div", { class: "bar" }, el("span", { class: "label", text: "Registro-modelo" }), copyBtn(() => str(res.registro_modelo))), el("div", { class: "model", text: str(res.registro_modelo) }));
   if (live) { const co = cardsOffer(res.cartoes, "Anamnese"); if (co) box.append(co); }
   return box;
+}
+
+/* =====================================================================
+   8b. DUELO — desafio por código (cada um no seu Claude) e ao vivo (mesmo artefato)
+   ===================================================================== */
+const DU = { nick: ls.get("duelNick", ""), view: "home", ch: null, mine: false, res: null, others: [], ri: 0, rounds: [], phase: "input", texts: [], prova: "", interp: "", t0: 0, gen: null, msg: "", room: null, roomErr: "", peers: [], ready: false, countdownEnd: 0, pasteErr: "", recId: null };
+const DSET = { what: ls.get("duWhat", "cardio"), cen: ls.get("duCen", "normal"), fmt: ls.get("duFmt", "unico"), n: +ls.get("duN", 3) || 3, lim: +ls.get("duLim", 180) };
+if (!CIRC[DSET.what] && !RMAP[DSET.what]) DSET.what = "cardio";
+const DLIMS = [[0, "Sem limite"], [120, "2 min"], [180, "3 min"], [300, "5 min"]];
+
+function seededShuffle(list, seed) {
+  let h = 2166136261; for (const c of String(seed)) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); }
+  const rnd = () => { h += 0x6D2B79F5; let t = h; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  const a = list.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a;
+}
+async function encodeCode(prefix, obj) {
+  const bytes = new TextEncoder().encode(JSON.stringify(obj)); let data = bytes, z = "0";
+  if (window.CompressionStream) { try { data = new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(new CompressionStream("deflate-raw"))).arrayBuffer()); z = "1"; } catch { data = bytes; } }
+  let bin = ""; for (let i = 0; i < data.length; i += 0x8000) bin += String.fromCharCode.apply(null, data.subarray(i, i + 0x8000));
+  return prefix + z + btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+async function decodeCode(text) {
+  const m = String(text || "").replace(/\s+/g, "").match(/(SEMIO|SEMIR)([01])([A-Za-z0-9_-]+)/);
+  if (!m) throw new Error("Código não reconhecido. Cole o código inteiro, começando por SEMIO ou SEMIR.");
+  let b64 = m[3].replace(/-/g, "+").replace(/_/g, "/"); while (b64.length % 4) b64 += "=";
+  let bytes; try { bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0)); } catch { throw new Error("O código veio cortado ou alterado. Copie de novo, inteiro."); }
+  if (m[2] === "1") {
+    if (!window.DecompressionStream) throw new Error("Este navegador não abre códigos compactados. Tente no Chrome, Edge ou no app do Claude.");
+    try { bytes = new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream("deflate-raw"))).arrayBuffer()); } catch { throw new Error("O código veio cortado ou alterado. Copie de novo, inteiro."); }
+  }
+  try { return { kind: m[1], obj: JSON.parse(new TextDecoder().decode(bytes)) }; } catch { throw new Error("O código veio cortado ou alterado. Copie de novo, inteiro."); }
+}
+async function mapLimit(list, n, fn) { const out = new Array(list.length); let k = 0; await Promise.all(Array.from({ length: Math.min(n, list.length) }, async () => { while (k < list.length) { const i = k++; out[i] = await fn(list[i], i); } })); return out; }
+const slimCase = c => ({ titulo: c.titulo, vinheta: c.vinheta, percepcoes: arr(c.percepcoes), gabarito: arr(c.gabarito), achados_alterados: arr(c.achados_alterados), sindrome: c.sindrome, diagnostico: c.diagnostico, diferenciais: arr(c.diferenciais) });
+const duelRids = (what, cen, n) => CIRC[what] ? CIRC[what].ids.slice() : cen === "alterado" ? Array(n).fill(what) : [what];
+function duelLabel(d) {
+  const n = d.n || (d.rounds || []).length; const exam = exIsExam(d.what);
+  return [exName(d.what), exam ? (d.cen === "alterado" ? "exame alterado" : "exame normal") : "roteiro", `${n} ${n === 1 ? "rodada" : "rodadas"}`, d.lim ? `${fmtSec(d.lim)} por rodada` : "sem limite de tempo", d.fmt === "unico" ? "texto único" : "por etapas"].join(" · ");
+}
+function roundPoints(rd) {
+  if (!rd.alt) return Math.round(rd.c * 100);
+  const a = rd.alt.tot ? rd.alt.ok / rd.alt.tot : 0; const ip = rd.alt.is === "ok" ? 1 : rd.alt.is === "parcial" ? 0.5 : 0;
+  return Math.round(rd.c * 50 + a * 40 + ip * 10);
+}
+const sumPts = () => DU.rounds.reduce((a, rd) => a + (rd && rd.p || 0), 0);
+const rank = list => list.slice().sort((a, b) => b.total - a.total || a.time - b.time);
+function duNickOk() { if (DU.nick.trim()) return true; toast("Escreva seu nome no duelo primeiro."); const n = $("#duNick"); if (n) n.focus(); return false; }
+
+/* --- registro local dos duelos e placar --- */
+function duelRec(id) { return (P.duels || []).find(d => d.id === id) || null; }
+function mergeOthers(list, add) {
+  const out = list.slice();
+  for (const r of arr(add)) { if (!r || !r.nick) continue; if (DU.res && r.nick === DU.res.nick && r.at === DU.res.at) continue; const i = out.findIndex(x => x.nick === r.nick); if (i >= 0) out[i] = r; else out.push(r); }
+  return out;
+}
+function saveDuel() {
+  const ch = DU.ch; if (!ch) return;
+  const rec = { id: ch.id, at: ch.at, by: ch.by, what: ch.what, cen: ch.cen, fmt: ch.fmt, lim: ch.lim, n: ch.rounds.length, me: DU.res, others: DU.others };
+  P.duels = [...(P.duels || []).filter(d => d.id !== ch.id), rec].slice(-30); touch();
+}
+function placar() {
+  const m = {};
+  for (const d of P.duels || []) {
+    if (!d.me) continue;
+    for (const o of d.others || []) {
+      const k = o.nick; m[k] = m[k] || { v: 0, d: 0, e: 0 };
+      const cmp = d.me.total - o.total || o.time - d.me.time;
+      if (cmp > 0) m[k].v++; else if (cmp < 0) m[k].d++; else m[k].e++;
+    }
+  }
+  return m;
+}
+
+/* --- sala ao vivo --- */
+async function leaveRoom() { const r = DU.room; DU.room = null; DU.peers = []; if (r) try { await r.leave(); } catch {} }
+async function joinRoom() {
+  DU.roomErr = ""; await capsReady;
+  const ch = DU.ch; if (!ch) return;
+  if (!CAP.room) { DU.roomErr = "unavailable"; if (DU.ch === ch) renderDuelo(); return; }
+  try {
+    const rm = await CAP.room.join("duelo-" + ch.id);
+    if (DU.ch !== ch) { rm.leave().catch(() => {}); return; }
+    DU.room = rm;
+    rm.onPeers(({ peers }) => { if (DU.ch !== ch) return; DU.peers = peers.filter(p => !p.isMe && p.presence && p.presence.duel === ch.id); onPeersChanged(); },
+      () => { if (DU.ch === ch) { DU.room = null; DU.roomErr = "lost"; renderDuelo(); } });
+    duPresence();
+  } catch (e) { DU.roomErr = e && e.code === "not_permitted" ? "not_permitted" : "unavailable"; }
+  if (DU.ch === ch && DU.view !== "play") renderDuelo();
+}
+function duPresence() {
+  if (!DU.room || !DU.ch) return;
+  const st = DU.view === "play" ? "playing" : DU.view === "done" ? "done" : DU.ready ? "ready" : "lobby";
+  DU.room.presence({ duel: DU.ch.id, nick: DU.nick.slice(0, 40), st, ri: DU.ri, n: DU.ch.rounds.length, pts: sumPts(), res: DU.view === "done" ? DU.res : null }).catch(() => {});
+}
+function onPeersChanged() {
+  const fresh = DU.peers.map(p => p.presence.res).filter(r => r && r.cid === DU.ch.id);
+  if (fresh.length) { const before = JSON.stringify(DU.others); DU.others = mergeOthers(DU.others, fresh); if (JSON.stringify(DU.others) !== before) saveDuel(); }
+  if (DU.view === "lobby") {
+    const others = DU.peers.filter(p => p.presence.st !== "done");
+    const allReady = DU.ready && others.length >= 1 && others.every(p => p.presence.st === "ready" || p.presence.st === "playing");
+    if (allReady && !DU.countdownEnd) DU.countdownEnd = Date.now() + 3000;
+    if (!allReady) DU.countdownEnd = 0;
+    renderDuelo();
+  } else if (DU.view === "play") renderOpp();
+  else if (DU.view === "done") renderDuelo();
+}
+function oppLine() {
+  return DU.peers.map(p => { const s = p.presence; const nm = str(s.nick) || "Jogador"; return s.st === "done" ? `${nm}: terminou, ${s.res ? s.res.total : s.pts} pts` : s.st === "playing" ? `${nm}: rodada ${(+s.ri || 0) + 1} de ${s.n}, ${s.pts || 0} pts` : `${nm}: ${s.st === "ready" ? "pronto" : "na sala"}`; });
+}
+function renderOpp() { const e = $("#duOpp"); if (!e) return; const l = oppLine(); e.replaceChildren(...[`Você: ${sumPts()} pts`, ...l].map(t => el("span", { class: "rd", text: t }))); }
+
+/* --- criar, abrir, jogar --- */
+async function createDuel() {
+  if (!duNickOk()) return;
+  const cen = exIsExam(DSET.what) ? DSET.cen : "normal";
+  const rids = duelRids(DSET.what, cen, DSET.n);
+  let cases = null; DU.msg = "";
+  if (cen === "alterado") {
+    await capsReady;
+    if (!CAP.sample) { DU.msg = "O exame alterado precisa do Claude: abra o artefato no Claude (claude.ai ou app)."; renderDuelo(); return; }
+    DU.gen = { done: 0, total: rids.length }; renderDuelo();
+    try { cases = await mapLimit(rids, 2, async rid => { const c = await fetchAltCase(rid); DU.gen.done++; if (DU.view === "home") renderDuelo(); return slimCase(c); }); }
+    catch (e) { DU.gen = null; DU.msg = errMsg(e); renderDuelo(); return; }
+    DU.gen = null;
+  }
+  const ch = { v: 1, id: Math.random().toString(36).slice(2, 8), by: DU.nick.trim(), at: Date.now(), what: DSET.what, cen, fmt: DSET.fmt, lim: DSET.lim, rounds: rids.map((rid, i) => ({ rid, case: cases ? cases[i] : null })), res: null };
+  openDuel(ch, true);
+}
+async function openDuel(ch, mine) {
+  await leaveRoom();
+  Object.assign(DU, { ch, mine: !!mine, res: null, others: ch.res && ch.res.nick ? [ch.res] : [], ri: 0, rounds: [], phase: "input", view: "lobby", ready: false, countdownEnd: 0, recId: ch.id, pasteErr: "" });
+  const past = duelRec(ch.id);
+  if (past && past.me) { DU.res = past.me; DU.others = mergeOthers(past.others || [], DU.others); DU.view = "done"; }
+  saveDuel(); renderDuelo(); window.scrollTo(0, 0);
+  joinRoom();
+}
+async function openPasted(text) {
+  DU.pasteErr = "";
+  try {
+    const { kind, obj } = await decodeCode(text);
+    if (kind === "SEMIO") {
+      if (!obj || !Array.isArray(obj.rounds) || !obj.id) throw new Error("Este código não é um desafio válido.");
+      const missing = obj.rounds.find(r => !RMAP[r.rid]); if (missing) throw new Error("Este desafio usa um roteiro que não existe nesta versão do artefato.");
+      if (!duNickOk()) return;
+      return openDuel(obj, obj.by === DU.nick.trim() && !obj.res);
+    }
+    const rec = duelRec(obj.cid);
+    if (!rec) throw new Error("Este é um código de resultado de um desafio que não está registrado aqui. Abra primeiro o código do desafio.");
+    rec.others = mergeOthers(rec.others || [], [obj]); P.duels = [...P.duels]; touch();
+    if (DU.ch && DU.ch.id === obj.cid) DU.others = rec.others;
+    DU.recId = obj.cid; DU.view = "done"; renderDuelo(); toast(`Resultado de ${obj.nick} adicionado.`);
+  } catch (e) { DU.pasteErr = e.message || "Código inválido."; renderDuelo(); }
+}
+function startPlay() {
+  if (!duNickOk()) return;
+  Object.assign(DU, { view: "play", ri: 0, rounds: [], countdownEnd: 0 });
+  startRound(); duPresence(); renderDuelo(); window.scrollTo(0, 0);
+}
+function startRound() { Object.assign(DU, { phase: "input", texts: [], prova: "", interp: "", t0: Date.now() }); }
+function duSubmit(auto) {
+  if (DU.view !== "play" || DU.phase !== "input") return;
+  const spec = DU.ch.rounds[DU.ri]; const r = RMAP[spec.rid]; const single = DU.ch.fmt === "unico" || r.etapas.length === 1;
+  const secs = Math.min((Date.now() - DU.t0) / 1000, DU.ch.lim || Infinity);
+  const texts = single ? [] : r.etapas.map((_, i) => DU.texts[i] || "");
+  const statuses = r.etapas.map((st, i) => matchStage(st, single ? DU.prova : texts[i]).map(h => h ? "ok" : "falta"));
+  if ((single ? DU.prova : texts.join("")).trim()) recordAttempt(spec.rid, statuses, secs, single ? "p" : "g", false);
+  const rd = { rid: spec.rid, statuses, c: coverage(statuses), s: Math.round(secs), texts, prova: DU.prova, interp: DU.interp.trim(), auto: !!auto, alt: spec.case ? { state: "pending", ok: 0, tot: arr(spec.case.achados_alterados).length, is: null, res: null } : null };
+  rd.p = roundPoints(rd); DU.rounds[DU.ri] = rd; DU.phase = "feedback";
+  duPresence(); renderDuelo();
+  if (rd.alt) duCheck(rd, spec);
+}
+async function duCheck(rd, spec) {
+  rd.alt.state = "pending"; if (DU.view === "play") renderDuelo();
+  const r = RMAP[spec.rid];
+  const txt = rd.prova || r.etapas.map((s, i) => (rd.texts[i] || "").trim() ? `${s.n}: ${rd.texts[i].trim()}` : "").filter(Boolean).join("\n");
+  try {
+    if (!txt.trim()) throw { code: "empty" };
+    const res = await altCheckCall(spec.case, txt, rd.interp);
+    const n = altCount(spec.case, res); Object.assign(rd.alt, { state: "done", res, ok: n.ok, tot: n.tot, is: altStatusCls(res && res.interpretacao && res.interpretacao.status) });
+  } catch (e) { if (e && e.code === "empty") Object.assign(rd.alt, { state: "done", ok: 0, is: "falta" }); else rd.alt.state = "failed"; }
+  rd.p = roundPoints(rd); duPresence();
+  if (DU.view === "play") renderDuelo();
+}
+function duNext() {
+  if (DU.ri < DU.ch.rounds.length - 1) { DU.ri++; startRound(); duPresence(); renderDuelo(); window.scrollTo(0, 0); const ta = $("#view-duelo textarea"); if (ta) ta.focus(); }
+  else duFinish();
+}
+function duFinish(gaveUp) {
+  const n = DU.ch.rounds.length;
+  for (let i = 0; i < n; i++) if (!DU.rounds[i]) DU.rounds[i] = { rid: DU.ch.rounds[i].rid, p: 0, c: 0, s: DU.ch.lim || 0, statuses: [], texts: [], prova: "", interp: "", alt: null, skipped: true };
+  DU.res = { v: 1, cid: DU.ch.id, nick: DU.nick.trim(), at: Date.now(), total: sumPts(), time: DU.rounds.reduce((a, rd) => a + (rd.s || 0), 0), gaveUp: !!gaveUp,
+    rounds: DU.rounds.map(rd => ({ p: rd.p, c: Math.round(rd.c * 100), a: rd.alt ? [rd.alt.ok, rd.alt.tot] : null, s: rd.s })) };
+  DU.view = "done"; DU.recId = DU.ch.id; saveDuel(); markDay(); touch(); duPresence(); updateHeader(); renderDuelo(); window.scrollTo(0, 0);
+}
+function duTick() {
+  if (DU.view === "lobby" && DU.countdownEnd) {
+    const left = Math.ceil((DU.countdownEnd - Date.now()) / 1000); const e = $("#duCount");
+    if (e) e.textContent = left > 0 ? `Começa em ${left}…` : "Valendo!";
+    if (left <= 0) startPlay();
+  }
+  if (DU.view === "play" && DU.phase === "input" && DU.t0) {
+    const secs = (Date.now() - DU.t0) / 1000; const e = $("#dTimer");
+    if (e) { e.textContent = DU.ch.lim ? fmtSec(Math.max(0, DU.ch.lim - secs)) : fmtSec(secs); e.classList.toggle("delta-down", !!DU.ch.lim && DU.ch.lim - secs < 20); }
+    if (DU.ch.lim && secs >= DU.ch.lim) duSubmit(true);
+  }
+}
+setInterval(duTick, 250);
+
+/* --- telas --- */
+function renderDuelo() {
+  const v = $("#view-duelo"); if (!v) return;
+  if (DU.view === "lobby" && DU.ch) return renderDuLobby(v);
+  if (DU.view === "play" && DU.ch) return renderDuPlay(v);
+  if (DU.view === "done" && duelRec(DU.recId)) return renderDuDone(v);
+  DU.view = "home"; renderDuHome(v);
+}
+function renderDuHome(v) {
+  v.replaceChildren(el("div", { class: "stack" }, el("h2", { text: "Duelo" }),
+    el("p", { class: "lead", text: "Desafie um amigo no mesmo roteiro e nos mesmos pacientes. Vence quem fizer mais pontos; no empate, o mais rápido. Funciona por código, cada um no seu Claude, ou ao vivo, com os dois neste mesmo artefato." })));
+  const nick = el("input", { type: "text", id: "duNick", maxlength: "40", placeholder: "Como seu amigo vai te ver no placar" }); nick.value = DU.nick;
+  nick.addEventListener("input", () => { DU.nick = nick.value; ls.set("duelNick", DU.nick); });
+  v.append(el("div", { class: "panel" }, el("div", { class: "field" }, el("label", { for: "duNick", text: "Seu nome no duelo" }), nick)));
+  // criar
+  const sel = el("select", { id: "duWhat" },
+    el("optgroup", { label: "Circuitos (uma rodada por roteiro)" }, Object.entries(CIRC).map(([id, c]) => el("option", { value: id, text: c.nome }))),
+    el("optgroup", { label: "Exame físico" }, ROTEIROS.filter(r => r.grupo === "Exame físico").map(r => el("option", { value: r.id, text: r.nome }))),
+    el("optgroup", { label: "Anamnese" }, ROTEIROS.filter(r => r.grupo === "Anamnese").map(r => el("option", { value: r.id, text: r.nome }))));
+  sel.value = DSET.what; sel.addEventListener("change", () => { DSET.what = sel.value; ls.set("duWhat", DSET.what); renderDuelo(); });
+  const exam = exIsExam(DSET.what); const alt = exam && DSET.cen === "alterado"; const single = !CIRC[DSET.what];
+  const lim = el("select", { id: "duLim" }, DLIMS.map(([k, t]) => el("option", { value: String(k), text: t }))); lim.value = String(DSET.lim);
+  lim.addEventListener("change", () => { DSET.lim = +lim.value; ls.set("duLim", DSET.lim); });
+  const n = el("select", { id: "duN" }, [1, 3, 5].map(k => el("option", { value: String(k), text: `${k} ${k === 1 ? "paciente" : "pacientes"}` }))); n.value = String(DSET.n);
+  n.addEventListener("change", () => { DSET.n = +n.value; ls.set("duN", DSET.n); });
+  const create = el("div", { class: "panel" }, el("span", { class: "label", text: "Criar desafio" }),
+    el("div", { class: "field" }, el("label", { for: "duWhat", text: "O que" }), sel),
+    exam ? el("div", { class: "field" }, el("span", { class: "label", text: "Cenário" }), seg([["normal", "Exame normal"], ["alterado", "Exame alterado"]], DSET.cen, c => { DSET.cen = c; ls.set("duCen", c); renderDuelo(); }, "Cenário"),
+      el("span", { class: "meta", text: alt ? "O Claude gera os pacientes agora; os dois recebem exatamente os mesmos." : "Os dois descrevem o mesmo exame normal de memória." })) : null,
+    el("div", { class: "grid2" },
+      alt && single ? el("div", { class: "field" }, el("label", { for: "duN", text: "Rodadas" }), n) : null,
+      el("div", { class: "field" }, el("label", { for: "duLim", text: "Tempo por rodada" }), lim)),
+    el("div", { class: "field" }, el("span", { class: "label", text: "Formato" }), seg([["unico", "Texto único"], ["etapas", "Por etapas"]], DSET.fmt, f => { DSET.fmt = f; ls.set("duFmt", f); renderDuelo(); }, "Formato")));
+  if (DU.gen) create.append(el("div", { class: "busy" }, el("span", { class: "pulse" }), el("span", { text: `Gerando pacientes: ${DU.gen.done} de ${DU.gen.total}…` })));
+  if (DU.msg) create.append(el("div", { class: "err", text: DU.msg }));
+  create.append(el("div", {}, el("button", { class: "btn primary", type: "button", disabled: !!DU.gen, text: "Criar desafio", onclick: createDuel })));
+  v.append(create);
+  // colar código
+  const ta = el("textarea", { id: "duPaste", style: "min-height:70px", placeholder: "Cole aqui o código que seu amigo mandou (começa com SEMIO ou SEMIR)" });
+  v.append(el("div", { class: "panel" }, el("span", { class: "label", text: "Recebeu um código?" }), ta,
+    DU.pasteErr ? el("div", { class: "err", text: DU.pasteErr }) : null,
+    el("div", {}, el("button", { class: "btn", type: "button", text: "Abrir código", onclick: () => openPasted(ta.value) }))));
+  // como funciona
+  v.append(el("div", { class: "panel" }, el("span", { class: "label", text: "Como funciona" }),
+    el("ol", { class: "how" },
+      el("li", { text: "Crie o desafio. Jogue já, ou espere seu amigo para jogarem ao vivo." }),
+      el("li", { text: "Copie o código e mande para ele (WhatsApp, e-mail). Ele cola aqui, na aba Duelo, e joga exatamente o mesmo desafio." }),
+      el("li", { text: "Quem joga depois vê o placar na hora e copia o código de resultado para mandar de volta; você cola aqui e o placar se completa." }),
+      el("li", { text: "Ao vivo: se ele estiver com este mesmo artefato aberto, os dois abrem o mesmo desafio, marcam Pronto e a largada é junta, com o placar em tempo real." })),
+    el("p", { class: "meta", text: "Pontos por rodada, até 100. Exame normal: porcentagem dos itens do roteiro. Exame alterado: itens (até 50) + achados alterados corretos, conferidos pelo Claude (até 40) + síndrome (até 10). No empate, vence o menor tempo." })));
+  // placar
+  const pl = placar(); const nicks = Object.keys(pl);
+  const recent = (P.duels || []).slice().reverse().slice(0, 8);
+  if (nicks.length || recent.length) v.append(el("div", { class: "panel" }, el("span", { class: "label", text: "Placar contra amigos" }),
+    nicks.length ? el("div", {}, nicks.map(k => el("div", { class: "weak" }, el("span", { text: k }), el("span", { style: "color:var(--ink-2)", text: `${pl[k].v} vitória${pl[k].v === 1 ? "" : "s"} · ${pl[k].d} derrota${pl[k].d === 1 ? "" : "s"}${pl[k].e ? ` · ${pl[k].e} empate${pl[k].e === 1 ? "" : "s"}` : ""}` })))) : el("p", { class: "meta", text: "O placar aparece quando houver um resultado seu e um do seu amigo no mesmo desafio." }),
+    recent.length ? el("span", { class: "label", style: "margin-top:6px", text: "Desafios recentes" }) : null,
+    el("div", {}, recent.map(d => el("button", { class: "weak", type: "button", style: "width:100%;background:none;border-left:0;border-right:0;border-bottom:0;text-align:left;cursor:pointer;color:var(--ink)", onclick: () => { DU.recId = d.id; DU.view = "done"; renderDuelo(); window.scrollTo(0, 0); } },
+      el("span", {}, `${exName(d.what)}${d.cen === "alterado" ? " · alterado" : ""}`, el("span", { class: "meta", text: ` · ${ago(d.at)} · ${d.me ? d.me.total + " pts" : "não jogado"}${(d.others || []).length ? " · vs " + d.others.map(o => o.nick).join(", ") : ""}` })),
+      el("span", { style: "color:var(--accent-ink)", text: "ver" }))))));
+}
+function codeBox(label, getCode, hint) {
+  const box = el("div", { class: "stack" }, el("span", { class: "label", text: label }));
+  const out = el("textarea", { readonly: true, style: "min-height:64px;font-family:var(--mono);font-size:.72rem", "aria-label": label }); out.value = "Gerando código…";
+  getCode().then(c => { out.value = c; }).catch(() => { out.value = "Não foi possível gerar o código."; });
+  const btn = el("button", { class: "btn primary small", type: "button", text: "Copiar código" });
+  btn.addEventListener("click", () => { navigator.clipboard.writeText(out.value).then(() => { btn.textContent = "Copiado"; setTimeout(() => btn.textContent = "Copiar código", 1800); }, () => { out.focus(); out.select(); toast("Cópia bloqueada: o código está selecionado, use Ctrl+C."); }); });
+  box.append(out, el("div", { class: "row" }, btn, hint ? el("span", { class: "meta", text: hint }) : null));
+  return box;
+}
+function renderDuLobby(v) {
+  const ch = DU.ch;
+  v.replaceChildren(el("div", {}, el("button", { class: "btn ghost small", type: "button", text: "← Duelos", onclick: async () => { await leaveRoom(); DU.view = "home"; DU.ch = null; renderDuelo(); } })));
+  const head = el("div", { class: "panel" }, el("span", { class: "label", text: DU.mine ? "Seu desafio" : `Desafio de ${str(ch.by) || "um amigo"}` }), el("h3", { text: exName(ch.what) }), el("p", { class: "meta", text: duelLabel(ch) }));
+  if (ch.res) head.append(el("p", {}, el("b", { text: "Meta: " }), `${ch.res.nick} fez ${ch.res.total} pontos em ${fmtSec(ch.res.time)}.`));
+  if (DU.mine) head.append(codeBox("Código do desafio", () => encodeCode("SEMIO", ch), "Mande agora para jogarem ao vivo, ou jogue primeiro: no fim sai um código já com o seu resultado."));
+  v.append(head);
+  const live = el("div", { class: "panel" }, el("span", { class: "label", text: "Ao vivo" }));
+  if (DU.room) {
+    const ready = el("button", { class: "btn" + (DU.ready ? "" : " primary"), type: "button", text: DU.ready ? "Cancelar pronto" : "Estou pronto", onclick: () => { DU.ready = !DU.ready; if (!DU.ready) DU.countdownEnd = 0; duPresence(); onPeersChanged(); } });
+    live.append(el("div", { class: "stack", style: "gap:6px" },
+      el("div", { class: "weak" }, el("span", { text: `${DU.nick || "Você"} (você)` }), el("span", { style: "color:var(--" + (DU.ready ? "ok" : "ink-3") + ")", text: DU.ready ? "pronto" : "na sala" })),
+      DU.peers.map(p => el("div", { class: "weak" }, el("span", { text: str(p.presence.nick) || "Jogador" + (p.guest ? " (convidado)" : "") }), el("span", { style: "color:var(--" + (p.presence.st === "ready" ? "ok" : "ink-3") + ")", text: { ready: "pronto", playing: "jogando", done: "terminou", lobby: "na sala" }[p.presence.st] || "na sala" })))));
+    live.append(el("p", { class: "meta", text: DU.peers.length ? "A largada é automática quando todos na sala estiverem prontos." : "Ninguém mais nesta sala agora. Quando seu amigo abrir este mesmo desafio neste artefato, ele aparece aqui." }),
+      el("div", { class: "row" }, ready, el("span", { id: "duCount", class: "mid", text: DU.countdownEnd ? "Começa em…" : "" })));
+  } else {
+    const why = { not_permitted: "Sua conta não pode usar salas ao vivo neste artefato.", lost: "A conexão ao vivo caiu. Volte e abra o desafio de novo." }[DU.roomErr]
+      || (DU.roomErr ? "Ao vivo só funciona com os dois neste mesmo artefato, abertos no Claude. O dono do artefato convida o e-mail do amigo pelo menu Compartilhar; quem entra por link público não entra na sala. O desafio por código funciona do mesmo jeito." : "Conectando à sala…");
+    live.append(el("p", { class: "meta", text: why }));
+  }
+  v.append(live);
+  v.append(el("div", { class: "row" }, el("button", { class: "btn" + (DU.room && DU.peers.length ? "" : " primary"), type: "button", text: "Jogar agora, sem esperar", onclick: startPlay })));
+}
+function renderDuPlay(v) {
+  const ch = DU.ch; const spec = ch.rounds[DU.ri]; const r = RMAP[spec.rid]; const single = ch.fmt === "unico" || r.etapas.length === 1; const c = spec.case;
+  const give = el("button", { class: "btn small", type: "button", text: "Desistir" });
+  give.addEventListener("click", () => { if (!give.dataset.armed) { give.dataset.armed = "1"; give.textContent = "Confirmar desistência"; give.style.color = "var(--bad)"; setTimeout(() => { if (give.isConnected) { delete give.dataset.armed; give.textContent = "Desistir"; give.style.color = ""; } }, 4000); return; } duFinish(true); });
+  v.replaceChildren(el("div", { class: "panel" },
+    el("div", { class: "bar" }, el("div", { class: "stack", style: "gap:2px" }, el("span", { class: "label", text: `Duelo · rodada ${DU.ri + 1} de ${ch.rounds.length}` }), el("h3", { text: r.nome })),
+      el("div", { class: "row" }, el("span", { class: "timer run", id: "dTimer", title: ch.lim ? "Tempo restante" : "Tempo", text: ch.lim ? fmtSec(ch.lim) : "0:00" }), give)),
+    el("div", { class: "rounds", id: "duOpp" })));
+  renderOpp();
+  if (DU.phase === "input") {
+    if (c) v.append(el("div", { class: "vignette" }, el("b", { text: c.titulo || "Paciente" }), el("p", { style: "margin-top:4px", text: str(c.vinheta) })));
+    const panel = el("div", { class: "panel" });
+    const onKey = e => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); duSubmit(); } };
+    if (single) {
+      if (c) { const ps = arr(c.percepcoes); panel.append(el("div", { class: "perc" }, el("span", { class: "label", text: "O que você percebe ao examinar · fora de ordem" }), el("ul", {}, seededShuffle(ps.map((_, i) => i), ch.id + DU.ri).map(i => el("li", { text: str(ps[i].texto) }))))); }
+      const ta = el("textarea", { id: `du-${DU.ri}-u`, style: "min-height:260px", placeholder: r.pergunta ? "Liste tudo o que perguntar, na ordem…" : c ? "Descreva o exame em linguagem de prontuário, na ordem…" : "Descreva o exame completo, na ordem…" });
+      ta.value = DU.prova; ta.addEventListener("input", () => { DU.prova = ta.value; }); ta.addEventListener("keydown", onKey);
+      const m = micFor(ta); panel.append(m.wrap, m.partial);
+    } else r.etapas.forEach((st, i) => {
+      const ta = el("textarea", { id: `du-${DU.ri}-${i}`, style: "min-height:72px" });
+      ta.value = DU.texts[i] || ""; ta.addEventListener("input", () => { DU.texts[i] = ta.value; }); ta.addEventListener("keydown", onKey);
+      const m = micFor(ta);
+      panel.append(el("div", { class: "field" }, el("label", { for: ta.id }, el("span", { class: "num", text: pad2(i + 1) + " " }), st.n), c ? el("div", { class: "perc" }, el("p", { text: percFor(c, r, i) })) : null, m.wrap, m.partial));
+    });
+    if (c) {
+      const si = el("input", { type: "text", id: "du-sind", placeholder: "Ex.: síndrome de consolidação; pneumonia lobar" });
+      si.value = DU.interp; si.addEventListener("input", () => { DU.interp = si.value; }); si.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); duSubmit(); } });
+      panel.append(el("div", { class: "field" }, el("label", { for: "du-sind", text: "Síndrome e hipótese principal" }), si));
+    }
+    panel.append(el("div", { class: "bar" }, el("span", { class: "kbd", text: "Ctrl+Enter entrega" }), el("button", { class: "btn primary", type: "button", text: "Entregar rodada", onclick: () => duSubmit() })));
+    v.append(panel);
+    const ta = v.querySelector("textarea"); if (ta && document.activeElement === document.body) ta.focus();
+    return;
+  }
+  const rd = DU.rounds[DU.ri]; const last = DU.ri === ch.rounds.length - 1;
+  const panel = el("div", { class: "panel" });
+  const missed = []; r.etapas.forEach((st, i) => st.itens.forEach(([, label], j) => { if (rd.statuses[i] && rd.statuses[i][j] !== "ok") missed.push(label); }));
+  panel.append(el("div", { class: "score-row" },
+    el("div", { class: "kv" }, el("span", { class: "label", text: `Rodada ${DU.ri + 1}` }), el("span", { class: "big", text: rd.alt && rd.alt.state === "pending" ? "…" : String(rd.p) }), el("span", { class: "meta", text: "pontos" })),
+    el("div", { class: "kv" }, el("span", { class: "label", text: "Itens" }), el("span", { class: "mid", text: pct(rd.c) })),
+    rd.alt ? el("div", { class: "kv" }, el("span", { class: "label", text: "Alterados" }), el("span", { class: "mid", text: rd.alt.state === "done" ? `${rd.alt.ok}/${rd.alt.tot}` : rd.alt.state === "pending" ? "…" : "?" })) : null,
+    el("div", { class: "kv" }, el("span", { class: "label", text: "Tempo" }), el("span", { class: "mid", text: fmtSec(rd.s) })),
+    rd.auto ? el("span", { class: "badge warn", text: "Tempo esgotado" }) : null));
+  if (rd.alt && rd.alt.state === "pending") panel.append(el("div", { class: "busy" }, el("span", { class: "pulse" }), el("span", { text: "O Claude está conferindo os achados alterados…" })));
+  if (rd.alt && rd.alt.state === "failed") panel.append(el("div", { class: "note" }, "Não foi possível conferir os achados alterados. ", el("button", { class: "link", type: "button", text: "Conferir de novo", onclick: () => duCheck(rd, spec) })));
+  if (missed.length) panel.append(el("p", { class: "meta", text: `Faltaram ${missed.length} itens: ${missed.slice(0, 8).join(", ")}${missed.length > 8 ? "…" : ""}` }));
+  const next = el("button", { class: "btn primary", id: "duNext", type: "button", text: last ? "Ver resultado" : "Próxima rodada", disabled: !!(rd.alt && rd.alt.state === "pending"), onclick: duNext });
+  panel.append(el("div", { class: "row" }, next, el("span", { class: "meta", text: "A revisão completa de cada rodada fica no resultado." })));
+  v.append(panel);
+  if (!next.disabled) next.focus({ preventScroll: true });
+}
+function renderDuDone(v) {
+  const rec = duelRec(DU.recId); const isCur = DU.ch && DU.ch.id === rec.id;
+  const me = rec.me; const others = rec.others || [];
+  const rows = rank([...(me ? [{ ...me, you: true }] : []), ...others]);
+  v.replaceChildren(el("div", {}, el("button", { class: "btn ghost small", type: "button", text: "← Duelos", onclick: async () => { await leaveRoom(); DU.view = "home"; DU.ch = null; renderDuelo(); } })));
+  const panel = el("div", { class: "panel" }, el("span", { class: "label", text: `Resultado · desafio de ${str(rec.by)}` }), el("h3", { text: exName(rec.what) }), el("p", { class: "meta", text: duelLabel(rec) }));
+  if (rows.length > 1) { const w = rows[0]; panel.append(el("p", { class: "mid", style: "font-family:var(--display);font-size:1.3rem", text: w.you ? "Você venceu." : `${w.nick} venceu.` })); }
+  const nR = rec.n || 0;
+  panel.append(el("div", { class: "tablewrap" }, el("table", {},
+    el("thead", {}, el("tr", {}, el("th", { text: "Jogador" }), el("th", { text: "Pontos" }), el("th", { text: "Tempo" }), Array.from({ length: nR }, (_, i) => el("th", { text: `R${i + 1}` })))),
+    el("tbody", {}, rows.map((x, k) => el("tr", {}, el("td", {}, k === 0 && rows.length > 1 ? el("span", { class: "badge ok", style: "margin-right:6px", text: "1º" }) : null, x.you ? `${x.nick} (você)` : x.nick, x.gaveUp ? el("span", { class: "meta", text: " · desistiu" }) : null),
+      el("td", { class: "mono", text: String(x.total) }), el("td", { class: "mono", text: fmtSec(x.time) }), arr(x.rounds).map(r => el("td", { class: "mono", text: String(r.p) }))))))));
+  if (!others.length) panel.append(el("p", { class: "meta", text: "Ainda não há resultado de outra pessoa neste desafio. Quando seu amigo jogar, cole aqui o código de resultado dele (aba Duelo, Recebeu um código?)." }));
+  v.append(panel);
+  // compartilhar
+  const share = el("div", { class: "panel" });
+  if (isCur && me) {
+    const chWith = { ...DU.ch, res: DU.ch.res || (rec.by === me.nick ? me : null) };
+    if (DU.mine) share.append(codeBox("Desafio com o seu resultado", () => encodeCode("SEMIO", { ...DU.ch, res: me }), "Mande para seu amigo: ele joga o mesmo desafio e vê a sua meta."));
+    else {
+      share.append(codeBox("Seu resultado", () => encodeCode("SEMIR", me), `Mande para ${str(rec.by)}: ele cola na aba Duelo e o placar se completa.`));
+      share.append(el("details", {}, el("summary", { class: "meta", text: "Desafiar outra pessoa com este mesmo desafio" }), codeBox("Código do desafio", () => encodeCode("SEMIO", chWith))));
+    }
+  } else if (me) share.append(el("p", { class: "meta", text: "Para gerar códigos de novo, abra o desafio original pelo código." }));
+  if (share.children.length) v.append(share);
+  // revisão
+  if (isCur && DU.rounds.length) {
+    const rev = el("div", { class: "panel" }, el("span", { class: "label", text: "Revisão das suas rodadas" }));
+    DU.rounds.forEach((rd, i) => {
+      const r = RMAP[rd.rid]; const spec = DU.ch.rounds[i];
+      const body = el("div", { class: "stack" });
+      if (!rd.skipped) {
+        r.etapas.forEach((st, si) => body.append(el("div", { class: "items" }, st.itens.map(([, label], j) => chip(label, (rd.statuses[si] || [])[j] || "falta")))));
+        const t = rd.prova || r.etapas.map((s, k) => (rd.texts[k] || "").trim() ? `${s.n}: ${rd.texts[k].trim()}` : "").filter(Boolean).join("\n");
+        if (t) body.append(el("p", { class: "yourtext", text: t }));
+        if (spec.case && rd.alt && rd.alt.state === "done") body.append(renderAltCheck(spec.case, rd.alt.res, rd.interp));
+      } else body.append(el("p", { class: "meta", text: "Rodada não jogada." }));
+      rev.append(el("details", {}, el("summary", {}, `Rodada ${i + 1} · ${r.nome} · ${rd.p} pts`), body));
+    });
+    v.append(rev);
+  }
+  v.append(el("div", { class: "row" },
+    el("button", { class: "btn primary", type: "button", text: "Revanche (novo desafio, mesmas regras)", onclick: async () => {
+      await leaveRoom(); Object.assign(DSET, { what: rec.what, cen: rec.cen, fmt: rec.fmt, lim: rec.lim, n: CIRC[rec.what] ? DSET.n : rec.n }); DU.view = "home"; DU.ch = null; renderDuelo(); createDuel(); } })));
 }
 
 /* =====================================================================
