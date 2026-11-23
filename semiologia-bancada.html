@@ -3043,7 +3043,7 @@ function plOver() {
   P.surv.best = [...P.surv.best, rec].sort((a, b) => b.score - a.score).slice(0, 10);
   PL.last = { rec, record: g.score > prevTop && g.score > 0 };
   const rh = { id: Date.now().toString(36), at: Date.now(), tema: g.tema, score: g.score, h: g.hourIdx, c: g.correct, n: g.answered, best: g.best, survived: g.survived, log: g.log.slice(-150), ai: {} };
-  PL.hist = [...PL.hist, rh]; plSaveHist(); PL.revRec = rh; PL.revFilter = "todas";
+  PL.hist = [...PL.hist, rh]; plSaveHist(); plCloudSave(rh, 0); if (PL.cloud && PL.cloud.length >= PL_KEEP) plPrune(); PL.revRec = rh; PL.revFilter = "todas";
   markDay(); touch(); updateHeader(); renderPlantao(); window.scrollTo(0, 0);
   if (rh.log.length) plExplainStart(rh, plOrder(rh));
 }
@@ -3111,11 +3111,7 @@ function renderPlHome(v) {
       el("li", { text: "A cada 7 pacientes, uma emergência: menos tempo e pontos em dobro." }),
       el("li", { text: "A IA prepara dois lotes de perguntas antes de começar, cada um sobre assuntos sorteados, e repõe sem parar durante o plantão. As perguntas já vistas ficam guardadas (até 600) e as novas têm prioridade; as da casa garantem que o jogo nunca para." })),
     el("p", { class: "meta", text: "Tipos: tradução (do leigo para o termo técnico), achado, manobra, caso relâmpago, escala, verdadeiro ou falso, sequência e etapa do exame." })));
-  const hist = PL.hist.slice().reverse();
-  if (hist.length) v.append(el("div", { class: "panel" }, el("span", { class: "label", text: "Revisar plantões anteriores" }),
-    el("div", {}, hist.map(r => el("div", { class: "weak", style: "align-items:center" },
-      el("span", {}, el("b", { class: "mono", text: r.score.toLocaleString("pt-BR") }), el("span", { class: "meta", text: ` · ${ago(r.at)} · até ${plHourLabel(r.h)} · ${r.c}/${r.n} acertos · explicações ${Object.keys(r.ai || {}).length}/${r.log.length}` })),
-      el("button", { class: "btn small", type: "button", text: "Revisar", onclick: () => { PL.revRec = r; PL.revFilter = "todas"; PL.state = "review"; renderPlantao(); window.scrollTo(0, 0); } }))))));
+  v.append(plHistPanel());
   const top = ((P.surv || {}).best || []).slice(0, 5);
   if (top.length) v.append(el("div", { class: "panel" }, el("span", { class: "label", text: "Seus melhores plantões" }),
     el("div", {}, top.map((r, i) => el("div", { class: "weak" }, el("span", {}, el("b", { class: "mono", text: `${i + 1}. ${r.score.toLocaleString("pt-BR")}` }), el("span", { class: "meta", text: ` · até ${plHourLabel(r.h)} · ${r.c} acertos · ${(PL_TEMAS.find(t => t[0] === r.tema) || ["", ""])[1]} · ${ago(r.at)}` })), el("span", { style: "color:var(--ink-3)", text: `seq. ${r.best || 0}` }))))));
@@ -3175,7 +3171,82 @@ function renderPlPlay(v) {
 /* --- revisão do plantão: todas as respostas, com explicação da IA --- */
 PL.hist = ls.get("plHist", []); PL.revFilter = "todas"; PL.revRec = null; PL.exp = null;
 const plSlimQ = q => ({ id: q.id, q: q.q, opts: q.opts, ans: q.ans, exp: q.exp, tipo: q.tipo, nivel: q.nivel, tema: q.tema, src: q.src });
-function plSaveHist() { PL.hist = PL.hist.slice(-8); ls.set("plHist", PL.hist); }
+function plSaveHist() { PL.hist = PL.hist.slice().sort((a, b) => a.at - b.at).slice(-8); ls.set("plHist", PL.hist); }
+/* plantões salvos na conta (espaço privado do usuário); o aparelho guarda uma cópia dos últimos 8 */
+PL.cloud = null; PL.cloudErr = ""; PL.saveT = {}; PL.saving = {}; PL.showAll = false; PL.migrated = false;
+const PL_KEEP = 50;
+const plCloudOk = () => !!(CAP.db && CAP.uid && PL.cloud);
+const plCol = () => CAP.db.collection(`data/users/${CAP.uid}/meta/plantoes`);
+const plAiCount = r => Object.keys((r && r.ai) || {}).length;
+function plTouchRec(rec) { const i = PL.hist.findIndex(r => r.id === rec.id); if (i >= 0) PL.hist[i] = rec; plSaveHist(); plCloudSave(rec); }
+function plFit(rec) {
+  const d = JSON.parse(JSON.stringify(rec)); const size = () => new TextEncoder().encode(JSON.stringify(d)).length;
+  if (size() > 240000) for (const [k, a] of Object.entries(d.ai || {})) if (d.log[k] && d.log[k].ok) a.dis = [];
+  if (size() > 240000) for (const a of Object.values(d.ai || {})) a.dis = [];
+  return d;
+}
+function plCloudSave(rec, delay = 1500) {
+  if (!CAP.db || !CAP.uid || !rec) return;
+  clearTimeout(PL.saveT[rec.id]);
+  PL.saveT[rec.id] = setTimeout(() => {
+    const data = plFit(rec);
+    PL.saving[rec.id] = (PL.saving[rec.id] || Promise.resolve()).then(() => plCol().doc(rec.id).set(data)).then(() => { if (PL.cloudErr) { PL.cloudErr = ""; refreshPlHist(); } },
+      e => { PL.cloudErr = e && e.code === "quota_exceeded" ? "O espaço da conta para plantões encheu: exclua alguns antigos." : "Não foi possível salvar um plantão na sua conta agora; ele continua neste aparelho e será enviado de novo."; refreshPlHist(); });
+  }, delay);
+}
+function plPrune() { if (!plCloudOk()) return; PL.cloud.slice().sort((a, b) => b.at - a.at).slice(PL_KEEP).forEach(r => plCol().doc(r.id).delete().catch(() => {})); }
+function plCloudInit() {
+  if (!CAP.db || !CAP.uid || PL.cloud) return;
+  let col; try { col = plCol(); } catch { return; }
+  PL.cloud = [];
+  col.orderBy("at", "desc").limit(PL_KEEP + 10).onSnapshot(snap => {
+    PL.cloud = snap.docs.map(d => d.data()).filter(r => r && r.id && Array.isArray(r.log));
+    if (!snap.metadata.fromCache && !PL.migrated) {
+      PL.migrated = true;
+      const ids = new Set(PL.cloud.map(r => r.id));
+      PL.hist.filter(r => !ids.has(r.id) || plAiCount(r) > plAiCount(PL.cloud.find(c => c.id === r.id))).forEach(r => plCloudSave(r, 0));
+      plPrune();
+    }
+    refreshPlHist();
+  }, () => { PL.cloudErr = "Não foi possível ler os plantões salvos na sua conta agora."; refreshPlHist(); });
+}
+function plAllHist() {
+  const m = new Map();
+  for (const r of PL.cloud || []) m.set(r.id, r);
+  for (const r of PL.hist) { const c = m.get(r.id); if (!c || plAiCount(r) >= plAiCount(c)) m.set(r.id, r); }
+  if (PL.revRec && m.has(PL.revRec.id)) m.set(PL.revRec.id, PL.revRec);
+  return [...m.values()].sort((a, b) => b.at - a.at);
+}
+function plOpenRec(r) {
+  PL.revRec = PL.hist.includes(r) || r === PL.revRec ? r : JSON.parse(JSON.stringify(r));
+  PL.revFilter = "todas"; PL.state = "review"; renderPlantao(); window.scrollTo(0, 0);
+}
+function plDeleteRec(r) {
+  PL.hist = PL.hist.filter(x => x.id !== r.id); plSaveHist();
+  if (PL.cloud) { PL.cloud = PL.cloud.filter(x => x.id !== r.id); plCol().doc(r.id).delete().catch(() => {}); }
+  clearTimeout(PL.saveT[r.id]);
+  refreshPlHist();
+}
+function refreshPlHist() { const b = $("#plHistBox"); if (b) b.replaceWith(plHistPanel()); }
+function plHistPanel() {
+  const all = plAllHist(); const shown = PL.showAll ? all : all.slice(0, 10); const cloud = plCloudOk();
+  const box = el("div", { class: "panel", id: "plHistBox" }, el("div", { class: "bar" }, el("span", { class: "label", text: "Revisar plantões anteriores" }),
+    el("span", { class: "badge " + (cloud ? "ok" : ""), text: cloud ? `${all.length} na sua conta` : "só neste aparelho" })));
+  if (!all.length) box.append(el("p", { class: "meta", text: cloud ? "Seus plantões aparecem aqui e ficam salvos na sua conta, com as explicações da IA: dá para revisar em qualquer aparelho, dias depois." : "Seus plantões aparecem aqui, com as explicações da IA." }));
+  box.append(el("div", {}, shown.map(r => {
+    const del = el("button", { class: "link", type: "button", style: "color:var(--ink-3)", text: "Excluir" });
+    del.addEventListener("click", () => { if (!del.dataset.armed) { del.dataset.armed = "1"; del.textContent = "Confirmar"; del.style.color = "var(--bad)"; setTimeout(() => { if (del.isConnected) { delete del.dataset.armed; del.textContent = "Excluir"; del.style.color = "var(--ink-3)"; } }, 4000); return; } plDeleteRec(r); });
+    return el("div", { class: "weak", style: "align-items:center;flex-wrap:wrap" },
+      el("span", { style: "flex:1;min-width:200px" }, el("b", { class: "mono", text: r.score.toLocaleString("pt-BR") + " pts" }),
+        el("span", { class: "meta", text: ` · ${fmtDate(r.at)} · até ${plHourLabel(r.h)} · ${r.c}/${r.n} acertos · explicações ${plAiCount(r)}/${r.log.length}` })),
+      el("span", { class: "row", style: "gap:12px" }, del, el("button", { class: "btn small", type: "button", text: "Revisar", onclick: () => plOpenRec(r) })));
+  })));
+  if (all.length > 10) box.append(el("div", {}, el("button", { class: "link", type: "button", text: PL.showAll ? "Mostrar menos" : `Mostrar todos (${all.length})`, onclick: () => { PL.showAll = !PL.showAll; refreshPlHist(); } })));
+  if (cloud) box.append(el("p", { class: "meta", text: `Guardamos os últimos ${PL_KEEP} plantões na sua conta, num espaço só seu.` }));
+  else if (CAP.ready) box.append(el("p", { class: "meta", text: "Fora do Claude, os plantões ficam só neste navegador (os últimos 8). Abrindo o artefato no Claude, eles vão para a sua conta e aparecem em qualquer aparelho." }));
+  if (PL.cloudErr) box.append(el("p", { class: "meta", style: "color:var(--bad)", text: PL.cloudErr }));
+  return box;
+}
 const plOrder = rec => { const ks = [...rec.log.keys()]; return [...ks.filter(i => !rec.log[i].ok), ...ks.filter(i => rec.log[i].ok)]; };
 function plExplainPrompt(items) {
   return `Você é preceptor de semiologia médica (referências: Porto, Bates) revisando com um estudante de medicina brasileiro as perguntas de um quiz rápido que ele acabou de fazer. Para CADA pergunta:
@@ -3210,7 +3281,7 @@ function plExplainStart(rec, idxs, front) {
             rec.ai[i] = { ok: e.gabarito_ok !== false, cor: str(e.correcao), exp: str(e.explicacao), dis: arr(e.distratores).map(d => ({ a: str(d && d.alternativa), w: str(d && d.por_que_nao) })), dica: str(e.dica) };
             if (e.gabarito_ok === false) plDropBad(rec.log[i].q);
           }
-          plSaveHist();
+          plTouchRec(rec);
         } catch (e) {
           if (!(e && e.code === "cancelled")) J.err = errMsg(e);
           J.queue.unshift(...chunk.filter(i => !rec.ai[i]));
@@ -3575,6 +3646,7 @@ capsReady.then(async () => {
   if (CAP.tts && AN.tab === "paciente" && PS.step === "setup") renderPaciente();
   startHistory();
   await loadProgress();
+  plCloudInit();
   if (curView() === "inicio") renderProgresso();
   if (curView() === "jogos") renderJogos();
   if (curView() === "plantao" && PL.state === "home") renderPlantao();
