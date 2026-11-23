@@ -2860,14 +2860,43 @@ function plLocalBank() {
   return out;
 }
 const PL_LOCAL = plLocalBank();
-const PL = { tema: ls.get("plTema", "tudo"), state: "home", pool: ls.get("plPool", []), fetching: false, fetchErr: "", prepT0: 0, countEnd: 0, g: null, last: null };
+const PL = { tema: ls.get("plTema", "tudo"), state: "home", pool: ls.get("plPool", []), fetching: false, inflight: 0, fetchErr: "", prepT0: 0, countEnd: 0, g: null, last: null };
+const PL_MAX = 600;
+/* assuntos sorteados a cada lote, para a IA variar de verdade */
+const PL_SUB = {
+  cardio: ["inspeção do precórdio e turgência jugular", "ictus cordis", "pulsos arteriais e suas alterações", "bulhas e desdobramentos", "B3 e B4", "sopros sistólicos", "sopros diastólicos", "manobras que alteram sopros", "atrito pericárdico e tamponamento", "técnica de aferição da pressão arterial", "edema e insuficiência venosa", "sinais periféricos de endocardite", "insuficiência cardíaca no exame", "valvopatias no exame"],
+  resp: ["inspeção estática do tórax", "padrões e ritmos respiratórios", "sinais de esforço respiratório", "expansibilidade e frêmito toracovocal", "percussão do tórax", "murmúrio vesicular", "estertores finos e grossos", "sibilos, roncos e estridor", "atrito pleural", "ressonância vocal, egofonia e pectorilóquia", "síndromes pleuropulmonares", "derrame pleural x consolidação x pneumotórax", "DPOC e asma no exame", "baqueteamento e cianose"],
+  abd: ["inspeção do abdome", "ruídos hidroaéreos e sopros abdominais", "percussão e hepatimetria", "espaço de Traube", "pesquisa de ascite", "palpação do fígado", "palpação do baço", "irritação peritoneal", "apendicite no exame", "colecistite e vias biliares", "hérnias da parede abdominal", "estigmas de hepatopatia crônica", "rins, Giordano e dor lombar", "abdome agudo obstrutivo"],
+  neuro: ["nível de consciência e Glasgow", "pupilas e reflexos pupilares", "pares cranianos oculomotores", "paralisia facial central x periférica", "nervos cranianos bulbares", "força muscular e graduação", "tônus e trofismo", "reflexos profundos e graduação", "reflexos patológicos", "sensibilidade e padrões de perda", "coordenação e síndrome cerebelar", "marcha e seus tipos", "sinais meníngeos", "neurônio motor superior x inferior"],
+  geral: ["estado geral, fácies e biotipo", "sinais vitais e valores normais", "hidratação e perfusão", "palidez, icterícia e cianose", "linfonodos e suas características", "lesões elementares da pele", "unhas e fâneros", "edema e graduação", "tireoide ao exame", "pescoço: traqueia, carótidas, jugulares", "olhos e conjuntivas", "otoscopia e orofaringe", "estado nutricional e IMC"],
+  osteo: ["exame do joelho", "exame do ombro", "punho e mão", "coluna lombar e radiculopatias", "coluna cervical", "quadril e sacroilíacas", "sinais flogísticos e artrite", "amplitude de movimento", "força e reflexos segmentares", "marcha e postura", "tornozelo e pé"],
+  anamnese: ["estrutura e ordem da anamnese", "queixa principal e HDA", "caracterização da dor", "dispneia e classes funcionais", "dor torácica", "febre", "cefaleia e sinais de alarme", "ISDA por sistemas", "antecedentes pessoais e familiares", "carga tabágica, etilismo e hábitos", "comunicação e perguntas abertas", "sinais de alarme em queixas comuns", "síncope e palpitações", "dor abdominal na anamnese"]
+};
+function plFocus(tema) { const all = tema === "tudo" ? Object.values(PL_SUB).flat() : PL_SUB[tema] || []; return shuffle(all).slice(0, tema === "tudo" ? 6 : 4); }
+const plWords = t => new Set(norm(t).replace(/[^a-z0-9 ]/g, " ").split(" ").filter(w => w.length >= 4));
+/* repetida = mesmo enunciado, ou enunciado quase igual com a mesma resposta certa */
+function plIsDup(q) {
+  const n = norm(q.q); const w = plWords(q.q); const ans = norm(q.opts[q.ans]);
+  return PL.pool.some(x => {
+    if (norm(x.q) === n) return true;
+    if (norm(x.opts[x.ans]) !== ans) return false;
+    const v = plWords(x.q); let inter = 0; for (const t of w) if (v.has(t)) inter++;
+    const uni = w.size + v.size - inter; return uni > 0 && inter / uni >= 0.6;
+  });
+}
+function plTrimPool() {
+  if (PL.pool.length <= PL_MAX) return;
+  const unseen = PL.pool.filter(q => !q.seen); const seen = PL.pool.filter(q => q.seen);
+  PL.pool = [...seen.slice(-Math.max(0, PL_MAX - unseen.length)), ...unseen].slice(-PL_MAX);
+}
 if (!PL_TEMAS.some(t => t[0] === PL.tema)) PL.tema = "tudo";
 const plTemaOk = (q, tema) => tema === "tudo" || q.tema === tema;
 const plFreshAI = tema => PL.pool.filter(q => plTemaOk(q, tema) && !q.seen).length;
-function plPrompt(tema, n, avoid) {
+function plPrompt(tema, n, avoid, focus) {
   const nome = (PL_TEMAS.find(t => t[0] === tema) || PL_TEMAS[0])[1];
   return `Você prepara perguntas para "Plantão", um jogo de sobrevivência de semiologia médica para estudantes de medicina brasileiros (referências: Porto, Bates). Português do Brasil.
 Tema: ${tema === "tudo" ? "todos os sistemas (cardiovascular, respiratório, abdome, neurológico, geral e pele, cabeça e pescoço, osteoarticular, anamnese)" : nome}.
+Nesta leva, distribua as perguntas entre estes assuntos: ${(focus || []).join("; ")}. Cubra todos eles e varie o ângulo (achado, manobra, caso, escala).
 Gere ${n} perguntas variadas, distribuídas entre os tipos:
 - "traducao": descrição leiga e concreta do que se vê, ouve, palpa ou percute → termo técnico correto;
 - "achado": achado de exame → significado clínico mais provável;
@@ -2899,18 +2928,19 @@ function plValidate(raw, tema) {
 }
 async function plFetch(tema) {
   await capsReady;
-  if (!CAP.sample || PL.fetching) return 0;
-  PL.fetching = true; refreshPlFoot();
-  const avoid = PL.pool.filter(q => plTemaOk(q, tema)).slice(-40).map(q => q.q.slice(0, 70));
+  if (!CAP.sample || PL.inflight >= 2) return 0;
+  PL.inflight++; PL.fetching = true; refreshPlFoot();
+  const avoid = PL.pool.filter(q => plTemaOk(q, tema)).slice(-50).map(q => q.q.slice(0, 60));
   try {
-    const res = await CAP.sample.json(plPrompt(tema, 16, avoid), { cache: false });
-    const known = new Set(PL.pool.map(q => norm(q.q)));
-    const fresh = arr(res && res.perguntas).map(x => plValidate(x, tema)).filter(q => q && !known.has(norm(q.q)) && (known.add(norm(q.q)), true));
-    PL.pool = [...PL.pool, ...fresh].slice(-300); ls.set("plPool", PL.pool); PL.fetchErr = "";
-    return fresh.length;
+    const res = await CAP.sample.json(plPrompt(tema, 16, avoid, plFocus(tema)), { cache: false });
+    let n = 0;
+    for (const x of arr(res && res.perguntas)) { const q = plValidate(x, tema); if (q && !plIsDup(q)) { PL.pool.push(q); n++; } }
+    plTrimPool(); ls.set("plPool", PL.pool); PL.fetchErr = "";
+    return n;
   } catch (e) { PL.fetchErr = errMsg(e); return 0; }
-  finally { PL.fetching = false; refreshPlFoot(); }
+  finally { PL.inflight--; PL.fetching = PL.inflight > 0; refreshPlFoot(); }
 }
+const plFetch2 = tema => Promise.all([plFetch(tema), plFetch(tema)]).then(([a, b]) => a + b);
 function plHourLabel(h) { return h >= 12 ? "07:00+" : pad2((19 + h) % 24) + ":00"; }
 function plTime(g, q) {
   let T = Math.max(6, 15 - g.hourIdx * 0.75);
@@ -2922,7 +2952,7 @@ function plPick(g) {
   let cands = [...PL.pool, ...PL_LOCAL].filter(q => plTemaOk(q, g.tema) && !g.used.has(q.id));
   if (!cands.length) { g.used.clear(); cands = [...PL.pool, ...PL_LOCAL].filter(q => plTemaOk(q, g.tema)); }
   const ai = cands.filter(q => q.src === "ia");
-  if (ai.length && Math.random() < (ai.some(q => !q.seen) ? 0.6 : 0.3)) cands = ai;
+  if (ai.length && Math.random() < (ai.some(q => !q.seen) ? 0.78 : 0.35)) cands = ai;
   const target = g.hourIdx < 4 ? 1 : g.hourIdx < 8 ? 2 : 3;
   if (g.emerg) { const hard = cands.filter(q => q.tipo === "caso" || q.nivel >= 2); if (hard.length) cands = hard; }
   const w = cands.map(q => {
@@ -2945,7 +2975,7 @@ function plView(q) {
 function plStart() {
   PL.state = "prep"; PL.prepT0 = Date.now(); PL.fetchErr = ""; renderPlantao(); window.scrollTo(0, 0);
   capsReady.then(async () => {
-    if (CAP.sample && plFreshAI(PL.tema) < 12) await plFetch(PL.tema);
+    if (CAP.sample && plFreshAI(PL.tema) < 24) { const a = plFetch(PL.tema), b = plFetch(PL.tema); await Promise.race([a, b]); }
     if (PL.state === "prep") plCountdown();
   });
 }
@@ -2961,7 +2991,7 @@ function plNext() {
   Object.assign(g, { q: plView(q), T: 0, acc: 0, t0: performance.now(), running: true, phase: "q", chosen: null, lastPts: 0, hourUp: false, coffee: false });
   g.T = plTime(g, q);
   renderPlantao();
-  if (CAP.sample && !PL.fetching && plFreshAI(g.tema) - 0 < 6) plFetch(g.tema);
+  if (CAP.sample && PL.inflight < 2 && plFreshAI(g.tema) < 12 && (g.batches || 0) < 16) { g.batches = (g.batches || 0) + 1; plFetch(g.tema); }
 }
 const plElapsed = g => g.acc + (g.running ? (performance.now() - g.t0) / 1000 : 0);
 function plAnswer(i) {
@@ -3050,7 +3080,7 @@ function renderPlHome(v) {
     el("span", { class: "label", text: "Tema do plantão" }), temas,
     el("p", { class: "meta", id: "plPoolLine", text: plPoolLine() }),
     el("div", { class: "row" }, el("button", { class: "btn primary big", type: "button", text: "Começar plantão", onclick: plStart }),
-      CAP.sample ? el("button", { class: "link", type: "button", text: "Só preparar perguntas agora", onclick: async () => { const n = await plFetch(PL.tema); toast(n ? `${n} perguntas novas prontas.` : PL.fetchErr || "Nenhuma pergunta nova desta vez."); refreshPlFoot(); } }) : null)));
+      CAP.sample ? el("button", { class: "link", type: "button", text: "Preparar mais 32 perguntas agora", onclick: async () => { toast("A IA está preparando dois lotes…"); const n = await plFetch2(PL.tema); toast(n ? `${n} perguntas novas prontas.` : PL.fetchErr || "Nenhuma pergunta nova desta vez."); refreshPlFoot(); } }) : null)));
   v.append(el("div", { class: "panel" }, el("span", { class: "label", text: "Como funciona" }),
     el("ul", { class: "rules" },
       el("li", { text: "Você tem 3 vidas. Errou ou o tempo acabou, perde uma." }),
@@ -3059,7 +3089,7 @@ function renderPlHome(v) {
       el("li", { text: "Acertos seguidos multiplicam os pontos: ×2 com 5, ×3 com 10, ×4 com 15. Responder rápido dá bônus." }),
       el("li", { text: "10 acertos seguidos rendem um café: recupera uma vida." }),
       el("li", { text: "A cada 7 pacientes, uma emergência: menos tempo e pontos em dobro." }),
-      el("li", { text: "A IA prepara um lote de perguntas antes de começar e repõe durante o plantão; as perguntas da casa garantem que o jogo nunca para." })),
+      el("li", { text: "A IA prepara dois lotes de perguntas antes de começar, cada um sobre assuntos sorteados, e repõe sem parar durante o plantão. As perguntas já vistas ficam guardadas (até 600) e as novas têm prioridade; as da casa garantem que o jogo nunca para." })),
     el("p", { class: "meta", text: "Tipos: tradução (do leigo para o termo técnico), achado, manobra, caso relâmpago, escala, verdadeiro ou falso, sequência e etapa do exame." })));
   const top = ((P.surv || {}).best || []).slice(0, 5);
   if (top.length) v.append(el("div", { class: "panel" }, el("span", { class: "label", text: "Seus melhores plantões" }),
@@ -3072,7 +3102,7 @@ function renderPlPrep(v) {
   else {
     m.append(el("span", { class: "label", text: "Preparando o plantão" }), ECG(),
       el("h3", { text: CAP.sample ? "A IA está montando os casos da noite" : "Separando as perguntas da casa" }),
-      el("p", { class: "meta" }, CAP.sample ? `Um lote de 16 perguntas de ${(PL_TEMAS.find(t => t[0] === PL.tema) || PL_TEMAS[0])[1].toLowerCase()}. Isso leva de 10 a 60 segundos · ` : "", el("span", { id: "plPrepT", class: "mono", text: "0 s" })),
+      el("p", { class: "meta" }, CAP.sample ? `Dois lotes de 16 perguntas de ${(PL_TEMAS.find(t => t[0] === PL.tema) || PL_TEMAS[0])[1].toLowerCase()}, cada um sobre assuntos sorteados. O plantão começa quando o primeiro chegar (10 a 60 s) · ` : "", el("span", { id: "plPrepT", class: "mono", text: "0 s" })),
       el("p", { class: "meta", text: "Enquanto isso: responda com as teclas 1 a 4 (V ou F no verdadeiro ou falso). Enter segue, P pausa." }),
       el("div", { class: "row" }, el("button", { class: "btn primary", type: "button", text: "Começar já com as perguntas da casa", onclick: plCountdown }),
         el("button", { class: "btn", type: "button", text: "Cancelar", onclick: () => { PL.state = "home"; renderPlantao(); } })));
