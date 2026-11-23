@@ -1,0 +1,844 @@
+<title>Bancada de Semiologia</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+<style>
+/* Layout: prontuário em coluna única; abas no topo; cada etapa do exame é uma ficha; a correção chega como um parecer anexado abaixo. */
+:root{
+  --paper:#f1f5f5; --surface:#ffffff; --surface-2:#e8eeee;
+  --ink:#13201f; --ink-2:#465755; --ink-3:#667674;
+  --rule:#d2dcdb; --rule-strong:#adbcba;
+  --accent:#0d6b6e; --accent-soft:#dcefee; --accent-ink:#0a5052; --on-accent:#ffffff;
+  --ok:#17704a; --ok-soft:#e2f2ea; --warn:#8a6412; --warn-soft:#faf0d9; --bad:#a3301d; --bad-soft:#fae9e5;
+  --display:"Newsreader",Georgia,"Times New Roman",serif;
+  --body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0c1313; --surface:#141d1d; --surface-2:#1a2525;
+  --ink:#e6eeed; --ink-2:#9db0ae; --ink-3:#7f9290;
+  --rule:#263434; --rule-strong:#384a49;
+  --accent:#5cc4c4; --accent-soft:#143233; --accent-ink:#9adddb; --on-accent:#081212;
+  --ok:#5cc292; --ok-soft:#13291f; --warn:#d9a845; --warn-soft:#2a2113; --bad:#e58470; --bad-soft:#2d1814;
+  color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --paper:#0c1313; --surface:#141d1d; --surface-2:#1a2525;
+  --ink:#e6eeed; --ink-2:#9db0ae; --ink-3:#7f9290;
+  --rule:#263434; --rule-strong:#384a49;
+  --accent:#5cc4c4; --accent-soft:#143233; --accent-ink:#9adddb; --on-accent:#081212;
+  --ok:#5cc292; --ok-soft:#13291f; --warn:#d9a845; --warn-soft:#2a2113; --bad:#e58470; --bad-soft:#2d1814;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.55;margin:0;-webkit-text-size-adjust:100%}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--surface)}
+h1,h2,h3{font-family:var(--display);font-weight:600;text-wrap:balance;margin:0;letter-spacing:-.01em}
+p{margin:0}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.wrap{max-width:860px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--surface);border-bottom:1px solid var(--rule)}
+header.top .wrap{display:flex;flex-direction:column;gap:10px;padding-block:14px 0}
+.brand{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.brand h1{font-size:1.55rem}
+.brand small{font-family:var(--mono);font-size:.72rem;color:var(--ink-3);letter-spacing:.04em;text-transform:uppercase}
+nav.tabs{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none}
+nav.tabs a{padding:8px 12px 10px;color:var(--ink-2);text-decoration:none;border-bottom:2px solid transparent;white-space:nowrap;font-weight:500}
+nav.tabs a[aria-current="page"]{color:var(--accent-ink);border-color:var(--accent)}
+main{padding-block:22px 60px}
+section.view{display:flex;flex-direction:column;gap:18px}
+
+.ai-status{font-size:.85rem;padding:8px 12px;border-radius:8px;background:var(--surface-2);color:var(--ink-2)}
+.ai-status.ok{background:var(--accent-soft);color:var(--accent-ink)}
+.ai-status.off{background:var(--warn-soft);color:var(--warn)}
+
+.intro{color:var(--ink-2);max-width:65ch}
+.label{font-family:var(--mono);font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1px solid var(--rule-strong);background:var(--surface);padding:6px 12px;border-radius:999px;font-size:.9rem}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.seq{display:flex;flex-wrap:wrap;gap:4px;align-items:center;font-family:var(--mono);font-size:.78rem;color:var(--ink-2)}
+.seq span{background:var(--surface-2);padding:2px 8px;border-radius:4px}
+.seq i{font-style:normal;color:var(--ink-3)}
+
+.card{background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.stage-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.stage-head h3{font-size:1.15rem}
+.stage-num{font-family:var(--mono);color:var(--accent);margin-right:6px}
+.hint{font-size:.86rem;color:var(--ink-2);background:var(--surface-2);border-radius:6px;padding:8px 10px}
+textarea,input[type="text"],input[type="number"],select{width:100%;background:var(--paper);border:1px solid var(--rule-strong);border-radius:6px;padding:9px 10px;line-height:1.5}
+textarea{resize:vertical;min-height:84px}
+.field{display:flex;flex-direction:column;gap:5px;min-width:0}
+.field label{font-weight:500;font-size:.9rem}
+.field .sub{font-size:.8rem;color:var(--ink-3)}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.vitals{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px}
+.vitals input{font-family:var(--mono)}
+
+.btn{border:1px solid var(--rule-strong);background:var(--surface);padding:9px 16px;border-radius:7px;font-weight:500}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.btn.link{border:none;background:none;padding:4px 0;color:var(--accent-ink);text-decoration:underline;text-underline-offset:3px;font-size:.88rem}
+.btn.danger{color:var(--bad);border-color:var(--bad)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.toggle{display:flex;align-items:center;gap:6px;font-size:.9rem;color:var(--ink-2)}
+
+.vignette{border-left:3px solid var(--accent);background:var(--accent-soft);padding:12px 14px;border-radius:0 8px 8px 0;color:var(--ink)}
+.vignette b{font-family:var(--display);font-size:1.05rem}
+
+.busy{display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px dashed var(--rule-strong);border-radius:8px;color:var(--ink-2)}
+.pulse{width:10px;height:10px;border-radius:50%;background:var(--accent);animation:pulse 1.2s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.25}}
+@media (prefers-reduced-motion:reduce){.pulse{animation:none}}
+.err{padding:10px 12px;border-radius:8px;background:var(--bad-soft);color:var(--bad);font-size:.9rem}
+
+/* Parecer */
+.report{display:flex;flex-direction:column;gap:14px}
+.report-head{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.score{font-family:var(--display);font-size:2.6rem;line-height:1;font-weight:600;color:var(--accent-ink);font-variant-numeric:tabular-nums}
+.score small{font-size:1rem;color:var(--ink-3)}
+.report-head p{flex:1;min-width:220px;color:var(--ink-2)}
+.pill{display:inline-block;font-family:var(--mono);font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;padding:2px 8px;border-radius:4px;white-space:nowrap}
+.pill.ok{background:var(--ok-soft);color:var(--ok)}
+.pill.warn{background:var(--warn-soft);color:var(--warn)}
+.pill.bad{background:var(--bad-soft);color:var(--bad)}
+.pill.neutral{background:var(--surface-2);color:var(--ink-2)}
+.eval{border:1px solid var(--rule);border-left-width:4px;border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;background:var(--surface)}
+.eval.ok{border-left-color:var(--ok)} .eval.warn{border-left-color:var(--warn)} .eval.bad{border-left-color:var(--bad)}
+.eval h4{margin:0;font-size:1rem;display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.list-block h5{margin:0 0 2px;font-size:.78rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:.05em}
+.list-block ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:2px}
+.lb-ok h5{color:var(--ok)} .lb-miss h5{color:var(--bad)} .lb-add h5{color:var(--warn)} .lb-err h5{color:var(--bad)} .lb-neutral h5{color:var(--ink-3)}
+.model{background:var(--surface-2);border-radius:8px;padding:12px 14px;white-space:pre-wrap;font-size:.93rem}
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.9rem}
+th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--rule);vertical-align:top}
+th{font-family:var(--mono);font-size:.72rem;text-transform:uppercase;color:var(--ink-3);font-weight:500}
+.hyp{border:1px solid var(--rule);border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.hyp h4{margin:0;font-family:var(--display);font-size:1.12rem;display:flex;gap:10px;justify-content:space-between;align-items:baseline;flex-wrap:wrap}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.disclaimer{font-size:.8rem;color:var(--ink-3)}
+
+/* Chat */
+.patient{display:flex;gap:12px;align-items:center}
+.avatar{width:42px;height:42px;border-radius:50%;background:var(--accent-soft);color:var(--accent-ink);display:grid;place-items:center;font-family:var(--display);font-weight:600;font-size:1.1rem;flex:none}
+.chat{display:flex;flex-direction:column;gap:8px;max-height:420px;overflow-y:auto;padding:4px}
+.msg{max-width:82%;padding:8px 12px;border-radius:12px;white-space:pre-wrap;font-size:.94rem}
+.msg.me{align-self:flex-end;background:var(--accent);color:var(--on-accent);border-bottom-right-radius:4px}
+.msg.pt{align-self:flex-start;background:var(--surface-2);border-bottom-left-radius:4px}
+.msg.sys{align-self:center;font-size:.8rem;color:var(--ink-3);background:none}
+.chat-input{display:flex;gap:8px}
+.chat-input textarea{min-height:44px;height:44px}
+
+/* Histórico */
+.hist-item{display:flex;flex-direction:column;gap:8px}
+.hist-row{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.hist-row .t{font-weight:500;min-width:0;flex:1}
+.hist-row time{font-family:var(--mono);font-size:.78rem;color:var(--ink-3);font-variant-numeric:tabular-nums}
+.empty{color:var(--ink-3);text-align:center;padding:30px 10px;border:1px dashed var(--rule-strong);border-radius:10px}
+</style>
+
+<header class="top">
+  <div class="wrap">
+    <div class="brand">
+      <h1>Bancada de Semiologia</h1>
+      <small>anamnese · exame físico · raciocínio</small>
+    </div>
+    <nav class="tabs" aria-label="Seções">
+      <a href="#exame" data-view="exame">Treino de exame físico</a>
+      <a href="#anamnese" data-view="anamnese">Treino de anamnese</a>
+      <a href="#casos" data-view="casos">Exames reais</a>
+      <a href="#historico" data-view="historico">Histórico</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <div id="aiStatus" class="ai-status">Conectando ao Claude para a correção…</div>
+
+  <!-- EXAME FÍSICO -->
+  <section class="view" id="view-exame" style="margin-top:18px">
+    <p class="intro">Escolha o sistema e descreva o exame na sequência, etapa por etapa, como escreveria no prontuário. O Claude aponta o que faltou, o que você poderia acrescentar e onde a terminologia ou a ordem podem melhorar.</p>
+    <div class="field">
+      <span class="label">Sistema</span>
+      <div class="chips" id="sysChips"></div>
+    </div>
+    <div class="field">
+      <span class="label">Cenário</span>
+      <div class="chips" id="ctxChips">
+        <button class="chip" data-ctx="normal" aria-pressed="true">Exame normal (adulto hígido)</button>
+        <button class="chip" data-ctx="caso" aria-pressed="false">Caso clínico gerado pelo Claude</button>
+      </div>
+    </div>
+    <div id="caseBox" hidden></div>
+    <div>
+      <span class="label">Sequência</span>
+      <div class="seq" id="seqLine"></div>
+    </div>
+    <label class="toggle"><input type="checkbox" id="showHints"> Mostrar roteiro de cada etapa</label>
+    <div id="stages" style="display:flex;flex-direction:column;gap:12px"></div>
+    <div class="row">
+      <button class="btn primary" id="btnCorrigirExame">Corrigir com o Claude</button>
+      <button class="btn" id="btnLimparExame">Limpar descrições</button>
+      <button class="btn link" id="btnExemploExame">Carregar exemplo incompleto</button>
+    </div>
+    <div id="outExame"></div>
+  </section>
+
+  <!-- ANAMNESE -->
+  <section class="view" id="view-anamnese" hidden style="margin-top:18px">
+    <p class="intro">Entreviste um paciente simulado pelo Claude e depois registre a anamnese. A correção compara seu registro com o que o paciente sabia e mostra as perguntas que ficaram por fazer.</p>
+    <div class="card">
+      <div class="grid2">
+        <div class="field">
+          <label for="anDif">Dificuldade</label>
+          <select id="anDif">
+            <option value="básica">Básica: história clara, paciente colaborativo</option>
+            <option value="intermediária" selected>Intermediária: dados que só aparecem se perguntados</option>
+            <option value="avançada">Avançada: paciente prolixo, comorbidades e confundidores</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="anArea">Área</label>
+          <select id="anArea">
+            <option>Clínica médica (qualquer)</option>
+            <option>Cardiologia</option><option>Pneumologia</option><option>Gastroenterologia</option>
+            <option>Neurologia</option><option>Endocrinologia</option><option>Nefrologia/urologia</option>
+            <option>Reumatologia</option><option>Infectologia</option><option>Pediatria (acompanhante responde)</option>
+            <option>Ginecologia e obstetrícia</option><option>Pronto-socorro</option><option>Psiquiatria</option>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <button class="btn primary" id="btnNovoPaciente">Chamar novo paciente</button>
+        <button class="btn link" id="btnSemPaciente">Só quero escrever uma anamnese, sem entrevista</button>
+      </div>
+      <div id="patientBox" hidden>
+        <div class="patient" style="margin-block:6px 10px">
+          <div class="avatar" id="ptAvatar">?</div>
+          <div><b id="ptName"></b><div class="sub" id="ptMeta" style="color:var(--ink-3);font-size:.85rem"></div></div>
+        </div>
+        <div class="chat" id="chat" aria-live="polite"></div>
+        <div class="chat-input" style="margin-top:8px">
+          <textarea id="chatMsg" placeholder="Pergunte ao paciente… (Enter envia, Shift+Enter quebra linha)"></textarea>
+          <button class="btn primary" id="btnEnviar">Enviar</button>
+        </div>
+      </div>
+      <div id="outPaciente"></div>
+    </div>
+
+    <h2 style="font-size:1.3rem">Registro da anamnese</h2>
+    <div id="anFields" style="display:flex;flex-direction:column;gap:12px"></div>
+    <div class="row">
+      <button class="btn primary" id="btnCorrigirAn">Corrigir anamnese</button>
+      <button class="btn" id="btnLimparAn">Limpar registro</button>
+    </div>
+    <div id="outAn"></div>
+  </section>
+
+  <!-- CASOS REAIS -->
+  <section class="view" id="view-casos" hidden style="margin-top:18px">
+    <p class="intro">Registre um exame que você fez de verdade (estágio, plantão, ambulatório). O Claude organiza o raciocínio: síndrome, hipóteses diagnósticas com achados a favor e contra, sinais de alarme, exames complementares e o que vale reexaminar.</p>
+    <div class="disclaimer" style="background:var(--warn-soft);color:var(--warn);padding:8px 12px;border-radius:8px">Não escreva nome, prontuário, endereço ou qualquer dado que identifique o paciente (LGPD). Isto é ferramenta de estudo e não substitui a avaliação do preceptor.</div>
+    <div class="card">
+      <div class="grid2">
+        <div class="field"><label for="cIdade">Idade</label><input type="text" id="cIdade" placeholder="ex.: 67 anos"></div>
+        <div class="field"><label for="cSexo">Sexo</label>
+          <select id="cSexo"><option value="">—</option><option>Feminino</option><option>Masculino</option></select></div>
+        <div class="field"><label for="cCenario">Cenário</label>
+          <select id="cCenario"><option>Ambulatório</option><option>Pronto-socorro</option><option>Enfermaria</option><option>UTI</option><option>Atenção primária</option><option>Domicílio</option></select></div>
+      </div>
+      <div class="field"><label for="cQP">Queixa principal e HDA resumida</label><textarea id="cQP" placeholder="ex.: Dispneia há 5 dias, progressiva, aos médios esforços → pequenos; ortopneia (2 travesseiros), DPN…"></textarea></div>
+      <div class="field"><label for="cAnt">Antecedentes, medicações, hábitos</label><textarea id="cAnt" placeholder="ex.: HAS, DM2, IAM em 2019; losartana, metformina; ex-tabagista 30 maços-ano"></textarea></div>
+      <div>
+        <span class="label">Sinais vitais</span>
+        <div class="vitals" style="margin-top:6px">
+          <div class="field"><label for="vPA">PA <span class="sub">mmHg</span></label><input type="text" id="vPA" placeholder="150x90"></div>
+          <div class="field"><label for="vFC">FC <span class="sub">bpm</span></label><input type="text" id="vFC" placeholder="104"></div>
+          <div class="field"><label for="vFR">FR <span class="sub">irpm</span></label><input type="text" id="vFR" placeholder="24"></div>
+          <div class="field"><label for="vT">Temp. <span class="sub">°C</span></label><input type="text" id="vT" placeholder="36,8"></div>
+          <div class="field"><label for="vSat">SpO₂ <span class="sub">% (AA)</span></label><input type="text" id="vSat" placeholder="91"></div>
+          <div class="field"><label for="vHGT">Glicemia <span class="sub">mg/dL</span></label><input type="text" id="vHGT" placeholder="182"></div>
+        </div>
+      </div>
+      <div class="field"><label for="cEF">Exame físico (como você descreveu)</label><textarea id="cEF" style="min-height:180px" placeholder="Geral: REG, LOTE, corado, hidratado, acianótico, anictérico…&#10;ACV: …&#10;AR: …&#10;ABD: …&#10;MMII: …"></textarea></div>
+      <div class="field"><label for="cExames">Exames complementares já disponíveis <span class="sub">(opcional)</span></label><textarea id="cExames" placeholder="ex.: ECG com FA de alta resposta; BNP 1.200"></textarea></div>
+      <div class="field"><label for="cMinha">Minhas hipóteses <span class="sub">(opcional — o Claude comenta seu raciocínio)</span></label><textarea id="cMinha" placeholder="ex.: IC descompensada perfil B; DPOC exacerbado?"></textarea></div>
+      <div class="row">
+        <button class="btn primary" id="btnHipoteses">Gerar hipóteses diagnósticas</button>
+        <button class="btn" id="btnLimparCaso">Limpar</button>
+        <button class="btn link" id="btnExemploCaso">Preencher com um exemplo</button>
+      </div>
+    </div>
+    <div id="outCaso"></div>
+  </section>
+
+  <!-- HISTÓRICO -->
+  <section class="view" id="view-historico" hidden style="margin-top:18px">
+    <p class="intro">Cada correção e cada análise ficam guardadas aqui, só para você. Abra uma entrada para rever o parecer.</p>
+    <div class="row" id="histFilters">
+      <div class="chips">
+        <button class="chip" data-f="" aria-pressed="true">Tudo</button>
+        <button class="chip" data-f="exame" aria-pressed="false">Exame físico</button>
+        <button class="chip" data-f="anamnese" aria-pressed="false">Anamnese</button>
+        <button class="chip" data-f="caso" aria-pressed="false">Exames reais</button>
+      </div>
+    </div>
+    <div id="histStats" class="row"></div>
+    <div id="histList" style="display:flex;flex-direction:column;gap:10px"></div>
+  </section>
+</main>
+
+<script>
+"use strict";
+/* ---------- utilidades ---------- */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+function el(tag, attrs = {}, ...kids) {
+  const n = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (v == null || v === false) continue;
+    if (k === "class") n.className = v;
+    else if (k === "text") n.textContent = v;
+    else if (k.startsWith("on")) n.addEventListener(k.slice(2), v);
+    else n.setAttribute(k, v === true ? "" : v);
+  }
+  for (const c of kids.flat()) if (c != null && c !== false) n.append(c instanceof Node ? c : document.createTextNode(String(c)));
+  return n;
+}
+const arr = x => Array.isArray(x) ? x.filter(v => v != null && v !== "") : (x ? [x] : []);
+const str = x => x == null ? "" : (typeof x === "string" ? x : (typeof x === "object" ? JSON.stringify(x) : String(x)));
+const ls = {
+  get(k, d) { try { const v = localStorage.getItem("semio:" + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem("semio:" + k, JSON.stringify(v)); } catch {} }
+};
+function debounce(fn, ms) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; }
+const fmtDate = ms => { try { return new Date(ms).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" }); } catch { return ""; } };
+
+/* ---------- capacidades ---------- */
+let sample = null, db = null, uid = null;
+const capsReady = (async () => {
+  const c = window.claude;
+  if (!c || !c.use) return;
+  const [s, d, u] = await Promise.all([c.use("sample").catch(() => null), c.use("db").catch(() => null), c.use("user").catch(() => null)]);
+  sample = s;
+  if (d && u) { try { uid = await u.id(); } catch {} if (uid) db = d; }
+})();
+capsReady.then(() => {
+  const st = $("#aiStatus");
+  if (sample) { st.className = "ai-status ok"; st.textContent = "Claude conectado. A primeira correção pede sua permissão para usar o Claude."; }
+  else { st.className = "ai-status off"; st.textContent = "A correção por IA só funciona com o artefato aberto no Claude (claude.ai ou app). Você ainda pode escrever e salvar rascunhos."; }
+  startHistory();
+});
+
+const ERRS = {
+  not_granted: "Você não autorizou o uso do Claude nesta página. Recarregue para ser perguntado de novo.",
+  sampling_disabled: "O Claude não está disponível para esta conta.",
+  rate_limited: "Limite de uso atingido. Espere um pouco e tente de novo.",
+  session_expired: "Sua sessão expirou. Entre de novo no Claude.",
+  refused: "O Claude recusou este conteúdo. Revise o texto e tente de novo.",
+  invalid_json: "A resposta veio num formato inesperado. Tente de novo.",
+  prompt_too_large: "Texto longo demais. Encurte as descrições.",
+  empty_completion: "O Claude não devolveu resposta. Tente de novo."
+};
+const errMsg = e => ERRS[e && e.code] || "Falha de conexão com o Claude. Tente de novo.";
+
+/* Executa uma chamada com indicador de progresso e botão Parar */
+async function runAI(out, label, fn) {
+  await capsReady;
+  if (!sample) { out.replaceChildren(el("div", { class: "err", text: "A correção por IA só funciona com o artefato aberto no Claude." })); return null; }
+  const ctl = new AbortController();
+  const secs = el("span", { text: "0 s" });
+  const stop = el("button", { class: "btn link", text: "Parar", onclick: () => ctl.abort() });
+  out.replaceChildren(el("div", { class: "busy" }, el("span", { class: "pulse" }), el("span", {}, label + " · ", secs), stop));
+  const t0 = Date.now(); const timer = setInterval(() => secs.textContent = Math.round((Date.now() - t0) / 1000) + " s", 1000);
+  try { return await fn(ctl.signal); }
+  catch (e) {
+    if (e && e.code === "cancelled") out.replaceChildren(el("div", { class: "disclaimer", text: "Correção interrompida." }));
+    else out.replaceChildren(el("div", { class: "err", text: errMsg(e) }));
+    return null;
+  } finally { clearInterval(timer); }
+}
+
+/* ---------- histórico (db privado por usuário, ou navegador) ---------- */
+let HIST = [];
+const COL = () => "data/users/" + uid;
+async function saveRecord(rec) {
+  rec.id = rec.id || ("r" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6));
+  rec.criadoEm = rec.criadoEm || Date.now();
+  if (db) {
+    try { await db.collection(COL()).doc(rec.id).set(rec); return true; } catch (e) { console.warn(e); }
+  }
+  HIST = [rec, ...HIST.filter(r => r.id !== rec.id)].slice(0, 60);
+  ls.set("hist", HIST); renderHist(); return true;
+}
+async function deleteRecord(id) {
+  if (db) { try { await db.collection(COL()).doc(id).delete(); return; } catch (e) { console.warn(e); } }
+  HIST = HIST.filter(r => r.id !== id); ls.set("hist", HIST); renderHist();
+}
+let histNote = "";
+function startHistory() {
+  if (!db) { HIST = ls.get("hist", []); histNote = "Sem conexão ao armazenamento do Claude: o histórico fica só neste navegador."; renderHist(); return; }
+  histNote = "Carregando histórico…"; renderHist();
+  const timer = setTimeout(() => { histNote = "O histórico ainda não respondeu; pode estar desatualizado."; renderHist(); }, 10000);
+  db.collection(COL()).orderBy("criadoEm", "desc").limit(200).onSnapshot(snap => {
+    HIST = snap.docs.map(d => Object.assign({}, d.data(), { id: d.id }));
+    if (!snap.metadata.fromCache) { clearTimeout(timer); histNote = ""; }
+    renderHist();
+  }, () => { clearTimeout(timer); histNote = "Não foi possível ler o histórico salvo."; HIST = ls.get("hist", []); renderHist(); });
+}
+
+/* ---------- dados semiológicos ---------- */
+const SISTEMAS = {
+  geral: { nome: "Exame geral (ectoscopia)", etapas: [
+    ["Estado geral e consciência", "Estado geral (BEG/REG/MEG), nível de consciência e orientação (tempo, espaço, pessoa), fácies, atitude, biotipo, estado nutricional."],
+    ["Sinais vitais e medidas", "PA (membro, posição), FC, FR, temperatura (local), SpO₂, dor; peso, altura, IMC, circunferência abdominal."],
+    ["Pele, fâneros e mucosas", "Coloração (palidez graduada em cruzes, icterícia, cianose central/periférica), hidratação, turgor e elasticidade, lesões, unhas, cabelos."],
+    ["Linfonodos", "Cadeias (cervicais, supraclaviculares, axilares, inguinais); se palpáveis: tamanho, consistência, mobilidade, dor, coalescência."],
+    ["Perfusão e edema", "Tempo de enchimento capilar, extremidades, edema (localização, cacifo graduado, simetria), panículo adiposo, marcha."]
+  ] },
+  cardio: { nome: "Cardiovascular", etapas: [
+    ["Inspeção", "Precórdio: abaulamentos, cicatrizes, ictus visível, pulsações; turgência jugular a 45°, refluxo hepatojugular; cianose, baqueteamento."],
+    ["Palpação", "Ictus cordis: localização (EIC e linha), extensão em polpas digitais, intensidade, mobilidade; frêmitos (fase e foco); impulsões; pulsos (frequência, ritmo, amplitude, simetria)."],
+    ["Ausculta", "Focos mitral, tricúspide, aórtico, aórtico acessório e pulmonar. Ritmo (regular, 2 tempos), bulhas (B1/B2: fonese, desdobramentos), B3/B4, sopros (fase, foco, irradiação, intensidade /6+, timbre), atritos, cliques."],
+    ["Pulsos e complementos", "Pulsos periféricos comparados (carotídeos, radiais, femorais, pediosos, tibiais posteriores), enchimento capilar, edema de MMII; manobras (Rivero-Carvallo, DLE, handgrip) quando indicadas."]
+  ] },
+  resp: { nome: "Respiratório", etapas: [
+    ["Inspeção estática", "Forma do tórax (normolíneo, em tonel, pectus), abaulamentos, retrações, cicatrizes, circulação colateral."],
+    ["Inspeção dinâmica", "Tipo respiratório, FR, ritmo, amplitude, tiragem, uso de musculatura acessória, expansibilidade visível."],
+    ["Palpação", "Expansibilidade (ápices e bases, simetria), frêmito toracovocal (simétrico, aumentado, diminuído), pontos dolorosos, enfisema subcutâneo."],
+    ["Percussão", "Comparativa e simétrica: som claro pulmonar, macicez, submacicez, hipersonoridade, timpanismo; espaço de Traube."],
+    ["Ausculta", "Murmúrio vesicular (presente, simétrico, diminuído), ruídos adventícios (estertores finos/grossos, sibilos, roncos, estridor, atrito pleural) com localização; ressonância vocal (broncofonia, pectorilóquia, egofonia)."]
+  ] },
+  abd: { nome: "Abdome", etapas: [
+    ["Inspeção", "Forma (plano, globoso, escavado, em avental), cicatrizes, estrias, circulação colateral, hérnias, abaulamentos, movimentos peristálticos visíveis, cicatriz umbilical."],
+    ["Ausculta", "Ruídos hidroaéreos (presentes, normo/hipo/hiperativos, metálicos), sopros vasculares (aorta, renais)."],
+    ["Percussão", "Timpanismo e macicez difusos; hepatimetria; espaço de Traube; sinal de Giordano; pesquisa de ascite (macicez móvel, piparote, semicírculo de Skoda)."],
+    ["Palpação superficial", "Tensão da parede, sensibilidade, defesa, massas superficiais."],
+    ["Palpação profunda e órgãos", "Fígado (borda, superfície, consistência, distância do RCD), baço (Schuster), rins, massas (localização, tamanho, consistência, mobilidade), sinais de irritação peritoneal (Blumberg)."],
+    ["Manobras especiais", "Murphy, McBurney, Rovsing, psoas, obturador, Giordano, Courvoisier, conforme o caso."]
+  ] },
+  neuro: { nome: "Neurológico", etapas: [
+    ["Estado mental", "Nível de consciência (Glasgow), orientação, atenção, memória, linguagem (fluência, compreensão, nomeação, repetição)."],
+    ["Pares cranianos", "I a XII: acuidade e campos visuais, pupilas (isocoria, reflexos fotomotor e consensual), motricidade ocular, sensibilidade facial, mímica (central x periférica), audição, palato e úvula, ECM/trapézio, língua."],
+    ["Motricidade", "Trofismo, tônus (espasticidade, rigidez), força graduada 0–5 por segmento, manobras deficitárias (Mingazzini, Barré), movimentos involuntários."],
+    ["Reflexos", "Profundos (bicipital, tricipital, estilorradial, patelar, aquileu) graduados 0–4+, simetria; superficiais; cutaneoplantar (Babinski), clônus."],
+    ["Sensibilidade", "Superficial (tátil, dolorosa, térmica) e profunda (vibratória, artrestesia); padrão (dermatômico, em bota e luva, nível sensitivo)."],
+    ["Coordenação, equilíbrio e marcha", "Index-nariz, calcanhar-joelho, diadococinesia, Romberg, marcha (tipo)."],
+    ["Sinais meníngeos", "Rigidez de nuca, Kernig, Brudzinski, Lasègue."]
+  ] },
+  cabeca: { nome: "Cabeça e pescoço", etapas: [
+    ["Cabeça e face", "Crânio, couro cabeludo, fácies, seios da face, ATM."],
+    ["Olhos, ouvidos, nariz", "Conjuntivas, escleras, pupilas, acuidade; otoscopia; rinoscopia anterior."],
+    ["Cavidade oral e orofaringe", "Lábios, dentes, gengivas, língua, mucosa, amígdalas (graduação), úvula, hidratação."],
+    ["Pescoço", "Inspeção, mobilidade, linfonodos por cadeia, tireoide (tamanho, consistência, nódulos, mobilidade à deglutição), traqueia centrada, pulsos carotídeos e sopros, jugulares."]
+  ] },
+  osteo: { nome: "Osteoarticular", etapas: [
+    ["Inspeção", "Alinhamento, deformidades, edema, rubor, atrofias, postura e marcha; comparação com o lado contralateral."],
+    ["Palpação", "Calor, dor à palpação (pontos anatômicos), derrame articular, crepitações, sinovite."],
+    ["Amplitude de movimento", "Ativa e passiva, em graus quando possível; dor ao movimento; limitação."],
+    ["Força e neurovascular", "Força muscular segmentar, reflexos, sensibilidade, pulsos distais."],
+    ["Testes especiais", "Conforme articulação: Lachman, gaveta, McMurray, Neer, Hawkins, Jobe, Phalen, Tinel, Lasègue, FABER, Schober…"]
+  ] }
+};
+const EXEMPLO_EXAME = {
+  cardio: ["Sem abaulamentos.", "Ictus palpável.", "BNF, sem sopros.", ""],
+  resp: ["Tórax normal.", "", "Expansibilidade preservada.", "", "MV+ sem RA."],
+  abd: ["Abdome plano.", "", "", "Abdome flácido, indolor.", "Sem visceromegalias.", ""],
+  geral: ["BEG, LOTE.", "PA 120x80, FC 80.", "Corado, hidratado.", "", ""],
+  neuro: ["Glasgow 15.", "Pupilas isocóricas.", "Força preservada.", "Reflexos normais.", "", "", ""],
+  cabeca: ["", "", "Orofaringe sem alterações.", "Tireoide normal."],
+  osteo: ["Sem deformidades.", "", "", "", ""]
+};
+
+/* ---------- roteamento ---------- */
+const VIEWS = ["exame", "anamnese", "casos", "historico"];
+function route() {
+  const v = VIEWS.includes(location.hash.slice(1)) ? location.hash.slice(1) : "exame";
+  for (const name of VIEWS) $("#view-" + name).hidden = name !== v;
+  $$("nav.tabs a").forEach(a => { if (a.dataset.view === v) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current"); });
+}
+addEventListener("hashchange", route);
+
+/* ================= EXAME FÍSICO ================= */
+let sys = ls.get("sys", "cardio"); if (!SISTEMAS[sys]) sys = "cardio";
+let ctx = "normal";
+let caseData = null; // {titulo, vinheta, diagnostico, achados_esperados}
+
+function renderSysChips() {
+  const box = $("#sysChips"); box.replaceChildren();
+  for (const [k, s] of Object.entries(SISTEMAS))
+    box.append(el("button", { class: "chip", "aria-pressed": String(k === sys), text: s.nome, onclick: () => { sys = k; ls.set("sys", k); caseData = null; renderCase(); renderSysChips(); renderStages(); } }));
+}
+function draftKey() { return "draft:" + sys; }
+function renderStages() {
+  const s = SISTEMAS[sys];
+  const seq = $("#seqLine"); seq.replaceChildren();
+  s.etapas.forEach(([n], i) => { if (i) seq.append(el("i", { text: "→" })); seq.append(el("span", { text: n })); });
+  const drafts = ls.get(draftKey(), []);
+  const box = $("#stages"); box.replaceChildren();
+  const show = $("#showHints").checked;
+  const save = debounce(() => ls.set(draftKey(), $$("#stages textarea").map(t => t.value)), 400);
+  s.etapas.forEach(([n, h], i) => {
+    const hint = el("div", { class: "hint", text: h, hidden: !show });
+    const ta = el("textarea", { id: "st-" + sys + "-" + i, placeholder: "Descreva a " + n.toLowerCase() + "…", oninput: save });
+    ta.value = drafts[i] || "";
+    box.append(el("div", { class: "card" },
+      el("div", { class: "stage-head" },
+        el("h3", {}, el("span", { class: "stage-num", text: String(i + 1).padStart(2, "0") }), n),
+        el("button", { class: "btn link", text: "roteiro", "aria-label": "Mostrar roteiro de " + n, onclick: () => hint.hidden = !hint.hidden })),
+      hint, ta));
+  });
+}
+$("#showHints").addEventListener("change", e => { $$("#stages .hint").forEach(h => h.hidden = !e.target.checked); });
+$$("#ctxChips .chip").forEach(b => b.addEventListener("click", () => {
+  ctx = b.dataset.ctx; $$("#ctxChips .chip").forEach(x => x.setAttribute("aria-pressed", String(x === b))); renderCase();
+}));
+function renderCase() {
+  const box = $("#caseBox");
+  box.hidden = ctx !== "caso";
+  if (ctx !== "caso") return;
+  box.replaceChildren();
+  if (caseData) {
+    box.append(el("div", { class: "vignette" }, el("b", { text: caseData.titulo || "Caso clínico" }), el("p", { text: caseData.vinheta, style: "margin-top:4px" }),
+      el("p", { class: "disclaimer", style: "margin-top:6px", text: "Descreva os achados que você esperaria encontrar neste paciente. O diagnóstico aparece na correção." })));
+    box.append(el("div", { class: "row", style: "margin-top:8px" }, el("button", { class: "btn link", text: "Gerar outro caso", onclick: gerarCaso })));
+  } else {
+    const out = el("div");
+    box.append(el("div", { class: "card" }, el("p", { text: "O Claude escreve uma vinheta curta (idade, queixa, contexto) para o sistema " + SISTEMAS[sys].nome.toLowerCase() + ". Você descreve o exame esperado; a correção revela o diagnóstico e os achados." }),
+      el("div", { class: "row" }, el("button", { class: "btn primary", text: "Gerar caso", onclick: () => gerarCaso(out) })), out));
+  }
+}
+async function gerarCaso(outEl) {
+  const out = outEl instanceof Node ? outEl : $("#caseBox");
+  const prompt = `Crie uma vinheta curta de caso clínico realista para um estudante de medicina treinar a descrição do exame físico do sistema "${SISTEMAS[sys].nome}". Varie idade, sexo e doença (evite sempre os mesmos clássicos). A vinheta tem 2 a 4 frases: idade, sexo, queixa, tempo de evolução e contexto, SEM revelar achados de exame físico nem o diagnóstico.
+Responda só com JSON: {"titulo":"rótulo neutro, ex. 'Homem, 58 anos, dispneia'","vinheta":"...","diagnostico":"...","achados_esperados":["achado de exame esperado por etapa, com terminologia semiológica"]}
+Semente de variação: ${Math.random().toString(36).slice(2, 8)}`;
+  const res = await runAI(out, "Gerando caso", signal => sample.json(prompt, { signal, cache: false }));
+  if (res && res.vinheta) { caseData = res; renderCase(); }
+}
+
+$("#btnLimparExame").addEventListener("click", () => { $$("#stages textarea").forEach(t => t.value = ""); ls.set(draftKey(), []); $("#outExame").replaceChildren(); });
+$("#btnExemploExame").addEventListener("click", () => {
+  const ex = EXEMPLO_EXAME[sys] || [];
+  $$("#stages textarea").forEach((t, i) => t.value = ex[i] || "");
+  ls.set(draftKey(), ex);
+});
+$("#btnCorrigirExame").addEventListener("click", async () => {
+  const s = SISTEMAS[sys];
+  const desc = s.etapas.map(([n], i) => ({ etapa: n, descricao: ($("#st-" + sys + "-" + i) || {}).value || "" }));
+  if (!desc.some(d => d.descricao.trim())) { $("#outExame").replaceChildren(el("div", { class: "err", text: "Escreva a descrição de pelo menos uma etapa antes de corrigir." })); return; }
+  if (ctx === "caso" && !caseData) { $("#outExame").replaceChildren(el("div", { class: "err", text: "Gere um caso clínico primeiro, ou troque o cenário para exame normal." })); return; }
+  const cenario = ctx === "caso"
+    ? `CASO CLÍNICO apresentado ao aluno: "${caseData.vinheta}". Gabarito oculto (não foi mostrado ao aluno): diagnóstico ${caseData.diagnostico}; achados esperados: ${arr(caseData.achados_esperados).join("; ")}. Avalie se os achados descritos são coerentes com o caso.`
+    : "EXAME NORMAL de um adulto hígido: o aluno deve descrever o exame normal completo, com a terminologia de prontuário.";
+  const prompt = `Você é preceptor de semiologia médica (referências: Porto, Bates, López). Corrija a descrição de exame físico de um estudante de medicina brasileiro. Seja rigoroso e específico, em português do Brasil.
+SISTEMA: ${s.nome}
+SEQUÊNCIA ESPERADA: ${s.etapas.map(e => e[0]).join(" → ")}
+${cenario}
+DESCRIÇÃO DO ALUNO, POR ETAPA:
+${desc.map((d, i) => `${i + 1}. ${d.etapa}: ${d.descricao.trim() || "(em branco)"}`).join("\n")}
+
+Para cada etapa diga o que ele descreveu bem, o que FALTOU (itens que um exame dessa etapa obrigatoriamente registra), o que PODERIA ACRESCENTAR (enriquecimentos, manobras, graduações, localização precisa) e imprecisões ou erros. Aponte abreviações ou termos vagos ("normal", "sem alterações") e sugira a forma correta. Comente a ordem da sequência. Escreva uma descrição-modelo completa, no estilo de prontuário.
+Responda só com JSON:
+{"nota":0-10,"resumo":"2-3 frases","sequencia":{"adequada":true,"comentario":"..."},
+"etapas":[{"nome":"...","avaliacao":"completo|parcial|ausente","descreveu_bem":["..."],"faltou":["..."],"acrescentar":["..."],"imprecisoes":["..."]}],
+"terminologia":[{"escrito":"...","sugerido":"...","motivo":"..."}],
+"descricao_modelo":"texto corrido, uma linha por etapa"${ctx === "caso" ? ',"caso":{"diagnostico":"...","comentario":"o que nos achados do aluno apontaria ou não para o diagnóstico; achados-chave que ele deveria procurar"}' : ""}}`;
+  const out = $("#outExame");
+  const res = await runAI(out, "Claude está corrigindo", signal => sample.json(prompt, { signal }));
+  if (!res) return;
+  out.replaceChildren(renderExameReport(res));
+  saveRecord({ tipo: "exame", titulo: s.nome + (ctx === "caso" && caseData ? " · " + (caseData.titulo || "caso") : " · exame normal"), nota: Number(res.nota), entrada: { sistema: sys, cenario: ctx, caso: caseData, descricao: desc }, resultado: res });
+  out.scrollIntoView({ behavior: "smooth", block: "start" });
+});
+
+/* ---------- renderização dos pareceres ---------- */
+const statusCls = a => { a = str(a).toLowerCase(); return a.startsWith("compl") || a.startsWith("adequ") ? "ok" : a.startsWith("parc") ? "warn" : a ? "bad" : "neutral"; };
+function listBlock(title, items, cls) {
+  items = arr(items); if (!items.length) return null;
+  return el("div", { class: "list-block " + cls }, el("h5", { text: title }), el("ul", {}, items.map(i => el("li", { text: str(i) }))));
+}
+function reportHead(res, label) {
+  const n = Number(res.nota);
+  return el("div", { class: "report-head" },
+    isFinite(n) ? el("div", { class: "score" }, String(Math.round(n * 10) / 10).replace(".", ","), el("small", { text: " /10" })) : null,
+    el("p", { text: str(res.resumo) }));
+}
+function copyBlock(text) {
+  const pre = el("div", { class: "model", text });
+  const btn = el("button", { class: "btn link", text: "Copiar", onclick: () => {
+    navigator.clipboard.writeText(text).then(() => btn.textContent = "Copiado", () => { const r = document.createRange(); r.selectNodeContents(pre); const s = getSelection(); s.removeAllRanges(); s.addRange(r); btn.textContent = "Selecionado: use Ctrl+C"; });
+  } });
+  return [pre, btn];
+}
+function renderExameReport(res) {
+  const r = el("div", { class: "card report" }, el("span", { class: "label", text: "Parecer do preceptor" }), reportHead(res));
+  if (res.sequencia) r.append(el("div", { class: "row" }, el("span", { class: "pill " + (res.sequencia.adequada === false ? "warn" : "ok"), text: res.sequencia.adequada === false ? "Sequência a rever" : "Sequência adequada" }), el("span", { text: str(res.sequencia.comentario), style: "color:var(--ink-2);flex:1;min-width:200px" })));
+  if (res.caso) r.append(el("div", { class: "vignette" }, el("b", { text: "Diagnóstico do caso: " + str(res.caso.diagnostico) }), el("p", { text: str(res.caso.comentario), style: "margin-top:4px" })));
+  for (const e of arr(res.etapas)) {
+    const c = statusCls(e.avaliacao);
+    r.append(el("div", { class: "eval " + c },
+      el("h4", {}, el("span", { text: str(e.nome) }), el("span", { class: "pill " + c, text: str(e.avaliacao) || "—" })),
+      listBlock("Descreveu bem", e.descreveu_bem, "lb-ok"),
+      listBlock("Faltou", e.faltou, "lb-miss"),
+      listBlock("Poderia acrescentar", e.acrescentar, "lb-add"),
+      listBlock("Imprecisões", e.imprecisoes, "lb-err")));
+  }
+  r.append(...termTable(res.terminologia));
+  if (res.descricao_modelo) r.append(el("span", { class: "label", text: "Descrição-modelo" }), ...copyBlock(str(res.descricao_modelo)));
+  return r;
+}
+function termTable(t) {
+  t = arr(t); if (!t.length) return [];
+  return [el("span", { class: "label", text: "Terminologia" }), el("div", { class: "tablewrap" }, el("table", {},
+    el("thead", {}, el("tr", {}, el("th", { text: "Você escreveu" }), el("th", { text: "Prefira" }), el("th", { text: "Por quê" }))),
+    el("tbody", {}, t.map(x => el("tr", {}, el("td", { text: str(x.escrito) }), el("td", { text: str(x.sugerido) }), el("td", { text: str(x.motivo) }))))))];
+}
+
+/* ================= ANAMNESE ================= */
+const AN_CAMPOS = [
+  ["id", "Identificação", "Nome (fictício), idade, sexo, cor, estado civil, profissão, naturalidade, procedência, religião"],
+  ["qp", "Queixa principal", "Nas palavras do paciente, com tempo de evolução"],
+  ["hda", "História da doença atual", "Início, duração, localização, irradiação, característica, intensidade, fatores de melhora/piora, sintomas associados, evolução, tratamentos"],
+  ["isda", "Interrogatório sintomatológico (ISDA)", "Por sistemas: geral, pele, cabeça e pescoço, cardiovascular, respiratório, digestivo, geniturinário, neurológico, osteomuscular, psíquico"],
+  ["ap", "Antecedentes pessoais", "Fisiológicos (gestação, parto, DNPM) e patológicos: doenças, internações, cirurgias, traumas, transfusões, alergias, medicações, vacinas"],
+  ["af", "Antecedentes familiares", "Pais, irmãos, filhos: doenças, causas e idades de óbito"],
+  ["hab", "Hábitos de vida", "Alimentação, atividade física, tabagismo (maços-ano), etilismo (tipo, quantidade), drogas, sono, sexualidade"],
+  ["soc", "Condições socioeconômicas e culturais", "Moradia, saneamento, renda, escolaridade, vínculos, animais, viagens"],
+  ["hd", "Hipóteses (opcional)", "Suas hipóteses diagnósticas após a entrevista"]
+];
+let patient = null; // {paciente, queixa_inicial, roteiro, diagnostico}
+let turns = [];      // [{role, content}]
+const anDraft = ls.get("anDraft", {});
+function renderAnFields() {
+  const box = $("#anFields"); box.replaceChildren();
+  const save = debounce(() => { const d = {}; AN_CAMPOS.forEach(([k]) => d[k] = $("#an-" + k).value); ls.set("anDraft", d); }, 400);
+  for (const [k, n, h] of AN_CAMPOS) {
+    const ta = el("textarea", { id: "an-" + k, placeholder: h, oninput: save, style: k === "hda" || k === "isda" ? "min-height:130px" : null });
+    ta.value = anDraft[k] || "";
+    box.append(el("div", { class: "field" }, el("label", { for: "an-" + k, text: n }), ta));
+  }
+}
+function addMsg(role, text) {
+  const chat = $("#chat");
+  chat.append(el("div", { class: "msg " + role, text }));
+  chat.scrollTop = chat.scrollHeight;
+  return chat.lastChild;
+}
+$("#btnNovoPaciente").addEventListener("click", async () => {
+  const out = $("#outPaciente");
+  const dif = $("#anDif").value, area = $("#anArea").value;
+  const prompt = `Crie um paciente simulado para um estudante de medicina brasileiro treinar anamnese. Área: ${area}. Dificuldade: ${dif}. Varie idade, sexo, doença e perfil social; evite os casos mais batidos. O roteiro deve ser rico e coerente, com dados que só surgem se o aluno perguntar (ex.: características da dor, ISDA positivo relevante, medicações, hábitos, antecedentes familiares relevantes).${area.startsWith("Pediatria") ? " O entrevistado é a mãe ou o pai da criança." : ""}
+Responda só com JSON:
+{"paciente":{"nome":"nome fictício","idade":"","sexo":"","profissao":"","cenario":"ambulatório|pronto-socorro|enfermaria","quem_responde":"o próprio paciente ou acompanhante"},
+"queixa_inicial":"o que o paciente diz quando perguntado o motivo da consulta, em linguagem leiga",
+"personalidade":"como se comporta na conversa",
+"roteiro":{"identificacao":"","qp":"","hda":"detalhada e cronológica","isda":"positivos e negativos relevantes","antecedentes_pessoais":"","medicacoes":"","alergias":"","antecedentes_familiares":"","habitos":"","socioeconomico":""},
+"diagnostico":"","diferenciais":[""]}
+Semente de variação: ${Math.random().toString(36).slice(2, 8)}`;
+  const res = await runAI(out, "Chamando paciente", signal => sample.json(prompt, { signal, cache: false }));
+  if (!res || !res.roteiro) return;
+  out.replaceChildren();
+  patient = res; turns = [];
+  const p = res.paciente || {};
+  $("#ptAvatar").textContent = (str(p.nome).trim()[0] || "P").toUpperCase();
+  $("#ptName").textContent = str(p.nome) || "Paciente";
+  $("#ptMeta").textContent = [p.idade, p.sexo, p.profissao, p.cenario, p.quem_responde && !/pr[oó]prio/i.test(p.quem_responde) ? "responde: " + p.quem_responde : ""].filter(Boolean).join(" · ");
+  $("#chat").replaceChildren();
+  addMsg("sys", "O paciente entrou no consultório. Cumprimente e comece a entrevista.");
+  $("#patientBox").hidden = false;
+  $("#chatMsg").focus();
+});
+$("#btnSemPaciente").addEventListener("click", () => {
+  patient = null; turns = []; $("#patientBox").hidden = true; $("#outPaciente").replaceChildren();
+  $("#an-id").focus();
+});
+function patientRules() {
+  return `Você é um ator simulando um paciente em consulta de treino de anamnese para um estudante de medicina. Fique SEMPRE no personagem e responda só como o paciente (ou acompanhante), em português do Brasil coloquial, de 1 a 4 frases, sem termos técnicos que um leigo não usaria. Revele informações somente quando o aluno perguntar algo pertinente; não conte a história inteira de uma vez e nunca diga o diagnóstico. Pergunta vaga recebe resposta vaga. Se o aluno usar jargão, mostre que não entendeu. Se ele perguntar algo que não está no roteiro, invente uma resposta coerente e negativa ou banal. Não descreva o exame físico; se o aluno quiser examinar, diga que está à disposição e que ele anote os achados à parte.
+Personagem (secreto): ${JSON.stringify({ paciente: patient.paciente, queixa_inicial: patient.queixa_inicial, personalidade: patient.personalidade, roteiro: patient.roteiro })}`;
+}
+let chatBusy = false;
+async function sendChat() {
+  const box = $("#chatMsg"); const text = box.value.trim();
+  if (!text || chatBusy || !patient) return;
+  await capsReady;
+  if (!sample) { addMsg("sys", "O Claude não está disponível nesta visualização."); return; }
+  chatBusy = true; $("#btnEnviar").disabled = true;
+  box.value = ""; addMsg("me", text); turns.push({ role: "user", content: text });
+  const bubble = addMsg("pt", "…");
+  try {
+    const { text: reply } = await sample([{ role: "user", content: patientRules() }, ...turns.slice(-40)], { modelTier: "quick", cache: false, onText: ({ text }) => { bubble.textContent = text; $("#chat").scrollTop = 1e9; } });
+    bubble.textContent = reply; turns.push({ role: "assistant", content: reply });
+  } catch (e) { bubble.className = "msg sys"; bubble.textContent = errMsg(e); turns.pop(); }
+  finally { chatBusy = false; $("#btnEnviar").disabled = false; box.focus(); }
+}
+$("#btnEnviar").addEventListener("click", sendChat);
+$("#chatMsg").addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendChat(); } });
+$("#btnLimparAn").addEventListener("click", () => { AN_CAMPOS.forEach(([k]) => $("#an-" + k).value = ""); ls.set("anDraft", {}); $("#outAn").replaceChildren(); });
+$("#btnCorrigirAn").addEventListener("click", async () => {
+  const reg = {}; AN_CAMPOS.forEach(([k, n]) => reg[n] = $("#an-" + k).value.trim());
+  if (!Object.values(reg).some(Boolean)) { $("#outAn").replaceChildren(el("div", { class: "err", text: "Preencha o registro da anamnese antes de corrigir." })); return; }
+  const transcript = turns.map(t => (t.role === "user" ? "ALUNO: " : "PACIENTE: ") + t.content).join("\n");
+  const ctxTxt = patient
+    ? `PACIENTE SIMULADO (roteiro completo que o paciente conhecia): ${JSON.stringify(patient)}\nTRANSCRIÇÃO DA ENTREVISTA:\n${transcript || "(o aluno não fez perguntas)"}`
+    : "Não houve entrevista simulada: avalie estrutura, completude, cronologia e terminologia do registro, e coerência interna.";
+  const prompt = `Você é preceptor de semiologia médica (Porto, Bates). Corrija a anamnese escrita por um estudante de medicina brasileiro, em português do Brasil, de forma rigorosa e específica.
+${ctxTxt}
+REGISTRO DO ALUNO:
+${Object.entries(reg).map(([k, v]) => `## ${k}\n${v || "(em branco)"}`).join("\n")}
+
+Avalie cada seção da anamnese: o que FALTOU registrar (inclusive dados que o paciente sabia e o aluno não perguntou ou não anotou), o que PODERIA ACRESCENTAR e erros (QP com termo técnico ou sem tempo, HDA sem cronologia ou sem caracterizar o sintoma, ISDA misturado à HDA, etc.).${patient ? " Liste as perguntas importantes que o aluno não fez na entrevista e avalie a comunicação (perguntas abertas x fechadas, empatia, jargão, perguntas indutoras)." : ""} Escreva um registro-modelo.
+Responda só com JSON:
+{"nota":0-10,"resumo":"2-3 frases",
+"secoes":[{"nome":"...","avaliacao":"completo|parcial|ausente","descreveu_bem":["..."],"faltou":["..."],"acrescentar":["..."],"imprecisoes":["..."]}],
+"perguntas_nao_feitas":["..."],
+"comunicacao":{"pontos_fortes":["..."],"melhorar":["..."]},
+"terminologia":[{"escrito":"...","sugerido":"...","motivo":"..."}],
+"registro_modelo":"anamnese completa, uma seção por parágrafo"${patient ? ',"diagnostico":{"gabarito":"...","diferenciais":["..."],"comentario":"o quanto as hipóteses do aluno se aproximaram e que dados da história sustentam o diagnóstico"}' : ""}}`;
+  const out = $("#outAn");
+  const res = await runAI(out, "Claude está corrigindo a anamnese", signal => sample.json(prompt, { signal }));
+  if (!res) return;
+  out.replaceChildren(renderAnReport(res));
+  const p = patient && patient.paciente || {};
+  saveRecord({ tipo: "anamnese", titulo: patient ? `Paciente simulado · ${[p.idade, p.sexo].filter(Boolean).join(", ")} · ${str(patient.roteiro && patient.roteiro.qp).slice(0, 60)}` : "Anamnese livre", nota: Number(res.nota), entrada: { paciente: patient, entrevista: turns, registro: reg }, resultado: res });
+  out.scrollIntoView({ behavior: "smooth", block: "start" });
+});
+function renderAnReport(res) {
+  const r = el("div", { class: "card report" }, el("span", { class: "label", text: "Parecer da anamnese" }), reportHead(res));
+  if (res.diagnostico) r.append(el("div", { class: "vignette" }, el("b", { text: "Diagnóstico do paciente: " + str(res.diagnostico.gabarito) }),
+    arr(res.diagnostico.diferenciais).length ? el("p", { style: "margin-top:4px", text: "Diferenciais: " + arr(res.diagnostico.diferenciais).join("; ") }) : null,
+    el("p", { style: "margin-top:4px", text: str(res.diagnostico.comentario) })));
+  for (const e of arr(res.secoes)) {
+    const c = statusCls(e.avaliacao);
+    r.append(el("div", { class: "eval " + c },
+      el("h4", {}, el("span", { text: str(e.nome) }), el("span", { class: "pill " + c, text: str(e.avaliacao) || "—" })),
+      listBlock("Registrou bem", e.descreveu_bem, "lb-ok"), listBlock("Faltou", e.faltou, "lb-miss"),
+      listBlock("Poderia acrescentar", e.acrescentar, "lb-add"), listBlock("Imprecisões", e.imprecisoes, "lb-err")));
+  }
+  const pq = listBlock("Perguntas que ficaram por fazer", res.perguntas_nao_feitas, "lb-miss");
+  if (pq) r.append(el("div", { class: "eval bad" }, pq));
+  if (res.comunicacao) {
+    const a = listBlock("Comunicação: pontos fortes", res.comunicacao.pontos_fortes, "lb-ok"), b = listBlock("Comunicação: a melhorar", res.comunicacao.melhorar, "lb-add");
+    if (a || b) r.append(el("div", { class: "cols" }, a, b));
+  }
+  r.append(...termTable(res.terminologia));
+  if (res.registro_modelo) r.append(el("span", { class: "label", text: "Registro-modelo" }), ...copyBlock(str(res.registro_modelo)));
+  return r;
+}
+
+/* ================= CASOS REAIS ================= */
+const CASO_IDS = ["cIdade", "cSexo", "cCenario", "cQP", "cAnt", "vPA", "vFC", "vFR", "vT", "vSat", "vHGT", "cEF", "cExames", "cMinha"];
+const casoDraft = ls.get("casoDraft", {});
+CASO_IDS.forEach(id => { const n = $("#" + id); if (casoDraft[id] != null) n.value = casoDraft[id]; n.addEventListener("input", debounce(saveCasoDraft, 400)); n.addEventListener("change", saveCasoDraft); });
+function saveCasoDraft() { const d = {}; CASO_IDS.forEach(id => d[id] = $("#" + id).value); ls.set("casoDraft", d); }
+$("#btnLimparCaso").addEventListener("click", () => { CASO_IDS.forEach(id => { const n = $("#" + id); n.value = n.tagName === "SELECT" ? n.options[0].value : ""; }); saveCasoDraft(); $("#outCaso").replaceChildren(); });
+$("#btnExemploCaso").addEventListener("click", () => {
+  const ex = { cIdade: "72 anos", cSexo: "Masculino", cCenario: "Pronto-socorro",
+    cQP: "Falta de ar há 6 dias, progressiva, hoje aos mínimos esforços. Dorme com 3 travesseiros, acorda à noite com falta de ar. Inchaço nas pernas há 2 semanas. Nega febre e dor torácica.",
+    cAnt: "HAS, DM2, IAM há 4 anos. Usa losartana, metformina, AAS; parou o furosemida por conta própria há 1 mês. Ex-tabagista 40 maços-ano.",
+    vPA: "160x95", vFC: "112", vFR: "26", vT: "36,5", vSat: "89", vHGT: "210",
+    cEF: "REG, LOTE, hipocorado 1+/4+, acianótico, anictérico, taquidispneico.\nACV: turgência jugular a 45°. Ictus no 6º EIC na linha axilar anterior, 3 polpas. RCI? 3T com B3, sopro sistólico 2+/6+ em foco mitral irradiando para axila.\nAR: MV+ diminuído em bases, estertores crepitantes até terço médio bilateralmente.\nABD: globoso, fígado a 4 cm do RCD, doloroso, RHJ+.\nMMII: edema 3+/4+ até joelhos, simétrico, frio.",
+    cExames: "", cMinha: "IC descompensada" };
+  CASO_IDS.forEach(id => { if (ex[id] != null) $("#" + id).value = ex[id]; }); saveCasoDraft();
+});
+$("#btnHipoteses").addEventListener("click", async () => {
+  const v = id => $("#" + id).value.trim();
+  if (!v("cEF") && !v("cQP")) { $("#outCaso").replaceChildren(el("div", { class: "err", text: "Descreva ao menos a queixa ou o exame físico." })); return; }
+  const caso = { idade: v("cIdade"), sexo: v("cSexo"), cenario: v("cCenario"), queixa_hda: v("cQP"), antecedentes: v("cAnt"),
+    sinais_vitais: { PA_mmHg: v("vPA"), FC_bpm: v("vFC"), FR_irpm: v("vFR"), Temp_C: v("vT"), SpO2: v("vSat"), Glicemia_mgdL: v("vHGT") },
+    exame_fisico: v("cEF"), exames_complementares: v("cExames"), hipoteses_do_aluno: v("cMinha") };
+  const prompt = `Você é um clínico experiente e preceptor ajudando um estudante de medicina brasileiro a raciocinar sobre um paciente real que ele examinou. Use os dados abaixo. Raciocine de forma sindrômica antes da etiológica, considere gravidade e o cenário. Em português do Brasil.
+DADOS:
+${JSON.stringify(caso, null, 1)}
+
+Responda só com JSON:
+{"resumo_clinico":"uma frase-problema (idade, sexo, achados-chave)",
+"sindromes":["síndromes identificadas"],
+"gravidade":{"nivel":"estável|potencialmente grave|grave","justificativa":"..."},
+"sinais_vitais":[{"parametro":"...","valor":"...","interpretacao":"..."}],
+"hipoteses":[{"nome":"...","probabilidade":"alta|moderada|baixa","a_favor":["achados do caso"],"contra":["achados ou ausências"],"confirmar_com":["exame ou achado"]}],
+"nao_pode_perder":["diagnósticos graves a excluir"],
+"sinais_alarme":["..."],
+"exames_sugeridos":[{"exame":"...","motivo":"..."}],
+"reexaminar":["achados de exame físico que faltaram ou que vale repetir/graduar para diferenciar as hipóteses"],
+"perguntas_adicionais":["perguntas de anamnese que ajudariam"],
+"comentario_descricao":"comentário breve sobre a qualidade da descrição do exame (terminologia, graduações, lacunas)",
+"comentario_hipoteses_aluno":"se o aluno deu hipóteses, avalie; senão string vazia"}
+Ordene as hipóteses da mais para a menos provável (3 a 6).`;
+  const out = $("#outCaso");
+  const res = await runAI(out, "Claude está analisando o caso", signal => sample.json(prompt, { signal, modelTier: "complex" }));
+  if (!res) return;
+  out.replaceChildren(renderCasoReport(res));
+  saveRecord({ tipo: "caso", titulo: str(res.resumo_clinico).slice(0, 110) || "Exame real", entrada: caso, resultado: res });
+  out.scrollIntoView({ behavior: "smooth", block: "start" });
+});
+const probCls = p => { p = str(p).toLowerCase(); return p.startsWith("alta") ? "bad" : p.startsWith("mod") ? "warn" : "neutral"; };
+function renderCasoReport(res) {
+  const r = el("div", { class: "card report" }, el("span", { class: "label", text: "Raciocínio diagnóstico" }));
+  r.append(el("h3", { style: "font-size:1.25rem", text: str(res.resumo_clinico) }));
+  const g = res.gravidade || {};
+  r.append(el("div", { class: "row" },
+    g.nivel ? el("span", { class: "pill " + (/^grave/i.test(g.nivel) ? "bad" : /pot/i.test(g.nivel) ? "warn" : "ok"), text: str(g.nivel) }) : null,
+    el("span", { style: "color:var(--ink-2);flex:1;min-width:200px", text: str(g.justificativa) })));
+  if (arr(res.sindromes).length) r.append(el("div", { class: "chips" }, arr(res.sindromes).map(s => el("span", { class: "pill neutral", text: str(s) }))));
+  const sv = arr(res.sinais_vitais);
+  if (sv.length) r.append(el("div", { class: "tablewrap" }, el("table", {}, el("thead", {}, el("tr", {}, el("th", { text: "Parâmetro" }), el("th", { text: "Valor" }), el("th", { text: "Interpretação" }))),
+    el("tbody", {}, sv.map(x => el("tr", {}, el("td", { text: str(x.parametro) }), el("td", { text: str(x.valor), style: "font-family:var(--mono);white-space:nowrap" }), el("td", { text: str(x.interpretacao) })))))));
+  r.append(el("span", { class: "label", text: "Hipóteses diagnósticas" }));
+  arr(res.hipoteses).forEach((h, i) => r.append(el("div", { class: "hyp" },
+    el("h4", {}, el("span", {}, el("span", { class: "stage-num", text: (i + 1) + "." }), str(h.nome)), el("span", { class: "pill " + probCls(h.probabilidade), text: "probabilidade " + str(h.probabilidade) })),
+    el("div", { class: "cols" }, listBlock("A favor", h.a_favor, "lb-ok"), listBlock("Contra / ausente", h.contra, "lb-err"), listBlock("Confirmar com", h.confirmar_com, "lb-neutral")))));
+  const a = listBlock("Não pode perder", res.nao_pode_perder, "lb-miss"), b = listBlock("Sinais de alarme", res.sinais_alarme, "lb-miss");
+  if (a || b) r.append(el("div", { class: "eval bad" }, el("div", { class: "cols" }, a, b)));
+  const ex = arr(res.exames_sugeridos);
+  if (ex.length) r.append(el("span", { class: "label", text: "Exames complementares sugeridos" }), el("div", { class: "tablewrap" }, el("table", {}, el("tbody", {}, ex.map(x => el("tr", {}, el("td", { text: str(x.exame || x), style: "font-weight:500" }), el("td", { text: str(x.motivo) })))))));
+  const c = listBlock("Reexaminar ou graduar melhor", res.reexaminar, "lb-add"), d = listBlock("Perguntas que ajudariam", res.perguntas_adicionais, "lb-add");
+  if (c || d) r.append(el("div", { class: "eval warn" }, el("div", { class: "cols" }, c, d)));
+  if (res.comentario_descricao) r.append(el("div", { class: "list-block lb-neutral" }, el("h5", { text: "Sobre a sua descrição" }), el("p", { text: str(res.comentario_descricao) })));
+  if (res.comentario_hipoteses_aluno) r.append(el("div", { class: "list-block lb-neutral" }, el("h5", { text: "Sobre as suas hipóteses" }), el("p", { text: str(res.comentario_hipoteses_aluno) })));
+  r.append(el("p", { class: "disclaimer", text: "Gerado por IA para estudo. Confirme condutas com o preceptor e as diretrizes vigentes." }));
+  return r;
+}
+
+/* ================= HISTÓRICO ================= */
+let histFilter = "";
+const TIPO = { exame: "Exame físico", anamnese: "Anamnese", caso: "Exame real" };
+$$("#histFilters .chip").forEach(b => b.addEventListener("click", () => { histFilter = b.dataset.f; $$("#histFilters .chip").forEach(x => x.setAttribute("aria-pressed", String(x === b))); renderHist(); }));
+function renderHist() {
+  const list = $("#histList"); if (!list) return;
+  const items = HIST.filter(r => !histFilter || r.tipo === histFilter);
+  const stats = $("#histStats"); stats.replaceChildren();
+  const notas = items.map(r => Number(r.nota)).filter(n => isFinite(n));
+  if (notas.length) stats.append(el("span", { class: "pill neutral", text: `${notas.length} correções · média ${(notas.reduce((a, b) => a + b, 0) / notas.length).toFixed(1).replace(".", ",")}/10` }));
+  if (histNote) stats.append(el("span", { class: "disclaimer", text: histNote }));
+  list.replaceChildren();
+  if (!items.length) { list.append(el("div", { class: "empty", text: "Nenhuma entrada ainda. Corrija um exame, uma anamnese ou analise um exame real; o parecer aparece aqui." })); return; }
+  for (const r of items) {
+    const body = el("div", { hidden: true });
+    const del = el("button", { class: "btn link", text: "Excluir" });
+    del.addEventListener("click", () => {
+      if (del.dataset.armed) { deleteRecord(r.id); return; }
+      del.dataset.armed = "1"; del.textContent = "Confirmar exclusão"; del.style.color = "var(--bad)";
+      setTimeout(() => { delete del.dataset.armed; del.textContent = "Excluir"; del.style.color = ""; }, 4000);
+    });
+    const open = el("button", { class: "btn link", text: "Abrir", onclick: () => {
+      if (!body.childNodes.length) body.append(r.tipo === "exame" ? renderExameReport(r.resultado || {}) : r.tipo === "anamnese" ? renderAnReport(r.resultado || {}) : renderCasoReport(r.resultado || {}));
+      body.hidden = !body.hidden; open.textContent = body.hidden ? "Abrir" : "Fechar";
+    } });
+    const n = Number(r.nota);
+    list.append(el("div", { class: "card hist-item" },
+      el("div", { class: "hist-row" },
+        el("span", { class: "pill " + (r.tipo === "caso" ? "neutral" : isFinite(n) ? (n >= 8 ? "ok" : n >= 5 ? "warn" : "bad") : "neutral"), text: TIPO[r.tipo] + (isFinite(n) && r.tipo !== "caso" ? " · " + String(n).replace(".", ",") : "") }),
+        el("span", { class: "t", text: str(r.titulo) }),
+        el("time", { text: fmtDate(r.criadoEm) })),
+      el("div", { class: "row" }, open, del), body));
+  }
+}
+
+/* ---------- início ---------- */
+renderSysChips(); renderStages(); renderCase(); renderAnFields(); route(); renderHist();
+</script>
