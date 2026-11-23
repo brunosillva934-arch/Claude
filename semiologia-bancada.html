@@ -394,6 +394,21 @@ th{font-size:.68rem;text-transform:uppercase;color:var(--ink-3);font-weight:700;
 .revq:first-child{border-top:0}
 .revq .you{color:var(--bad);text-decoration:line-through;font-size:.88rem}
 .revq .ans{color:var(--ok);font-weight:600;font-size:.9rem}
+.rv{display:flex;flex-direction:column;gap:9px;padding-block:18px;border-top:1px solid var(--rule)}
+.rv:first-child{border-top:0;padding-top:4px}
+.rv-head{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:.76rem;color:var(--ink-3);font-weight:600}
+.rv-q{font-family:var(--display);font-weight:700;font-size:1.1rem;line-height:1.35;letter-spacing:-.01em}
+.rv-opts{display:flex;flex-direction:column;gap:5px;margin:0;padding:0;list-style:none}
+.rv-opts li{display:flex;gap:9px;align-items:baseline;padding:8px 11px;border-radius:10px;background:var(--surface-2);font-size:.93rem}
+.rv-opts li.right{background:var(--ok-soft);color:var(--ok);font-weight:600}
+.rv-opts li.chosen-wrong{background:var(--bad-soft);color:var(--bad)}
+.rv-opts .mk{font-family:var(--mono);font-size:.78rem;width:14px;flex:none}
+.rv-opts .you{margin-left:auto;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
+.rv-ai{border-left:3px solid var(--brand);padding:2px 0 2px 13px;display:flex;flex-direction:column;gap:8px}
+.rv-ai .label{color:var(--brand-ink)}
+.rv-ai li.mine{color:var(--ink);font-weight:600}
+.rv-ai .tip{background:var(--brand-soft);border-radius:10px;padding:8px 11px;font-size:.92rem}
+#plAiLine .meter{width:120px}
 .pause{position:absolute;inset:0;background:rgb(9 16 27 / .94);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:2}
 
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--surface);padding:10px 16px;border-radius:12px;font-size:.88rem;font-weight:600;z-index:50;max-width:calc(100% - 32px);box-shadow:0 8px 24px rgb(0 0 0 / .2)}
@@ -2981,7 +2996,7 @@ function plStart() {
 }
 function plCountdown() { PL.state = "count"; PL.countEnd = Date.now() + 3000; renderPlantao(); }
 function plBegin() {
-  PL.g = { tema: PL.tema, lives: 3, score: 0, streak: 0, best: 0, correct: 0, answered: 0, hourIdx: 0, used: new Set(), errors: [], times: [], q: null, T: 15, acc: 0, t0: 0, running: false, phase: "q", emerg: false, lastTipo: null, paused: false, survived: false, aiUsed: 0, startedAt: Date.now() };
+  PL.g = { log: [], tema: PL.tema, lives: 3, score: 0, streak: 0, best: 0, correct: 0, answered: 0, hourIdx: 0, used: new Set(), errors: [], times: [], q: null, T: 15, acc: 0, t0: 0, running: false, phase: "q", emerg: false, lastTipo: null, paused: false, survived: false, aiUsed: 0, startedAt: Date.now() };
   PL.state = "play"; plNext();
 }
 function plNext() {
@@ -2998,6 +3013,7 @@ function plAnswer(i) {
   const g = PL.g; if (!g || g.phase !== "q" || g.paused) return;
   const left = Math.max(0, g.T - plElapsed(g)); g.running = false; g.acc = g.T - left;
   const ok = i === g.q.ans; g.answered++; g.phase = "fb"; g.chosen = i; g.times.push(g.T - left);
+  g.log.push({ q: plSlimQ(g.q), chosen: i, ok, t: Math.round((g.T - left) * 10) / 10, T: g.T, hour: g.hourIdx, emerg: g.emerg });
   const src = PL.pool.find(x => x.id === g.q.id); if (src) { src.seen = (src.seen || 0) + 1; if (!ok) src.wrong = (src.wrong || 0) + 1; }
   if (ok) {
     g.streak++; g.best = Math.max(g.best, g.streak); g.correct++;
@@ -3026,7 +3042,10 @@ function plOver() {
   const prevTop = (P.surv.best[0] || {}).score || 0;
   P.surv.best = [...P.surv.best, rec].sort((a, b) => b.score - a.score).slice(0, 10);
   PL.last = { rec, record: g.score > prevTop && g.score > 0 };
+  const rh = { id: Date.now().toString(36), at: Date.now(), tema: g.tema, score: g.score, h: g.hourIdx, c: g.correct, n: g.answered, best: g.best, survived: g.survived, log: g.log.slice(-150), ai: {} };
+  PL.hist = [...PL.hist, rh]; plSaveHist(); PL.revRec = rh; PL.revFilter = "todas";
   markDay(); touch(); updateHeader(); renderPlantao(); window.scrollTo(0, 0);
+  if (rh.log.length) plExplainStart(rh, plOrder(rh));
 }
 function plTick() {
   if (PL.state === "count") { const left = Math.ceil((PL.countEnd - Date.now()) / 1000); const e = $("#plCount"); if (e) e.textContent = left > 0 ? String(left) : "Já!"; if (left <= 0) plBegin(); return; }
@@ -3063,7 +3082,8 @@ function plPoolLine() {
 }
 function renderPlantao() {
   const v = $("#view-plantao"); if (!v) return;
-  v.replaceChildren(el("a", { class: "back", href: "#jogos", text: "← Jogos" }));
+  v.replaceChildren(PL.state === "review" ? el("button", { class: "back", type: "button", text: "← Plantão", onclick: () => { PL.state = "home"; renderPlantao(); window.scrollTo(0, 0); } }) : el("a", { class: "back", href: "#jogos", text: "← Jogos" }));
+  if (PL.state === "review" && PL.revRec) return renderPlRevScreen(v);
   if (PL.state === "play" && PL.g) return renderPlPlay(v);
   if (PL.state === "prep" || PL.state === "count") return renderPlPrep(v);
   if (PL.state === "over" && PL.g) return renderPlOver(v);
@@ -3091,6 +3111,11 @@ function renderPlHome(v) {
       el("li", { text: "A cada 7 pacientes, uma emergência: menos tempo e pontos em dobro." }),
       el("li", { text: "A IA prepara dois lotes de perguntas antes de começar, cada um sobre assuntos sorteados, e repõe sem parar durante o plantão. As perguntas já vistas ficam guardadas (até 600) e as novas têm prioridade; as da casa garantem que o jogo nunca para." })),
     el("p", { class: "meta", text: "Tipos: tradução (do leigo para o termo técnico), achado, manobra, caso relâmpago, escala, verdadeiro ou falso, sequência e etapa do exame." })));
+  const hist = PL.hist.slice().reverse();
+  if (hist.length) v.append(el("div", { class: "panel" }, el("span", { class: "label", text: "Revisar plantões anteriores" }),
+    el("div", {}, hist.map(r => el("div", { class: "weak", style: "align-items:center" },
+      el("span", {}, el("b", { class: "mono", text: r.score.toLocaleString("pt-BR") }), el("span", { class: "meta", text: ` · ${ago(r.at)} · até ${plHourLabel(r.h)} · ${r.c}/${r.n} acertos · explicações ${Object.keys(r.ai || {}).length}/${r.log.length}` })),
+      el("button", { class: "btn small", type: "button", text: "Revisar", onclick: () => { PL.revRec = r; PL.revFilter = "todas"; PL.state = "review"; renderPlantao(); window.scrollTo(0, 0); } }))))));
   const top = ((P.surv || {}).best || []).slice(0, 5);
   if (top.length) v.append(el("div", { class: "panel" }, el("span", { class: "label", text: "Seus melhores plantões" }),
     el("div", {}, top.map((r, i) => el("div", { class: "weak" }, el("span", {}, el("b", { class: "mono", text: `${i + 1}. ${r.score.toLocaleString("pt-BR")}` }), el("span", { class: "meta", text: ` · até ${plHourLabel(r.h)} · ${r.c} acertos · ${(PL_TEMAS.find(t => t[0] === r.tema) || ["", ""])[1]} · ${ago(r.at)}` })), el("span", { style: "color:var(--ink-3)", text: `seq. ${r.best || 0}` }))))));
@@ -3147,6 +3172,118 @@ function renderPlPlay(v) {
     el("div", { class: "row" }, el("button", { class: "btn primary", type: "button", text: "Continuar", onclick: () => plPause(false) }), el("button", { class: "btn", type: "button", text: "Encerrar plantão", onclick: () => { g.paused = false; plOver(); } }))));
   v.append(m);
 }
+/* --- revisão do plantão: todas as respostas, com explicação da IA --- */
+PL.hist = ls.get("plHist", []); PL.revFilter = "todas"; PL.revRec = null; PL.exp = null;
+const plSlimQ = q => ({ id: q.id, q: q.q, opts: q.opts, ans: q.ans, exp: q.exp, tipo: q.tipo, nivel: q.nivel, tema: q.tema, src: q.src });
+function plSaveHist() { PL.hist = PL.hist.slice(-8); ls.set("plHist", PL.hist); }
+const plOrder = rec => { const ks = [...rec.log.keys()]; return [...ks.filter(i => !rec.log[i].ok), ...ks.filter(i => rec.log[i].ok)]; };
+function plExplainPrompt(items) {
+  return `Você é preceptor de semiologia médica (referências: Porto, Bates) revisando com um estudante de medicina brasileiro as perguntas de um quiz rápido que ele acabou de fazer. Para CADA pergunta:
+1. Confira o gabarito. Se estiver errado ou ambíguo, use "gabarito_ok": false e explique em "correcao" qual seria a resposta certa e por quê.
+2. "explicacao": 2 a 4 frases sobre por que a resposta certa está certa (mecanismo, semiotécnica, achados associados, como diferenciar dos parecidos).
+3. "distratores": para CADA alternativa errada, uma frase dizendo por que não é. Se o aluno marcou uma delas, seja especialmente claro nela.
+4. "dica": um macete curto para lembrar à beira do leito.
+Português do Brasil, linguagem direta. Não invente referências bibliográficas nem números de página.
+PERGUNTAS:
+${JSON.stringify(items)}
+Responda só com JSON: {"explicacoes":[{"id":"k0","gabarito_ok":true,"correcao":"","explicacao":"...","distratores":[{"alternativa":"...","por_que_nao":"..."}],"dica":"..."}]}`;
+}
+function plDropBad(q) { if (q.src !== "ia") return; PL.pool = PL.pool.filter(x => x.id !== q.id); ls.set("plPool", PL.pool); }
+function plExplainStart(rec, idxs, front) {
+  rec.ai = rec.ai || {};
+  let J = PL.exp && PL.exp.rec === rec && !PL.exp.done ? PL.exp : null;
+  const todo = idxs.filter(i => rec.log[i] && !rec.ai[i] && !(J && (J.queue.includes(i) || J.busy.has(i))));
+  if (J) { if (front) J.queue = [...todo, ...J.queue.filter(i => !todo.includes(i))]; else J.queue.push(...todo); todo.forEach(i => plRefreshCard(rec, i)); plRefreshAiLine(); return; }
+  if (!todo.length) return;
+  J = PL.exp = { rec, queue: todo.slice(), busy: new Set(), done: false, err: "", ctl: new AbortController() };
+  todo.forEach(i => plRefreshCard(rec, i)); plRefreshAiLine();
+  capsReady.then(async () => {
+    if (!CAP.sample) { J.queue = []; J.done = true; J.err = "As explicações da IA precisam do artefato aberto no Claude (claude.ai ou app)."; todo.forEach(i => plRefreshCard(rec, i)); plRefreshAiLine(); return; }
+    const worker = async () => {
+      while (J.queue.length && !J.ctl.signal.aborted && !J.err) {
+        const chunk = J.queue.splice(0, 8); chunk.forEach(i => { J.busy.add(i); plRefreshCard(rec, i); });
+        try {
+          const items = chunk.map(i => { const L = rec.log[i]; return { id: "k" + i, enunciado: L.q.q, alternativas: L.q.opts, correta: L.q.opts[L.q.ans], resposta_do_aluno: L.chosen === -1 ? "(tempo esgotado)" : L.q.opts[L.chosen] }; });
+          const res = await CAP.sample.json(plExplainPrompt(items), { signal: J.ctl.signal });
+          for (const e of arr(res && res.explicacoes)) {
+            const i = Number(str(e.id).replace(/\D/g, "")); if (!chunk.includes(i)) continue;
+            rec.ai[i] = { ok: e.gabarito_ok !== false, cor: str(e.correcao), exp: str(e.explicacao), dis: arr(e.distratores).map(d => ({ a: str(d && d.alternativa), w: str(d && d.por_que_nao) })), dica: str(e.dica) };
+            if (e.gabarito_ok === false) plDropBad(rec.log[i].q);
+          }
+          plSaveHist();
+        } catch (e) {
+          if (!(e && e.code === "cancelled")) J.err = errMsg(e);
+          J.queue.unshift(...chunk.filter(i => !rec.ai[i]));
+        } finally { chunk.forEach(i => { J.busy.delete(i); plRefreshCard(rec, i); }); plRefreshAiLine(); }
+      }
+    };
+    await Promise.all([worker(), worker()]);
+    J.done = true; const left = J.queue.slice(); J.queue = []; left.forEach(i => plRefreshCard(rec, i)); plRefreshAiLine();
+  });
+}
+function plRefreshCard(rec, i) { const old = document.getElementById(`plr-${rec.id}-${i}`); if (old) old.replaceWith(plRevCard(rec, i)); }
+function plRefreshAiLine() {
+  const line = $("#plAiLine"); const rec = PL.revRec; if (!line || !rec) return;
+  const n = rec.log.length; const done = Object.keys(rec.ai || {}).length; const J = PL.exp && PL.exp.rec === rec ? PL.exp : null; const running = J && !J.done;
+  line.replaceChildren(el("span", { class: "meta", text: `Explicações da IA: ${done} de ${n}` }), meter(n ? done / n : 0));
+  if (running) line.append(el("span", { class: "pulse" }), el("span", { class: "meta", text: "gerando, erros primeiro…" }), el("button", { class: "link", type: "button", text: "Parar", onclick: () => J.ctl.abort() }));
+  else if (done < n) line.append(el("button", { class: "btn small primary", type: "button", text: `Explicar ${done ? "o restante" : "tudo"} com a IA (${n - done})`, onclick: () => plExplainStart(rec, plOrder(rec)) }));
+  if (J && J.err) line.append(el("span", { class: "meta", style: "color:var(--bad);flex-basis:100%", text: J.err }));
+}
+function plRevCard(rec, i) {
+  const L = rec.log[i]; const q = L.q; const A = rec.ai && rec.ai[i]; const J = PL.exp && PL.exp.rec === rec ? PL.exp : null;
+  const busy = J && J.busy.has(i); const queued = J && !J.done && J.queue.includes(i);
+  const card = el("div", { class: "rv", id: `plr-${rec.id}-${i}` });
+  card.append(el("div", { class: "rv-head" }, el("span", { class: "badge " + (L.ok ? "ok" : "bad"), text: L.ok ? "acertou" : L.chosen === -1 ? "tempo esgotado" : "errou" }),
+    el("span", { text: `#${i + 1} · ${plHourLabel(L.hour)} · ${PL_TIPOS[q.tipo] || q.tipo} · nível ${q.nivel || 1}${q.src === "ia" ? " · IA" : ""}${L.emerg ? " · emergência" : ""} · ${dec(L.t)} s` })));
+  card.append(el("p", { class: "rv-q", text: q.q }));
+  card.append(el("ul", { class: "rv-opts" }, q.opts.map((o, k) => el("li", { class: k === q.ans ? "right" : k === L.chosen ? "chosen-wrong" : "" },
+    el("span", { class: "mk", text: k === q.ans ? "✓" : k === L.chosen ? "✗" : "·" }), el("span", { text: o }), k === L.chosen ? el("span", { class: "you", text: "sua resposta" }) : null))));
+  if (L.chosen === -1) card.append(el("p", { class: "meta", text: "O tempo acabou antes da resposta." }));
+  if (A) {
+    const ai = el("div", { class: "rv-ai" }, el("span", { class: "label", text: "Explicação da IA" }));
+    if (!A.ok) ai.append(el("div", { class: "note", text: "A IA revisora discorda do gabarito desta pergunta. " + (A.cor || "Ela pode estar errada ou ambígua.") + (q.src === "ia" ? " A pergunta saiu do estoque do Plantão." : "") }));
+    if (A.exp) ai.append(el("p", { text: A.exp }));
+    const dis = A.dis.filter(d => d.w);
+    if (dis.length) ai.append(el("div", { class: "lb neu" }, el("h5", { text: "Por que não as outras" }), el("ul", {}, dis.map(d => el("li", { class: L.chosen >= 0 && norm(d.a) === norm(q.opts[L.chosen]) ? "mine" : "" }, el("b", { text: d.a + ": " }), d.w)))));
+    if (A.dica) ai.append(el("p", { class: "tip" }, el("b", { text: "Macete: " }), A.dica));
+    card.append(ai);
+  } else {
+    if (q.exp) card.append(el("p", { class: "meta", text: q.exp }));
+    card.append(busy || queued ? el("div", { class: "busy" }, el("span", { class: "pulse" }), el("span", { text: busy ? "A IA está explicando esta pergunta…" : "Na fila da IA…" }))
+      : el("div", {}, el("button", { class: "link", type: "button", text: "Explicar com a IA", onclick: () => plExplainStart(rec, [i], true) })));
+  }
+  const mk = el("button", { class: "link", type: "button", text: "Virar cartão" });
+  mk.addEventListener("click", () => { addCustomCards([{ frente: q.q, verso: q.opts[q.ans] + (A && A.exp ? "\n" + A.exp : q.exp ? "\n" + q.exp : "") + (A && A.dica ? "\nMacete: " + A.dica : "") }], "Plantão"); mk.disabled = true; mk.textContent = "Cartão criado"; });
+  card.append(el("div", { class: "row" }, mk));
+  return card;
+}
+function renderPlReview(rec) {
+  const log = rec.log; const ks = [...log.keys()]; const nErr = ks.filter(i => !log[i].ok).length;
+  const F = { todas: ks, erros: ks.filter(i => !log[i].ok), acertos: ks.filter(i => log[i].ok), lentas: ks.filter(i => log[i].ok && log[i].T && log[i].t > log[i].T * 0.6) };
+  const list = el("div", {});
+  const draw = () => { const sel = F[PL.revFilter] || F.todas; list.replaceChildren(...sel.map(i => plRevCard(rec, i))); if (!sel.length) list.append(el("p", { class: "meta", text: "Nada neste filtro." })); };
+  const chips = el("div", { class: "chips" });
+  [["todas", `Todas (${ks.length})`], ["erros", `Erros (${nErr})`], ["acertos", `Acertos (${ks.length - nErr})`], ["lentas", `Acertos lentos (${F.lentas.length})`]].forEach(([k, t]) => {
+    const b = el("button", { class: "chip", type: "button", "aria-pressed": String(PL.revFilter === k), text: t });
+    b.addEventListener("click", () => { PL.revFilter = k; chips.querySelectorAll(".chip").forEach(c => c.setAttribute("aria-pressed", String(c === b))); draw(); });
+    chips.append(b);
+  });
+  let add = null;
+  if (nErr) { add = el("button", { class: "btn small", type: "button", text: `Mandar os ${nErr} erros para os cartões` });
+    add.addEventListener("click", () => { const n = addCustomCards(F.erros.map(i => { const q = log[i].q; const A = rec.ai && rec.ai[i]; return { frente: q.q, verso: q.opts[q.ans] + (A && A.exp ? "\n" + A.exp : q.exp ? "\n" + q.exp : "") + (A && A.dica ? "\nMacete: " + A.dica : "") }; }), "Plantão"); add.disabled = true; add.textContent = `${n} cartões adicionados`; }); }
+  draw();
+  return el("div", { class: "panel" }, el("div", { class: "bar" }, el("h3", { text: "Revisão do plantão" }), add),
+    el("p", { class: "meta", text: "Cada pergunta que você respondeu, com a sua resposta, a certa e a explicação da IA: por que a certa está certa, por que as outras não, e um macete." }),
+    el("div", { id: "plAiLine", class: "row" }), chips, list);
+}
+function renderPlRevScreen(v) {
+  const r = PL.revRec;
+  v.append(el("div", { class: "panel" }, el("span", { class: "label", text: "Plantão de " + fmtDate(r.at) }),
+    el("h3", { text: r.survived ? "Sobreviveu até as 7h" : `Caiu às ${plHourLabel(r.h)}` }),
+    el("p", { class: "meta", text: `${r.score.toLocaleString("pt-BR")} pontos · ${r.c} de ${r.n} acertos · maior sequência ${r.best || 0} · ${(PL_TEMAS.find(t => t[0] === r.tema) || ["", ""])[1]}` })));
+  v.append(renderPlReview(r)); plRefreshAiLine();
+}
 function renderPlOver(v) {
   const g = PL.g; const { rec, record } = PL.last || { rec: {}, record: false };
   const avg = g.times.length ? g.times.reduce((a, b) => a + b, 0) / g.times.length : 0;
@@ -3162,13 +3299,7 @@ function renderPlOver(v) {
     el("div", { class: "row" }, el("button", { class: "btn primary big", type: "button", text: "Novo plantão", onclick: plStart }),
       el("button", { class: "btn", type: "button", text: "Voltar", onclick: () => { PL.state = "home"; renderPlantao(); } })));
   v.append(m);
-  if (g.errors.length) {
-    const add = el("button", { class: "btn primary small", type: "button", text: `Mandar os ${g.errors.length} erros para os meus cartões` });
-    add.addEventListener("click", () => { const n = addCustomCards(g.errors.map(e => ({ frente: e.q.q, verso: e.q.opts[e.q.ans] + (e.q.exp ? "\n" + e.q.exp : "") })), "Plantão"); add.disabled = true; add.textContent = `${n} cartões adicionados`; });
-    v.append(el("div", { class: "panel" }, el("div", { class: "bar" }, el("span", { class: "label", text: "Revise o que você errou" }), add),
-      el("div", {}, g.errors.map(e => el("div", { class: "revq" }, el("b", { text: e.q.q }),
-        el("span", { class: "you", text: e.chosen === -1 ? "Tempo esgotado" : e.q.opts[e.chosen] }), el("span", { class: "ans", text: e.q.opts[e.q.ans] }), e.q.exp ? el("span", { class: "meta", text: e.q.exp }) : null)))));
-  }
+  if (PL.revRec && PL.revRec.log.length) { v.append(renderPlReview(PL.revRec)); plRefreshAiLine(); }
 }
 
 /* =====================================================================
