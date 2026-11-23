@@ -243,13 +243,33 @@ th{font-family:var(--mono);font-size:.68rem;text-transform:uppercase;color:var(-
 @media (max-width:480px){.mrow{grid-template-columns:minmax(0,1fr) 44px 70px}.mrow .meter{display:none}.spark{width:70px}}
 .weak{display:flex;justify-content:space-between;gap:10px;padding-block:7px;border-top:1px solid var(--rule);font-size:.9rem}
 .weak:first-child{border-top:0}
-.weak span:last-child{font-family:var(--mono);font-size:.78rem;color:var(--bad);white-space:nowrap}
+.weak>span:first-child{min-width:0}
+.weak>span:last-child{font-family:var(--mono);font-size:.78rem;color:var(--bad);white-space:nowrap}
 .hist-item{display:flex;flex-direction:column;gap:8px;padding-block:12px;border-top:1px solid var(--rule)}
 .hist-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .hist-row .t{font-weight:500;min-width:0;flex:1}
 .hist-row time{font-family:var(--mono);font-size:.76rem;color:var(--ink-3)}
 .empty{color:var(--ink-3);text-align:center;padding:26px 10px;border:1px dashed var(--rule-strong);border-radius:10px;font-size:.92rem}
 
+
+/* abas no celular: grade de 5 colunas, sem rolagem lateral */
+@media (max-width:560px){
+  nav.tabs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));margin-inline:0;overflow:visible}
+  nav.tabs a{padding:8px 2px 9px;font-size:.78rem;text-align:center;white-space:normal;line-height:1.2;display:flex;align-items:center;justify-content:center}
+}
+/* exaustão */
+.how{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:5px;color:var(--ink-2)}
+.how li::marker{font-family:var(--mono);color:var(--accent)}
+.rounds{display:flex;gap:4px;flex-wrap:wrap}
+.rd{font-family:var(--mono);font-size:.72rem;padding:2px 7px;border-radius:4px;background:var(--surface-2);color:var(--ink-2);font-variant-numeric:tabular-nums}
+.rd.perfect{background:var(--ok-soft);color:var(--ok)}
+.rd.cur{border:1px dashed var(--accent);background:none;color:var(--accent-ink)}
+.tag{font-family:var(--mono);font-size:.62rem;text-transform:uppercase;letter-spacing:.04em;opacity:.85}
+.callout{display:flex;justify-content:space-between;gap:12px;align-items:center;text-decoration:none;color:var(--ink);border:1px solid var(--rule);background:var(--surface);border-radius:12px;padding:14px 16px}
+.callout b{font-family:var(--display);font-size:1.1rem}
+.callout:hover{border-color:var(--accent)}
+.go{color:var(--accent-ink);font-weight:500}
+.callout .go{font-size:1.3rem}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--paper);padding:9px 16px;border-radius:8px;font-size:.88rem;z-index:50;max-width:calc(100% - 32px)}
 </style>
 
@@ -260,9 +280,9 @@ th{font-family:var(--mono);font-size:.68rem;text-transform:uppercase;color:var(-
       <div class="hstat"><span id="hStreak"></span><span id="aiDot" class="aidot" title="Conectando ao Claude">Claude</span></div>
     </div>
     <nav class="tabs" aria-label="Seções">
-      <a href="#recitar" data-view="recitar">Recitar</a>
-      <a href="#reflexos" data-view="reflexos">Reflexos</a>
-      <a href="#paciente" data-view="paciente">Paciente</a>
+      <a href="#exame" data-view="exame">Exame físico</a>
+      <a href="#anamnese" data-view="anamnese">Anamnese</a>
+      <a href="#exaustao" data-view="exaustao">Exaustão</a>
       <a href="#casos" data-view="casos">Casos reais</a>
       <a href="#progresso" data-view="progresso">Progresso</a>
     </nav>
@@ -270,9 +290,9 @@ th{font-family:var(--mono);font-size:.68rem;text-transform:uppercase;color:var(-
 </header>
 
 <main class="wrap">
-  <section class="view" id="view-recitar"></section>
-  <section class="view" id="view-reflexos" hidden></section>
-  <section class="view" id="view-paciente" hidden></section>
+  <section class="view" id="view-exame"></section>
+  <section class="view" id="view-anamnese" hidden></section>
+  <section class="view" id="view-exaustao" hidden></section>
 
   <section class="view" id="view-casos" hidden>
     <div class="stack">
@@ -859,7 +879,7 @@ const ERRS = {
 const errMsg = e => ERRS[e && e.code] || "Falha de conexão com o Claude. Tente de novo.";
 async function runAI(out, label, fn) {
   await capsReady;
-  if (!CAP.sample) { out.replaceChildren(el("div", { class: "err", text: "O parecer do Claude só funciona com o artefato aberto no Claude (claude.ai ou app). A conferência automática e os cartões funcionam em qualquer lugar." })); return null; }
+  if (!CAP.sample) { out.replaceChildren(el("div", { class: "err", text: "O parecer do Claude só funciona com o artefato aberto no Claude (claude.ai ou app). A conferência automática, a exaustão e os cartões funcionam em qualquer lugar." })); return null; }
   const ctl = new AbortController();
   const secs = el("span", { class: "mono", text: "0 s" });
   out.replaceChildren(el("div", { class: "busy", "aria-live": "polite" }, el("span", { class: "pulse" }), el("span", {}, label, " · ", secs),
@@ -905,9 +925,7 @@ function micFor(ta) {
       $$(".mic").forEach(x => x.classList.toggle("on", x === b)); return;
     }
     DICT.target = ta; DICT.btn = b; DICT.partial = partial;
-    d.start(DICT.lang ? { language: DICT.lang } : undefined).catch(e => {
-      if (e && e.code === "dismissed") toast("Ditado cancelado.");
-    });
+    d.start(DICT.lang ? { language: DICT.lang } : undefined).catch(e => { if (e && e.code === "dismissed") toast("Ditado cancelado."); });
     ta.focus();
   });
   return { wrap: el("div", { class: "ta-wrap" }, ta, b), partial };
@@ -922,7 +940,7 @@ function speak(text) {
 /* =====================================================================
    4. PROGRESSO DO ALUNO (db privado do usuário, com cópia local)
    ===================================================================== */
-const blankP = () => ({ v: 2, uid: null, upd: 0, items: {}, runs: {}, cards: {}, custom: [], seq: {}, days: [], nd: { d: "", n: 0 } });
+const blankP = () => ({ v: 2, uid: null, upd: 0, items: {}, runs: {}, cards: {}, custom: [], seq: {}, days: [], nd: { d: "", n: 0 }, exs: [] });
 let P = (() => { const l = ls.get("P", null); return l && l.v === 2 ? Object.assign(blankP(), l) : blankP(); })();
 let progRef = null, saveT = null, saveChain = Promise.resolve();
 function touch() {
@@ -955,13 +973,28 @@ function streak() {
 }
 const itemKey = (rid, iid) => rid + "." + iid;
 const charVal = c => c === "1" ? 1 : c === "h" ? 0.5 : 0;
+const statusChar = s => s === "ok" ? "1" : s === "parcial" ? "h" : "0";
 function itemScore(rid, iid) { const h = P.items[itemKey(rid, iid)]; if (!h) return null; const last = h.slice(-3); return [...last].reduce((a, c) => a + charVal(c), 0) / last.length; }
 function mastery(rid) {
   const r = RMAP[rid]; let tot = 0, n = 0, any = false;
   for (const st of r.etapas) for (const [iid] of st.itens) { const s = itemScore(rid, iid); n++; if (s != null) { any = true; tot += s; } }
   return any ? tot / n : null;
 }
-function cleanRuns(rid) { return (P.runs[rid] || []).filter(x => !x.h); }
+const allRuns = rid => P.runs[rid] || [];
+const cleanRuns = rid => allRuns(rid).filter(x => !x.h && !x.x);
+function countsToday(rid) { const d = todayStr(); return !cleanRuns(rid).some(x => fmtDay(new Date(x.t)) === d); }
+function coverage(statuses) { let tot = 0, n = 0; statuses.forEach(s => s.forEach(x => { n++; tot += x === "ok" ? 1 : x === "parcial" ? 0.5 : 0; })); return n ? tot / n : 0; }
+/* Só a primeira tentativa do dia (sem dicas) em cada roteiro altera o domínio: ela mede retenção, não repetição imediata. */
+function recordAttempt(rid, statuses, secs, m, hints) {
+  const counted = !hints && countsToday(rid);
+  const run = { t: Date.now(), c: Math.round(coverage(statuses) * 1000) / 1000, s: Math.round(secs), m, h: hints ? 1 : 0, x: !hints && !counted ? 1 : 0 };
+  const list = [...allRuns(rid), run];
+  P.runs[rid] = [...list.filter(x => !x.x).slice(-40), ...list.filter(x => x.x).slice(-30)].sort((a, b) => a.t - b.t);
+  if (counted) RMAP[rid].etapas.forEach((st, i) => st.itens.forEach(([iid], j) => { const k = itemKey(rid, iid); P.items[k] = ((P.items[k] || "") + statusChar(statuses[i][j])).slice(-12); }));
+  markDay(); touch();
+  return { run, counted };
+}
+function amendItem(rid, i, j, status) { const k = itemKey(rid, RMAP[rid].etapas[i].itens[j][0]); const h = P.items[k] || "0"; P.items[k] = h.slice(0, -1) + statusChar(status); }
 function weakItems(rids) {
   const out = [];
   for (const rid of rids) RMAP[rid].etapas.forEach((st, si) => st.itens.forEach(([iid, label]) => {
@@ -1005,17 +1038,19 @@ function addCustomCards(list, src) {
 /* =====================================================================
    5. ROTEAMENTO E RELÓGIO
    ===================================================================== */
-const VIEWS = ["recitar", "reflexos", "paciente", "casos", "progresso"];
-const ALIAS = { exame: "recitar", anamnese: "paciente", historico: "progresso" };
-function curView() { const v = ALIAS[location.hash.slice(1)] || location.hash.slice(1); return VIEWS.includes(v) ? v : "recitar"; }
+const VIEWS = ["exame", "anamnese", "exaustao", "casos", "progresso"];
+const ALIAS = { recitar: "exame", reflexos: "exaustao", paciente: "anamnese", historico: "progresso" };
+function curView() { const h = location.hash.slice(1); const v = ALIAS[h] || h; return VIEWS.includes(v) ? v : "exame"; }
 function route() {
   const v = curView();
   for (const name of VIEWS) $("#view-" + name).hidden = name !== v;
   $$("nav.tabs a").forEach(a => a.dataset.view === v ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current"));
-  if (v !== "recitar") pauseRecitar();
+  if (!RS.rid || v !== (RMAP[RS.rid].grupo === "Anamnese" ? "anamnese" : "exame")) pauseRecitar();
+  if (v !== "exaustao") pauseEx();
   if (v === "progresso") renderProgresso();
-  if (v === "reflexos" && !(RF.game && RF.game.running)) renderReflexos();
-  if (v === "recitar" && !RS.rid) renderRecitar();
+  if (v === "exaustao" && !(RF.game && RF.game.running)) renderExaustao();
+  if (v === "exame" && !(RS.rid && RMAP[RS.rid].grupo === "Exame físico")) renderHost("Exame físico");
+  if (v === "anamnese" && !$("#anHost")) renderAnamnese();
   updateHeader();
 }
 addEventListener("hashchange", () => { route(); window.scrollTo(0, 0); });
@@ -1028,57 +1063,74 @@ function updateHeader() {
 }
 setInterval(() => {
   const t = $("#rTimer"); if (t) { t.textContent = fmtSec(elapsedRecitar()); t.classList.toggle("run", RS.running); }
+  const x = $("#xTimer"); if (x && EX.run) { x.textContent = fmtSec(exElapsed()); x.classList.toggle("run", EX.run.running); }
   const g = $("#gTimer"); if (g && RF.game) g.textContent = fmtSec(RF.game.t0 ? ((RF.game.t1 || performance.now()) - RF.game.t0) / 1000 : 0);
   const p = $("#pTimer"); if (p && PS.t0) p.textContent = fmtSec((Date.now() - PS.t0) / 1000);
 }, 500);
-document.addEventListener("visibilitychange", () => { if (document.hidden) pauseRecitar(); });
+document.addEventListener("visibilitychange", () => { if (document.hidden) { pauseRecitar(); pauseEx(); } });
+function goDrill(rid) {
+  if (RMAP[rid].grupo === "Anamnese") { AN.tab = "roteiros"; ls.set("anTab", "roteiros"); location.hash = "anamnese"; openDrill(rid); renderAnamnese(); }
+  else { location.hash = "exame"; openDrill(rid); }
+}
 
 /* =====================================================================
-   6. RECITAR — roteiro de memória com conferência instantânea
+   6. ROTEIROS — exame físico e anamnese de memória, com conferência instantânea
    ===================================================================== */
-const RS = { rid: null, mode: ls.get("rmode", "guiado"), cen: "normal", hints: false, stage: 0, texts: [], prova: "", acc: 0, t0: 0, running: false, caso: null, result: null };
+const RS = { rid: null, mode: ls.get("rmode", "guiado"), cen: "normal", hints: false, stage: 0, texts: [], prova: "", acc: 0, t0: 0, running: false, caso: null, result: null, session: null };
 function elapsedRecitar() { return RS.acc + (RS.running ? (performance.now() - RS.t0) / 1000 : 0); }
 function startTimer() { if (!RS.running && !RS.result) { RS.running = true; RS.t0 = performance.now(); } }
 function pauseRecitar() { if (RS.running) { RS.acc = elapsedRecitar(); RS.running = false; } }
 const saveDraft = debounce(() => { if (RS.rid) ls.set("draft:" + RS.rid, { texts: RS.texts, prova: RS.prova }); }, 400);
 function matchStage(st, text) { const t = norm(text); return st.itens.map(x => x[2].test(t)); }
+const HOSTS = { "Exame físico": () => $("#view-exame"), "Anamnese": () => AN.tab === "roteiros" ? $("#anHost") : null };
+const curHost = () => RS.rid ? HOSTS[RMAP[RS.rid].grupo]() : null;
+function renderHost(grupo) {
+  const host = HOSTS[grupo](); if (!host) return;
+  const active = RS.rid && RMAP[RS.rid].grupo === grupo;
+  if (!active) return renderRecitarHome(host, grupo);
+  if (RS.session) return;
+  if (RS.result) return renderRecitarResult(host);
+  renderRecitarDrill(host);
+}
+function renderRecitar() { renderHost("Exame físico"); renderHost("Anamnese"); }
 
-function suggestRoteiro() {
-  const today = dayNum();
-  const practiced = ROTEIROS.filter(r => cleanRuns(r.id).length);
-  const due = practiced.map(r => { const runs = cleanRuns(r.id); const last = runs[runs.length - 1]; return { r, m: mastery(r.id) || 0, days: today - dayNum(new Date(last.t)) }; })
+function suggestRoteiro(grupo) {
+  const today = dayNum(); const pool = ROTEIROS.filter(r => r.grupo === grupo);
+  const practiced = pool.filter(r => cleanRuns(r.id).length);
+  const due = practiced.map(r => { const last = cleanRuns(r.id).slice(-1)[0]; return { r, m: mastery(r.id) || 0, days: today - dayNum(new Date(last.t)), last }; })
     .filter(x => x.m < 0.95 && x.days >= 1).sort((a, b) => a.m - b.m || b.days - a.days);
-  if (due.length) return { r: due[0].r, why: `Domínio ${pct(due[0].m)} · último treino ${ago(cleanRuns(due[0].r.id).slice(-1)[0].t)}` };
-  const fresh = ROTEIROS.find(r => !cleanRuns(r.id).length);
+  if (due.length) return { r: due[0].r, why: `Domínio ${pct(due[0].m)} · último treino ${ago(due[0].last.t)}` };
+  const fresh = pool.find(r => !cleanRuns(r.id).length);
   if (fresh) return { r: fresh, why: "Ainda não treinado" };
   const weakest = practiced.map(r => ({ r, m: mastery(r.id) || 0 })).sort((a, b) => a.m - b.m)[0];
   return weakest ? { r: weakest.r, why: `Domínio ${pct(weakest.m)}: o mais fraco` } : null;
 }
-function renderRecitar() {
-  const v = $("#view-recitar");
-  if (!RS.rid) return renderRecitarHome(v);
-  if (RS.session) return;
-  if (RS.result) return renderRecitarResult(v);
-  renderRecitarDrill(v);
+function exCallout(id) {
+  return el("a", { class: "callout", href: "#exaustao", onclick: () => { RF.tab = "roteiros"; if (!EX.run) { EX.rid = id; ls.set("exRid", id); } } },
+    el("div", { class: "stack", style: "gap:2px" }, el("span", { class: "label", text: "Treino por exaustão" }),
+      el("b", { text: id === "circ_exame" ? "Repetir o exame até 100%, três vezes seguidas" : "Repetir os roteiros até sair sem pensar" }),
+      el("span", { class: "meta", text: "Rodadas em branco, sem dicas, uma atrás da outra, até atingir o critério." })),
+    el("span", { class: "go", text: "→" }));
 }
-function renderRecitarHome(v) {
-  v.replaceChildren(el("div", { class: "stack" },
-    el("h2", { text: "Recitar de memória" }),
-    el("p", { class: "lead", text: "Escreva ou dite o exame como faria à beira do leito. A conferência é instantânea e mostra o que ficou de fora; o parecer do Claude é opcional. Repita até sair sem pensar." })));
-  const sug = suggestRoteiro();
+function renderRecitarHome(v, grupo) {
+  const exam = grupo === "Exame físico";
+  v.replaceChildren();
+  if (exam) v.append(el("div", { class: "stack" }, el("h2", { text: "Exame físico" }),
+    el("p", { class: "lead", text: "Descreva o exame de memória, na sequência, como no prontuário. A conferência por itens é instantânea; o parecer do Claude aponta o que faltou, o que poderia acrescentar e corrige termos e ordem." })));
+  else v.append(el("p", { class: "meta", text: "O que perguntar em cada situação. Funciona como o exame físico: guiado ou prova, conferência instantânea e parecer opcional do Claude." }));
+  const sug = suggestRoteiro(grupo);
   if (sug) v.append(el("button", { class: "suggest", type: "button", onclick: () => openDrill(sug.r.id) },
     el("span", { class: "label", text: "Treinar agora" }), el("b", { text: sug.r.nome }), el("span", { class: "meta", text: sug.why }), el("span", { class: "go", text: "Começar →" })));
-  for (const g of ["Exame físico", "Anamnese"]) {
-    v.append(el("div", { class: "stack" }, el("span", { class: "label", text: g }),
-      el("div", { class: "tiles" }, ROTEIROS.filter(r => r.grupo === g).map(r => {
-        const m = mastery(r.id); const runs = P.runs[r.id] || []; const last = runs[runs.length - 1];
-        return el("button", { class: "tile", type: "button", onclick: () => openDrill(r.id) },
-          el("b", { text: r.nome }),
-          el("span", { class: "meta", text: `${r.etapas.length > 1 ? r.etapas.length + " etapas · " : ""}${nItens(r)} itens` }),
-          meter(m || 0, "Domínio"),
-          el("span", { class: "foot" }, el("span", { text: m == null ? "não treinado" : `domínio ${pct(m)}` }), el("span", { text: last ? ago(last.t) : "" })));
-      }))));
-  }
+  v.append(el("div", { class: "stack" }, el("span", { class: "label", text: exam ? "Sistemas" : "Roteiros de anamnese" }),
+    el("div", { class: "tiles" }, ROTEIROS.filter(r => r.grupo === grupo).map(r => {
+      const m = mastery(r.id); const last = allRuns(r.id).slice(-1)[0];
+      return el("button", { class: "tile", type: "button", onclick: () => openDrill(r.id) },
+        el("b", { text: r.nome }),
+        el("span", { class: "meta", text: `${r.etapas.length > 1 ? r.etapas.length + " etapas · " : ""}${nItens(r)} itens` }),
+        meter(m || 0, "Domínio"),
+        el("span", { class: "foot" }, el("span", { text: m == null ? "não treinado" : `domínio ${pct(m)}` }), el("span", { text: last ? ago(last.t) : "" })));
+    }))));
+  v.append(exCallout(exam ? "circ_exame" : "circ_an"));
 }
 function openDrill(rid, keep) {
   if (RS.rid !== rid || !keep) RS.caso = null;
@@ -1086,15 +1138,15 @@ function openDrill(rid, keep) {
   Object.assign(RS, { rid, stage: 0, texts: d.texts || [], prova: d.prova || "", acc: 0, running: false, result: null, session: null, hints: keep ? RS.hints : false });
   if (!keep) RS.cen = "normal";
   renderRecitar(); window.scrollTo(0, 0);
-  const ta = $("#view-recitar textarea"); if (ta && keep) ta.focus();
+  const h = curHost(); const ta = h && h.querySelector("textarea"); if (ta && keep) ta.focus();
 }
 function drillHeader(r, extra) {
-  const runs = cleanRuns(r.id); const best = runs.length ? Math.min(...runs.filter(x => x.c >= 0.9).map(x => x.s).concat([Infinity])) : Infinity;
+  const runs = allRuns(r.id).filter(x => !x.h); const best = runs.filter(x => x.c >= 0.9).reduce((a, x) => Math.min(a, x.s), Infinity);
   const m = mastery(r.id);
   return el("div", { class: "stack" },
-    el("div", { class: "bar" }, el("button", { class: "btn ghost small", type: "button", text: "← Roteiros", onclick: () => { pauseRecitar(); RS.rid = null; renderRecitar(); } }), extra || null),
+    el("div", { class: "bar" }, el("button", { class: "btn ghost small", type: "button", text: r.grupo === "Anamnese" ? "← Roteiros" : "← Sistemas", onclick: () => { pauseRecitar(); RS.rid = null; renderRecitar(); } }), extra || null),
     el("div", { class: "stack", style: "gap:4px" }, el("h2", { text: r.nome }),
-      el("span", { class: "meta", text: [m == null ? "ainda não treinado" : `domínio ${pct(m)}`, isFinite(best) ? `melhor tempo com ≥ 90%: ${fmtSec(best)}` : "", `${runs.length} tentativa${runs.length === 1 ? "" : "s"}`].filter(Boolean).join(" · ") })));
+      el("span", { class: "meta", text: [m == null ? "ainda não treinado" : `domínio ${pct(m)}`, isFinite(best) ? `melhor tempo com ≥ 90%: ${fmtSec(best)}` : "", `${allRuns(r.id).length} tentativa${allRuns(r.id).length === 1 ? "" : "s"}`].filter(Boolean).join(" · ") })));
 }
 function renderRecitarDrill(v) {
   const r = RMAP[RS.rid]; const multi = r.etapas.length > 1; const mode = multi ? RS.mode : "guiado"; const isExam = r.grupo === "Exame físico";
@@ -1150,7 +1202,7 @@ function renderRecitarDrill(v) {
         el("span", { class: "kbd", text: "Ctrl+Enter" })),
       el("button", { class: "btn primary", type: "button", text: last ? "Conferir" : "Próxima →", onclick: nextStage }))));
 }
-function focusStage() { const ta = $("#view-recitar textarea"); if (ta) { ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); } }
+function focusStage() { const h = curHost(); const ta = h && h.querySelector("textarea"); if (ta) { ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); } }
 function nextStage() { const r = RMAP[RS.rid]; if (RS.stage < r.etapas.length - 1) { RS.stage++; renderRecitar(); focusStage(); } else conferir(); }
 function renderCaseBox() {
   const box = el("div", { class: "stack" });
@@ -1172,7 +1224,6 @@ Semente: ${Math.random().toString(36).slice(2, 8)}`;
   const res = await runAI(out, "Gerando caso", signal => CAP.sample.json(prompt, { signal, cache: false }));
   if (res && res.vinheta) { RS.caso = res; renderRecitar(); }
 }
-
 function conferir() {
   const r = RMAP[RS.rid]; const mode = r.etapas.length > 1 ? RS.mode : "guiado";
   const texts = mode === "prova" ? [] : r.etapas.map((_, i) => RS.texts[i] || "");
@@ -1180,33 +1231,31 @@ function conferir() {
   if (!all.trim()) { toast("Escreva alguma coisa antes de conferir."); return; }
   pauseRecitar();
   const secs = elapsedRecitar();
-  const stages = r.etapas.map((st, i) => ({ status: matchStage(st, mode === "prova" ? RS.prova : texts[i]).map(h => h ? "ok" : "falta"), src: st.itens.map(() => "auto") }));
-  let order = null;
-  if (mode === "prova") {
-    const t = norm(RS.prova);
-    const pos = r.etapas.map((st, i) => { const ps = st.itens.map(x => t.search(x[2])).filter(p => p >= 0); return { i, p: ps.length ? Math.min(...ps) : -1 }; }).filter(x => x.p >= 0).sort((a, b) => a.p - b.p);
-    const seq = pos.map(x => x.i); let inv = 0; for (let a = 0; a < seq.length; a++) for (let b = a + 1; b < seq.length; b++) if (seq[a] > seq[b]) inv++;
-    order = { seq, inv };
-  }
-  const prev = cleanRuns(r.id).filter(x => x.m === mode[0]).slice(-1)[0];
-  const priorBest = cleanRuns(r.id).filter(x => x.c >= 0.9).reduce((a, x) => Math.min(a, x.s), Infinity);
-  const run = { t: Date.now(), c: 0, s: Math.round(secs), m: mode[0], h: RS.hints ? 1 : 0 };
-  (P.runs[r.id] = P.runs[r.id] || []).push(run); P.runs[r.id] = P.runs[r.id].slice(-40);
-  RS.result = { rid: r.id, mode, hints: RS.hints, secs, texts, prova: RS.prova, stages, order, run, prev, priorBest, cen: RS.cen, caso: RS.caso, ai: null };
-  if (!RS.hints) r.etapas.forEach((st, i) => st.itens.forEach(([iid], j) => { const k = itemKey(r.id, iid); P.items[k] = ((P.items[k] || "") + (stages[i].status[j] === "ok" ? "1" : "0")).slice(-12); }));
-  recompute(); markDay(); touch(); ls.del("draft:" + r.id);
+  const statuses = r.etapas.map((st, i) => matchStage(st, mode === "prova" ? RS.prova : texts[i]).map(h => h ? "ok" : "falta"));
+  const order = mode === "prova" ? detectOrder(r, RS.prova) : null;
+  const prev = allRuns(r.id).filter(x => !x.h && x.m === mode[0]).slice(-1)[0];
+  const priorBest = allRuns(r.id).filter(x => !x.h && x.c >= 0.9).reduce((a, x) => Math.min(a, x.s), Infinity);
+  const { run, counted } = recordAttempt(r.id, statuses, secs, mode[0], RS.hints);
+  RS.result = { rid: r.id, mode, hints: RS.hints, secs, texts, prova: RS.prova, stages: statuses.map(s => ({ status: s.slice(), src: s.map(() => "auto") })), order, run, counted, prev, priorBest, cen: RS.cen, caso: RS.caso, ai: null };
+  recompute(); touch(); ls.del("draft:" + r.id);
   renderRecitar(); window.scrollTo(0, 0); updateHeader();
 }
-function recompute() {
-  const R = RS.result; let tot = 0, n = 0;
-  R.stages.forEach(s => s.status.forEach(x => { n++; tot += x === "ok" ? 1 : x === "parcial" ? 0.5 : 0; }));
-  R.cov = n ? tot / n : 0; R.run.c = Math.round(R.cov * 1000) / 1000;
+function detectOrder(r, text) {
+  const t = norm(text);
+  const pos = r.etapas.map((st, i) => { const ps = st.itens.map(x => t.search(x[2])).filter(p => p >= 0); return { i, p: ps.length ? Math.min(...ps) : -1 }; }).filter(x => x.p >= 0).sort((a, b) => a.p - b.p);
+  const seq = pos.map(x => x.i); let inv = 0; for (let a = 0; a < seq.length; a++) for (let b = a + 1; b < seq.length; b++) if (seq[a] > seq[b]) inv++;
+  return { seq, inv };
 }
+function recompute() { const R = RS.result; R.cov = coverage(R.stages.map(s => s.status)); R.run.c = Math.round(R.cov * 1000) / 1000; }
 function setStatus(i, j, status, src) {
-  const R = RS.result; const r = RMAP[R.rid];
+  const R = RS.result;
   R.stages[i].status[j] = status; R.stages[i].src[j] = src;
-  if (!R.hints) { const k = itemKey(R.rid, r.etapas[i].itens[j][0]); const h = P.items[k] || "0"; P.items[k] = h.slice(0, -1) + (status === "ok" ? "1" : status === "parcial" ? "h" : "0"); }
+  if (R.counted) amendItem(R.rid, i, j, status);
   recompute(); touch();
+}
+function chip(label, status, extra, onclick) {
+  return el(onclick ? "button" : "span", { type: onclick ? "button" : null, class: "it " + status, onclick,
+    "aria-label": `${label}: ${status === "ok" ? "completo" : status === "parcial" ? "parcial" : "faltou"}`, title: onclick ? "Toque para corrigir a conferência" : null }, label, extra);
 }
 function renderRecitarResult(v) {
   const R = RS.result; const r = RMAP[R.rid];
@@ -1221,7 +1270,7 @@ function renderRecitarResult(v) {
     el("div", { class: "kv" }, el("span", { class: "label", text: "Tempo" }), el("span", { class: "mid", text: fmtSec(R.secs) })),
     delta != null ? el("div", { class: "kv" }, el("span", { class: "label", text: "Vs. anterior" }), el("span", { class: "mid " + (delta > 0 ? "delta-up" : delta < 0 ? "delta-down" : ""), text: (delta > 0 ? "+" : "") + delta + " pp" })) : null,
     record ? el("span", { class: "badge ok", text: "Novo recorde de tempo" }) : null,
-    R.hints ? el("span", { class: "badge warn", text: "Com dicas · não conta" }) : null));
+    R.hints ? el("span", { class: "badge warn", text: "Com dicas · não conta" }) : !R.counted ? el("span", { class: "badge", title: "Só a primeira tentativa do dia em cada roteiro altera o domínio", text: "Treino extra · não altera o domínio" }) : el("span", { class: "badge acc", title: "Primeira tentativa do dia: mede o que ficou guardado", text: "Conta para o domínio" })));
   if (R.order && R.order.inv) panel.append(el("div", { class: "note" }, el("b", { text: "Ordem: " }),
     "você descreveu " + R.order.seq.map(i => r.etapas[i].n).join(" → ") + ". O esperado é " + r.etapas.map(s => s.n).join(" → ") + "."));
   else if (R.order) panel.append(el("p", { class: "meta", text: "Ordem das etapas adequada (detecção aproximada pelas palavras usadas)." }));
@@ -1230,44 +1279,46 @@ function renderRecitarResult(v) {
     const s = R.stages[i]; const k = s.status.filter(x => x === "ok").length;
     stagesBox.append(el("div", { class: "rs-stage" },
       el("div", { class: "bar" }, el("h4", { text: st.n }), el("span", { class: "live" }, meter(k / st.itens.length), el("span", { text: `${k}/${st.itens.length}` }))),
-      el("div", { class: "items" }, st.itens.map(([, label], j) => el("button", {
-        type: "button", class: "it " + s.status[j], title: "Toque para corrigir a conferência", "aria-label": `${label}: ${s.status[j] === "ok" ? "completo" : s.status[j] === "parcial" ? "parcial" : "faltou"}`,
-        onclick: () => { const nx = s.status[j] === "ok" ? "falta" : "ok"; setStatus(i, j, nx, "manual"); renderRecitarResult(v); } },
-        label, s.src[j] !== "auto" ? el("span", { class: "src", text: s.src[j] === "ai" ? "Claude" : "você" }) : null))),
+      el("div", { class: "items" }, st.itens.map(([, label], j) => chip(label, s.status[j], s.src[j] !== "auto" ? el("span", { class: "src", text: s.src[j] === "ai" ? "Claude" : "você" }) : null,
+        () => { setStatus(i, j, s.status[j] === "ok" ? "falta" : "ok", "manual"); renderRecitarResult(v); }))),
       R.mode === "guiado" && (R.texts[i] || "").trim() ? el("p", { class: "yourtext", text: R.texts[i].trim() }) : null));
   });
   panel.append(stagesBox);
   if (R.mode === "prova") panel.append(el("details", {}, el("summary", { class: "meta", text: "Seu texto" }), el("p", { class: "yourtext", style: "margin-top:8px", text: R.prova })));
   panel.append(el("p", { class: "disclaimer", text: "A conferência automática procura palavras-chave. Se algo que você escreveu não foi reconhecido, toque no item para marcar; o parecer do Claude verifica de verdade." }));
   const missed = []; r.etapas.forEach((st, i) => st.itens.forEach(([iid], j) => { if (R.stages[i].status[j] !== "ok") missed.push({ rid: r.id, si: i, iid }); }));
-  const modelBox = el("div", { class: "stack", hidden: true }, el("div", { class: "bar" }, el("span", { class: "label", text: r.pergunta ? "Roteiro-modelo" : "Descrição-modelo (exame normal)" }),
-    el("div", { class: "row" }, CAP.tts ? el("button", { class: "link", type: "button", text: "Ouvir", onclick: () => speak(r.modelo) }) : null, copyBtn(() => r.modelo))),
-    el("div", { class: "model", text: r.modelo }));
+  const modelBox = modeloBox(r);
+  const aiBox = el("div", { class: "stack-lg" });
   panel.append(el("div", { class: "row" },
     el("button", { class: "btn primary", type: "button", text: "Repetir agora", onclick: () => openDrill(r.id, true) }),
+    el("button", { class: "btn", type: "button", text: "Exaustão neste roteiro", onclick: () => { startExaustao(r.id); location.hash = "exaustao"; } }),
     missed.length ? el("button", { class: "btn", type: "button", text: `Fixar os ${missed.length} que faltaram`, onclick: () => clozeFromRecitar(missed) }) : null,
     el("button", { class: "btn", type: "button", text: "Parecer do Claude", onclick: () => parecerRecitar(aiBox) }),
     el("button", { class: "btn ghost", type: "button", text: "Ver modelo", onclick: e => { modelBox.hidden = !modelBox.hidden; e.target.textContent = modelBox.hidden ? "Ver modelo" : "Ocultar modelo"; } })));
   panel.append(modelBox);
   v.append(panel);
-  const aiBox = el("div", { class: "stack-lg" });
   if (R.ai) aiBox.append(renderRecitarAI(R.ai, R));
   v.append(aiBox);
   window.scrollTo(0, y);
+}
+function modeloBox(r) {
+  return el("div", { class: "stack", hidden: true }, el("div", { class: "bar" }, el("span", { class: "label", text: r.pergunta ? "Roteiro-modelo" : "Descrição-modelo (exame normal)" }),
+    el("div", { class: "row" }, CAP.tts ? el("button", { class: "link", type: "button", text: "Ouvir", onclick: () => speak(r.modelo) }) : null, copyBtn(() => r.modelo))),
+    el("div", { class: "model", text: r.modelo }));
 }
 function clozeCard(rid, si, iid) {
   const r = RMAP[rid], st = r.etapas[si]; const it = st.itens.find(x => x[0] === iid);
   return { id: `cz:${rid}.${iid}`, deck: "foco", f: `${r.nome} · ${st.n}\nQual item falta?\n` + st.itens.map(x => x[0] === iid ? "• ______" : "• " + x[1]).join("\n"), v: it[1] + "\n\n" + st.d };
 }
 function clozeFromRecitar(missed) {
-  const v = $("#view-recitar"); RS.session = true;
+  const v = curHost(); if (!v) return; RS.session = true;
   const box = el("div", { class: "stack-lg" }); v.replaceChildren(box);
   startSession(box, missed.map(m => clozeCard(m.rid, m.si, m.iid)), { srs: false, title: "Fixar o que faltou", onExit: () => { RS.session = null; renderRecitar(); } });
 }
 function promptRecitar(R) {
   const r = RMAP[R.rid]; const isExam = r.grupo === "Exame físico";
   const lines = []; r.etapas.forEach((st, i) => st.itens.forEach(([iid, label], j) => lines.push(`${iid} | ${st.n} | ${label} | automático: ${R.stages[i].status[j] === "ok" ? "detectado" : "não detectado"}`)));
-  const texto = R.mode === "prova" ? R.prova : r.etapas.map((st, i) => `### ${st.n}\n${R.texts[i].trim() || "(em branco)"}`).join("\n");
+  const texto = R.mode === "prova" ? R.prova : r.etapas.map((st, i) => `### ${st.n}\n${(R.texts[i] || "").trim() || "(em branco)"}`).join("\n");
   const caso = R.cen === "caso" && R.caso ? `\nCENÁRIO: caso clínico mostrado ao aluno: "${R.caso.vinheta}". Gabarito oculto: ${R.caso.diagnostico}; achados esperados: ${arr(R.caso.achados_esperados).join("; ")}. Julgue também se os achados descritos combinam com o caso.` : isExam ? "\nCENÁRIO: exame normal de adulto hígido." : "";
   return `Você é preceptor de semiologia médica (referências: Porto, Bates). Avalie um estudante de medicina brasileiro que ${isExam ? "descreveu de memória o exame" : "listou de memória o roteiro de anamnese"} "${r.nome}", no modo ${R.mode === "prova" ? "prova (texto único, sem ver as etapas)" : "guiado (por etapas)"}, em ${fmtSec(R.secs)}.${caso}
 SEQUÊNCIA ESPERADA: ${r.etapas.map(s => s.n).join(" → ")}
@@ -1290,7 +1341,7 @@ Responda só com JSON:
 async function parecerRecitar(box) {
   const R = RS.result; const r = RMAP[R.rid];
   const res = await runAI(box, "Claude está avaliando", signal => CAP.sample.json(promptRecitar(R), { signal }));
-  if (!res) return;
+  if (!res || RS.result !== R) return;
   const st = res.itens && typeof res.itens === "object" ? res.itens : {};
   r.etapas.forEach((s, i) => s.itens.forEach(([iid], j) => { const a = str(st[iid]).toLowerCase(); const ns = a.startsWith("ok") ? "ok" : a.startsWith("parc") ? "parcial" : a.startsWith("falt") ? "falta" : null; if (ns) setStatus(i, j, ns, "ai"); }));
   R.ai = res;
@@ -1298,7 +1349,7 @@ async function parecerRecitar(box) {
     entrada: { rid: r.id, modo: R.mode, cenario: R.cen, caso: R.caso, textos: R.texts, prova: R.prova, segundos: Math.round(R.secs) },
     resultado: { ai: res, status: R.stages.map(s => s.status) } });
   renderRecitar();
-  setTimeout(() => { const b = $("#view-recitar .ai-report"); if (b) b.scrollIntoView({ behavior: "smooth", block: "start" }); }, 50);
+  setTimeout(() => { const h = curHost(); const b = h && h.querySelector(".ai-report"); if (b) b.scrollIntoView({ behavior: "smooth", block: "start" }); }, 50);
 }
 function lb(title, items, cls) { items = arr(items); if (!items.length) return null; return el("div", { class: "lb " + cls }, el("h5", { text: title }), el("ul", {}, items.map(i => el("li", { text: str(i) })))); }
 function cardsOffer(cartoes, src) {
@@ -1333,11 +1384,217 @@ function renderRecitarAI(res, R) {
 }
 
 /* =====================================================================
-   7. REFLEXOS — cartões com repetição espaçada e sequências
+   7. EXAUSTÃO — rodadas seguidas até o critério; cartões; sequências
    ===================================================================== */
+const CIRC = {
+  circ_exame: { nome: "Exame físico completo (7 sistemas)", ids: ROTEIROS.filter(r => r.grupo === "Exame físico").map(r => r.id) },
+  circ_an: { nome: "Anamnese completa (7 roteiros)", ids: ROTEIROS.filter(r => r.grupo === "Anamnese").map(r => r.id) }
+};
+const CRITS = [["p3", "100% três vezes seguidas"], ["p1", "100% uma vez"], ["r10", "10 rodadas"], ["livre", "Sem limite (eu encerro)"]];
+const TARGETS = [[0, "Sem tempo-alvo"], [300, "5 min por rodada"], [180, "3 min por rodada"], [120, "2 min por rodada"], [60, "1 min por rodada"]];
+const exName = id => CIRC[id] ? CIRC[id].nome : RMAP[id] ? RMAP[id].nome : "";
+const EX = { rid: ls.get("exRid", "cardio"), fmt: ls.get("exFmt", "unico"), crit: ls.get("exCrit", "p3"), target: ls.get("exTarget", 0), run: null };
+if (!CIRC[EX.rid] && !RMAP[EX.rid]) EX.rid = "cardio";
+const RF = { tab: "roteiros", deck: "achados", game: null, seqId: null, adding: false };
+
+function exElapsed() { const X = EX.run; return X ? X.acc + (X.running ? (performance.now() - X.t0) / 1000 : 0) : 0; }
+function exStart() { const X = EX.run; if (X && !X.running && X.phase === "input") { X.running = true; X.t0 = performance.now(); } }
+function pauseEx() { const X = EX.run; if (X && X.running) { X.acc = exElapsed(); X.running = false; } }
+function startExaustao(id) {
+  if (id) { EX.rid = id; ls.set("exRid", id); }
+  const ids = CIRC[EX.rid] ? CIRC[EX.rid].ids.slice() : [EX.rid];
+  EX.run = { id: EX.rid, ids, qi: 0, per: {}, phase: "input", texts: [], prova: "", acc: 0, t0: 0, running: false, started: Date.now(), fmt: EX.fmt, crit: EX.crit, target: +EX.target || 0 };
+  RF.tab = "roteiros";
+}
+const trailingPerfect = per => { let n = 0; for (let i = per.rounds.length - 1; i >= 0 && per.rounds[i].perfect; i--) n++; return n; };
+function critMet(per, crit) {
+  if (crit === "p3") return trailingPerfect(per) >= 3;
+  if (crit === "p1") return trailingPerfect(per) >= 1;
+  if (crit === "r10") return per.rounds.length >= 10;
+  return false;
+}
+function finalizeRound(rd, rid, target) {
+  rd.c = coverage(rd.statuses); rd.run.c = Math.round(rd.c * 1000) / 1000;
+  rd.missed = []; RMAP[rid].etapas.forEach((st, i) => st.itens.forEach(([iid], j) => { if (rd.statuses[i][j] !== "ok") rd.missed.push(iid); }));
+  rd.slow = !!(target && rd.secs > target);
+  rd.perfect = !rd.missed.length && !rd.slow;
+}
+function exConferir() {
+  const X = EX.run; const rid = X.ids[X.qi]; const r = RMAP[rid]; const per = X.per[rid];
+  const single = X.fmt === "unico" || r.etapas.length === 1;
+  const texts = single ? [] : r.etapas.map((_, i) => X.texts[i] || "");
+  const all = single ? X.prova : texts.join("\n");
+  if (!all.trim()) { toast("Escreva alguma coisa antes de conferir."); return; }
+  pauseEx(); const secs = exElapsed();
+  const statuses = r.etapas.map((st, i) => matchStage(st, single ? X.prova : texts[i]).map(h => h ? "ok" : "falta"));
+  const { run, counted } = recordAttempt(rid, statuses, secs, single ? "p" : "g", false);
+  const prev = per.rounds[per.rounds.length - 1];
+  const rd = { statuses, src: statuses.map(s => s.map(() => "auto")), secs, texts, prova: X.prova, run, counted, prevMissed: prev ? prev.missed.slice() : null, order: single && r.etapas.length > 1 ? detectOrder(r, X.prova) : null };
+  finalizeRound(rd, rid, X.target);
+  per.rounds.push(rd); per.done = critMet(per, X.crit);
+  X.phase = "feedback"; touch(); updateHeader();
+  renderExaustao(); const b = $("#exNext"); if (b) b.focus({ preventScroll: true }); window.scrollTo(0, 0);
+}
+function exNextRound() {
+  const X = EX.run; Object.assign(X, { phase: "input", texts: [], prova: "", acc: 0, running: false });
+  renderExaustao(); const ta = $("#view-exaustao textarea"); if (ta) ta.focus(); window.scrollTo(0, 0);
+}
+function exNextRoteiro() { EX.run.qi++; exNextRound(); }
+function exFinish() {
+  const X = EX.run; const total = Object.values(X.per).reduce((a, p) => a + p.rounds.length, 0);
+  if (!total) { EX.run = null; renderExaustao(); return; }
+  pauseEx();
+  const dur = Object.values(X.per).reduce((a, p) => a + p.rounds.reduce((b, rd) => b + rd.secs, 0), 0);
+  P.exs = [...(P.exs || []), { t: X.started, nome: exName(X.id), rounds: total, met: Object.values(X.per).filter(p => p.done).length, of: X.ids.length, dur: Math.round(dur), crit: X.crit }].slice(-30);
+  touch(); X.phase = "done"; renderExaustao(); window.scrollTo(0, 0);
+}
+function renderExaustao() {
+  const v = $("#view-exaustao"); if (SESSION && SESSION.container.closest("#view-exaustao")) return;
+  v.replaceChildren(el("div", { class: "stack" }, el("h2", { text: "Exaustão" }),
+    el("p", { class: "lead", text: "Repetir até sair sem pensar. Rodadas de roteiro até o critério, cartões até zerar e sequências contra o relógio." })),
+    seg([["roteiros", EX.run ? "Rodadas · em andamento" : "Rodadas"], ["cartoes", "Cartões"], ["sequencias", "Sequências"]], RF.tab, t => { RF.tab = t; if (t !== "sequencias") RF.game = null; renderExaustao(); }, "Tipo de treino"));
+  const body = el("div", { class: "stack-lg" }); v.append(body);
+  if (RF.tab === "roteiros") EX.run ? renderExRun(body) : renderExSetup(body);
+  else if (RF.tab === "cartoes") renderCards(body);
+  else renderSeqHome(body);
+}
+function renderExSetup(body) {
+  body.append(el("div", { class: "panel" }, el("span", { class: "label", text: "Como funciona" }),
+    el("ol", { class: "how" },
+      el("li", { text: "Escolha um sistema, um roteiro de anamnese ou um circuito inteiro." }),
+      el("li", { text: "Escreva ou dite tudo de memória e confira. Sem dicas." }),
+      el("li", { text: "Veja o que faltou. A rodada seguinte começa em branco, na hora (Enter)." }),
+      el("li", { text: "Repete até o critério: por padrão, 100% três vezes seguidas. No circuito, passa ao próximo sistema." })),
+    el("p", { class: "meta", text: "Só a primeira rodada do dia de cada roteiro conta para o domínio: ela mede o que ficou guardado de ontem. As demais são treino puro e aparecem como rodadas." })));
+  const sel = el("select", { id: "exWhat" },
+    el("optgroup", { label: "Circuitos" }, Object.entries(CIRC).map(([id, c]) => el("option", { value: id, text: c.nome }))),
+    el("optgroup", { label: "Exame físico" }, ROTEIROS.filter(r => r.grupo === "Exame físico").map(r => el("option", { value: r.id, text: r.nome }))),
+    el("optgroup", { label: "Anamnese" }, ROTEIROS.filter(r => r.grupo === "Anamnese").map(r => el("option", { value: r.id, text: r.nome }))));
+  sel.value = EX.rid; sel.addEventListener("change", () => { EX.rid = sel.value; ls.set("exRid", EX.rid); });
+  const crit = el("select", { id: "exCrit" }, CRITS.map(([k, t]) => el("option", { value: k, text: t }))); crit.value = EX.crit;
+  crit.addEventListener("change", () => { EX.crit = crit.value; ls.set("exCrit", EX.crit); });
+  const tgt = el("select", { id: "exTarget" }, TARGETS.map(([k, t]) => el("option", { value: String(k), text: t }))); tgt.value = String(EX.target);
+  tgt.addEventListener("change", () => { EX.target = +tgt.value; ls.set("exTarget", EX.target); });
+  body.append(el("div", { class: "panel" },
+    el("div", { class: "field" }, el("label", { for: "exWhat", text: "O que treinar" }), sel),
+    el("div", { class: "field" }, el("span", { class: "label", text: "Formato" }),
+      seg([["unico", "Texto único"], ["etapas", "Por etapas"]], EX.fmt, f => { EX.fmt = f; ls.set("exFmt", f); renderExaustao(); }, "Formato"),
+      el("span", { class: "meta", text: EX.fmt === "unico" ? "Um texto só, sem as etapas à vista: testa também a sequência." : "Um campo por etapa, com o nome da etapa à vista: foca no conteúdo de cada uma." })),
+    el("div", { class: "grid2" }, el("div", { class: "field" }, el("label", { for: "exCrit", text: "Critério de parada" }), crit), el("div", { class: "field" }, el("label", { for: "exTarget", text: "Tempo-alvo" }), tgt)),
+    el("div", {}, el("button", { class: "btn primary", type: "button", text: "Começar", onclick: () => { startExaustao(); renderExaustao(); const ta = $("#view-exaustao textarea"); if (ta) ta.focus(); } }))));
+  const exs = (P.exs || []).slice(-6).reverse();
+  if (exs.length) body.append(el("div", { class: "panel" }, el("span", { class: "label", text: "Últimas sessões" }),
+    el("div", {}, exs.map(s => el("div", { class: "weak" }, el("span", {}, s.nome, el("span", { class: "meta", text: ` · ${ago(s.t)} · ${s.rounds} rodadas · ${fmtSec(s.dur)}` })),
+      el("span", { style: `color:var(--${s.met === s.of ? "ok" : "ink-3"})`, text: `${s.met}/${s.of} no critério` }))))));
+}
+function roundsStrip(per, X) {
+  const n = per.rounds.length;
+  return el("div", { class: "rounds" }, per.rounds.map((rd, i) => el("span", { class: "rd" + (rd.perfect ? " perfect" : ""), title: `Rodada ${i + 1}: ${pct(rd.c)} em ${fmtSec(rd.secs)}`, text: pct(rd.c) })),
+    X.phase === "input" ? el("span", { class: "rd cur", text: `rodada ${n + 1}` }) : null);
+}
+function critLine(per, X) {
+  const tp = trailingPerfect(per);
+  const c = X.crit === "p3" ? `perfeitas seguidas: ${tp} de 3` : X.crit === "p1" ? "meta: uma rodada perfeita" : X.crit === "r10" ? `rodada ${per.rounds.length} de 10` : "sem limite: encerre quando quiser";
+  return `${c}${X.target ? ` · tempo-alvo ${fmtSec(X.target)}` : ""}`;
+}
+function renderExRun(body) {
+  const X = EX.run;
+  if (X.phase === "done") return renderExSummary(body);
+  const rid = X.ids[X.qi]; const r = RMAP[rid]; const per = X.per[rid] || (X.per[rid] = { rounds: [], done: false });
+  const single = X.fmt === "unico" || r.etapas.length === 1;
+  body.append(el("div", { class: "panel" },
+    el("div", { class: "bar" }, el("div", { class: "stack", style: "gap:2px" },
+      el("span", { class: "label", text: X.ids.length > 1 ? `${exName(X.id)} · ${X.qi + 1} de ${X.ids.length}` : "Exaustão" }), el("h3", { text: r.nome })),
+      el("div", { class: "row" }, el("span", { class: "timer", id: "xTimer", text: fmtSec(exElapsed()) }), el("button", { class: "btn small", type: "button", text: "Encerrar", onclick: exFinish }))),
+    roundsStrip(per, X), el("p", { class: "meta", text: critLine(per, X) })));
+  if (X.phase === "input") {
+    const last = per.rounds[per.rounds.length - 1];
+    const panel = el("div", { class: "panel" });
+    panel.append(el("p", { class: "meta", text: last ? `Rodada anterior: ${pct(last.c)}, ${last.missed.length ? `faltaram ${last.missed.length} itens` : "nada faltou"}. De novo, do início, sem olhar.` : (single ? "Tudo num texto só, na ordem. As etapas não aparecem." : "As etapas estão à vista; o conteúdo de cada uma é com você.") + " Ctrl+Enter confere." }));
+    const onKey = e => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); exConferir(); } };
+    if (single) {
+      const ta = el("textarea", { id: `ex-${rid}-u`, style: "min-height:280px", placeholder: r.pergunta ? "Liste tudo o que perguntar, na ordem…" : "Descreva o exame completo, na ordem…" });
+      ta.value = X.prova; ta.addEventListener("input", () => { X.prova = ta.value; exStart(); }); ta.addEventListener("keydown", onKey);
+      const m = micFor(ta); panel.append(m.wrap, m.partial);
+    } else r.etapas.forEach((st, i) => {
+      const ta = el("textarea", { id: `ex-${rid}-${i}`, style: "min-height:72px" });
+      ta.value = X.texts[i] || ""; ta.addEventListener("input", () => { X.texts[i] = ta.value; exStart(); }); ta.addEventListener("keydown", onKey);
+      const m = micFor(ta);
+      panel.append(el("div", { class: "field" }, el("label", { for: ta.id }, el("span", { class: "num", text: pad2(i + 1) + " " }), st.n), m.wrap, m.partial));
+    });
+    panel.append(el("div", { class: "bar" }, el("span", { class: "kbd", text: "Ctrl+Enter" }), el("button", { class: "btn primary", type: "button", text: "Conferir rodada", onclick: exConferir })));
+    body.append(panel);
+    return;
+  }
+  // feedback
+  const rd = per.rounds[per.rounds.length - 1]; const prevSet = rd.prevMissed ? new Set(rd.prevMissed) : null;
+  const panel = el("div", { class: "panel" });
+  panel.append(el("div", { class: "score-row" },
+    el("div", { class: "kv" }, el("span", { class: "label", text: `Rodada ${per.rounds.length}` }), el("span", { class: "big", text: pct(rd.c) }), el("span", { class: "meta", text: rd.missed.length ? `faltaram ${rd.missed.length}` : "todos os itens" })),
+    el("div", { class: "kv" }, el("span", { class: "label", text: "Tempo" }), el("span", { class: "mid " + (rd.slow ? "delta-down" : ""), text: fmtSec(rd.secs) })),
+    rd.perfect ? el("span", { class: "badge ok", text: "Rodada perfeita" }) : rd.slow && !rd.missed.length ? el("span", { class: "badge warn", text: "Completa, mas acima do tempo-alvo" }) : null,
+    el("span", { class: "badge" + (rd.counted ? " acc" : ""), title: rd.counted ? "Primeira rodada do dia neste roteiro" : "Só a primeira rodada do dia altera o domínio", text: rd.counted ? "Conta para o domínio" : "Treino" })));
+  if (rd.order && rd.order.inv) panel.append(el("div", { class: "note" }, el("b", { text: "Ordem: " }), "você descreveu " + rd.order.seq.map(i => r.etapas[i].n).join(" → ") + "; o esperado é " + r.etapas.map(s => s.n).join(" → ") + "."));
+  const box = el("div", { class: "stack" });
+  r.etapas.forEach((st, i) => {
+    const k = rd.statuses[i].filter(x => x === "ok").length;
+    box.append(el("div", { class: "rs-stage" },
+      el("div", { class: "bar" }, el("h4", { text: st.n }), el("span", { class: "live" }, meter(k / st.itens.length), el("span", { text: `${k}/${st.itens.length}` }))),
+      el("div", { class: "items" }, st.itens.map(([iid, label], j) => {
+        const s = rd.statuses[i][j]; const was = prevSet && prevSet.has(iid);
+        const tag = was ? el("span", { class: "tag", text: s === "ok" ? "recuperado" : "de novo" }) : rd.src[i][j] === "manual" ? el("span", { class: "src", text: "você" }) : null;
+        return chip(label, s, tag, () => { rd.statuses[i][j] = s === "ok" ? "falta" : "ok"; rd.src[i][j] = "manual"; if (rd.counted) amendItem(rid, i, j, rd.statuses[i][j]); finalizeRound(rd, rid, X.target); per.done = critMet(per, X.crit); touch(); renderExaustao(); });
+      }))));
+  });
+  panel.append(box);
+  const txt = single ? rd.prova : r.etapas.map((s, i) => (rd.texts[i] || "").trim() ? `${s.n}: ${rd.texts[i].trim()}` : "").filter(Boolean).join("\n");
+  panel.append(el("details", {}, el("summary", { class: "meta", text: "Seu texto desta rodada" }), el("p", { class: "yourtext", style: "margin-top:8px", text: txt })));
+  const mb = modeloBox(r);
+  const more = X.qi < X.ids.length - 1;
+  const next = per.done
+    ? (more ? el("button", { class: "btn primary", id: "exNext", type: "button", text: `Critério atingido · próximo: ${RMAP[X.ids[X.qi + 1]].nome} →`, onclick: exNextRoteiro })
+            : el("button", { class: "btn primary", id: "exNext", type: "button", text: "Critério atingido · ver resumo", onclick: exFinish }))
+    : el("button", { class: "btn primary", id: "exNext", type: "button", text: "Próxima rodada", onclick: exNextRound });
+  panel.append(el("div", { class: "row" }, next, el("span", { class: "kbd", text: "Enter" }),
+    el("button", { class: "btn ghost", type: "button", text: "Ver modelo", onclick: e => { mb.hidden = !mb.hidden; e.target.textContent = mb.hidden ? "Ver modelo" : "Ocultar modelo"; } }),
+    more && !per.done ? el("button", { class: "btn ghost", type: "button", text: "Pular para o próximo", onclick: exNextRoteiro }) : null), mb);
+  panel.append(el("p", { class: "disclaimer", text: "Toque num item para corrigir a conferência automática. \"Recuperado\": faltou na rodada anterior e agora veio. \"De novo\": faltou outra vez." }));
+  body.append(panel);
+}
+function renderExSummary(body) {
+  const X = EX.run; const ids = X.ids.filter(id => X.per[id] && X.per[id].rounds.length);
+  const rounds = ids.reduce((a, id) => a + X.per[id].rounds.length, 0);
+  const dur = ids.reduce((a, id) => a + X.per[id].rounds.reduce((b, rd) => b + rd.secs, 0), 0);
+  const stubborn = {};
+  ids.forEach(id => X.per[id].rounds.forEach(rd => rd.missed.forEach(iid => { const k = id + "." + iid; stubborn[k] = (stubborn[k] || 0) + 1; })));
+  const top = Object.entries(stubborn).filter(([, n]) => n >= 2).sort((a, b) => b[1] - a[1]).slice(0, 15);
+  const findItem = k => { const [rid, iid] = k.split("."); const r = RMAP[rid]; for (let si = 0; si < r.etapas.length; si++) { const it = r.etapas[si].itens.find(x => x[0] === iid); if (it) return { rid, si, iid, label: it[1] }; } return null; };
+  const panel = el("div", { class: "panel" }, el("span", { class: "label", text: "Sessão de exaustão concluída" }), el("h3", { text: exName(X.id) }),
+    el("div", { class: "score-row" },
+      el("div", { class: "kv" }, el("span", { class: "label", text: "Rodadas" }), el("span", { class: "big", text: String(rounds) })),
+      el("div", { class: "kv" }, el("span", { class: "label", text: "Tempo total" }), el("span", { class: "mid", text: fmtSec(dur) })),
+      el("div", { class: "kv" }, el("span", { class: "label", text: "No critério" }), el("span", { class: "mid", text: `${ids.filter(id => X.per[id].done).length}/${X.ids.length}` }))),
+    el("div", { class: "tablewrap" }, el("table", {},
+      el("thead", {}, el("tr", {}, el("th", { text: "Roteiro" }), el("th", { text: "Rodadas" }), el("th", { text: "1ª" }), el("th", { text: "Última" }), el("th", { text: "Critério" }))),
+      el("tbody", {}, ids.map(id => { const rs = X.per[id].rounds; return el("tr", {}, el("td", { text: RMAP[id].nome }), el("td", { class: "mono", text: String(rs.length) }), el("td", { class: "mono", text: pct(rs[0].c) }), el("td", { class: "mono", text: pct(rs[rs.length - 1].c) }), el("td", { text: X.per[id].done ? "atingido" : "—" })); })))));
+  if (top.length) panel.append(el("span", { class: "label", text: "Itens mais teimosos (faltaram em 2 ou mais rodadas)" }),
+    el("div", {}, top.map(([k, n]) => { const it = findItem(k); return it ? el("div", { class: "weak" }, el("span", {}, it.label, el("span", { class: "meta", text: " · " + RMAP[it.rid].nome })), el("span", { text: `${n} rodadas` })) : null; })));
+  const host = el("div", { class: "stack-lg" });
+  panel.append(el("div", { class: "row" },
+    el("button", { class: "btn primary", type: "button", text: "De novo, mesma configuração", onclick: () => { EX.fmt = X.fmt; EX.crit = X.crit; EX.target = X.target; startExaustao(X.id); renderExaustao(); const ta = $("#view-exaustao textarea"); if (ta) ta.focus(); } }),
+    top.length ? el("button", { class: "btn", type: "button", text: "Fixar os teimosos em cartões", onclick: () => { body.replaceChildren(host); startSession(host, top.map(([k]) => findItem(k)).filter(Boolean).map(w => clozeCard(w.rid, w.si, w.iid)), { srs: false, title: "Itens teimosos", onExit: () => { EX.run = null; renderExaustao(); } }); } }) : null,
+    el("button", { class: "btn ghost", type: "button", text: "Voltar", onclick: () => { EX.run = null; renderExaustao(); } })));
+  body.append(panel);
+}
+document.addEventListener("keydown", e => {
+  if (e.key !== "Enter" || e.ctrlKey || e.metaKey || !EX.run || EX.run.phase !== "feedback" || curView() !== "exaustao" || RF.tab !== "roteiros") return;
+  if (e.target.closest && e.target.closest("textarea,input,select,button,a,summary")) return;
+  const b = $("#exNext"); if (b) { e.preventDefault(); b.click(); }
+});
+
+/* --- cartões com repetição espaçada --- */
 const INT = [0, 1, 2, 4, 8, 16, 32, 64];
 const NEW_PER_DAY = 15;
-const RF = { tab: "cartoes", deck: "achados", game: null, seqId: null, adding: false };
 let SESSION = null;
 const allCards = () => [...BUILTIN, ...P.custom.map(c => ({ id: c.id, deck: "meus", f: c.f, v: c.v }))];
 function todayQueue() {
@@ -1359,8 +1616,7 @@ function srsGrade(card, g) {
 }
 function startSession(container, cards, opts) {
   const prev = SESSION;
-  SESSION = { container, queue: opts.srs ? cards.slice() : shuffle(cards), total: cards.length, done: 0, flipped: false, shownAt: 0, lat: [], auto: 0, fails: 0, ...opts };
-  if (opts.srs) SESSION.queue = shuffle(SESSION.queue);
+  SESSION = { container, queue: shuffle(cards), total: cards.length, done: 0, flipped: false, shownAt: 0, lat: [], auto: 0, fails: 0, ...opts };
   if (prev && prev.container !== container && prev.onExit) prev.onExit();
   renderSession();
 }
@@ -1413,30 +1669,24 @@ document.addEventListener("keydown", e => {
   if (!S.flipped && (e.key === " " || e.key === "Enter")) { e.preventDefault(); flipCard(); }
   else if (S.flipped && ["1", "2", "3"].includes(e.key)) { e.preventDefault(); gradeCard(+e.key - 1); }
 });
-function renderReflexos() {
-  const v = $("#view-reflexos"); if (SESSION && SESSION.container.closest("#view-reflexos")) return;
-  v.replaceChildren(el("div", { class: "stack" }, el("h2", { text: "Reflexos" }),
-    el("p", { class: "lead", text: "Cartões curtos para responder em voz alta, com repetição espaçada: o que você erra volta logo; o que sai automático volta cada vez mais tarde. Nas sequências, o objetivo é ordenar sem errar e cada vez mais rápido." })),
-    seg([["cartoes", "Cartões"], ["sequencias", "Sequências"]], RF.tab, t => { RF.tab = t; RF.game = null; renderReflexos(); }, "Tipo de treino"));
-  if (RF.tab === "sequencias") return renderSeqHome(v);
+function renderCards(body) {
   const { due, fresh } = todayQueue(); const n = due.length + fresh.length;
-  const body = el("div", { class: "stack-lg" }); v.append(body);
   body.append(el("div", { class: "panel" },
-    el("span", { class: "label", text: "Revisão de hoje" }),
+    el("span", { class: "label", text: "Revisão de hoje (repetição espaçada)" }),
     el("div", { class: "row", style: "align-items:flex-end;gap:16px" }, el("span", { class: "bigcount", text: String(n) }),
       el("span", { class: "meta", style: "padding-bottom:4px", text: n ? `${due.length} para revisar · ${fresh.length} novos` : "Tudo em dia. Volte amanhã, ou faça uma maratona." })),
-    n ? el("div", {}, el("button", { class: "btn primary", type: "button", text: "Começar revisão", onclick: () => { startSession(body, [...due, ...fresh], { srs: true, title: "Revisão espaçada", onExit: renderReflexos }); } })) : null));
-  const all = allCards();
-  const deckCards = all.filter(c => c.deck === RF.deck);
+    el("p", { class: "meta", text: "O que você erra volta no mesmo dia; o que sai automático volta em 1, 2, 4, 8, 16 dias…" }),
+    n ? el("div", {}, el("button", { class: "btn primary", type: "button", text: "Começar revisão", onclick: () => startSession(body, [...due, ...fresh], { srs: true, title: "Revisão espaçada", onExit: renderExaustao }) })) : null));
+  const all = allCards(); const deckCards = all.filter(c => c.deck === RF.deck);
   body.append(el("div", { class: "panel" },
-    el("span", { class: "label", text: "Maratona" }),
-    el("p", { class: "meta", text: "Todos os cartões de um baralho, embaralhados, até você marcar automático em cada um. Não altera a agenda da revisão." }),
-    el("div", { class: "chips" }, DECKS.map(d => el("button", { class: "chip", type: "button", "aria-pressed": String(d.id === RF.deck), text: `${d.nome} (${all.filter(c => c.deck === d.id).length})`, onclick: () => { RF.deck = d.id; renderReflexos(); } }))),
-    el("div", {}, el("button", { class: "btn", type: "button", disabled: !deckCards.length, text: `Começar maratona · ${deckCards.length} cartões`, onclick: () => startSession(body, deckCards, { srs: false, title: "Maratona · " + DECKS.find(d => d.id === RF.deck).nome, onExit: renderReflexos }) }))));
+    el("span", { class: "label", text: "Maratona até zerar" }),
+    el("p", { class: "meta", text: "Todos os cartões de um baralho, embaralhados. O que você não marca como automático volta até sair. Não altera a agenda da revisão." }),
+    el("div", { class: "chips" }, DECKS.map(d => el("button", { class: "chip", type: "button", "aria-pressed": String(d.id === RF.deck), text: `${d.nome} (${all.filter(c => c.deck === d.id).length})`, onclick: () => { RF.deck = d.id; renderExaustao(); } }))),
+    el("div", {}, el("button", { class: "btn", type: "button", disabled: !deckCards.length, text: `Começar maratona · ${deckCards.length} cartões`, onclick: () => startSession(body, deckCards, { srs: false, title: "Maratona · " + DECKS.find(d => d.id === RF.deck).nome, onExit: renderExaustao }) }))));
   const weak = weakItems(ROTEIROS.map(r => r.id));
   if (weak.length) body.append(el("div", { class: "panel" }, el("span", { class: "label", text: "Foco nos seus esquecidos" }),
     el("p", { class: "meta", text: `${weak.length} itens dos roteiros que você deixou de fora em pelo menos 2 das últimas 5 tentativas, ou na última.` }),
-    el("div", {}, el("button", { class: "btn", type: "button", text: `Treinar ${Math.min(weak.length, 20)} itens`, onclick: () => startSession(body, weak.slice(0, 20).map(w => clozeCard(w.rid, w.si, w.iid)), { srs: false, title: "Foco nos esquecidos", onExit: renderReflexos }) }))));
+    el("div", {}, el("button", { class: "btn", type: "button", text: `Treinar ${Math.min(weak.length, 20)} itens`, onclick: () => startSession(body, weak.slice(0, 20).map(w => clozeCard(w.rid, w.si, w.iid)), { srs: false, title: "Foco nos esquecidos", onExit: renderExaustao }) }))));
   const t = dayNum();
   body.append(el("div", { class: "panel" }, el("span", { class: "label", text: "Baralhos" }),
     el("div", {}, DECKS.map(d => {
@@ -1447,18 +1697,18 @@ function renderReflexos() {
 }
 function renderMeusCartoes() {
   const box = el("div", { class: "panel" }, el("div", { class: "bar" }, el("span", { class: "label", text: `Meus cartões (${P.custom.length})` }),
-    el("button", { class: "btn small", type: "button", text: RF.adding ? "Cancelar" : "Novo cartão", onclick: () => { RF.adding = !RF.adding; renderReflexos(); } })));
+    el("button", { class: "btn small", type: "button", text: RF.adding ? "Cancelar" : "Novo cartão", onclick: () => { RF.adding = !RF.adding; renderExaustao(); } })));
   if (RF.adding) {
     const f = el("textarea", { id: "ncF", placeholder: "Frente: a pergunta (ex.: O que é o sinal de Kussmaul?)", style: "min-height:60px" });
     const vv = el("textarea", { id: "ncV", placeholder: "Verso: a resposta objetiva", style: "min-height:60px" });
     box.append(f, vv, el("div", {}, el("button", { class: "btn primary small", type: "button", text: "Salvar cartão", onclick: () => {
       if (!f.value.trim() || !vv.value.trim()) { toast("Preencha frente e verso."); return; }
-      addCustomCards([{ frente: f.value.trim(), verso: vv.value.trim() }], "manual"); RF.adding = false; toast("Cartão salvo."); renderReflexos(); } })));
+      addCustomCards([{ frente: f.value.trim(), verso: vv.value.trim() }], "manual"); RF.adding = false; toast("Cartão salvo."); renderExaustao(); } })));
   }
   if (!P.custom.length) box.append(el("p", { class: "meta", text: "Os pareceres do Claude sugerem cartões a partir das suas falhas; você também pode criar os seus aqui." }));
   else box.append(el("details", {}, el("summary", { class: "meta", text: "Ver e excluir" }), el("div", { class: "stack", style: "margin-top:8px" }, P.custom.slice().reverse().map(c => {
     const del = el("button", { class: "link", type: "button", text: "Excluir" });
-    del.addEventListener("click", () => { if (!del.dataset.armed) { del.dataset.armed = "1"; del.textContent = "Confirmar"; del.style.color = "var(--bad)"; return; } P.custom = P.custom.filter(x => x.id !== c.id); delete P.cards[c.id]; touch(); renderReflexos(); });
+    del.addEventListener("click", () => { if (!del.dataset.armed) { del.dataset.armed = "1"; del.textContent = "Confirmar"; del.style.color = "var(--bad)"; return; } P.custom = P.custom.filter(x => x.id !== c.id); delete P.cards[c.id]; touch(); renderExaustao(); });
     return el("div", { class: "bar soft" }, el("div", { style: "min-width:0;flex:1" }, el("b", { text: c.f }), el("p", { class: "meta", text: c.v })), del);
   }))));
   return box;
@@ -1468,19 +1718,20 @@ const SEQS = () => [...ROTEIROS.filter(r => r.etapas.length >= 3).map(r => ({ id
 function renderSeqHome(v) {
   const list = SEQS(); if (!RF.seqId) RF.seqId = list[0].id;
   const S = list.find(s => s.id === RF.seqId);
-  v.append(el("div", { class: "chips" }, list.map(s => { const b = P.seq[s.id]; return el("button", { class: "chip", type: "button", "aria-pressed": String(s.id === RF.seqId), text: s.nome + (b ? ` · ${fmtSec(b / 1000)}` : ""), onclick: () => { RF.seqId = s.id; RF.game = null; renderReflexos(); } }); })));
+  v.append(el("p", { class: "meta", text: "Toque nas etapas na ordem certa. Errou, conta erro; o recorde só vale sem erros." }),
+    el("div", { class: "chips" }, list.map(s => { const b = P.seq[s.id]; return el("button", { class: "chip", type: "button", "aria-pressed": String(s.id === RF.seqId), text: s.nome + (b ? ` · ${fmtSec(b / 1000)}` : ""), onclick: () => { RF.seqId = s.id; RF.game = null; renderExaustao(); } }); })));
   if (!RF.game || RF.game.id !== S.id) RF.game = { id: S.id, order: shuffle(S.passos.map((_, i) => i)), next: 0, errors: 0, t0: 0, t1: 0, running: false };
   const G = RF.game; const best = P.seq[S.id];
   const panel = el("div", { class: "panel" });
-  panel.append(el("div", { class: "bar" }, el("h3", { text: S.nome }), el("span", { class: "timer", id: "gTimer", text: "0:00" })),
-    el("p", { class: "meta", text: `Toque nas etapas na ordem correta. Erros: ${G.errors}${best ? ` · recorde sem erros: ${fmtSec(best / 1000)}` : ""}` }));
+  const info = el("p", { class: "meta", text: `Erros: ${G.errors}${best ? ` · recorde sem erros: ${fmtSec(best / 1000)}` : ""}` });
+  panel.append(el("div", { class: "bar" }, el("h3", { text: S.nome }), el("span", { class: "timer", id: "gTimer", text: "0:00" })), info);
   panel.append(el("div", { class: "slots" }, S.passos.map((p, i) => el("div", { class: "slot" + (i < G.next ? " filled" : ""), text: i < G.next ? p : "" }))));
   if (G.next < S.passos.length) panel.append(el("div", { class: "pool" }, G.order.filter(i => i >= G.next).map(i => {
     const b = el("button", { class: "chip", type: "button", text: S.passos[i] });
     b.addEventListener("click", () => {
       if (!G.t0) { G.t0 = performance.now(); G.running = true; }
-      if (i === G.next) { G.next++; if (G.next === S.passos.length) { G.t1 = performance.now(); G.running = false; const ms = G.t1 - G.t0; G.newRecord = !G.errors && (!P.seq[S.id] || ms < P.seq[S.id]); if (G.newRecord) P.seq[S.id] = Math.round(ms); markDay(); touch(); updateHeader(); } renderReflexos(); }
-      else { G.errors++; b.classList.remove("shake"); void b.offsetWidth; b.classList.add("shake"); panel.querySelector(".meta").textContent = `Toque nas etapas na ordem correta. Erros: ${G.errors}`; }
+      if (i === G.next) { G.next++; if (G.next === S.passos.length) { G.t1 = performance.now(); G.running = false; const ms = G.t1 - G.t0; G.newRecord = !G.errors && (!P.seq[S.id] || ms < P.seq[S.id]); if (G.newRecord) P.seq[S.id] = Math.round(ms); markDay(); touch(); updateHeader(); } renderExaustao(); }
+      else { G.errors++; b.classList.remove("shake"); void b.offsetWidth; b.classList.add("shake"); info.textContent = `Erros: ${G.errors}`; }
     });
     return b;
   })));
@@ -1488,15 +1739,17 @@ function renderSeqHome(v) {
     const ms = G.t1 - G.t0;
     panel.append(el("div", { class: "row" }, el("span", { class: "mid", text: fmtSec(ms / 1000) }), el("span", { class: "badge " + (G.errors ? "warn" : "ok"), text: G.errors ? `${G.errors} erro${G.errors > 1 ? "s" : ""}` : "sem erros" }),
       G.newRecord ? el("span", { class: "badge acc", text: "recorde" }) : null),
-      el("div", { class: "row" }, el("button", { class: "btn primary", type: "button", text: "De novo", onclick: () => { RF.game = null; renderReflexos(); } })));
+      el("div", { class: "row" }, el("button", { class: "btn primary", type: "button", text: "De novo", onclick: () => { RF.game = null; renderExaustao(); } })));
   }
   v.append(panel);
   const t = $("#gTimer"); if (t) t.textContent = fmtSec(G.t0 ? ((G.t1 || performance.now()) - G.t0) / 1000 : 0);
 }
 
 /* =====================================================================
-   8. PACIENTE SIMULADO — entrevista, exame dirigido, registro, parecer
+   8. ANAMNESE — roteiros, paciente simulado e escrita (inclusive de paciente real)
    ===================================================================== */
+const AN = { tab: ls.get("anTab", "roteiros") };
+if (!["roteiros", "paciente", "escrever"].includes(AN.tab)) AN.tab = "roteiros";
 const AN_CAMPOS = [
   ["id", "Identificação", "Idade, sexo, cor, estado civil, profissão, naturalidade, procedência…"],
   ["qp", "Queixa principal", "Nas palavras do paciente, com o tempo de evolução"],
@@ -1505,20 +1758,46 @@ const AN_CAMPOS = [
   ["ap", "Antecedentes pessoais", "Fisiológicos e patológicos: doenças, internações, cirurgias, alergias, medicações, vacinas"],
   ["af", "Antecedentes familiares", "Pais, irmãos, filhos"],
   ["hab", "Hábitos e condições socioeconômicas", "Tabagismo (maços-ano), etilismo, drogas, atividade física, dieta, moradia, trabalho"],
-  ["ef", "Exame físico", "Os achados que você obteve no modo Examinar"],
+  ["ef", "Exame físico", "Os achados que você obteve (opcional na anamnese escrita)"],
   ["hd", "Hipóteses e conduta", "Hipóteses diagnósticas em ordem de probabilidade e próximos passos"],
   ["apres", "Apresentação ao preceptor (1 minuto)", "Como você apresentaria em voz alta: identificação, queixa e tempo, achados-chave, hipótese e plano. Use o microfone."]
 ];
 const PS = { step: "setup", patient: null, turns: [], mode: "perguntar", t0: 0, dur: 0, voice: ls.get("pvoice", false), live: ls.get("plive", false), busy: false, report: null };
-const anDraft = ls.get("anDraft2", {});
+const LV = { origem: ls.get("alOrigem", "real"), cenario: ls.get("alCen", "Enfermaria"), report: null };
+function renderAnamnese() {
+  const v = $("#view-anamnese");
+  const host = el("div", { id: "anHost", class: "stack-lg" });
+  v.replaceChildren(el("div", { class: "stack" }, el("h2", { text: "Anamnese" }),
+    el("p", { class: "lead", text: "Três formas de treinar: decorar os roteiros de perguntas, entrevistar um paciente simulado ou escrever uma anamnese, inclusive de um paciente real do estágio, para o Claude corrigir." })),
+    seg([["roteiros", "Roteiros"], ["paciente", "Paciente simulado"], ["escrever", "Escrever anamnese"]], AN.tab, t => { AN.tab = t; ls.set("anTab", t); renderAnamnese(); }, "Modo"), host);
+  if (AN.tab === "roteiros") renderHost("Anamnese");
+  else if (AN.tab === "paciente") renderPaciente();
+  else renderEscrever();
+}
+function anHost(tab) { const h = $("#anHost"); return h && AN.tab === tab ? h : null; }
+function registroForm(pfx, draftKey, campos) {
+  const draft = ls.get(draftKey, {});
+  const panel = el("div", { class: "panel" });
+  const save = () => { const d = ls.get(draftKey, {}); campos.forEach(([k]) => { const n = $("#" + pfx + "-" + k); if (n) d[k] = n.value; }); ls.set(draftKey, d); };
+  for (const [k, n, h] of campos) {
+    const ta = el("textarea", { id: pfx + "-" + k, placeholder: h, style: ["hda", "isda", "ef", "apres"].includes(k) ? "min-height:120px" : null });
+    ta.value = draft[k] || ""; ta.addEventListener("input", save);
+    const m = micFor(ta);
+    panel.append(el("div", { class: "field" }, el("label", { for: ta.id, text: n }), m.wrap, m.partial));
+  }
+  return panel;
+}
+const readRegistro = (pfx, campos) => { const reg = {}; campos.forEach(([k, n]) => { const x = $("#" + pfx + "-" + k); if (x) reg[n] = x.value.trim(); }); return reg; };
+function clearRegistro(pfx, draftKey, campos) { campos.forEach(([k]) => { const n = $("#" + pfx + "-" + k); if (n) n.value = ""; }); ls.set(draftKey, {}); }
+
+/* --- paciente simulado --- */
 function renderPaciente() {
-  const v = $("#view-paciente"); v.replaceChildren();
-  v.append(el("div", { class: "stack" }, el("h2", { text: "Paciente simulado" }),
-    el("p", { class: "lead", text: "Uma consulta completa: você entrevista, examina o que achar necessário, registra e apresenta. O Claude faz o paciente e depois o preceptor." }),
-    el("div", { class: "steps3" }, ["1 · Entrevista", "2 · Registro", "3 · Parecer"].map((t, i) => el("span", { class: (PS.step === "setup" || PS.step === "entrevista" ? 0 : PS.report ? 2 : 1) === i ? "cur" : "", text: t })))));
-  if (PS.step === "setup") return v.append(renderPacSetup());
-  if (PS.step === "entrevista") return v.append(renderPacChat());
-  v.append(renderPacRegistro());
+  const host = anHost("paciente"); if (!host) return;
+  if (PS.step === "registro" && !PS.patient) PS.step = "setup";
+  host.replaceChildren(el("div", { class: "steps3" }, ["1 · Entrevista", "2 · Registro", "3 · Parecer"].map((t, i) => el("span", { class: (PS.step === "registro" ? (PS.report ? 2 : 1) : 0) === i ? "cur" : "", text: t }))));
+  if (PS.step === "setup") host.append(renderPacSetup());
+  else if (PS.step === "entrevista") host.append(renderPacChat());
+  else host.append(renderPacRegistro());
 }
 function renderPacSetup() {
   const dif = el("select", { id: "anDif" }, ["básica: história clara, paciente colaborativo", "intermediária: dados que só aparecem se perguntados", "avançada: paciente prolixo, comorbidades e confundidores"].map((t, i) => el("option", { value: t.split(":")[0], selected: i === 1, text: t[0].toUpperCase() + t.slice(1) })));
@@ -1527,12 +1806,11 @@ function renderPacSetup() {
   const live = el("input", { type: "checkbox", id: "pLive" }); live.checked = PS.live; live.addEventListener("change", () => { PS.live = live.checked; ls.set("plive", PS.live); });
   const out = el("div");
   return el("div", { class: "panel" },
+    el("p", { class: "meta", text: "O Claude faz o paciente: só conta o que você perguntar e não entende jargão. No modo Examinar você pede manobras específicas (ex.: \"ausculta pulmonar nas bases\") e recebe só aquele achado. Depois você registra e o Claude corrige como preceptor." }),
     el("div", { class: "grid2" }, el("div", { class: "field" }, el("label", { for: "anDif", text: "Dificuldade" }), dif), el("div", { class: "field" }, el("label", { for: "anArea", text: "Área" }), area)),
     el("div", { class: "row" }, CAP.tts ? el("label", { class: "toggle", for: "pVoice" }, voice, "Ouvir a voz do paciente") : null,
-      el("label", { class: "toggle", for: "pLive" }, live, "Mostrar tópicos abordados durante a entrevista")),
-    el("p", { class: "meta", text: "Durante a consulta, alterne para Examinar e peça manobras específicas (ex.: \"ausculta cardíaca\", \"palpação do hipocôndrio direito\"): o Claude devolve só o achado daquilo que você examinou." }),
-    el("div", { class: "row" }, el("button", { class: "btn primary", type: "button", text: "Chamar paciente", onclick: () => chamarPaciente(dif.value, area.value, out) }),
-      el("button", { class: "link", type: "button", text: "Só escrever uma anamnese, sem entrevista", onclick: () => { PS.patient = null; PS.turns = []; PS.step = "registro"; PS.report = null; renderPaciente(); } })),
+      el("label", { class: "toggle", for: "pLive" }, live, "Mostrar tópicos já abordados")),
+    el("div", { class: "row" }, el("button", { class: "btn primary", type: "button", text: "Chamar paciente", onclick: () => chamarPaciente(dif.value, area.value, out) })),
     out);
 }
 async function chamarPaciente(dif, area, out) {
@@ -1606,60 +1884,81 @@ async function sendChat(ta, chat, send, renderTopics) {
 }
 function renderPacRegistro() {
   const box = el("div", { class: "stack-lg" });
-  if (PS.patient) {
-    const p = PS.patient.paciente || {};
-    box.append(el("div", { class: "soft bar" }, el("span", {}, el("b", { text: str(p.nome) }), ` · ${[p.idade, p.sexo].filter(Boolean).join(", ")} · consulta de ${fmtSec(PS.dur)} · ${PS.turns.filter(t => t.role === "user" && t.kind === "q").length} perguntas · ${PS.turns.filter(t => t.role === "user" && t.kind === "x").length} manobras`),
-      el("button", { class: "link", type: "button", text: "Voltar à entrevista", onclick: () => { PS.step = "entrevista"; PS.t0 = Date.now() - PS.dur * 1000; renderPaciente(); } })));
-  }
-  const panel = el("div", { class: "panel" });
-  const save = debounce(() => { const d = {}; AN_CAMPOS.forEach(([k]) => { const n = $("#an-" + k); if (n) d[k] = n.value; }); ls.set("anDraft2", d); }, 400);
-  for (const [k, n, h] of AN_CAMPOS) {
-    if (k === "ef" && !PS.patient) continue;
-    const ta = el("textarea", { id: "an-" + k, placeholder: h, style: ["hda", "isda", "ef", "apres"].includes(k) ? "min-height:120px" : null });
-    ta.value = anDraft[k] || ""; ta.addEventListener("input", () => { anDraft[k] = ta.value; save(); });
-    const m = micFor(ta);
-    panel.append(el("div", { class: "field" }, el("label", { for: "an-" + k, text: n }), m.wrap, m.partial));
-  }
+  const p = PS.patient.paciente || {};
+  box.append(el("div", { class: "soft bar" }, el("span", {}, el("b", { text: str(p.nome) }), ` · ${[p.idade, p.sexo].filter(Boolean).join(", ")} · consulta de ${fmtSec(PS.dur)} · ${PS.turns.filter(t => t.role === "user" && t.kind === "q").length} perguntas · ${PS.turns.filter(t => t.role === "user" && t.kind === "x").length} manobras`),
+    el("button", { class: "link", type: "button", text: "Voltar à entrevista", onclick: () => { PS.step = "entrevista"; PS.t0 = Date.now() - PS.dur * 1000; renderPaciente(); } })));
+  const panel = registroForm("an", "anDraft2", AN_CAMPOS);
   const out = el("div", { class: "stack-lg" });
   panel.append(el("div", { class: "row" },
-    el("button", { class: "btn primary", type: "button", text: "Corrigir com o Claude", onclick: () => corrigirPaciente(out) }),
-    el("button", { class: "btn", type: "button", text: "Limpar registro", onclick: () => { AN_CAMPOS.forEach(([k]) => { anDraft[k] = ""; const n = $("#an-" + k); if (n) n.value = ""; }); ls.set("anDraft2", {}); } }),
+    el("button", { class: "btn primary", type: "button", text: "Corrigir com o Claude", onclick: () => corrigirAnamnese(out, "paciente") }),
+    el("button", { class: "btn", type: "button", text: "Limpar registro", onclick: () => clearRegistro("an", "anDraft2", AN_CAMPOS) }),
     el("button", { class: "link", type: "button", text: "Novo paciente", onclick: () => { Object.assign(PS, { step: "setup", patient: null, turns: [], report: null, t0: 0 }); renderPaciente(); } })));
   box.append(panel, out);
   if (PS.report) out.append(renderPacReport(PS.report, true));
   return box;
 }
-async function corrigirPaciente(out) {
-  const reg = {}; AN_CAMPOS.forEach(([k, n]) => { const el_ = $("#an-" + k); if (el_) reg[n] = el_.value.trim(); });
+
+/* --- escrever anamnese (paciente real, caso de aula ou treino livre) --- */
+function renderEscrever() {
+  const host = anHost("escrever"); if (!host) return;
+  const origem = el("select", { id: "alOrigem" }, [["real", "Paciente real (estágio, plantão, ambulatório)"], ["caso", "Caso de aula ou de livro"], ["treino", "Treino livre"]].map(([k, t]) => el("option", { value: k, text: t })));
+  origem.value = LV.origem; origem.addEventListener("change", () => { LV.origem = origem.value; ls.set("alOrigem", LV.origem); renderEscrever(); });
+  const cen = el("select", { id: "alCen" }, ["Ambulatório", "Pronto-socorro", "Enfermaria", "UTI", "Atenção primária", "Domicílio"].map(t => el("option", { text: t })));
+  cen.value = LV.cenario; cen.addEventListener("change", () => { LV.cenario = cen.value; ls.set("alCen", LV.cenario); });
+  host.replaceChildren(
+    el("p", { class: "meta", text: "Escreva a anamnese completa, seção por seção, como no prontuário. O Claude corrige estrutura, completude, cronologia e termos e diz que perguntas você ainda deveria fazer diante deste quadro." }),
+    el("div", { class: "grid2" }, el("div", { class: "field" }, el("label", { for: "alOrigem", text: "Origem" }), origem), el("div", { class: "field" }, el("label", { for: "alCen", text: "Cenário" }), cen)),
+    LV.origem === "real" ? el("p", { class: "note", text: "Paciente real: não escreva nome, prontuário, endereço ou qualquer dado que o identifique (LGPD). Use idade e sexo." }) : null);
+  const panel = registroForm("al", "anLivre", AN_CAMPOS);
+  const out = el("div", { class: "stack-lg" });
+  panel.append(el("div", { class: "row" },
+    el("button", { class: "btn primary", type: "button", text: "Corrigir com o Claude", onclick: () => corrigirAnamnese(out, "livre") }),
+    el("button", { class: "btn", type: "button", text: "Limpar", onclick: () => { clearRegistro("al", "anLivre", AN_CAMPOS); out.replaceChildren(); LV.report = null; } })));
+  host.append(panel, out);
+  if (LV.report) out.append(renderPacReport(LV.report, true));
+}
+async function corrigirAnamnese(out, kind) {
+  const isPac = kind === "paciente";
+  const reg = readRegistro(isPac ? "an" : "al", AN_CAMPOS);
   if (!Object.values(reg).some(Boolean)) { out.replaceChildren(el("div", { class: "err", text: "Preencha o registro antes de corrigir." })); return; }
-  const transcript = PS.turns.map(t => (t.role === "user" ? (t.kind === "x" ? "ALUNO EXAMINA: " + t.content.replace(/^\[EXAME\]\s*/, "") : "ALUNO: " + t.content) : (t.kind === "x" ? "ACHADO: " : "PACIENTE: ") + t.content)).join("\n");
-  const ctx = PS.patient
-    ? `CASO SIMULADO (o paciente conhecia tudo isto): ${JSON.stringify(PS.patient)}\nDURAÇÃO DA CONSULTA: ${fmtSec(PS.dur)}\nTRANSCRIÇÃO:\n${transcript || "(sem perguntas)"}`
-    : "Não houve entrevista simulada: avalie estrutura, completude, cronologia, terminologia e coerência interna do registro.";
+  let ctx, extra = "", schema = "";
+  if (isPac) {
+    const transcript = PS.turns.map(t => (t.role === "user" ? (t.kind === "x" ? "ALUNO EXAMINA: " + t.content.replace(/^\[EXAME\]\s*/, "") : "ALUNO: " + t.content) : (t.kind === "x" ? "ACHADO: " : "PACIENTE: ") + t.content)).join("\n");
+    ctx = `CASO SIMULADO (o paciente conhecia tudo isto): ${JSON.stringify(PS.patient)}\nDURAÇÃO DA CONSULTA: ${fmtSec(PS.dur)}\nTRANSCRIÇÃO:\n${transcript || "(sem perguntas)"}`;
+    extra = " Liste as perguntas importantes que ficaram por fazer. Avalie o exame dirigido: o que ele examinou de relevante e o que deixou de examinar. Avalie a comunicação (perguntas abertas x fechadas, empatia, jargão, perguntas indutoras) e a eficiência (duração, ordem).";
+    schema = ',"exame_dirigido":{"adequado":["..."],"faltou_examinar":["..."]},"comunicacao":{"pontos_fortes":["..."],"melhorar":["..."]},"diagnostico":{"gabarito":"...","diferenciais":["..."],"comentario":"o quanto as hipóteses do aluno se aproximaram e que dados sustentam o diagnóstico"}';
+  } else {
+    ctx = LV.origem === "real"
+      ? `ANAMNESE DE PACIENTE REAL colhida pelo aluno (cenário: ${LV.cenario}). Não há gabarito: avalie estrutura, completude, cronologia, terminologia e coerência interna.`
+      : LV.origem === "caso" ? `ANAMNESE ESCRITA A PARTIR DE UM CASO DE AULA OU LIVRO (cenário: ${LV.cenario}). Avalie estrutura, completude, cronologia, terminologia e coerência.`
+      : `ANAMNESE DE TREINO LIVRE (cenário: ${LV.cenario}). Avalie estrutura, completude, cronologia, terminologia e coerência.`;
+    extra = LV.origem === "treino" ? " Liste perguntas que um bom entrevistador ainda faria." : " Diante deste quadro, liste as perguntas que o aluno ainda deveria fazer (pensando nos diagnósticos diferenciais) e as hipóteses que a história sugere, com o porquê.";
+    schema = LV.origem === "treino" ? "" : ',"hipoteses_sugeridas":[{"nome":"...","por_que":"dados da história que apontam para ela"}]';
+  }
   const prompt = `Você é preceptor de semiologia médica (Porto, Bates). Corrija o trabalho de um estudante de medicina brasileiro, em português do Brasil, de forma rigorosa, específica e breve (no máximo 20 palavras por item de lista).
 ${ctx}
 REGISTRO DO ALUNO:
 ${Object.entries(reg).map(([k, v]) => `## ${k}\n${v || "(em branco)"}`).join("\n")}
 
-Avalie cada seção da anamnese: o que FALTOU (inclusive dados que o paciente sabia e o aluno não perguntou ou não anotou), o que PODERIA ACRESCENTAR e imprecisões (QP com termo técnico ou sem tempo, HDA sem cronologia ou sem caracterizar o sintoma, ISDA misturado à HDA, etc.).${PS.patient ? " Liste as perguntas importantes que ficaram por fazer. Avalie o exame dirigido: o que ele examinou de relevante e o que deixou de examinar. Avalie a comunicação (perguntas abertas x fechadas, empatia, jargão, perguntas indutoras) e a eficiência (duração, ordem)." : ""} Avalie a apresentação ao preceptor (frase-resumo, organização, o que sobra e o que falta). Escreva um registro-modelo. Crie de 2 a 5 cartões de memorização sobre as falhas deste aluno.
+Avalie cada seção da anamnese: o que FALTOU, o que PODERIA ACRESCENTAR e imprecisões (QP com termo técnico ou sem tempo, HDA sem cronologia ou sem caracterizar o sintoma, ISDA misturado à HDA, antecedentes incompletos etc.).${extra} Se a apresentação ao preceptor estiver preenchida, avalie (frase-resumo, organização, o que sobra e o que falta). Escreva um registro-modelo. Crie de 2 a 5 cartões de memorização sobre as falhas deste aluno.
 Responda só com JSON:
 {"nota":0-10,"resumo":"2 frases",
 "secoes":[{"nome":"...","avaliacao":"completo|parcial|ausente","descreveu_bem":["..."],"faltou":["..."],"acrescentar":["..."],"imprecisoes":["..."]}],
 "perguntas_nao_feitas":["..."],
-"exame_dirigido":{"adequado":["..."],"faltou_examinar":["..."]},
-"comunicacao":{"pontos_fortes":["..."],"melhorar":["..."]},
-"apresentacao":"comentário e uma versão-modelo em até 60 palavras",
+"apresentacao":"comentário e uma versão-modelo em até 60 palavras, ou string vazia",
 "terminologia":[{"escrito":"...","sugerido":"...","motivo":"..."}],
 "registro_modelo":"anamnese completa, uma seção por parágrafo",
-"cartoes":[{"frente":"...","verso":"..."}]${PS.patient ? ',"diagnostico":{"gabarito":"...","diferenciais":["..."],"comentario":"o quanto as hipóteses do aluno se aproximaram e que dados sustentam o diagnóstico"}' : ""}}`;
+"cartoes":[{"frente":"...","verso":"..."}]${schema}}`;
   const res = await runAI(out, "Claude está corrigindo", signal => CAP.sample.json(prompt, { signal }));
   if (!res) return;
-  PS.report = res; out.replaceChildren(renderPacReport(res, true));
-  const p = PS.patient && PS.patient.paciente || {};
-  saveRecord({ tipo: "paciente", titulo: PS.patient ? `${[p.idade, p.sexo].filter(Boolean).join(", ")} · ${str(PS.patient.roteiro && PS.patient.roteiro.qp).slice(0, 70)}` : "Anamnese livre", nota: Number(res.nota),
-    entrada: { paciente: PS.patient, entrevista: PS.turns, registro: reg, duracao: Math.round(PS.dur) }, resultado: res });
+  if (isPac) PS.report = res; else LV.report = res;
+  out.replaceChildren(renderPacReport(res, true));
+  if (isPac) { renderPaciente(); }
+  const p = isPac && PS.patient && PS.patient.paciente || {};
+  saveRecord({ tipo: isPac ? "paciente" : "anamnese", titulo: isPac ? `${[p.idade, p.sexo].filter(Boolean).join(", ")} · ${str(PS.patient.roteiro && PS.patient.roteiro.qp).slice(0, 70)}` : `${LV.origem === "real" ? "Paciente real" : LV.origem === "caso" ? "Caso de aula" : "Treino livre"} · ${str(reg["Queixa principal"]).slice(0, 70) || "anamnese"}`,
+    nota: Number(res.nota), entrada: isPac ? { paciente: PS.patient, entrevista: PS.turns, registro: reg, duracao: Math.round(PS.dur) } : { origem: LV.origem, cenario: LV.cenario, registro: reg }, resultado: res });
   markDay(); touch(); updateHeader();
-  out.scrollIntoView({ behavior: "smooth", block: "start" });
+  const o = isPac ? $("#anHost .stack-lg .panel:last-child") : out; (o || out).scrollIntoView({ behavior: "smooth", block: "start" });
 }
 const statusCls = a => { a = str(a).toLowerCase(); return a.startsWith("compl") || a.startsWith("adequ") ? "ok" : a.startsWith("parc") ? "warn" : a ? "bad" : ""; };
 function termTable(t) {
@@ -1674,7 +1973,7 @@ function scoreHead(res) {
     el("p", { style: "flex:1;min-width:220px;color:var(--ink-2)", text: str(res.resumo) }));
 }
 function renderPacReport(res, live) {
-  const box = el("div", { class: "panel" }, el("span", { class: "label", text: "Parecer da consulta" }), scoreHead(res));
+  const box = el("div", { class: "panel" }, el("span", { class: "label", text: "Parecer da anamnese" }), scoreHead(res));
   if (res.diagnostico) box.append(el("div", { class: "vignette" }, el("b", { text: "Diagnóstico: " + str(res.diagnostico.gabarito) }),
     arr(res.diagnostico.diferenciais).length ? el("p", { style: "margin-top:4px", text: "Diferenciais: " + arr(res.diagnostico.diferenciais).join("; ") }) : null,
     el("p", { style: "margin-top:4px", text: str(res.diagnostico.comentario) })));
@@ -1683,14 +1982,16 @@ function renderPacReport(res, live) {
     box.append(el("div", { class: "eval " + c }, el("h4", {}, el("span", { text: str(e.nome) }), el("span", { class: "badge " + c, text: str(e.avaliacao) || "—" })),
       lb("Registrou bem", e.descreveu_bem, "ok"), lb("Faltou", e.faltou, "bad"), lb("Poderia acrescentar", e.acrescentar, "warn"), lb("Imprecisões", e.imprecisoes, "bad")));
   }
-  const q = lb("Perguntas que ficaram por fazer", res.perguntas_nao_feitas, "bad");
+  const q = lb("Perguntas que ainda caberiam", res.perguntas_nao_feitas, "bad");
+  const hs = arr(res.hipoteses_sugeridas);
+  const hy = hs.length ? el("div", { class: "lb neu" }, el("h5", { text: "Hipóteses que a história sugere" }), el("ul", {}, hs.map(h => el("li", {}, el("b", { text: str(h.nome || h) }), h.por_que ? " · " + str(h.por_que) : "")))) : null;
   const ex = res.exame_dirigido ? el("div", { class: "cols" }, lb("Exame: examinou bem", res.exame_dirigido.adequado, "ok"), lb("Exame: faltou examinar", res.exame_dirigido.faltou_examinar, "bad")) : null;
   const com = res.comunicacao ? el("div", { class: "cols" }, lb("Comunicação: pontos fortes", res.comunicacao.pontos_fortes, "ok"), lb("Comunicação: a melhorar", res.comunicacao.melhorar, "warn")) : null;
-  [q, ex && ex.children.length ? ex : null, com && com.children.length ? com : null].forEach(x => x && box.append(x));
+  [q, hy, ex && ex.children.length ? ex : null, com && com.children.length ? com : null].forEach(x => x && box.append(x));
   if (res.apresentacao) box.append(el("div", { class: "soft" }, el("span", { class: "label", text: "Apresentação ao preceptor" }), el("p", { style: "margin-top:4px;white-space:pre-wrap", text: str(res.apresentacao) })));
   const tt = termTable(res.terminologia); if (tt) box.append(tt);
   if (res.registro_modelo) box.append(el("div", { class: "bar" }, el("span", { class: "label", text: "Registro-modelo" }), copyBtn(() => str(res.registro_modelo))), el("div", { class: "model", text: str(res.registro_modelo) }));
-  if (live) { const co = cardsOffer(res.cartoes, "Paciente simulado"); if (co) box.append(co); }
+  if (live) { const co = cardsOffer(res.cartoes, "Anamnese"); if (co) box.append(co); }
   return box;
 }
 
@@ -1808,7 +2109,7 @@ let histFilter = "";
 function sparkline(vals) {
   const W = 84, H = 26, pad = 4; const NS = "http://www.w3.org/2000/svg";
   const svg = document.createElementNS(NS, "svg"); svg.setAttribute("viewBox", `0 0 ${W} ${H}`); svg.setAttribute("class", "spark"); svg.setAttribute("role", "img");
-  svg.setAttribute("aria-label", vals.length ? "Cobertura nas últimas tentativas: " + vals.map(v => pct(v)).join(", ") : "Sem tentativas");
+  svg.setAttribute("aria-label", vals.length ? "Cobertura nas primeiras tentativas de cada dia: " + vals.map(v => pct(v)).join(", ") : "Sem tentativas");
   const base = document.createElementNS(NS, "line"); base.setAttribute("x1", 0); base.setAttribute("x2", W); base.setAttribute("y1", H - pad); base.setAttribute("y2", H - pad); base.setAttribute("stroke", "var(--rule)"); base.setAttribute("stroke-width", "1"); svg.append(base);
   if (!vals.length) return svg;
   const x = i => vals.length === 1 ? W - pad : pad + i * (W - 2 * pad) / (vals.length - 1);
@@ -1817,44 +2118,62 @@ function sparkline(vals) {
   vals.forEach((v, i) => { const c = document.createElementNS(NS, "circle"); c.setAttribute("cx", x(i)); c.setAttribute("cy", y(v)); c.setAttribute("r", i === vals.length - 1 ? 4 : 6); c.setAttribute("fill", i === vals.length - 1 ? "var(--accent)" : "transparent"); const t = document.createElementNS(NS, "title"); t.textContent = pct(v); c.append(t); svg.append(c); });
   return svg;
 }
+function histGroup(rec) {
+  if (rec.tipo === "recitar") { const r = RMAP[(rec.entrada || {}).rid]; return r && r.grupo === "Anamnese" ? "anamnese" : "exame"; }
+  if (rec.tipo === "exame") return "exame";
+  if (rec.tipo === "paciente" || rec.tipo === "anamnese") return "anamnese";
+  return "caso";
+}
+function histLabel(rec) {
+  if (rec.tipo === "recitar") return histGroup(rec) === "anamnese" ? "Roteiro de anamnese" : "Exame físico";
+  return { exame: "Exame físico (v1)", paciente: "Paciente simulado", anamnese: "Anamnese", caso: "Exame real" }[rec.tipo] || rec.tipo;
+}
 function renderProgresso() {
   const v = $("#view-progresso"); if (SESSION && SESSION.container.closest("#view-progresso")) return;
   v.replaceChildren(el("div", { class: "stack" }, el("h2", { text: "Progresso" }),
-    el("p", { class: "lead", text: "O que já está automático, o que você ainda esquece e os pareceres do Claude." })));
+    el("p", { class: "lead", text: "O que já está automático, o que você ainda esquece, as sessões de exaustão e os pareceres do Claude." })));
   const week = Date.now() - 7 * 864e5;
   const runsWeek = Object.values(P.runs).flat().filter(r => r.t >= week).length;
   const { due, fresh } = todayQueue();
   const ms = ROTEIROS.map(r => mastery(r.id)).filter(m => m != null);
   v.append(el("div", { class: "stats" },
     el("div", { class: "stat" }, el("span", { class: "label", text: "Dias seguidos" }), el("b", { text: String(streak()) })),
-    el("div", { class: "stat" }, el("span", { class: "label", text: "Roteiros em 7 dias" }), el("b", { text: String(runsWeek) })),
+    el("div", { class: "stat" }, el("span", { class: "label", text: "Rodadas em 7 dias" }), el("b", { text: String(runsWeek) })),
     el("div", { class: "stat" }, el("span", { class: "label", text: "Cartões para hoje" }), el("b", { text: String(due.length + fresh.length) })),
     el("div", { class: "stat" }, el("span", { class: "label", text: "Domínio médio" }), el("b", { text: ms.length ? pct(ms.reduce((a, b) => a + b, 0) / ms.length) : "—" }))));
-  const rows = el("div", {});
-  ROTEIROS.forEach(r => {
-    const m = mastery(r.id); const vals = cleanRuns(r.id).slice(-12).map(x => x.c);
-    rows.append(el("div", { class: "mrow" },
-      el("button", { class: "nm", type: "button", title: "Treinar " + r.nome, text: r.nome, onclick: () => { location.hash = "recitar"; openDrill(r.id); } }),
-      meter(m || 0), el("span", { class: "pc", text: m == null ? "—" : pct(m) }), sparkline(vals)));
-  });
-  v.append(el("div", { class: "panel" }, el("div", { class: "bar" }, el("span", { class: "label", text: "Domínio por roteiro" }), el("span", { class: "meta", text: "linha: cobertura nas últimas tentativas" })), rows));
+  const panel = el("div", { class: "panel" }, el("div", { class: "bar" }, el("span", { class: "label", text: "Domínio por roteiro" })),
+    el("p", { class: "meta", text: "O domínio usa só a primeira tentativa de cada dia em cada roteiro: mede o que ficou guardado, não o que você acabou de repetir. A linha mostra essas tentativas." }));
+  for (const g of ["Exame físico", "Anamnese"]) {
+    const rows = el("div", {});
+    ROTEIROS.filter(r => r.grupo === g).forEach(r => {
+      const m = mastery(r.id); const vals = cleanRuns(r.id).slice(-12).map(x => x.c);
+      rows.append(el("div", { class: "mrow" },
+        el("button", { class: "nm", type: "button", title: "Treinar " + r.nome, text: r.nome, onclick: () => goDrill(r.id) }),
+        meter(m || 0), el("span", { class: "pc", text: m == null ? "—" : pct(m) }), sparkline(vals)));
+    });
+    panel.append(el("h4", { style: "margin-top:6px", text: g }), rows);
+  }
+  v.append(panel);
   const weak = weakItems(ROTEIROS.map(r => r.id));
   const wbox = el("div", { class: "panel" }, el("span", { class: "label", text: "Itens que você mais esquece" }));
-  if (!weak.length) wbox.append(el("p", { class: "meta", text: "Nada por aqui ainda. Faça alguns roteiros em Recitar; os itens que você deixa de fora aparecem nesta lista." }));
+  if (!weak.length) wbox.append(el("p", { class: "meta", text: "Nada por aqui ainda. Treine os roteiros; os itens que você deixa de fora aparecem nesta lista." }));
   else {
     wbox.append(el("div", {}, weak.slice(0, 12).map(w => el("div", { class: "weak" }, el("span", {}, w.label, el("span", { class: "meta", text: " · " + RMAP[w.rid].nome })), el("span", { text: `faltou ${w.miss} de ${w.n}` })))));
     const host = el("div", { class: "stack-lg" });
     wbox.append(el("div", {}, el("button", { class: "btn primary", type: "button", text: `Treinar estes ${Math.min(weak.length, 20)}`, onclick: () => { v.replaceChildren(host); startSession(host, weak.slice(0, 20).map(w => clozeCard(w.rid, w.si, w.iid)), { srs: false, title: "Foco nos esquecidos", onExit: renderProgresso }); } })));
   }
   v.append(wbox);
+  const exs = (P.exs || []).slice().reverse();
+  v.append(el("div", { class: "panel" }, el("span", { class: "label", text: "Sessões de exaustão" }),
+    exs.length ? el("div", {}, exs.slice(0, 10).map(s => el("div", { class: "weak" }, el("span", {}, s.nome, el("span", { class: "meta", text: ` · ${fmtDate(s.t)} · ${s.rounds} rodadas · ${fmtSec(s.dur)}` })),
+      el("span", { style: `color:var(--${s.met === s.of ? "ok" : "ink-3"})`, text: `${s.met}/${s.of} no critério` }))))
+      : el("p", { class: "meta", text: "Nenhuma ainda. Na aba Exaustão, escolha um sistema ou um circuito e repita até o critério." })));
   const hbox = el("div", { class: "panel" }, el("span", { class: "label", text: "Pareceres do Claude" }));
-  const groups = { "": null, recitar: ["recitar", "exame"], paciente: ["paciente", "anamnese"], caso: ["caso"] };
-  hbox.append(el("div", { class: "chips" }, [["", "Tudo"], ["recitar", "Recitar"], ["paciente", "Paciente"], ["caso", "Casos reais"]].map(([k, t]) =>
+  hbox.append(el("div", { class: "chips" }, [["", "Tudo"], ["exame", "Exame físico"], ["anamnese", "Anamnese"], ["caso", "Casos reais"]].map(([k, t]) =>
     el("button", { class: "chip", type: "button", "aria-pressed": String(histFilter === k), text: t, onclick: () => { histFilter = k; renderProgresso(); } }))));
   if (histNote) hbox.append(el("p", { class: "disclaimer", text: histNote }));
-  const items = HIST.filter(r => !groups[histFilter] || groups[histFilter].includes(r.tipo));
-  if (!items.length) hbox.append(el("div", { class: "empty", text: "Nenhum parecer ainda. Peça o parecer do Claude em Recitar, corrija uma consulta em Paciente ou analise um exame real." }));
-  const TIPO = { recitar: "Recitar", exame: "Exame (v1)", paciente: "Paciente", anamnese: "Anamnese (v1)", caso: "Exame real" };
+  const items = HIST.filter(r => !histFilter || histGroup(r) === histFilter);
+  if (!items.length) hbox.append(el("div", { class: "empty", text: "Nenhum parecer ainda. Peça o parecer do Claude no Exame físico, corrija uma anamnese ou analise um exame real." }));
   const list = el("div", {});
   for (const rec of items) {
     const body = el("div", { hidden: true });
@@ -1867,7 +2186,7 @@ function renderProgresso() {
     const del = el("button", { class: "link", type: "button", text: "Excluir" });
     del.addEventListener("click", () => { if (del.dataset.armed) { deleteRecord(rec.id); return; } del.dataset.armed = "1"; del.textContent = "Confirmar exclusão"; del.style.color = "var(--bad)"; setTimeout(() => { delete del.dataset.armed; del.textContent = "Excluir"; del.style.color = ""; }, 4000); });
     list.append(el("div", { class: "hist-item" },
-      el("div", { class: "hist-row" }, el("span", { class: "badge " + (rec.tipo === "caso" || !isFinite(n) ? "" : n >= 8 ? "ok" : n >= 5 ? "warn" : "bad"), text: (TIPO[rec.tipo] || rec.tipo) + (isFinite(n) && rec.tipo !== "caso" ? " · " + dec(n) : "") }),
+      el("div", { class: "hist-row" }, el("span", { class: "badge " + (rec.tipo === "caso" || !isFinite(n) ? "" : n >= 8 ? "ok" : n >= 5 ? "warn" : "bad"), text: histLabel(rec) + (isFinite(n) && rec.tipo !== "caso" ? " · " + dec(n) : "") }),
         el("span", { class: "t", text: str(rec.titulo) }), el("time", { text: fmtDate(rec.criadoEm) })),
       el("div", { class: "row" }, open, del), body));
   }
@@ -1879,8 +2198,8 @@ function renderHistBody(rec) {
     if (rec.tipo === "recitar") {
       const e = rec.entrada || {}; const r = RMAP[e.rid];
       if (!r) return el("p", { class: "meta", text: "Roteiro não encontrado." });
-      const st = arr(res.status); let tot = 0, n = 0; st.forEach(s => arr(s).forEach(x => { n++; tot += x === "ok" ? 1 : x === "parcial" ? 0.5 : 0; }));
-      const R = { rid: r.id, mode: e.modo, texts: e.textos || [], prova: e.prova || "", cov: n ? tot / n : 0 };
+      const st = arr(res.status);
+      const R = { rid: r.id, mode: e.modo, texts: e.textos || [], prova: e.prova || "", cov: coverage(st.map(s => arr(s))) };
       const wrap = el("div", { class: "stack" });
       wrap.append(el("div", { class: "stack" }, r.etapas.map((s, i) => el("div", { class: "items" }, s.itens.map(([, label], j) => el("span", { class: "it " + ((st[i] || [])[j] || "pend"), text: label }))))));
       wrap.append(renderRecitarAI(res.ai || {}, R));
@@ -1907,15 +2226,15 @@ function renderLegacyExame(res) {
    ===================================================================== */
 function refreshPassive() {
   if (!RS.rid) renderRecitar();
-  if (!SESSION && curView() === "reflexos") renderReflexos();
+  if (!SESSION && curView() === "exaustao" && !EX.run) renderExaustao();
   if (curView() === "progresso") renderProgresso();
   updateHeader();
 }
 initCasos();
-renderRecitar(); renderPaciente(); route();
+renderAnamnese(); renderHost("Exame físico"); route();
 capsReady.then(async () => {
   setupDictation(); updateHeader();
-  if (CAP.tts && PS.step === "setup") renderPaciente();
+  if (CAP.tts && AN.tab === "paciente" && PS.step === "setup") renderPaciente();
   startHistory();
   await loadProgress();
   if (curView() === "progresso") renderProgresso();
