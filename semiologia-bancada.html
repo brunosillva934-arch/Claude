@@ -270,6 +270,10 @@ th{font-family:var(--mono);font-size:.68rem;text-transform:uppercase;color:var(-
 .callout:hover{border-color:var(--accent)}
 .go{color:var(--accent-ink);font-weight:500}
 .callout .go{font-size:1.3rem}
+/* exame alterado */
+.perc{background:var(--surface-2);border-left:3px solid var(--warn);border-radius:0 10px 10px 0;padding:10px 14px;display:flex;flex-direction:column;gap:4px}
+.perc ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:5px}
+.altrow{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;align-items:start}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--paper);padding:9px 16px;border-radius:8px;font-size:.88rem;z-index:50;max-width:calc(100% - 32px)}
 </style>
 
@@ -1076,11 +1080,18 @@ function goDrill(rid) {
 /* =====================================================================
    6. ROTEIROS — exame físico e anamnese de memória, com conferência instantânea
    ===================================================================== */
-const RS = { rid: null, mode: ls.get("rmode", "guiado"), cen: "normal", hints: false, stage: 0, texts: [], prova: "", acc: 0, t0: 0, running: false, caso: null, result: null, session: null };
+const RS = { rid: null, mode: ls.get("rmode", "guiado"), cen: "normal", hints: false, stage: 0, texts: [], prova: "", interp: "", acc: 0, t0: 0, running: false, caso: null, alt: null, result: null, session: null };
 function elapsedRecitar() { return RS.acc + (RS.running ? (performance.now() - RS.t0) / 1000 : 0); }
 function startTimer() { if (!RS.running && !RS.result) { RS.running = true; RS.t0 = performance.now(); } }
 function pauseRecitar() { if (RS.running) { RS.acc = elapsedRecitar(); RS.running = false; } }
-const saveDraft = debounce(() => { if (RS.rid) ls.set("draft:" + RS.rid, { texts: RS.texts, prova: RS.prova }); }, 400);
+const draftKeyOf = (rid, cen) => (cen === "alterado" ? "alt:" : "draft:") + rid;
+function saveDraft() { if (!RS.rid) return; ls.set(draftKeyOf(RS.rid, RS.cen), RS.cen === "alterado" ? { caso: RS.alt, texts: RS.texts, prova: RS.prova, interp: RS.interp } : { texts: RS.texts, prova: RS.prova }); }
+function switchCen(c) {
+  saveDraft(); RS.cen = c; ls.set("rcen", c);
+  const d = ls.get(draftKeyOf(RS.rid, c), {});
+  Object.assign(RS, { texts: d.texts || [], prova: d.prova || "", interp: d.interp || "", alt: c === "alterado" ? d.caso || null : null, acc: 0, running: false, stage: 0 });
+  renderRecitar();
+}
 function matchStage(st, text) { const t = norm(text); return st.itens.map(x => x[2].test(t)); }
 const HOSTS = { "Exame físico": () => $("#view-exame"), "Anamnese": () => AN.tab === "roteiros" ? $("#anHost") : null };
 const curHost = () => RS.rid ? HOSTS[RMAP[RS.rid].grupo]() : null;
@@ -1116,7 +1127,7 @@ function renderRecitarHome(v, grupo) {
   const exam = grupo === "Exame físico";
   v.replaceChildren();
   if (exam) v.append(el("div", { class: "stack" }, el("h2", { text: "Exame físico" }),
-    el("p", { class: "lead", text: "Descreva o exame de memória, na sequência, como no prontuário. A conferência por itens é instantânea; o parecer do Claude aponta o que faltou, o que poderia acrescentar e corrige termos e ordem." })));
+    el("p", { class: "lead", text: "Descreva o exame de memória, na sequência, como no prontuário. Três cenários: exame normal, caso clínico e exame alterado, em que o Claude gera o paciente e você traduz o que percebe em linguagem de prontuário. A conferência por itens é instantânea; o parecer do Claude aponta o que faltou e corrige termos, graduações e ordem." })));
   else v.append(el("p", { class: "meta", text: "O que perguntar em cada situação. Funciona como o exame físico: guiado ou prova, conferência instantânea e parecer opcional do Claude." }));
   const sug = suggestRoteiro(grupo);
   if (sug) v.append(el("button", { class: "suggest", type: "button", onclick: () => openDrill(sug.r.id) },
@@ -1133,12 +1144,15 @@ function renderRecitarHome(v, grupo) {
   v.append(exCallout(exam ? "circ_exame" : "circ_an"));
 }
 function openDrill(rid, keep) {
+  const exam = RMAP[rid].grupo === "Exame físico";
   if (RS.rid !== rid || !keep) RS.caso = null;
-  const d = keep ? {} : ls.get("draft:" + rid, {});
-  Object.assign(RS, { rid, stage: 0, texts: d.texts || [], prova: d.prova || "", acc: 0, running: false, result: null, session: null, hints: keep ? RS.hints : false });
-  if (!keep) RS.cen = "normal";
+  if (!exam) RS.cen = "normal"; else if (!keep) RS.cen = ls.get("rcen", "normal");
+  const d = keep ? {} : ls.get(draftKeyOf(rid, RS.cen), {});
+  Object.assign(RS, { rid, stage: 0, texts: d.texts || [], prova: d.prova || "", interp: d.interp || "", acc: 0, running: false, result: null, session: null, hints: keep ? RS.hints : false, alt: RS.cen === "alterado" && !keep ? d.caso || null : null });
   renderRecitar(); window.scrollTo(0, 0);
-  const h = curHost(); const ta = h && h.querySelector("textarea"); if (ta && keep) ta.focus();
+  const h = curHost();
+  if (keep && RS.cen === "alterado") { const box = h && h.querySelector(".alt-box"); if (box) gerarAlterado(box); return; }
+  const ta = h && h.querySelector("textarea"); if (ta && keep) ta.focus();
 }
 function drillHeader(r, extra) {
   const runs = allRuns(r.id).filter(x => !x.h); const best = runs.filter(x => x.c >= 0.9).reduce((a, x) => Math.min(a, x.s), Infinity);
@@ -1153,7 +1167,7 @@ function renderRecitarDrill(v) {
   v.replaceChildren(drillHeader(r, el("span", { class: "timer", id: "rTimer", title: "Começa quando você digita", text: fmtSec(elapsedRecitar()) })));
   const ctrls = el("div", { class: "row" });
   if (multi) ctrls.append(seg([["guiado", "Guiado"], ["prova", "Prova"]], mode, m => { RS.mode = m; ls.set("rmode", m); renderRecitar(); }, "Modo"));
-  if (isExam) ctrls.append(seg([["normal", "Exame normal"], ["caso", "Caso clínico"]], RS.cen, c => { RS.cen = c; renderRecitar(); }, "Cenário"));
+  if (isExam) ctrls.append(seg([["normal", "Normal"], ["caso", "Caso clínico"], ["alterado", "Alterado"]], RS.cen, switchCen, "Cenário"));
   const hintT = el("input", { type: "checkbox", id: "rHints" }); hintT.checked = RS.hints;
   hintT.addEventListener("change", () => { RS.hints = hintT.checked; renderRecitar(); });
   ctrls.append(el("label", { class: "toggle", for: "rHints" }, hintT, "Dicas"));
@@ -1162,6 +1176,8 @@ function renderRecitarDrill(v) {
     ? "Prova: um texto só, sem as etapas à vista. A ordem também é conferida."
     : "Guiado: uma etapa por vez, com contador de itens. Ctrl+Enter avança." + (RS.hints ? " Com dicas, a tentativa não conta para o domínio." : "") }));
   if (isExam && RS.cen === "caso") v.append(renderCaseBox());
+  const alt = isExam && RS.cen === "alterado";
+  if (alt) { v.append(renderAltCase()); if (!RS.alt) return; }
 
   if (mode === "prova") {
     const ta = el("textarea", { id: "rt-prova-" + r.id, style: "min-height:300px", placeholder: isExam ? "Descreva o exame completo, na ordem, como no prontuário…" : "Liste tudo, na ordem que usaria com o paciente…" });
@@ -1171,6 +1187,7 @@ function renderRecitarDrill(v) {
     const m = micFor(ta);
     const panel = el("div", { class: "panel" }, m.wrap, m.partial);
     if (RS.hints) panel.prepend(el("p", { class: "hint", text: "Sequência: " + r.etapas.map(s => s.n).join(" → ") }));
+    if (alt) panel.append(interpField());
     panel.append(el("div", { class: "bar" }, el("span", { class: "kbd", text: "Ctrl+Enter confere" }), el("button", { class: "btn primary", type: "button", text: "Conferir", onclick: conferir })));
     v.append(panel);
     return;
@@ -1195,8 +1212,10 @@ function renderRecitarDrill(v) {
   const last = i === r.etapas.length - 1;
   v.append(el("div", { class: "panel" },
     el("div", { class: "bar" }, el("h3", { class: "stage-title" }, multi ? el("span", { class: "num", text: pad2(i + 1) }) : null, st.n), counter),
+    alt ? el("div", { class: "perc" }, el("span", { class: "label", text: "Ao examinar" }), el("p", { text: percFor(RS.alt, r, i) })) : null,
     RS.hints ? el("p", { class: "hint", text: st.d }) : null, RS.hints ? chips : null,
     m.wrap, m.partial,
+    alt && last ? interpField() : null,
     el("div", { class: "bar" },
       el("div", { class: "row" }, i > 0 ? el("button", { class: "btn", type: "button", text: "← Anterior", onclick: () => { RS.stage = i - 1; renderRecitar(); focusStage(); } }) : null,
         el("span", { class: "kbd", text: "Ctrl+Enter" })),
@@ -1229,6 +1248,7 @@ function conferir() {
   const texts = mode === "prova" ? [] : r.etapas.map((_, i) => RS.texts[i] || "");
   const all = mode === "prova" ? RS.prova : texts.join("\n");
   if (!all.trim()) { toast("Escreva alguma coisa antes de conferir."); return; }
+  if (RS.cen === "alterado" && !RS.alt) { toast("Gere o paciente primeiro."); return; }
   pauseRecitar();
   const secs = elapsedRecitar();
   const statuses = r.etapas.map((st, i) => matchStage(st, mode === "prova" ? RS.prova : texts[i]).map(h => h ? "ok" : "falta"));
@@ -1236,8 +1256,8 @@ function conferir() {
   const prev = allRuns(r.id).filter(x => !x.h && x.m === mode[0]).slice(-1)[0];
   const priorBest = allRuns(r.id).filter(x => !x.h && x.c >= 0.9).reduce((a, x) => Math.min(a, x.s), Infinity);
   const { run, counted } = recordAttempt(r.id, statuses, secs, mode[0], RS.hints);
-  RS.result = { rid: r.id, mode, hints: RS.hints, secs, texts, prova: RS.prova, stages: statuses.map(s => ({ status: s.slice(), src: s.map(() => "auto") })), order, run, counted, prev, priorBest, cen: RS.cen, caso: RS.caso, ai: null };
-  recompute(); touch(); ls.del("draft:" + r.id);
+  RS.result = { rid: r.id, mode, hints: RS.hints, secs, texts, prova: RS.prova, stages: statuses.map(s => ({ status: s.slice(), src: s.map(() => "auto") })), order, run, counted, prev, priorBest, cen: RS.cen, caso: RS.caso, alt: RS.cen === "alterado" ? RS.alt : null, interp: RS.interp, autoAI: RS.cen === "alterado", ai: null };
+  recompute(); touch(); ls.del(draftKeyOf(r.id, RS.cen));
   renderRecitar(); window.scrollTo(0, 0); updateHeader();
 }
 function detectOrder(r, text) {
@@ -1285,26 +1305,100 @@ function renderRecitarResult(v) {
   });
   panel.append(stagesBox);
   if (R.mode === "prova") panel.append(el("details", {}, el("summary", { class: "meta", text: "Seu texto" }), el("p", { class: "yourtext", style: "margin-top:8px", text: R.prova })));
+  if (R.alt) panel.append(el("p", { class: "yourtext" }, el("b", { text: "Sua interpretação: " }), R.interp.trim() || "(em branco)"),
+    el("p", { class: "note", text: "No exame alterado, a conferência automática só vê se cada item foi descrito. Quem confere se o achado, o termo e a graduação estão certos é o parecer do Claude, logo abaixo." }));
   panel.append(el("p", { class: "disclaimer", text: "A conferência automática procura palavras-chave. Se algo que você escreveu não foi reconhecido, toque no item para marcar; o parecer do Claude verifica de verdade." }));
   const missed = []; r.etapas.forEach((st, i) => st.itens.forEach(([iid], j) => { if (R.stages[i].status[j] !== "ok") missed.push({ rid: r.id, si: i, iid }); }));
   const modelBox = modeloBox(r);
   const aiBox = el("div", { class: "stack-lg" });
   panel.append(el("div", { class: "row" },
-    el("button", { class: "btn primary", type: "button", text: "Repetir agora", onclick: () => openDrill(r.id, true) }),
+    el("button", { class: "btn primary", type: "button", text: R.alt ? "Novo paciente" : "Repetir agora", onclick: () => openDrill(r.id, true) }),
     el("button", { class: "btn", type: "button", text: "Exaustão neste roteiro", onclick: () => { startExaustao(r.id); location.hash = "exaustao"; } }),
     missed.length ? el("button", { class: "btn", type: "button", text: `Fixar os ${missed.length} que faltaram`, onclick: () => clozeFromRecitar(missed) }) : null,
     el("button", { class: "btn", type: "button", text: "Parecer do Claude", onclick: () => parecerRecitar(aiBox) }),
-    el("button", { class: "btn ghost", type: "button", text: "Ver modelo", onclick: e => { modelBox.hidden = !modelBox.hidden; e.target.textContent = modelBox.hidden ? "Ver modelo" : "Ocultar modelo"; } })));
+    R.alt ? null : el("button", { class: "btn ghost", type: "button", text: "Ver modelo", onclick: e => { modelBox.hidden = !modelBox.hidden; e.target.textContent = modelBox.hidden ? "Ver modelo" : "Ocultar modelo"; } })));
   panel.append(modelBox);
   v.append(panel);
   if (R.ai) aiBox.append(renderRecitarAI(R.ai, R));
+  else if (R.aiRunning) aiBox.append(el("div", { class: "busy" }, el("span", { class: "pulse" }), el("span", { text: "O Claude está conferindo os achados…" })));
   v.append(aiBox);
+  if (R.autoAI && !R.ai && !R.aiStarted && R.alt) { R.aiStarted = true; parecerRecitar(aiBox); }
   window.scrollTo(0, y);
 }
 function modeloBox(r) {
   return el("div", { class: "stack", hidden: true }, el("div", { class: "bar" }, el("span", { class: "label", text: r.pergunta ? "Roteiro-modelo" : "Descrição-modelo (exame normal)" }),
     el("div", { class: "row" }, CAP.tts ? el("button", { class: "link", type: "button", text: "Ouvir", onclick: () => speak(r.modelo) }) : null, copyBtn(() => r.modelo))),
     el("div", { class: "model", text: r.modelo }));
+}
+/* --- exame alterado: geração e conferência --- */
+function altPrompt(r) {
+  return `Crie um paciente para um estudante de medicina brasileiro treinar a descrição de EXAME FÍSICO ALTERADO do sistema "${r.nome}". Varie doença, idade, sexo e gravidade; fuja dos casos mais batidos. Semente: ${Math.random().toString(36).slice(2, 8)}.
+Etapas, nesta ordem: ${r.etapas.map(s => s.n).join(" | ")}.
+1. "vinheta": 1 a 2 frases (idade, sexo, queixa, tempo, contexto), sem diagnóstico nem achados.
+2. "percepcoes": um item por etapa, na mesma ordem, com "etapa" igual ao nome dado acima e "texto" contando o que o examinador vê, sente, ouve ou mede, em linguagem LEIGA e concreta, sem termos técnicos, sem nomes de sinais, sem graduação em cruzes (em vez de "macicez": "som abafado, como ao percutir a coxa"; em vez de "B3": "um som grave a mais logo depois do segundo, melhor na ponta com o paciente virado para a esquerda"; em vez de "edema 3+/4+": "o dedo afunda fundo na canela e a marca demora a sumir"). Dê medidas concretas (cm, qual espaço entre as costelas, larguras de dedo, números dos sinais vitais) e inclua também o que está normal, para o aluno descrever o exame inteiro. As percepções devem ser suficientes para chegar a um termo técnico preciso.
+3. "gabarito": um item por etapa, a descrição correta em linguagem de prontuário (termos técnicos, graduações, localização).
+4. "achados_alterados": de 3 a 6 achados anormais, cada um {"id":"a1","etapa":"...","achado":"descrição técnica correta e graduada"}.
+5. "sindrome", "diagnostico", "diferenciais".
+Responda só com JSON: {"titulo":"rótulo neutro, ex. 'Mulher, 64 anos, falta de ar'","vinheta":"...","percepcoes":[{"etapa":"...","texto":"..."}],"gabarito":[{"etapa":"...","texto":"..."}],"achados_alterados":[{"id":"a1","etapa":"...","achado":"..."}],"sindrome":"...","diagnostico":"...","diferenciais":["..."]}`;
+}
+function fetchAltCase(rid, signal) {
+  return CAP.sample.json(altPrompt(RMAP[rid]), { signal, cache: false }).then(c => {
+    if (!c || !arr(c.achados_alterados).length || !arr(c.percepcoes).length) throw { code: "invalid_json" };
+    c._rid = rid; c._order = shuffle(arr(c.percepcoes).map((_, i) => i)); return c;
+  });
+}
+async function gerarAlterado(box) {
+  const rid = RS.rid; const out = el("div"); box.append(out);
+  const res = await runAI(out, "Gerando paciente com exame alterado", signal => fetchAltCase(rid, signal));
+  if (res && RS.rid === rid && RS.cen === "alterado") { Object.assign(RS, { alt: res, texts: [], prova: "", interp: "", acc: 0, running: false, stage: 0, result: null }); saveDraft(); renderRecitar(); focusStage(); }
+}
+function percFor(c, r, i) { const ps = arr(c.percepcoes); const n = norm(r.etapas[i].n); const hit = ps.find(p => norm(p.etapa) === n); return str((hit || ps[i] || {}).texto); }
+function percList(c) {
+  const ps = arr(c.percepcoes); const order = arr(c._order).length === ps.length ? c._order : ps.map((_, i) => i);
+  return el("div", { class: "perc" }, el("span", { class: "label", text: "O que você percebe ao examinar · fora de ordem" }), el("ul", {}, order.map(i => el("li", { text: str(ps[i] && ps[i].texto) }))));
+}
+function renderAltCase() {
+  const r = RMAP[RS.rid];
+  if (!RS.alt) {
+    const box = el("div", { class: "soft stack alt-box" }, el("p", { text: "O Claude gera um paciente com exame alterado. Você recebe o que se vê, sente, ouve e mede, em linguagem leiga, e escreve a descrição de prontuário com termos, localização e graduações; no fim, a síndrome e a hipótese. O parecer confere cada achado alterado." }));
+    box.append(el("div", {}, el("button", { class: "btn primary small", type: "button", text: "Gerar paciente", onclick: () => gerarAlterado(box) })));
+    return box;
+  }
+  const c = RS.alt; const mode = r.etapas.length > 1 ? RS.mode : "guiado";
+  const box = el("div", { class: "stack" }, el("div", { class: "vignette" }, el("b", { text: c.titulo || "Paciente" }), el("p", { style: "margin-top:4px", text: str(c.vinheta) })));
+  if (mode === "prova") box.append(percList(c));
+  box.append(el("div", {}, el("button", { class: "link", type: "button", text: "Outro paciente", onclick: () => { RS.alt = null; renderRecitar(); const h = curHost(); const b = h && h.querySelector(".alt-box"); if (b) gerarAlterado(b); } })));
+  return box;
+}
+function interpField() {
+  const ta = el("textarea", { id: "rt-interp-" + RS.rid, style: "min-height:64px", placeholder: "Síndrome(s) e hipótese principal. Ex.: síndrome de insuficiência cardíaca congestiva; IC descompensada" });
+  ta.value = RS.interp; ta.addEventListener("input", () => { RS.interp = ta.value; saveDraft(); });
+  ta.addEventListener("keydown", e => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); conferir(); } });
+  return el("div", { class: "field" }, el("label", { for: ta.id, text: "Interpretação: síndrome e hipótese" }), ta);
+}
+function altStatusCls(s) { s = str(s).toLowerCase(); return s.startsWith("ok") ? "ok" : s.startsWith("parc") ? "parcial" : "falta"; }
+function altAllOk(alt) {
+  const m = Object.fromEntries(arr(alt.res && alt.res.alterados).map(a => [str(a.id), altStatusCls(a.status)]));
+  return arr(alt.case.achados_alterados).every(a => m[str(a.id)] === "ok") && altStatusCls(alt.res && alt.res.interpretacao && alt.res.interpretacao.status) === "ok";
+}
+function altCount(c, res) { const m = Object.fromEntries(arr(res && res.alterados).map(a => [str(a.id), altStatusCls(a.status)])); const all = arr(c.achados_alterados); return { ok: all.filter(a => m[str(a.id)] === "ok").length, tot: all.length }; }
+function renderAltCheck(c, res, interp) {
+  const box = el("div", { class: "stack" });
+  const map = Object.fromEntries(arr(res && res.alterados).map(a => [str(a.id), a]));
+  const n = altCount(c, res);
+  box.append(el("div", { class: "bar" }, el("span", { class: "label", text: "Achados alterados" }), el("span", { class: "lat", text: `${n.ok} de ${n.tot} corretos` })));
+  box.append(el("div", { class: "stack", style: "gap:8px" }, arr(c.achados_alterados).map(a => {
+    const m = map[str(a.id)] || {}; const s = altStatusCls(m.status);
+    return el("div", { class: "altrow" }, el("span", { class: "it " + s, text: s === "ok" ? "correto" : s === "parcial" ? "impreciso" : "faltou" }),
+      el("div", { style: "min-width:0" }, el("div", { text: str(a.achado) }), m.comentario ? el("div", { class: "meta", text: str(m.comentario) }) : null));
+  })));
+  const ip = res && res.interpretacao; const is = ip ? altStatusCls(ip.status) : null;
+  box.append(el("div", { class: "vignette" }, el("b", { text: "Diagnóstico: " + str(c.diagnostico) }),
+    el("p", { style: "margin-top:4px", text: "Síndrome: " + str(c.sindrome) + (arr(c.diferenciais).length ? " · Diferenciais: " + arr(c.diferenciais).join("; ") : "") }),
+    el("p", { style: "margin-top:4px" }, el("b", { text: "Sua interpretação: " }), interp || "(em branco)"),
+    ip ? el("p", { style: "margin-top:6px" }, el("span", { class: "badge " + { ok: "ok", parcial: "warn", falta: "bad" }[is], text: { ok: "interpretação correta", parcial: "interpretação parcial", falta: "interpretação errada ou ausente" }[is] }), " ", str(ip.comentario)) : null));
+  box.append(el("details", {}, el("summary", { class: "meta", text: "Descrição de referência (prontuário)" }), el("div", { class: "model", style: "margin-top:8px", text: arr(c.gabarito).map(g => `${str(g.etapa)}: ${str(g.texto)}`).join("\n") })));
+  return box;
 }
 function clozeCard(rid, si, iid) {
   const r = RMAP[rid], st = r.etapas[si]; const it = st.itens.find(x => x[0] === iid);
@@ -1319,8 +1413,17 @@ function promptRecitar(R) {
   const r = RMAP[R.rid]; const isExam = r.grupo === "Exame físico";
   const lines = []; r.etapas.forEach((st, i) => st.itens.forEach(([iid, label], j) => lines.push(`${iid} | ${st.n} | ${label} | automático: ${R.stages[i].status[j] === "ok" ? "detectado" : "não detectado"}`)));
   const texto = R.mode === "prova" ? R.prova : r.etapas.map((st, i) => `### ${st.n}\n${(R.texts[i] || "").trim() || "(em branco)"}`).join("\n");
-  const caso = R.cen === "caso" && R.caso ? `\nCENÁRIO: caso clínico mostrado ao aluno: "${R.caso.vinheta}". Gabarito oculto: ${R.caso.diagnostico}; achados esperados: ${arr(R.caso.achados_esperados).join("; ")}. Julgue também se os achados descritos combinam com o caso.` : isExam ? "\nCENÁRIO: exame normal de adulto hígido." : "";
-  return `Você é preceptor de semiologia médica (referências: Porto, Bates). Avalie um estudante de medicina brasileiro que ${isExam ? "descreveu de memória o exame" : "listou de memória o roteiro de anamnese"} "${r.nome}", no modo ${R.mode === "prova" ? "prova (texto único, sem ver as etapas)" : "guiado (por etapas)"}, em ${fmtSec(R.secs)}.${caso}
+  const isAlt = R.cen === "alterado" && R.alt;
+  const caso = R.cen === "caso" && R.caso ? `\nCENÁRIO: caso clínico mostrado ao aluno: "${R.caso.vinheta}". Gabarito oculto: ${R.caso.diagnostico}; achados esperados: ${arr(R.caso.achados_esperados).join("; ")}. Julgue também se os achados descritos combinam com o caso.` : "";
+  const ctxAlt = isAlt ? `\nCENÁRIO: exame ALTERADO. O aluno recebeu estas percepções em linguagem leiga e devia traduzi-las para linguagem de prontuário: ${JSON.stringify(R.alt.percepcoes)}
+DESCRIÇÃO DE REFERÊNCIA: ${JSON.stringify(R.alt.gabarito)}
+ACHADOS ALTERADOS (id | etapa | achado):
+${arr(R.alt.achados_alterados).map(a => `${a.id} | ${a.etapa} | ${a.achado}`).join("\n")}
+SÍNDROME: ${R.alt.sindrome} · DIAGNÓSTICO: ${R.alt.diagnostico}
+INTERPRETAÇÃO DO ALUNO: ${(R.interp || "").trim() || "(em branco)"}
+No checklist, "ok" significa que o item foi descrito corretamente, normal ou alterado conforme as percepções.` : "";
+  const cen = caso || ctxAlt || (isExam ? "\nCENÁRIO: exame normal de adulto hígido." : "");
+  return `Você é preceptor de semiologia médica (referências: Porto, Bates). Avalie um estudante de medicina brasileiro que ${isExam ? "descreveu de memória o exame" : "listou de memória o roteiro de anamnese"} "${r.nome}", no modo ${R.mode === "prova" ? "prova (texto único, sem ver as etapas)" : "guiado (por etapas)"}, em ${fmtSec(R.secs)}.${cen}
 SEQUÊNCIA ESPERADA: ${r.etapas.map(s => s.n).join(" → ")}
 CHECKLIST (id | etapa | item | conferência automática por palavra-chave):
 ${lines.join("\n")}
@@ -1333,20 +1436,24 @@ TAREFAS
 3. Acrescentar: até 5 enriquecimentos além do checklist.
 4. Comente a sequência em uma frase.
 5. Reescreva o texto do aluno corrigido e completo, ${isExam ? "no estilo de prontuário, mantendo os achados dele quando corretos" : "como roteiro de perguntas na ordem ideal, em linguagem que o paciente entende"}.
-6. Crie de 2 a 5 cartões de memorização (frente: pergunta curta; verso: resposta objetiva) sobre as falhas DESTE aluno.
+6. Crie de 2 a 5 cartões de memorização (frente: pergunta curta; verso: resposta objetiva) sobre as falhas DESTE aluno.${isAlt ? `
+7. Para CADA achado alterado (id) diga "ok" (descrito com termo técnico, localização e graduação adequados; sinônimos técnicos valem), "parcial" (vago, termo ou graduação imprecisos) ou "falta" (ausente ou errado), com comentário de até 15 palavras.
+8. Avalie a interpretação do aluno (síndrome e hipótese).` : ""}
 Aceite abreviações consagradas de prontuário brasileiro (BEG, LOTE, RCR 2T BNF, MV+ sem RA, RHA+, TEC, MMII etc.) quando a informação estiver completa; aponte só quando a abreviação esconder informação. Frases curtas, no máximo 20 palavras por item de lista.
 Responda só com JSON:
-{"itens":{"<id>":"ok|parcial|falta"},"resumo":"2 frases","pontos_fortes":["..."],"erros":[{"trecho":"...","problema":"...","correcao":"..."}],"acrescentar":["..."],"sequencia":"...","texto_corrigido":"...","cartoes":[{"frente":"...","verso":"..."}]${caso ? ',"caso":{"diagnostico":"...","comentario":"o que nos achados do aluno aponta ou não para o diagnóstico","achados_chave_omitidos":["..."]}' : ""}}`;
+{"itens":{"<id>":"ok|parcial|falta"},"resumo":"2 frases","pontos_fortes":["..."],"erros":[{"trecho":"...","problema":"...","correcao":"..."}],"acrescentar":["..."],"sequencia":"...","texto_corrigido":"...","cartoes":[{"frente":"...","verso":"..."}]${isAlt ? ',"alterados":[{"id":"a1","status":"ok|parcial|falta","comentario":"..."}],"interpretacao":{"status":"ok|parcial|falta","comentario":"..."}' : ""}${caso ? ',"caso":{"diagnostico":"...","comentario":"o que nos achados do aluno aponta ou não para o diagnóstico","achados_chave_omitidos":["..."]}' : ""}}`;
 }
 async function parecerRecitar(box) {
-  const R = RS.result; const r = RMAP[R.rid];
-  const res = await runAI(box, "Claude está avaliando", signal => CAP.sample.json(promptRecitar(R), { signal }));
+  const R = RS.result; const r = RMAP[R.rid]; if (R.aiRunning) return;
+  R.aiRunning = true;
+  const res = await runAI(box, R.alt ? "O Claude está conferindo os achados" : "Claude está avaliando", signal => CAP.sample.json(promptRecitar(R), { signal }));
+  R.aiRunning = false;
   if (!res || RS.result !== R) return;
   const st = res.itens && typeof res.itens === "object" ? res.itens : {};
   r.etapas.forEach((s, i) => s.itens.forEach(([iid], j) => { const a = str(st[iid]).toLowerCase(); const ns = a.startsWith("ok") ? "ok" : a.startsWith("parc") ? "parcial" : a.startsWith("falt") ? "falta" : null; if (ns) setStatus(i, j, ns, "ai"); }));
   R.ai = res;
-  saveRecord({ tipo: "recitar", titulo: `${r.nome} · ${R.mode === "prova" ? "prova" : "guiado"}${R.cen === "caso" && R.caso ? " · " + (R.caso.titulo || "caso") : ""}`, nota: Math.round(R.cov * 100) / 10,
-    entrada: { rid: r.id, modo: R.mode, cenario: R.cen, caso: R.caso, textos: R.texts, prova: R.prova, segundos: Math.round(R.secs) },
+  saveRecord({ tipo: "recitar", titulo: `${r.nome} · ${R.mode === "prova" ? "prova" : "guiado"}${R.cen === "caso" && R.caso ? " · " + (R.caso.titulo || "caso") : ""}${R.alt ? " · alterado · " + (R.alt.titulo || "") : ""}`, nota: Math.round(R.cov * 100) / 10,
+    entrada: { rid: r.id, modo: R.mode, cenario: R.cen, caso: R.caso, alt: R.alt, interp: R.interp, textos: R.texts, prova: R.prova, segundos: Math.round(R.secs) },
     resultado: { ai: res, status: R.stages.map(s => s.status) } });
   renderRecitar();
   setTimeout(() => { const h = curHost(); const b = h && h.querySelector(".ai-report"); if (b) b.scrollIntoView({ behavior: "smooth", block: "start" }); }, 50);
@@ -1364,6 +1471,7 @@ function renderRecitarAI(res, R) {
   const box = el("div", { class: "panel ai-report" }, el("span", { class: "label", text: "Parecer do Claude" }));
   box.append(el("div", { class: "score-row" }, el("div", { class: "kv" }, el("span", { class: "big", text: dec(R.cov * 10) }), el("span", { class: "meta", text: "nota pelos itens verificados" })),
     el("p", { style: "flex:1;min-width:220px;color:var(--ink-2)", text: str(res.resumo) })));
+  if (R.alt) box.append(renderAltCheck(R.alt, res, (R.interp || "").trim()));
   if (res.caso) box.append(el("div", { class: "vignette" }, el("b", { text: "Diagnóstico do caso: " + str(res.caso.diagnostico) }), el("p", { style: "margin-top:4px", text: str(res.caso.comentario) }),
     lb("Achados-chave que você não citou", res.caso.achados_chave_omitidos, "bad")));
   const cols = el("div", { class: "cols" }, lb("Pontos fortes", res.pontos_fortes, "ok"), lb("Poderia acrescentar", res.acrescentar, "warn"));
@@ -1393,7 +1501,8 @@ const CIRC = {
 const CRITS = [["p3", "100% três vezes seguidas"], ["p1", "100% uma vez"], ["r10", "10 rodadas"], ["livre", "Sem limite (eu encerro)"]];
 const TARGETS = [[0, "Sem tempo-alvo"], [300, "5 min por rodada"], [180, "3 min por rodada"], [120, "2 min por rodada"], [60, "1 min por rodada"]];
 const exName = id => CIRC[id] ? CIRC[id].nome : RMAP[id] ? RMAP[id].nome : "";
-const EX = { rid: ls.get("exRid", "cardio"), fmt: ls.get("exFmt", "unico"), crit: ls.get("exCrit", "p3"), target: ls.get("exTarget", 0), run: null };
+const EX = { rid: ls.get("exRid", "cardio"), fmt: ls.get("exFmt", "unico"), crit: ls.get("exCrit", "p3"), target: ls.get("exTarget", 0), cen: ls.get("exCen", "normal"), run: null };
+const exIsExam = id => CIRC[id] ? id === "circ_exame" : !!RMAP[id] && RMAP[id].grupo === "Exame físico";
 if (!CIRC[EX.rid] && !RMAP[EX.rid]) EX.rid = "cardio";
 const RF = { tab: "roteiros", deck: "achados", game: null, seqId: null, adding: false };
 
@@ -1403,7 +1512,8 @@ function pauseEx() { const X = EX.run; if (X && X.running) { X.acc = exElapsed()
 function startExaustao(id) {
   if (id) { EX.rid = id; ls.set("exRid", id); }
   const ids = CIRC[EX.rid] ? CIRC[EX.rid].ids.slice() : [EX.rid];
-  EX.run = { id: EX.rid, ids, qi: 0, per: {}, phase: "input", texts: [], prova: "", acc: 0, t0: 0, running: false, started: Date.now(), fmt: EX.fmt, crit: EX.crit, target: +EX.target || 0 };
+  EX.run = { id: EX.rid, ids, qi: 0, per: {}, phase: "input", texts: [], prova: "", interp: "", acc: 0, t0: 0, running: false, started: Date.now(), fmt: EX.fmt, crit: EX.crit, target: +EX.target || 0,
+    cen: exIsExam(EX.rid) && EX.cen === "alterado" ? "alterado" : "normal", case: null, caseLoading: false, caseErr: null, prefetch: null };
   RF.tab = "roteiros";
 }
 const trailingPerfect = per => { let n = 0; for (let i = per.rounds.length - 1; i >= 0 && per.rounds[i].perfect; i--) n++; return n; };
@@ -1417,7 +1527,8 @@ function finalizeRound(rd, rid, target) {
   rd.c = coverage(rd.statuses); rd.run.c = Math.round(rd.c * 1000) / 1000;
   rd.missed = []; RMAP[rid].etapas.forEach((st, i) => st.itens.forEach(([iid], j) => { if (rd.statuses[i][j] !== "ok") rd.missed.push(iid); }));
   rd.slow = !!(target && rd.secs > target);
-  rd.perfect = !rd.missed.length && !rd.slow;
+  const altOk = !rd.alt || rd.alt.state === "failed" || (rd.alt.state === "done" && altAllOk(rd.alt));
+  rd.perfect = !rd.missed.length && !rd.slow && altOk;
 }
 function exConferir() {
   const X = EX.run; const rid = X.ids[X.qi]; const r = RMAP[rid]; const per = X.per[rid];
@@ -1425,18 +1536,56 @@ function exConferir() {
   const texts = single ? [] : r.etapas.map((_, i) => X.texts[i] || "");
   const all = single ? X.prova : texts.join("\n");
   if (!all.trim()) { toast("Escreva alguma coisa antes de conferir."); return; }
+  if (X.cen === "alterado" && !X.case) return;
   pauseEx(); const secs = exElapsed();
   const statuses = r.etapas.map((st, i) => matchStage(st, single ? X.prova : texts[i]).map(h => h ? "ok" : "falta"));
   const { run, counted } = recordAttempt(rid, statuses, secs, single ? "p" : "g", false);
   const prev = per.rounds[per.rounds.length - 1];
-  const rd = { statuses, src: statuses.map(s => s.map(() => "auto")), secs, texts, prova: X.prova, run, counted, prevMissed: prev ? prev.missed.slice() : null, order: single && r.etapas.length > 1 ? detectOrder(r, X.prova) : null };
+  const rd = { statuses, src: statuses.map(s => s.map(() => "auto")), secs, texts, prova: X.prova, run, counted, prevMissed: prev ? prev.missed.slice() : null, order: single && r.etapas.length > 1 ? detectOrder(r, X.prova) : null,
+    alt: X.cen === "alterado" ? { case: X.case, interp: X.interp.trim(), state: CAP.sample ? "pending" : "failed", res: null } : null };
   finalizeRound(rd, rid, X.target);
   per.rounds.push(rd); per.done = critMet(per, X.crit);
   X.phase = "feedback"; touch(); updateHeader();
   renderExaustao(); const b = $("#exNext"); if (b) b.focus({ preventScroll: true }); window.scrollTo(0, 0);
+  if (rd.alt && rd.alt.state === "pending") exCheckAlt(X, per, rd, rid);
+}
+function exPrefetch(rid) {
+  const X = EX.run; if (!X || X.cen !== "alterado" || !CAP.sample || (X.prefetch && X.prefetch.rid === rid)) return;
+  const p = fetchAltCase(rid); p.catch(() => {}); X.prefetch = { rid, p };
+}
+async function exLoadCase() {
+  const X = EX.run; if (!X || X.caseLoading) return; const rid = X.ids[X.qi];
+  X.caseLoading = true; X.caseErr = null;
+  await capsReady;
+  if (!CAP.sample) X.caseErr = "O exame alterado precisa do Claude: abra o artefato no Claude (claude.ai ou app).";
+  else try {
+    let p; if (X.prefetch && X.prefetch.rid === rid) { p = X.prefetch.p; X.prefetch = null; } else p = fetchAltCase(rid);
+    const c = await p; if (EX.run !== X) return; X.case = c;
+  } catch (e) { if (EX.run !== X) return; X.caseErr = errMsg(e); }
+  X.caseLoading = false;
+  if (curView() === "exaustao" && RF.tab === "roteiros" && X.phase === "input") { renderExaustao(); const ta = $("#view-exaustao textarea"); if (ta) ta.focus(); }
+  if (X.case) exPrefetch(rid);
+}
+async function exCheckAlt(X, per, rd, rid) {
+  const c = rd.alt.case; const r = RMAP[rid];
+  const txt = rd.prova || r.etapas.map((s, i) => (rd.texts[i] || "").trim() ? `${s.n}: ${rd.texts[i].trim()}` : "").filter(Boolean).join("\n");
+  const prompt = `Compare a descrição de exame físico de um estudante de medicina brasileiro com os achados alterados de referência. Para cada achado: "ok" se descrito com termo técnico, localização e graduação adequados (sinônimos técnicos e abreviações consagradas valem), "parcial" se citado de forma vaga ou com termo ou graduação imprecisos, "falta" se ausente ou errado. Avalie também a síndrome e hipótese do aluno. Comentários de até 12 palavras.
+ACHADOS ALTERADOS (id | etapa | achado):
+${arr(c.achados_alterados).map(a => `${a.id} | ${a.etapa} | ${a.achado}`).join("\n")}
+SÍNDROME DE REFERÊNCIA: ${c.sindrome} · DIAGNÓSTICO: ${c.diagnostico}
+TEXTO DO ALUNO:
+${txt}
+SÍNDROME E HIPÓTESE DO ALUNO: ${rd.alt.interp || "(em branco)"}
+Responda só com JSON: {"alterados":[{"id":"a1","status":"ok|parcial|falta","comentario":"..."}],"interpretacao":{"status":"ok|parcial|falta","comentario":"..."}}`;
+  try { rd.alt.res = await CAP.sample.json(prompt, { modelTier: "quick", cache: false }); rd.alt.state = "done"; }
+  catch { rd.alt.state = "failed"; }
+  finalizeRound(rd, rid, X.target); per.done = critMet(per, X.crit);
+  const isLast = per.rounds[per.rounds.length - 1] === rd;
+  if (isLast && per.done && X.qi < X.ids.length - 1) exPrefetch(X.ids[X.qi + 1]);
+  if (EX.run === X && X.phase === "feedback" && isLast && curView() === "exaustao" && RF.tab === "roteiros") { renderExaustao(); const b = $("#exNext"); if (b) b.focus({ preventScroll: true }); }
 }
 function exNextRound() {
-  const X = EX.run; Object.assign(X, { phase: "input", texts: [], prova: "", acc: 0, running: false });
+  const X = EX.run; Object.assign(X, { phase: "input", texts: [], prova: "", interp: "", acc: 0, running: false, case: null, caseErr: null });
   renderExaustao(); const ta = $("#view-exaustao textarea"); if (ta) ta.focus(); window.scrollTo(0, 0);
 }
 function exNextRoteiro() { EX.run.qi++; exNextRound(); }
@@ -1445,7 +1594,7 @@ function exFinish() {
   if (!total) { EX.run = null; renderExaustao(); return; }
   pauseEx();
   const dur = Object.values(X.per).reduce((a, p) => a + p.rounds.reduce((b, rd) => b + rd.secs, 0), 0);
-  P.exs = [...(P.exs || []), { t: X.started, nome: exName(X.id), rounds: total, met: Object.values(X.per).filter(p => p.done).length, of: X.ids.length, dur: Math.round(dur), crit: X.crit }].slice(-30);
+  P.exs = [...(P.exs || []), { t: X.started, nome: exName(X.id) + (X.cen === "alterado" ? " · alterado" : ""), rounds: total, met: Object.values(X.per).filter(p => p.done).length, of: X.ids.length, dur: Math.round(dur), crit: X.crit }].slice(-30);
   touch(); X.phase = "done"; renderExaustao(); window.scrollTo(0, 0);
 }
 function renderExaustao() {
@@ -1470,7 +1619,8 @@ function renderExSetup(body) {
     el("optgroup", { label: "Circuitos" }, Object.entries(CIRC).map(([id, c]) => el("option", { value: id, text: c.nome }))),
     el("optgroup", { label: "Exame físico" }, ROTEIROS.filter(r => r.grupo === "Exame físico").map(r => el("option", { value: r.id, text: r.nome }))),
     el("optgroup", { label: "Anamnese" }, ROTEIROS.filter(r => r.grupo === "Anamnese").map(r => el("option", { value: r.id, text: r.nome }))));
-  sel.value = EX.rid; sel.addEventListener("change", () => { EX.rid = sel.value; ls.set("exRid", EX.rid); });
+  sel.value = EX.rid; sel.addEventListener("change", () => { EX.rid = sel.value; ls.set("exRid", EX.rid); renderExaustao(); });
+  const examSel = exIsExam(EX.rid); const altSel = examSel && EX.cen === "alterado";
   const crit = el("select", { id: "exCrit" }, CRITS.map(([k, t]) => el("option", { value: k, text: t }))); crit.value = EX.crit;
   crit.addEventListener("change", () => { EX.crit = crit.value; ls.set("exCrit", EX.crit); });
   const tgt = el("select", { id: "exTarget" }, TARGETS.map(([k, t]) => el("option", { value: String(k), text: t }))); tgt.value = String(EX.target);
@@ -1480,8 +1630,13 @@ function renderExSetup(body) {
     el("div", { class: "field" }, el("span", { class: "label", text: "Formato" }),
       seg([["unico", "Texto único"], ["etapas", "Por etapas"]], EX.fmt, f => { EX.fmt = f; ls.set("exFmt", f); renderExaustao(); }, "Formato"),
       el("span", { class: "meta", text: EX.fmt === "unico" ? "Um texto só, sem as etapas à vista: testa também a sequência." : "Um campo por etapa, com o nome da etapa à vista: foca no conteúdo de cada uma." })),
+    el("div", { class: "field" }, el("span", { class: "label", text: "Cenário" }),
+      examSel ? seg([["normal", "Exame normal"], ["alterado", "Exame alterado"]], EX.cen, c => { EX.cen = c; ls.set("exCen", c); renderExaustao(); }, "Cenário") : null,
+      el("span", { class: "meta", text: !examSel ? "O exame alterado vale para o exame físico; a anamnese usa os roteiros." : altSel ? "Cada rodada traz um paciente novo gerado pelo Claude: você lê o que se vê, sente e ouve, descreve em linguagem de prontuário e dá a síndrome. A rodada só é perfeita com todos os itens e todos os achados alterados corretos. O próximo paciente já vai sendo preparado enquanto você escreve." + (CAP.ready && !CAP.sample ? " Requer o artefato aberto no Claude." : "") : "Descrever de memória o exame normal." })),
     el("div", { class: "grid2" }, el("div", { class: "field" }, el("label", { for: "exCrit", text: "Critério de parada" }), crit), el("div", { class: "field" }, el("label", { for: "exTarget", text: "Tempo-alvo" }), tgt)),
-    el("div", {}, el("button", { class: "btn primary", type: "button", text: "Começar", onclick: () => { startExaustao(); renderExaustao(); const ta = $("#view-exaustao textarea"); if (ta) ta.focus(); } }))));
+    el("div", {}, el("button", { class: "btn primary", type: "button", text: "Começar", onclick: () => {
+      if (altSel && CAP.ready && !CAP.sample) { toast("O exame alterado precisa do artefato aberto no Claude."); return; }
+      startExaustao(); renderExaustao(); const ta = $("#view-exaustao textarea"); if (ta) ta.focus(); } }))));
   const exs = (P.exs || []).slice(-6).reverse();
   if (exs.length) body.append(el("div", { class: "panel" }, el("span", { class: "label", text: "Últimas sessões" }),
     el("div", {}, exs.map(s => el("div", { class: "weak" }, el("span", {}, s.nome, el("span", { class: "meta", text: ` · ${ago(s.t)} · ${s.rounds} rodadas · ${fmtSec(s.dur)}` })),
@@ -1504,10 +1659,18 @@ function renderExRun(body) {
   const single = X.fmt === "unico" || r.etapas.length === 1;
   body.append(el("div", { class: "panel" },
     el("div", { class: "bar" }, el("div", { class: "stack", style: "gap:2px" },
-      el("span", { class: "label", text: X.ids.length > 1 ? `${exName(X.id)} · ${X.qi + 1} de ${X.ids.length}` : "Exaustão" }), el("h3", { text: r.nome })),
+      el("span", { class: "label", text: (X.ids.length > 1 ? `${exName(X.id)} · ${X.qi + 1} de ${X.ids.length}` : "Exaustão") + (X.cen === "alterado" ? " · exame alterado" : "") }), el("h3", { text: r.nome })),
       el("div", { class: "row" }, el("span", { class: "timer", id: "xTimer", text: fmtSec(exElapsed()) }), el("button", { class: "btn small", type: "button", text: "Encerrar", onclick: exFinish }))),
     roundsStrip(per, X), el("p", { class: "meta", text: critLine(per, X) })));
   if (X.phase === "input") {
+    const alt = X.cen === "alterado";
+    if (alt && (!X.case || X.case._rid !== rid)) {
+      if (X.caseErr) { body.append(el("div", { class: "panel" }, el("div", { class: "err", text: X.caseErr }), el("div", {}, el("button", { class: "btn", type: "button", text: "Tentar de novo", onclick: () => { X.caseErr = null; X.case = null; renderExaustao(); } })))); return; }
+      body.append(el("div", { class: "busy" }, el("span", { class: "pulse" }), el("span", { text: "Gerando paciente com exame alterado…" })));
+      if (!X.caseLoading) setTimeout(exLoadCase, 0);
+      return;
+    }
+    if (alt) body.append(el("div", { class: "vignette" }, el("b", { text: X.case.titulo || "Paciente" }), el("p", { style: "margin-top:4px", text: str(X.case.vinheta) })));
     const last = per.rounds[per.rounds.length - 1];
     const panel = el("div", { class: "panel" });
     panel.append(el("p", { class: "meta", text: last ? `Rodada anterior: ${pct(last.c)}, ${last.missed.length ? `faltaram ${last.missed.length} itens` : "nada faltou"}. De novo, do início, sem olhar.` : (single ? "Tudo num texto só, na ordem. As etapas não aparecem." : "As etapas estão à vista; o conteúdo de cada uma é com você.") + " Ctrl+Enter confere." }));
@@ -1515,13 +1678,21 @@ function renderExRun(body) {
     if (single) {
       const ta = el("textarea", { id: `ex-${rid}-u`, style: "min-height:280px", placeholder: r.pergunta ? "Liste tudo o que perguntar, na ordem…" : "Descreva o exame completo, na ordem…" });
       ta.value = X.prova; ta.addEventListener("input", () => { X.prova = ta.value; exStart(); }); ta.addEventListener("keydown", onKey);
+      if (alt) panel.append(percList(X.case));
       const m = micFor(ta); panel.append(m.wrap, m.partial);
     } else r.etapas.forEach((st, i) => {
       const ta = el("textarea", { id: `ex-${rid}-${i}`, style: "min-height:72px" });
       ta.value = X.texts[i] || ""; ta.addEventListener("input", () => { X.texts[i] = ta.value; exStart(); }); ta.addEventListener("keydown", onKey);
       const m = micFor(ta);
-      panel.append(el("div", { class: "field" }, el("label", { for: ta.id }, el("span", { class: "num", text: pad2(i + 1) + " " }), st.n), m.wrap, m.partial));
+      panel.append(el("div", { class: "field" }, el("label", { for: ta.id }, el("span", { class: "num", text: pad2(i + 1) + " " }), st.n),
+        alt ? el("div", { class: "perc" }, el("p", { text: percFor(X.case, r, i) })) : null, m.wrap, m.partial));
     });
+    if (alt) {
+      const si = el("input", { type: "text", id: "ex-sind", placeholder: "Ex.: síndrome de consolidação; pneumonia lobar" });
+      si.value = X.interp; si.addEventListener("input", () => { X.interp = si.value; });
+      si.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); exConferir(); } });
+      panel.append(el("div", { class: "field" }, el("label", { for: "ex-sind", text: "Síndrome e hipótese principal" }), si));
+    }
     panel.append(el("div", { class: "bar" }, el("span", { class: "kbd", text: "Ctrl+Enter" }), el("button", { class: "btn primary", type: "button", text: "Conferir rodada", onclick: exConferir })));
     body.append(panel);
     return;
@@ -1547,6 +1718,11 @@ function renderExRun(body) {
       }))));
   });
   panel.append(box);
+  if (rd.alt) {
+    if (rd.alt.state === "pending") panel.append(el("div", { class: "busy" }, el("span", { class: "pulse" }), el("span", { text: "O Claude está conferindo os achados alterados…" })));
+    else if (rd.alt.state === "failed") panel.append(el("p", { class: "note", text: "Não foi possível conferir os achados alterados com o Claude; esta rodada valeu só pela conferência automática dos itens." }));
+    else panel.append(renderAltCheck(rd.alt.case, rd.alt.res, rd.alt.interp));
+  }
   const txt = single ? rd.prova : r.etapas.map((s, i) => (rd.texts[i] || "").trim() ? `${s.n}: ${rd.texts[i].trim()}` : "").filter(Boolean).join("\n");
   panel.append(el("details", {}, el("summary", { class: "meta", text: "Seu texto desta rodada" }), el("p", { class: "yourtext", style: "margin-top:8px", text: txt })));
   const mb = modeloBox(r);
@@ -1554,9 +1730,10 @@ function renderExRun(body) {
   const next = per.done
     ? (more ? el("button", { class: "btn primary", id: "exNext", type: "button", text: `Critério atingido · próximo: ${RMAP[X.ids[X.qi + 1]].nome} →`, onclick: exNextRoteiro })
             : el("button", { class: "btn primary", id: "exNext", type: "button", text: "Critério atingido · ver resumo", onclick: exFinish }))
-    : el("button", { class: "btn primary", id: "exNext", type: "button", text: "Próxima rodada", onclick: exNextRound });
+    : el("button", { class: "btn primary", id: "exNext", type: "button", text: X.cen === "alterado" ? "Próximo paciente" : "Próxima rodada", onclick: exNextRound });
+  if (rd.alt && rd.alt.state === "pending") next.disabled = true;
   panel.append(el("div", { class: "row" }, next, el("span", { class: "kbd", text: "Enter" }),
-    el("button", { class: "btn ghost", type: "button", text: "Ver modelo", onclick: e => { mb.hidden = !mb.hidden; e.target.textContent = mb.hidden ? "Ver modelo" : "Ocultar modelo"; } }),
+    rd.alt ? null : el("button", { class: "btn ghost", type: "button", text: "Ver modelo", onclick: e => { mb.hidden = !mb.hidden; e.target.textContent = mb.hidden ? "Ver modelo" : "Ocultar modelo"; } }),
     more && !per.done ? el("button", { class: "btn ghost", type: "button", text: "Pular para o próximo", onclick: exNextRoteiro }) : null), mb);
   panel.append(el("p", { class: "disclaimer", text: "Toque num item para corrigir a conferência automática. \"Recuperado\": faltou na rodada anterior e agora veio. \"De novo\": faltou outra vez." }));
   body.append(panel);
@@ -1573,7 +1750,8 @@ function renderExSummary(body) {
     el("div", { class: "score-row" },
       el("div", { class: "kv" }, el("span", { class: "label", text: "Rodadas" }), el("span", { class: "big", text: String(rounds) })),
       el("div", { class: "kv" }, el("span", { class: "label", text: "Tempo total" }), el("span", { class: "mid", text: fmtSec(dur) })),
-      el("div", { class: "kv" }, el("span", { class: "label", text: "No critério" }), el("span", { class: "mid", text: `${ids.filter(id => X.per[id].done).length}/${X.ids.length}` }))),
+      el("div", { class: "kv" }, el("span", { class: "label", text: "No critério" }), el("span", { class: "mid", text: `${ids.filter(id => X.per[id].done).length}/${X.ids.length}` })),
+      X.cen === "alterado" ? (() => { let ok = 0, tot = 0; ids.forEach(id => X.per[id].rounds.forEach(rd => { if (rd.alt && rd.alt.state === "done") { const n = altCount(rd.alt.case, rd.alt.res); ok += n.ok; tot += n.tot; } })); return el("div", { class: "kv" }, el("span", { class: "label", text: "Achados alterados" }), el("span", { class: "mid", text: `${ok}/${tot}` })); })() : null),
     el("div", { class: "tablewrap" }, el("table", {},
       el("thead", {}, el("tr", {}, el("th", { text: "Roteiro" }), el("th", { text: "Rodadas" }), el("th", { text: "1ª" }), el("th", { text: "Última" }), el("th", { text: "Critério" }))),
       el("tbody", {}, ids.map(id => { const rs = X.per[id].rounds; return el("tr", {}, el("td", { text: RMAP[id].nome }), el("td", { class: "mono", text: String(rs.length) }), el("td", { class: "mono", text: pct(rs[0].c) }), el("td", { class: "mono", text: pct(rs[rs.length - 1].c) }), el("td", { text: X.per[id].done ? "atingido" : "—" })); })))));
@@ -2199,7 +2377,7 @@ function renderHistBody(rec) {
       const e = rec.entrada || {}; const r = RMAP[e.rid];
       if (!r) return el("p", { class: "meta", text: "Roteiro não encontrado." });
       const st = arr(res.status);
-      const R = { rid: r.id, mode: e.modo, texts: e.textos || [], prova: e.prova || "", cov: coverage(st.map(s => arr(s))) };
+      const R = { rid: r.id, mode: e.modo, texts: e.textos || [], prova: e.prova || "", alt: e.alt || null, interp: e.interp || "", cov: coverage(st.map(s => arr(s))) };
       const wrap = el("div", { class: "stack" });
       wrap.append(el("div", { class: "stack" }, r.etapas.map((s, i) => el("div", { class: "items" }, s.itens.map(([, label], j) => el("span", { class: "it " + ((st[i] || [])[j] || "pend"), text: label }))))));
       wrap.append(renderRecitarAI(res.ai || {}, R));
