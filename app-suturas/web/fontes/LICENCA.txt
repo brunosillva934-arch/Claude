@@ -1,0 +1,5 @@
+As fontes desta pasta são distribuídas sob a SIL Open Font License 1.1 (https://scripts.sil.org/OFL).
+
+IBM Plex Sans e IBM Plex Mono — Copyright 2019 IBM Corp.
+
+Arquivos .woff2 (subconjunto latino) obtidos dos pacotes @fontsource.
