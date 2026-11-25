@@ -1,0 +1,6 @@
+s=open('site/src.html',encoding='utf-8').read()
+data=open('data/app_data.json',encoding='utf-8').read().replace('<','\\u003c')
+out=s.replace('__DATA__',data)
+open('site/instrumentacao.html','w',encoding='utf-8').write(out)
+open('site/_test.html','w',encoding='utf-8').write('<!doctype html><html><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style></head><body>'+out+'</body></html>')
+print(len(out))
