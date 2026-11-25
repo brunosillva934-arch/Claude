@@ -1189,7 +1189,7 @@ const S={
   quantidade:1, lote:[], loteNome:"", provas:{}, velocidade:"seguro", motor:"maximo",
   esteira:[], rodando:false, abort:null, t0:0, log:[],
   questao:null, prova:null, espelhoAberto:false, remover:null,
-  historico:[], banco:[], dbPronto:false, podeEscrever:true, sampleOk:null,
+  historico:[], banco:[], dbPronto:false, podeEscrever:true, sampleOk:null, claudeMotivo:"",
   arvores:{}, arvoreOcupado:null, arvoreAdd:null, arvoreErro:"",
   uso:{n:0,ent:0,sai:0,itens:[]}
 };
@@ -1367,7 +1367,7 @@ let _sample=null,_db=null,_dl=null,_user=null;
 async function cap(n){ try{ return (window.claude&&typeof window.claude.use==="function")?await window.claude.use(n):null; }catch(e){ return null; } }
 async function pedirSample(){
   if(_sample)return _sample;
-  _sample=await cap("sample"); S.sampleOk=!!_sample; renderBanner(); return _sample;
+  _sample=await cap("sample"); S.sampleOk=!!_sample; if(!_sample)S.claudeMotivo="ausente"; renderBanner(); return _sample;
 }
 /* fila própria: duas chamadas por vez, e a escrita passa na frente da conferência */
 const FILA={ativos:0,espera:[]};
@@ -1388,7 +1388,7 @@ function medir(rotulo,ent,sai,ms,tier,falhou){
 }
 async function chamar(prompt,{tier,signal,onText,cache,rotulo,prio,aoIniciar}={}){
   const s=await pedirSample();
-  if(!s) throw {code:"not_granted",message:"Claude indisponível nesta visualização."};
+  if(!s) throw {code:"ausente",message:"Claude indisponível nesta visualização."};
   const opts={modelTier:tier||"default"};
   if(signal)opts.signal=signal; if(onText)opts.onText=onText; if(cache===false)opts.cache=false;
   let t0=0;
@@ -1398,6 +1398,7 @@ async function chamar(prompt,{tier,signal,onText,cache,rotulo,prio,aoIniciar}={}
     return r||{text:"",truncated:false};
   }catch(e){
     if(!(e&&e.code==="cancelled"&&!t0)) medir(rotulo,prompt.length,(e&&e.text||"").length,t0?performance.now()-t0:0,opts.modelTier,true);
+    if(e&&SEM_CLAUDE.includes(e.code)){ S.sampleOk=false; S.claudeMotivo=e.code; renderBanner(); }
     throw e;
   }
 }
@@ -1406,9 +1407,18 @@ async function pedirRegistros(prompt,opts){
   if(!regs.length) throw {code:"gen",message:"a resposta veio sem dados legíveis."};
   return regs;
 }
+/* cada motivo de o Claude não responder tem um remédio diferente: a mensagem diz qual */
+const SEM_CLAUDE=["ausente","not_granted","sampling_disabled","not_declared","capability_disabled","capability_removed"];
+function motivoClaude(c){
+  return c==="not_granted"?"A permissão para esta página usar o Claude foi recusada. Recarregue a página e, quando o Claude perguntar, escolha permitir. Em conta de organização, o administrador também pode ter bloqueado."
+    :c==="not_declared"?"Esta cópia do gerador não tem permissão para usar o Claude. Abra o gerador original, pelo link de sempre."
+    :c==="sampling_disabled"?"O Claude não está disponível para esta conta ou organização agora."
+    :c==="capability_disabled"||c==="capability_removed"?"Esta visualização não deixa a página usar o Claude (por exemplo, uma versão antiga do app). Abra pelo claude.ai no navegador ou atualize o app."
+    :"Esta janela não dá acesso ao Claude. Isso acontece quando o gerador é aberto fora do claude.ai: numa aba separada, num arquivo baixado ou numa cópia sem permissão. Abra pelo link do artefato, com a sua conta entrada.";
+}
 function erroLegivel(e){
   const c=e&&e.code;
-  return ["not_granted","sampling_disabled","not_declared","capability_disabled","capability_removed"].includes(c)?"O Claude não está liberado nesta visualização: use o prompt único, na tela Montar."
+  return SEM_CLAUDE.includes(c)?motivoClaude(c)+" Enquanto isso, o prompt único da tela Montar funciona numa conversa comum."
     :c==="rate_limited"?"Limite de uso ou de chamadas atingido. Espere um pouco antes de tentar de novo."
     :c==="session_expired"?"A sessão expirou: entre de novo no Claude e repita."
     :c==="refused"?"O Claude recusou este pedido. Mude o tema ou o recorte e tente de novo."
@@ -1845,7 +1855,7 @@ async function entregar(){
     registrar();
   }catch(e){
     pr.correcao=pr.entregue?pr.correcao:null;
-    pr.falha=["not_granted","sampling_disabled"].includes(e&&e.code)?"O Claude não está liberado nesta visualização. Abra o espelho abaixo e corrija você mesmo, quesito a quesito.":erroLegivel(e);
+    pr.falha=SEM_CLAUDE.includes(e&&e.code)?motivoClaude(e.code)+" Abra o espelho abaixo e corrija você mesmo, quesito a quesito.":erroLegivel(e);
   }finally{ pr.entregando=false; render(); guardarMesa(); }
 }
 /* se o item da reescrita ficou com nota cheia depois de um recurso, o desafio muda de alvo ou deixa de existir */
@@ -2007,7 +2017,8 @@ function renderTabs(){
 function renderBanner(){
   const host=document.getElementById("banner"); if(!host)return;
   const avisos=[];
-  if(S.sampleOk===false) avisos.push(el("div",{cls:"alerta bad"},"O Claude não respondeu nesta visualização, então a página não consegue gerar nem corrigir aqui. O exemplo, o espelho e o prompt único continuam disponíveis: copie o prompt na tela Montar e rode numa conversa."));
+  if(S.sampleOk===false) avisos.push(el("div",{cls:"alerta bad"},el("b",{txt:"A página não consegue gerar nem corrigir aqui. "}),motivoClaude(S.claudeMotivo||"ausente"),
+    " O exemplo, o espelho e o prompt único continuam disponíveis: copie o prompt na tela Montar e rode numa conversa."));
   if(!S.podeEscrever) avisos.push(el("div",{cls:"alerta"},"Visualização sem permissão de escrita: a prova funciona, mas o painel e o banco não guardam nada."));
   host.replaceChildren(...avisos.map(a=>el("div",{style:"margin-bottom:14px"},a)));
 }
@@ -2959,5 +2970,5 @@ restaurarMesa();
 { const a=ler("disc-arvores",{}); if(a&&typeof a==="object") for(const [k,t] of Object.entries(a)) if(t&&t.id===k&&Array.isArray(t.nos)) S.arvores[k]=t; }
 render();
 iniciarDb();
-cap("sample").then(s=>{ _sample=s; S.sampleOk=!!s; renderBanner(); if(S.view==="prova")pintarValidacao(); });
+cap("sample").then(s=>{ _sample=s; S.sampleOk=!!s; if(!s)S.claudeMotivo="ausente"; renderBanner(); if(S.view==="prova")pintarValidacao(); });
 </script>
