@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
-"""Junta web/ num único index.html, com as fontes embutidas, para ir dentro do APK.
+"""Junta web/ num único HTML, com fontes e ícone embutidos.
 
-uso: python3 montar.py destino/index.html
+O mesmo arquivo vai dentro do APK (assets/index.html) e é a versão para computador
+(Discursivas-treino.html), que abre com dois cliques em qualquer navegador.
+
+uso: python3 montar.py destino.html
 """
 import base64
 import json
@@ -39,7 +42,9 @@ def fontes():
 
 def montar():
     exemplo = json.dumps(ler("exemplo.txt"), ensure_ascii=False).replace("</", "<\\/")
+    icone = base64.b64encode((RAIZ / "res" / "mipmap-xhdpi" / "ic_launcher.png").read_bytes()).decode("ascii")
     partes = {
+        "/*ICONE*/": "data:image/png;base64," + icone,
         "/*FONTES*/": fontes(),
         "/*ESTILO*/": ler("estilo.css"),
         "/*EXEMPLO*/": "window.EXEMPLO_TXT=" + exemplo + ";",

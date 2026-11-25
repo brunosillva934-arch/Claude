@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # Monta o APK sem Gradle nem Android Studio, só com pacotes do Ubuntu/Debian:
 #   apt-get install aapt apksigner zipalign dalvik-exchange android-sdk-platform-23 default-jdk python3
-# uso: ./montar.sh        (gera Discursivas-treino.apk nesta pasta)
+# uso: ./montar.sh   (gera nesta pasta o Discursivas-treino.apk e o Discursivas-treino.html, a versão para computador)
 set -euo pipefail
 cd "$(dirname "$0")"
 
-NOME=1.0     # versão que a pessoa vê
-CODIGO=1     # aumente a cada versão: o Android só instala por cima se não for menor
+NOME=1.2     # versão que a pessoa vê
+CODIGO=3     # aumente a cada versão: o Android só instala por cima se não for menor
 MINIMO=21    # Android 5.0
 ALVO=34      # Android 14
 ANDROID_JAR=${ANDROID_JAR:-/usr/lib/android-sdk/platforms/android-23/android.jar}
@@ -19,8 +19,9 @@ SENHA=android
 T=$(mktemp -d)   # pasta de trabalho descartável, fica em /tmp
 mkdir -p "$T/classes" "$T/assets" "$T/dex"
 
-# 1. a página: web/ vira um único index.html, com as fontes dentro
+# 1. a página: web/ vira um único HTML, com as fontes dentro; a cópia de fora é a versão para computador
 python3 montar.py "$T/assets/index.html"
+cp "$T/assets/index.html" Discursivas-treino.html
 
 # 2. o código Java vira classes.dex (sem lambdas: o dx antigo não as converte)
 javac -nowarn -Xlint:-options -source 8 -target 8 -bootclasspath "$ANDROID_JAR" -d "$T/classes" $(find src -name '*.java')

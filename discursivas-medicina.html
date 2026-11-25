@@ -94,6 +94,17 @@ select:focus-visible,input:focus-visible,textarea:focus-visible,button:focus-vis
 .btn-sw[data-on="1"] b{color:var(--accent-ink)}
 .btn-sw[data-on="1"] small{color:var(--ink-2)}
 .pin{font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;background:var(--seal-soft);color:var(--seal);border-radius:2px;padding:1px 4px;text-transform:uppercase}
+.lista-nome{margin-top:12px;border-top:1px solid var(--rule);padding-top:12px}
+.card.fino > .lista-nome:first-child{margin-top:0;border-top:0;padding-top:0}
+.lista-nome-rot{display:block;font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);margin-bottom:2px}
+.lista-nome-linha{display:flex;align-items:center;gap:10px}
+.nome-lista{flex:1 1 auto;min-width:0;font-family:var(--display);font-size:21px;font-weight:600;letter-spacing:-.01em;line-height:1.25;color:var(--ink);background:transparent;border:0;border-bottom:1.5px dashed var(--rule-strong);border-radius:0;padding:4px 0 5px}
+.nome-lista:hover{border-bottom-color:var(--ink-3)}
+.nome-lista:focus{outline:none;border-bottom:1.5px solid var(--accent)}
+.nome-lista::placeholder{color:var(--ink-2);opacity:.75;font-weight:600}
+.tipo-lista{flex:none;font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;padding:4px 9px;border-radius:999px;background:var(--accent-soft);color:var(--accent-ink)}
+.tipo-lista[data-t="objetivas"]{background:var(--seal-soft);color:var(--seal)}
+.tipo-lista[data-t="mista"]{background:var(--surface-2);color:var(--ink-2)}
 .alerta{background:var(--warn-soft);border-left:3px solid var(--warn);color:var(--ink);font-size:13px;padding:8px 10px;border-radius:0 3px 3px 0}
 .alerta.bad{background:var(--bad-soft);border-color:var(--bad)}
 .alerta.ok{background:var(--ok-soft);border-color:var(--ok)}
@@ -1175,7 +1186,7 @@ const EXEMPLO = {
 const S={
   view:"montar", responder:false,
   params:{tipo:"discursiva",alternativas:4,nivel:"internato",direta:true,area:"clínica médica",tema:"insuficiência cardíaca descompensada",foco:"",formato:"mecanismo",dificuldade:3,cenario:"pronto-socorro",limite:10,itens:3,referencia:"",fonte:"diretriz",material:"",semPessoas:false,botoes:[]},
-  quantidade:1, lote:[], provas:{}, velocidade:"seguro", motor:"maximo",
+  quantidade:1, lote:[], loteNome:"", provas:{}, velocidade:"seguro", motor:"maximo",
   esteira:[], rodando:false, abort:null, t0:0, log:[],
   questao:null, prova:null, espelhoAberto:false, remover:null,
   historico:[], banco:[], dbPronto:false, podeEscrever:true, sampleOk:null,
@@ -1452,14 +1463,14 @@ let _mesaT=0;
 function guardarMesa(){
   const qs=S.lote.filter(q=>q&&!q.gerando&&!q.exemplo&&utilizavel(q)).map(limpa);
   const provas={}; for(const q of qs) if(S.provas[q.id]) provas[q.id]=limpa(S.provas[q.id]);
-  guardar("disc-mesa",{qs,atual:S.questao&&S.questao.id,provas,responder:S.responder});
+  guardar("disc-mesa",{qs,atual:S.questao&&S.questao.id,provas,responder:S.responder,nome:S.loteNome||""});
 }
 function agendarMesa(){ clearTimeout(_mesaT); _mesaT=setTimeout(guardarMesa,800); }
 function restaurarMesa(){
   const m=ler("disc-mesa",null); if(!m||!Array.isArray(m.qs))return;
   const qs=m.qs.filter(q=>q&&q.id&&q.params&&q.nucleo&&q.nucleo.espelho&&q.enunciado);
   if(!qs.length)return;
-  S.lote=qs; S.provas=m.provas||{};
+  S.lote=qs; S.provas=m.provas||{}; S.loteNome=String(m.nome||"").slice(0,80);
   S.questao=qs.find(q=>q.id===m.atual)||qs[0]; const pr=S.prova=provaDe(S.questao);
   S.responder=!!(m.responder||pr.entregue); S.espelhoAberto=!S.responder||pr.fase>=2||!!pr.pulou;
 }
@@ -1584,12 +1595,30 @@ function esvaziarSessao(){
   S.remover=null;
   if(S.questao&&S.lote.includes(S.questao)){ S.questao=null; S.prova=null; }
   for(const q of S.lote) delete S.provas[q.id];
-  S.lote=[]; render(); guardarMesa();
+  S.lote=[]; S.loteNome=""; render(); guardarMesa();
 }
 const prontasDaSessao=()=>S.lote.filter(x=>!x.gerando&&utilizavel(x));
+/* o nome da lista vai no topo do TXT e no nome do arquivo; o app de responder mostra esse nome em destaque */
+function tipoDaLista(qs){ const o=qs.filter(ehObj).length; return !qs.length?"":o===qs.length?"objetivas":o===0?"discursivas":"mista"; }
+function nomeSugerido(qs){
+  const cont={}; for(const q of qs){ const t=String(q.params.tema||"").trim(); if(t) cont[t]=(cont[t]||0)+1; }
+  const temas=Object.keys(cont).sort((a,b)=>cont[b]-cont[a]), t=temas[0]||"Sessão", tipo=tipoDaLista(qs);
+  return `${t.charAt(0).toUpperCase()+t.slice(1)}${temas.length>1?` e mais ${temas.length-1}`:""}${tipo?` · ${tipo}`:""}`;
+}
+const nomeDaLista=qs=>String(S.loteNome||"").replace(/\s+/g," ").trim()||nomeSugerido(qs);
+function campoNomeLista(qs){
+  const tipo=tipoDaLista(qs);
+  return el("div",{cls:"lista-nome"},
+    el("label",{cls:"lista-nome-rot",for:"nome-lista",txt:"nome da lista"}),
+    el("div",{cls:"lista-nome-linha"},
+      el("input",{type:"text",id:"nome-lista",cls:"nome-lista",maxlength:"80",value:S.loteNome||"",placeholder:nomeSugerido(qs),autocomplete:"off",
+        oninput:e=>{ S.loteNome=e.target.value; agendarMesa(); }}),
+      tipo?el("span",{cls:"tipo-lista","data-t":tipo,txt:tipo}):null));
+}
 function baixarSessao(btnId){
   const qs=prontasDaSessao(); if(!qs.length)return;
-  baixarArquivo(`sessao-${qs.length}q-${hoje()}.txt`,txtPacote(qs,`Sessão · ${qs.length} ${qs.length===1?"questão":"questões"}`),btnId);
+  const nome=nomeDaLista(qs);
+  baixarArquivo(`${slug(nome)}-${qs.length}q-${hoje()}.txt`,txtPacote(qs,nome),btnId);
 }
 function encerrar(q){ q.gerando=false; q.parcial=null; finalizar(q); }
 async function gerarBloco(p,alvo,ctx,signal){
@@ -2126,7 +2155,8 @@ function vMontar(){
         S.rodando?"gerando…":(n>1?`Gerar ${n} questões`:"Gerar questão")),
       S.rodando?el("button",{cls:"ghost",onclick:parar},"Parar"):null,
       el("span",{cls:"hint tight",txt:"as novas questões entram na sessão e as anteriores ficam; responder é um botão dentro de cada uma."})),
-    naSessao?el("div",{cls:"acoes",style:"margin-top:12px;border-top:1px solid var(--rule);padding-top:12px"},
+    naSessao?campoNomeLista(prontasDaSessao()):null,
+    naSessao?el("div",{cls:"acoes",style:"margin-top:8px"},
       el("span",{cls:"kicker",txt:`sessão · ${naSessao} ${naSessao===1?"questão":"questões"}`}),
       el("button",{cls:"ghost sm",id:"dl-sessao",onclick:()=>baixarSessao("dl-sessao")},naSessao===1?"Baixar em TXT":`Baixar as ${naSessao} em um TXT`),
       el("button",{cls:"ghost sm",onclick:()=>{ const q=S.questao&&S.lote.includes(S.questao)?S.questao:S.lote[S.lote.length-1]; if(q)abrirQuestao(q); }},"Abrir"),
@@ -2276,13 +2306,14 @@ function vProva(){
 function barraLote(q){
   const i=S.lote.indexOf(q), prontas=prontasDaSessao();
   return el("section",{cls:"card fino"},
-    el("div",{cls:"acoes"},
+    prontas.length?campoNomeLista(prontas):null,
+    el("div",{cls:"acoes",style:prontas.length?"margin-top:8px":null},
       el("span",{cls:"kicker",txt:`sessão · ${i<0?"esta questão é de fora":`questão ${i+1} de ${S.lote.length}`}`}),
       ...S.lote.map((x,j)=>el("button",{cls:"ghost sm","aria-pressed":String(j===i),title:`${x.params.tema} · ${x.params.nivel} · ${rotuloDif(x.params.dificuldade)}`,
         onclick:()=>abrirQuestao(x)},String(j+1)+(x.gerando?" …":respondida(x)?" ✓":"")))),
     el("div",{cls:"acoes",style:"margin-top:8px"},
       el("button",{cls:"ghost sm",id:"dl-lote",disabled:prontas.length?null:true,onclick:()=>baixarSessao("dl-lote")},`Baixar as ${prontas.length} em um TXT`),
-      el("button",{cls:"ghost sm",disabled:prontas.length?null:true,onclick:e=>copiar(txtPacote(prontas,`Sessão · ${prontas.length} questões`),e.target)},"Copiar todas"),
+      el("button",{cls:"ghost sm",disabled:prontas.length?null:true,onclick:e=>copiar(txtPacote(prontas,nomeDaLista(prontas)),e.target)},"Copiar todas"),
       el("span",{cls:"sep"}),
       i>=0?el("button",{cls:"ghost sm",disabled:(S.rodando||q.gerando)||null,onclick:()=>tirarDaSessao(q)},S.remover==="s:"+q.id?"Confirmar: tirar esta":"Tirar esta"):null,
       el("button",{cls:"ghost sm",disabled:S.rodando||null,onclick:esvaziarSessao},S.remover==="sessao"?`Confirmar: apagar as ${S.lote.length}`:"Esvaziar a sessão")));

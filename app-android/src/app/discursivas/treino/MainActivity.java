@@ -48,7 +48,7 @@ import java.util.ArrayList;
 public class MainActivity extends Activity {
     private static final int PEDIR_ARQUIVOS = 41;
     private static final int PEDIR_DESTINO = 42;
-    private static final int LIMITE_TXT = 4 * 1024 * 1024;
+    private static final int LIMITE_TXT = 8 * 1024 * 1024; // cabe uma cópia de segurança grande
     private static final int LIMITE_ENVIO = 180000;
 
     private WebView web;
