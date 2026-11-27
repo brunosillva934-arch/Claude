@@ -31,7 +31,7 @@
     return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; });
   }
   function semTags(h) {
-    return h.replace(/<[^>]+>/g, '').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#x27;/g, "'").replace(/&amp;/g, '&');
+    return String(h).replace(/<br\s*\/?>/g, ' ').replace(/<[^>]+>/g, '').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#x27;/g, "'").replace(/&amp;/g, '&');
   }
   function chave(s) { return norm(s).replace(/[^a-z0-9]+/g, ' ').trim(); }
   function escRe(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
@@ -76,61 +76,6 @@
     return out + esc(texto.slice(pos));
   }
 
-  /* ── índices ────────────────────────────────────────────────────────── */
-
-  var FICHAS = D.fichas;
-  var POR_ID = {};
-  var REMEDIOS = {};     // chave -> {nome, usos: [{f, si, bi}]}
-  var TAG_NOME = { 'PLANTÃO': 'Plantão', 'AMBULATÓRIO': 'Ambulatório', 'GESTANTE': 'Gestante', 'PEDIATRIA': 'Pediatria', 'IST': 'IST' };
-  var TAG_CLASSE = function (t) { return 't-' + norm(t).toUpperCase(); };
-  var SELO_NOME = { sus: 'SUS', fp: 'Farmácia Popular', ce: 'Controle especial' };
-  var SECAO_CURTA = { antes: 'Antes', receita: 'Receita', opcoes: 'Opções', unidade: 'Na unidade', plantonista: 'Plantonista' };
-
-  FICHAS.forEach(function (f) {
-    POR_ID[f.id] = f;
-    var corpo = [];
-    f.secoes.forEach(function (s, si) {
-      if (s.caso) corpo.push(s.caso);
-      s.blocos.forEach(function (b, bi) {
-        if (b.t === 'item') {
-          corpo.push(b.nome + ' ' + (b.qtd || '') + ' ' + (b.uso || ''));
-          (b.remedios || []).forEach(function (r) {
-            var k = chave(r);
-            if (!k) return;
-            var e = REMEDIOS[k] || (REMEDIOS[k] = { chave: k, nome: r, usos: [] });
-            e.usos.push({ f: f, si: si, bi: bi });
-          });
-        } else if (b.html) corpo.push(semTags(b.html));
-        else if (b.texto) corpo.push(b.texto + ' ' + (b.nota || ''));
-      });
-    });
-    f._corpo = corpo;
-    f._n = {
-      nome: norm(f.nome),
-      apelidos: f.apelidos.map(norm),
-      busque: f.busque ? f.busque.split(/\s*,\s*/) : [],
-      cid: norm(f.cid).replace(/\s+/g, ''),
-      corpo: norm(corpo.join(' ‖ ') + ' ‖ ' + f.atestado + ' ‖ ' + f.retorno)
-    };
-    f._n.busqueN = f._n.busque.map(norm);
-  });
-  var LISTA_REMEDIOS = Object.keys(REMEDIOS).map(function (k) { return REMEDIOS[k]; })
-    .sort(function (a, b) { return a.chave.localeCompare(b.chave); });
-  LISTA_REMEDIOS.forEach(function (r) {
-    var ids = {};
-    r.usos.forEach(function (u) { ids[u.f.id] = 1; });
-    r.nFichas = Object.keys(ids).length;
-  });
-  var ORDEM = FICHAS.slice().sort(function (a, b) { return norm(a.nome).localeCompare(norm(b.nome)); });
-
-  // linhas das tabelas, para a busca e para a página de cada remédio
-  var LINHAS_TAB = [];
-  D.tabelas.forEach(function (t, ti) {
-    t.linhas.forEach(function (l, li) {
-      LINHAS_TAB.push({ t: t, ti: ti, li: li, cab: semTags(l[0]), n: norm(semTags(l.join(' ‖ '))), ncab: norm(semTags(l[0])) });
-    });
-  });
-
   /* ── estado guardado ─────────────────────────────────────────────────── */
 
   var CHAVE_LOCAL = 'prescricoes.estado';
@@ -142,8 +87,11 @@
     } catch (e) { return {}; }
   }
   var E = lerEstado();
-  E.favs = Array.isArray(E.favs) ? E.favs.filter(function (id) { return POR_ID[id]; }) : [];
-  E.rec = Array.isArray(E.rec) ? E.rec.filter(function (id) { return POR_ID[id]; }) : [];
+  E.edits = E.edits && typeof E.edits === 'object' ? E.edits : {};
+  E.edits.fichas = E.edits.fichas && typeof E.edits.fichas === 'object' ? E.edits.fichas : {};
+  E.edits.tabelas = E.edits.tabelas && typeof E.edits.tabelas === 'object' ? E.edits.tabelas : {};
+  E.favs = Array.isArray(E.favs) ? E.favs : [];
+  E.rec = Array.isArray(E.rec) ? E.rec : [];
   E.receita = E.receita && Array.isArray(E.receita.itens) ? E.receita : { itens: [], orient: [], alarme: [] };
   E.tema = E.tema || 'auto';
   E.fs = E.fs || 16;
@@ -159,6 +107,97 @@
       } catch (e) { /* sem onde guardar: segue só na memória */ }
     }, 150);
   }
+
+  /* ── índices ────────────────────────────────────────────────────────── */
+  // O conteúdo do PDF (D) nunca muda. As edições ficam em E.edits e entram por cima:
+  // uma conduta editada substitui a original pelo mesmo id; as criadas se somam.
+
+  var TAG_NOME = { 'PLANTÃO': 'Plantão', 'AMBULATÓRIO': 'Ambulatório', 'GESTANTE': 'Gestante', 'PEDIATRIA': 'Pediatria', 'IST': 'IST', 'MINHAS': 'Minhas e editadas' };
+  var TAGS = ['PLANTÃO', 'AMBULATÓRIO', 'GESTANTE', 'PEDIATRIA', 'IST'];
+  var TAG_CLASSE = function (t) { return 't-' + norm(t).toUpperCase(); };
+  var SELO_NOME = { sus: 'SUS', fp: 'Farmácia Popular', ce: 'Controle especial' };
+  var SELO_CURTO = { sus: 'SUS', fp: 'Farm. Popular', ce: 'Controlado' };
+  var SECAO_CURTA = { antes: 'Antes', receita: 'Receita', opcoes: 'Opções', unidade: 'Na unidade', plantonista: 'Plantonista' };
+  var ORDEM_SECOES = ['antes', 'receita', 'opcoes', 'unidade', 'plantonista'];
+  var NOME_TOM = { orient: 'Orientações', alarme: 'Retornar imediatamente se', seguranca: 'Prescrever com segurança', encaminhar: 'Encaminhar / internar se', dica: 'Dica de plantão' };
+
+  var BASE_POR_ID = {};
+  D.fichas.forEach(function (f) { BASE_POR_ID[f.id] = f; });
+  var FICHAS, POR_ID, REMEDIOS, LISTA_REMEDIOS, ORDEM, TABELAS, LINHAS_TAB;
+
+  /** Cópia da ficha com o texto normalizado para a busca (a original fica intacta). */
+  function preparar(f0) {
+    var f = Object.assign({}, f0);
+    f.apelidos = f.apelidos || [];
+    var corpo = [];
+    f.secoes.forEach(function (s) {
+      if (s.caso) corpo.push(s.caso);
+      s.blocos.forEach(function (b) {
+        if (b.t === 'item') corpo.push(b.nome + ' ' + (b.qtd || '') + ' ' + semTags(b.uso || ''));
+        else if (b.html) corpo.push(semTags(b.html));
+        else if (b.texto) corpo.push(b.texto + ' ' + (b.nota || ''));
+      });
+    });
+    f._corpo = corpo;
+    f._n = {
+      nome: norm(f.nome),
+      apelidos: f.apelidos.map(norm),
+      busque: f.busque ? f.busque.split(/\s*,\s*/).filter(Boolean) : [],
+      cid: norm(f.cid || '').replace(/\s+/g, ''),
+      corpo: norm(corpo.join(' \u2016 ') + ' \u2016 ' + (f.atestado || '') + ' \u2016 ' + (f.retorno || ''))
+    };
+    f._n.busqueN = f._n.busque.map(norm);
+    return f;
+  }
+
+  function indexar() {
+    var ed = E.edits.fichas;
+    var lista = D.fichas.map(function (f) { return ed[f.id] || f; });
+    Object.keys(ed).forEach(function (id) { if (!BASE_POR_ID[id]) lista.push(ed[id]); });
+    FICHAS = lista.map(preparar);
+    POR_ID = {};
+    REMEDIOS = {};
+    FICHAS.forEach(function (f) {
+      POR_ID[f.id] = f;
+      f.secoes.forEach(function (s, si) {
+        s.blocos.forEach(function (b, bi) {
+          if (b.t !== 'item') return;
+          (b.remedios || []).forEach(function (r) {
+            var k = chave(r);
+            if (!k) return;
+            var e = REMEDIOS[k] || (REMEDIOS[k] = { chave: k, nome: r, usos: [] });
+            e.usos.push({ f: f, si: si, bi: bi });
+          });
+        });
+      });
+    });
+    LISTA_REMEDIOS = Object.keys(REMEDIOS).map(function (k) { return REMEDIOS[k]; })
+      .sort(function (a, b) { return a.chave.localeCompare(b.chave); });
+    LISTA_REMEDIOS.forEach(function (r) {
+      var ids = {};
+      r.usos.forEach(function (u) { ids[u.f.id] = 1; });
+      r.nFichas = Object.keys(ids).length;
+    });
+    ORDEM = FICHAS.slice().sort(function (a, b) { return a._n.nome.localeCompare(b._n.nome); });
+
+    TABELAS = D.tabelas.map(function (t, ti) {
+      var e = E.edits.tabelas[ti];
+      return e && Array.isArray(e.linhas) ? Object.assign({}, t, { linhas: e.linhas, editada: e.em }) : t;
+    });
+    // linhas das tabelas, para a busca e para a página de cada remédio
+    LINHAS_TAB = [];
+    TABELAS.forEach(function (t, ti) {
+      t.linhas.forEach(function (l, li) {
+        LINHAS_TAB.push({ t: t, ti: ti, li: li, cab: semTags(l[0]), n: norm(semTags(l.join(' \u2016 '))), ncab: norm(semTags(l[0])) });
+      });
+    });
+    E.favs = E.favs.filter(function (id) { return POR_ID[id]; });
+    E.rec = E.rec.filter(function (id) { return POR_ID[id]; });
+    if (E.filtro === 'MINHAS' && !temEdicoes()) E.filtro = '';
+  }
+  function temEdicoes() { return Object.keys(E.edits.fichas).length > 0; }
+
+  indexar();
 
   /* ── tema e tamanho da letra ─────────────────────────────────────────── */
 
@@ -283,9 +322,10 @@
 
   function mostrar(rota) {
     var nome = rota.partes[0] || 'inicio';
-    if (!TOPO[nome] && nome !== 'f' && nome !== 'r' && nome !== 'sobre') nome = 'inicio';
+    if (!TOPO[nome] && ['f', 'r', 'sobre', 'e', 'et'].indexOf(nome) < 0) nome = 'inicio';
     if (rotaAtual) rolagem[rotaAtual] = window.scrollY;
     var tela = TOPO[nome] ? nome : 'detalhe';
+    document.body.classList.toggle('sem-abas', nome === 'e' || nome === 'et');
     $$('.tela').forEach(function (t) { t.hidden = t.getAttribute('data-rota') !== tela; });
     $$('#abas a').forEach(function (a) {
       if (a.getAttribute('data-aba') === nome) a.setAttribute('aria-current', 'page');
@@ -299,6 +339,8 @@
     else if (nome === 'f') { y = desenharFicha(rota) ? y : 0; }
     else if (nome === 'r') desenharRemedio(rota.partes[1]);
     else if (nome === 'sobre') desenharSobre();
+    else if (nome === 'e') abrirEditor(rota.partes[1]);
+    else if (nome === 'et') abrirEditorTabela(+rota.partes[1]);
     rotaAtual = rota.chave;
     if (nome === 'f' && (rota.q.i || rota.q.q) && !(rota.chave in rolagem)) return; // a ficha rola sozinha até o alvo
     if (nome === 'tabelas' && rota.q.l && !(rota.chave in rolagem)) return;
@@ -307,20 +349,29 @@
 
   window.addEventListener('hashchange', function () { mostrar(lerRota()); });
   window.__voltar = function () {
+    if (dialogo) { var fn = dialogo.fn; fecharDialogo(); if (fn) fn(undefined); return true; }
     var r = lerRota();
     var nome = r.partes[0] || 'inicio';
+    if (nome === 'e' || nome === 'et') { sairDoEditor(); return true; }
     if (nome === 'inicio' && $('#busca').value) { limparBusca(); return true; }
     if (nome === 'inicio') return false;
-    if (history.length > 1 && navegou) { history.back(); return true; }
-    ir('#/', true);
+    voltarOu('#/');
     return true;
   };
+  function voltarOu(hash) {
+    if (history.length > 1 && navegou) history.back();
+    else ir(hash, true);
+  }
   var navegou = false;
   window.addEventListener('hashchange', function () { navegou = true; });
 
   document.addEventListener('click', function (ev) {
     var el = ev.target.closest('[data-ir]');
     if (el) { ev.preventDefault(); ir(el.getAttribute('data-ir')); return; }
+    var tr = ev.target.closest('a[data-trocar]');
+    if (tr) { ev.preventDefault(); ir(tr.getAttribute('href'), true); return; }
+    var nova = ev.target.closest('[data-nova]');
+    if (nova) { ev.preventDefault(); novaConduta(nova.getAttribute('data-nova')); return; }
     var aba = ev.target.closest('#abas a');
     if (aba) {
       ev.preventDefault();
@@ -338,10 +389,11 @@
   var ultimaBusca = null;
 
   function desenharFiltros() {
-    var tags = ['', 'PLANTÃO', 'AMBULATÓRIO', 'GESTANTE', 'PEDIATRIA', 'IST'];
+    var tags = [''].concat(temEdicoes() ? ['MINHAS'] : [], TAGS);
     $('#filtros').innerHTML = tags.map(function (t) {
-      var cor = t ? '<i class="ponto ' + TAG_CLASSE(t) + '"></i>' : '';
-      return '<button class="chip" type="button" data-filtro="' + esc(t) + '" aria-pressed="' + (E.filtro === t) + '">' + cor + (t ? TAG_NOME[t] : 'Todas') + '</button>';
+      var cor = t === 'MINHAS' ? '<svg class="chip-ic"><use href="#i-lapis"/></svg>' : t ? '<i class="ponto ' + TAG_CLASSE(t) + '"></i>' : '';
+      var nome = t === 'MINHAS' ? 'Minhas' : t ? TAG_NOME[t] : 'Todas';
+      return '<button class="chip" type="button" data-filtro="' + esc(t) + '" aria-pressed="' + (E.filtro === t) + '">' + cor + nome + '</button>';
     }).join('');
   }
   $('#filtros').addEventListener('click', function (ev) {
@@ -354,14 +406,20 @@
     desenharInicio();
   });
 
-  function passaFiltro(f) { return !E.filtro || f.tags.indexOf(E.filtro) >= 0; }
+  function passaFiltro(f) {
+    if (E.filtro === 'MINHAS') return !!(f.minha || f.editada);
+    return !E.filtro || f.tags.indexOf(E.filtro) >= 0;
+  }
+  function selo_edicao(f) {
+    return f.minha ? '<span class="marca-ed">minha</span>' : f.editada ? '<span class="marca-ed">editada</span>' : '';
+  }
 
   function pontosTags(f) {
     return '<span class="pontos" aria-hidden="true">' + f.tags.map(function (t) { return '<i class="' + TAG_CLASSE(t) + '" title="' + esc(TAG_NOME[t]) + '"></i>'; }).join('') + '</span>';
   }
   function linhaFicha(f, sub, extra) {
     return '<li><a class="linha" href="#/f/' + f.id + (extra || '') + '"><span class="linha-texto"><span class="linha-titulo">' +
-      (sub && sub.tituloHtml ? sub.tituloHtml : esc(f.nome)) + pontosTags(f) + '</span>' +
+      (sub && sub.tituloHtml ? sub.tituloHtml : esc(f.nome)) + pontosTags(f) + selo_edicao(f) + '</span>' +
       (sub && sub.html ? '<span class="linha-sub">' + sub.html + '</span>' : '<span class="linha-sub">' + esc(f.cid ? 'CID ' + f.cid : '') + '</span>') +
       '</span></a></li>';
   }
@@ -387,7 +445,8 @@
     var rec = E.rec.map(function (id) { return POR_ID[id]; }).filter(function (f) { return passaFiltro(f) && E.favs.indexOf(f.id) < 0; }).slice(0, 6);
     if (rec.length) h += '<h2 class="rotulo">Abertas por último</h2><ul class="lista">' + rec.map(function (f) { return linhaFicha(f); }).join('') + '</ul>';
     var todas = ORDEM.filter(passaFiltro);
-    h += '<h2 class="rotulo">' + (E.filtro ? 'Condutas · ' + TAG_NOME[E.filtro] : 'Todas as condutas') + '<small>' + todas.length + '</small></h2><ul class="lista">';
+    h += '<h2 class="rotulo">' + (E.filtro ? 'Condutas · ' + TAG_NOME[E.filtro] : 'Todas as condutas') + '<small>' + todas.length +
+      '<button class="mini-btn" type="button" data-nova=""><svg><use href="#i-somar"/></svg>Nova conduta</button></small></h2><ul class="lista">';
     var letraAtual = '';
     todas.forEach(function (f) {
       var l = norm(f.nome.charAt(0)).toUpperCase();
@@ -474,7 +533,8 @@
     if (!total) {
       return '<div class="vazio"><strong>Nada encontrado para “' + esc(q) + '”</strong>' +
         (E.filtro ? 'O filtro “' + esc(TAG_NOME[E.filtro]) + '” está ligado. ' : '') +
-        'Tente outra palavra, o nome do remédio ou o CID.</div>';
+        'Tente outra palavra, o nome do remédio ou o CID.' +
+        '<div class="botoes" style="justify-content:center;margin-top:14px"><button class="botao botao-claro" type="button" data-nova="' + esc(q) + '"><svg><use href="#i-somar"/></svg>Criar a conduta “' + esc(q) + '”</button></div></div>';
     }
     if (r.condutas.length) {
       h += '<h2 class="rotulo">Condutas<small>' + r.condutas.length + '</small></h2><ul class="lista">' +
@@ -540,7 +600,7 @@
       else if (b.t === 'grupo') h += '<h4 class="grupo">' + esc(b.texto) + '</h4>';
       else if (b.t === 'sub') {
         if (emAlarme) { h += '</div>'; emAlarme = false; }
-        var nome = { orient: 'Orientações', alarme: 'Retornar imediatamente se', seguranca: 'Prescrever com segurança', encaminhar: 'Encaminhar / internar se', dica: 'Dica de plantão' }[b.tom] || b.texto;
+        var nome = NOME_TOM[b.tom] || b.texto;
         if (b.tom === 'alarme') { h += '<div class="alarme">'; emAlarme = true; }
         h += '<h4 class="sub sub-' + b.tom + '">' + esc(nome) + (b.nota ? '<small>' + esc(b.nota) + '</small>' : '') + '</h4>';
       }
@@ -551,9 +611,16 @@
   }
 
   var fichaAtual = null;
+  var fichaOriginal = false;
+  function data(ms) {
+    var d = new Date(ms);
+    function z(n) { return (n < 10 ? '0' : '') + n; }
+    return z(d.getDate()) + '/' + z(d.getMonth() + 1) + '/' + d.getFullYear();
+  }
 
   function desenharFicha(rota) {
-    var f = POR_ID[rota.partes[1]];
+    var original = rota.q.original === '1' && BASE_POR_ID[rota.partes[1]];
+    var f = original ? preparar(BASE_POR_ID[rota.partes[1]]) : POR_ID[rota.partes[1]];
     var corpo = $('#detalhe-corpo');
     if (!f) {
       $('#detalhe-titulo').textContent = 'Conduta';
@@ -563,6 +630,7 @@
       return false;
     }
     fichaAtual = f;
+    fichaOriginal = !!original;
     E.rec = [f.id].concat(E.rec.filter(function (x) { return x !== f.id; })).slice(0, 12);
     guardar();
     $('#detalhe-titulo').textContent = f.nome;
@@ -582,6 +650,14 @@
     if (f.atestado || f.retorno) {
       h += '<dl class="info">' + (f.atestado ? '<div><dt>Atestado sugerido</dt><dd>' + esc(f.atestado) + '</dd></div>' : '') +
         (f.retorno ? '<div><dt>Retorno</dt><dd>' + esc(f.retorno) + '</dd></div>' : '') + '</dl>';
+    }
+    if (original) {
+      h += '<p class="ed-faixa">Você está vendo o original do PDF. <a href="#/f/' + f.id + '" data-trocar="1">Ver a sua versão</a></p>';
+    } else if (f.minha) {
+      var criada = f.criada || f.editada;
+      h += '<p class="ed-faixa">Conduta criada por você em ' + data(criada) + (f.editada && data(f.editada) !== data(criada) ? ', alterada em ' + data(f.editada) : '') + '.</p>';
+    } else if (f.editada) {
+      h += '<p class="ed-faixa">Editada por você em ' + data(f.editada) + '. <a href="#/f/' + f.id + '?original=1" data-trocar="1">Ver o original do PDF</a></p>';
     }
     h += '</header>';
 
@@ -603,7 +679,8 @@
       if (s.tipo !== 'antes') saltos.push('<a class="chip" href="#' + id + '" data-salto="' + id + '">' + esc(SECAO_CURTA[s.tipo] || s.titulo) + '</a>');
     });
     if (f.referencias) h += '<p class="bloco bloco-ref"><b>Referências</b>' + esc(f.referencias) + '</p>';
-    h += '<p class="pagina">Página ' + f.pagina + ' do PDF.</p>';
+    if (f.pagina) h += '<p class="pagina">' + (f.editada && !original ? 'Baseada na página ' : 'Página ') + f.pagina + ' do PDF.</p>';
+    if (!original) h += '<div class="botoes" style="margin-top:12px"><a class="botao botao-claro" href="#/e/' + f.id + '"><svg><use href="#i-lapis"/></svg>Editar esta conduta</a></div>';
     corpo.innerHTML = h;
     var nav = $('#detalhe-saltos');
     nav.innerHTML = saltos.join('');
@@ -655,7 +732,7 @@
 
   function desenharEstrela() {
     var fav = fichaAtual && E.favs.indexOf(fichaAtual.id) >= 0;
-    $('#detalhe-acoes').innerHTML = '<button class="icone-btn' + (fav ? ' ativo' : '') + '" type="button" data-acao="favorita" aria-pressed="' + fav + '" aria-label="' + (fav ? 'Tirar das favoritas' : 'Guardar nas favoritas') + '"><svg><use href="#' + (fav ? 'i-estrela-cheia' : 'i-estrela') + '"/></svg></button>';
+    $('#detalhe-acoes').innerHTML = (fichaOriginal ? '' : '<a class="icone-btn" href="#/e/' + fichaAtual.id + '" aria-label="Editar esta conduta"><svg><use href="#i-lapis"/></svg></a>') + '<button class="icone-btn' + (fav ? ' ativo' : '') + '" type="button" data-acao="favorita" aria-pressed="' + fav + '" aria-label="' + (fav ? 'Tirar das favoritas' : 'Guardar nas favoritas') + '"><svg><use href="#' + (fav ? 'i-estrela-cheia' : 'i-estrela') + '"/></svg></button>';
   }
 
   function blocoDoItem(el) {
@@ -802,7 +879,7 @@
   function desenharTabelas() {
     if (!tabelasProntas) {
       var h = '', saltos = [], tituloAnt = null;
-      D.tabelas.forEach(function (t, ti) {
+      TABELAS.forEach(function (t, ti) {
         var novo = t.titulo !== tituloAnt;
         tituloAnt = t.titulo;
         h += '<section class="tabela" id="t-' + ti + '">';
@@ -813,6 +890,8 @@
           h += '<h2 style="font-size:.95rem;margin-top:14px">' + esc(t.colunas[0]) + '</h2>';
         }
         if (t.sub) h += '<p class="tab-sub">' + t.sub + '</p>';
+        h += '<div class="tab-acoes">' + (t.editada ? '<span>Editada por você em ' + data(t.editada) + '</span>' : '<span></span>') +
+          '<a class="mini-btn" href="#/et/' + ti + '"><svg><use href="#i-lapis"/></svg>Editar tabela</a></div>';
         h += '<div class="ficha-grupo">' + t.linhas.map(function (l, li) { return linhaTabelaHtml(t, l, ti + '-' + li); }).join('') + '</div>';
         t.notas.forEach(function (n) { h += '<p class="tab-nota">' + n + '</p>'; });
         h += '</section>';
@@ -938,12 +1017,13 @@
     $('#detalhe-saltos').hidden = true;
     var versao = '';
     try { if (ponte && ponte.versao) versao = ponte.versao(); } catch (e) { versao = ''; }
-    var nItens = FICHAS.reduce(function (a, f) { return a + f.secoes.reduce(function (b, s) { return b + s.blocos.filter(function (x) { return x.t === 'item'; }).length; }, 0); }, 0);
+    var nItens = D.fichas.reduce(function (a, f) { return a + f.secoes.reduce(function (b, s) { return b + s.blocos.filter(function (x) { return x.t === 'item'; }).length; }, 0); }, 0);
     var h = '<h2 class="rotulo">Ajustes</h2><div class="ficha-grupo">' +
       '<div class="ajuste"><span>Tema</span><span class="segmentos" data-ajuste="tema">' +
       [['auto', 'Sistema'], ['claro', 'Claro'], ['escuro', 'Escuro']].map(function (o) { return '<button type="button" data-v="' + o[0] + '" aria-pressed="' + (E.tema === o[0]) + '">' + o[1] + '</button>'; }).join('') + '</span></div>' +
       '<div class="ajuste"><span>Tamanho da letra</span><span class="segmentos" data-ajuste="fs">' +
       [[15, 'A−'], [16, 'A'], [18, 'A+'], [20, 'A++']].map(function (o) { return '<button type="button" data-v="' + o[0] + '" aria-pressed="' + (E.fs === o[0]) + '">' + o[1] + '</button>'; }).join('') + '</span></div></div>';
+    h += blocoCopia();
     h += '<h2 class="rotulo">Legenda</h2><div class="ficha-grupo" style="padding:12px 14px"><div class="legenda">' +
       '<div><span class="selo selo-sus">SUS</span> costuma estar na rede pública (RENAME)</div>' +
       '<div><span class="selo selo-fp">Farm. Popular</span> gratuito no programa Farmácia Popular</div>' +
@@ -959,12 +1039,14 @@
       '<li>Este material apoia o raciocínio clínico; quem decide é você.</li></ul></div>';
     h += '<h2 class="rotulo">De onde vem</h2><div class="ficha-grupo texto" style="padding:4px 14px">' +
       '<p>Conteúdo do <b>Drive de Prescrições</b>, da Dra. Camilla Rocha (CRM-SP 265.940), versão completa de novembro de 2026: ' +
-      FICHAS.length + ' condutas, ' + nItens + ' itens de receita, ' + LISTA_REMEDIOS.length + ' remédios e ' + D.tabelas.length + ' tabelas.</p>' +
-      '<p>O app só reorganiza o texto do PDF para achar rápido. Funciona sem internet e não manda nada para lugar nenhum. Favoritas, últimas abertas e a receita montada ficam só neste aparelho.</p>' +
+      D.fichas.length + ' condutas, ' + nItens + ' itens de receita e ' + D.tabelas.length + ' tabelas.</p>' +
+      '<p>O app reorganiza o texto do PDF para achar rápido e deixa você atualizar o que quiser. Funciona sem internet e não manda nada para lugar nenhum. Favoritas, receita montada e suas alterações ficam só neste aparelho.</p>' +
       (versao ? '<p class="tab-nota">Versão do app: ' + esc(versao) + '</p>' : '') + '</div>';
     $('#detalhe-corpo').innerHTML = h;
   }
   $('#tela-detalhe').addEventListener('click', function (ev) {
+    var c = ev.target.closest('[data-copia]');
+    if (c) { if (c.getAttribute('data-copia') === 'salvar') exportarEdicoes(); else importarEdicoes(); return; }
     var b = ev.target.closest('[data-ajuste] button');
     if (!b) return;
     var qual = b.parentNode.getAttribute('data-ajuste');
@@ -974,6 +1056,613 @@
     aplicarTema();
     $$('button', b.parentNode).forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
   });
+
+  /* ── caixa de pergunta ──────────────────────────────────────────────── */
+
+  var dialogo = null;
+  /** botoes: [{t: 'texto', v: valor, cheio, perigo}]; fn(valor) — undefined se fechar sem escolher. */
+  function perguntar(msg, botoes, fn, lista) {
+    fecharDialogo();
+    var fundo = document.createElement('div');
+    fundo.className = 'dialogo-fundo';
+    fundo.innerHTML = '<div class="dialogo" role="alertdialog" aria-modal="true"><p>' + esc(msg) + '</p><div class="botoes' + (lista ? ' botoes-lista' : '') + '">' +
+      botoes.map(function (b, i) {
+        return '<button type="button" class="botao ' + (b.perigo ? 'botao-perigo-cheio' : b.cheio ? 'botao-cheio' : 'botao-claro') + '" data-i="' + i + '">' + esc(b.t) + '</button>';
+      }).join('') + '</div></div>';
+    document.body.appendChild(fundo);
+    dialogo = { el: fundo, fn: fn };
+    fundo.addEventListener('click', function (ev) {
+      var b = ev.target.closest('[data-i]');
+      if (!b && ev.target !== fundo) return;
+      var v = b ? botoes[+b.getAttribute('data-i')].v : undefined;
+      fecharDialogo();
+      if (fn) fn(v);
+    });
+  }
+  function fecharDialogo() {
+    if (!dialogo) return;
+    dialogo.el.parentNode.removeChild(dialogo.el);
+    dialogo = null;
+  }
+
+  /* ── edição: texto ↔ HTML ───────────────────────────────────────────── */
+
+  // No editor o negrito é **assim**; na ficha vira o rótulo em destaque ("Gestante:").
+  function htmlParaTexto(h) {
+    return semTags(String(h || '').replace(/<br\s*\/?>/g, '\u0001').replace(/<b class="\w+">([\s\S]*?)<\/b>/g, '**$1**')).replace(/\u0001/g, '\n');
+  }
+  function textoParaHtml(t) {
+    return esc(String(t).trim()).replace(/\*\*([^*\n]+?)\*\*/g, '<b class="rot">$1</b>').replace(/[ \t]*\n+[ \t]*/g, '<br>');
+  }
+
+  // nome do remédio sem dose nem forma (mesma regra do extrator)
+  var FORMA = /\s(\d|\(|(?:cp|comp|creme|pomada|gel|xarope|solução|suspensão|colírio|spray|loção|shampoo|xampu|gotas|sachê|ampola|frasco|injetável|tópico|EV|IM|FPS)(?=[\s,;.)]|$)|em\s+gotas)/i;
+  function remediosDoItem(nome) {
+    var n = String(nome).trim().replace(/^(Nebulização|Inalação)\s*:\s*/i, '');
+    var partes = n.split(/\s+\+\s+|\s+ou\s+(?=[A-ZÁÉÍÓÚ])/);
+    if (partes.length > 1 && !partes.slice(0, -1).every(function (p) { return /\d/.test(p); })) partes = [n];
+    var res = [];
+    partes.forEach(function (p) {
+      p = p.split(/\s+[-–]\s+/)[0];
+      var m = FORMA.exec(p);
+      if (m && m.index > 0) p = p.slice(0, m.index);
+      p = p.replace(/^[\s,.;:]+|[\s,.;:]+$/g, '');
+      if (p.toUpperCase() === 'SF') p = 'Soro fisiológico';
+      if (p) {
+        p = p.charAt(0).toUpperCase() + p.slice(1);
+        if (res.indexOf(p) < 0) res.push(p);
+      }
+    });
+    return res;
+  }
+
+  /* ── edição: rascunho ───────────────────────────────────────────────── */
+
+  // ED: o que está aberto no editor. {tipo: 'ficha'|'tabela', id, ti, r: rascunho, orig: JSON do começo, nova}
+  var ED = null;
+  var timerRascunho = null;
+
+  function rascunhoSujo() { return !!ED && JSON.stringify(ED.r) !== ED.orig; }
+  function guardarRascunho() {
+    clearTimeout(timerRascunho);
+    timerRascunho = setTimeout(function () {
+      if (!ED) return;
+      E.rascunho = rascunhoSujo() || ED.nova ? ED : null;
+      if (!E.rascunho) delete E.rascunho;
+      guardar();
+    }, 400);
+  }
+  function fecharEditor() {
+    clearTimeout(timerRascunho);
+    ED = null;
+    delete E.rascunho;
+    guardar();
+  }
+  function sairDoEditor() {
+    if (!rascunhoSujo()) { fecharEditor(); voltarOu('#/'); return; }
+    perguntar('Sair sem salvar? O que você mudou agora será perdido.', [
+      { t: 'Continuar editando' }, { t: 'Sair sem salvar', v: 1, perigo: true }
+    ], function (v) { if (v) { fecharEditor(); voltarOu('#/'); } });
+  }
+  function depoisDeMudar() {
+    indexar();
+    ultimaBusca = null;
+    tabelasProntas = false;
+    desenharFiltros();
+    guardar();
+  }
+
+  function paraRascunho(f) {
+    var vistos = {};
+    var tambem = (f.apelidos || []).concat(f.busque ? f.busque.split(/\s*,\s*/) : []).filter(function (t) {
+      var k = chave(t);
+      if (!k || vistos[k] || k === chave(f.nome || '')) return false;
+      vistos[k] = 1;
+      return true;
+    });
+    return {
+      nome: f.nome || '', cid: f.cid || '', tags: (f.tags || []).slice(), tambem: tambem.join(', '),
+      atestado: f.atestado || '', retorno: f.retorno || '', referencias: f.referencias || '',
+      secoes: (f.secoes || []).map(function (s) {
+        return {
+          tipo: s.tipo, titulo: s.titulo, sub: s.sub || '', caso: s.caso || '',
+          blocos: s.blocos.map(function (b) {
+            if (b.t === 'item') return { t: 'item', n: b.n || '', nome: b.nome || '', qtd: b.qtd || '', uso: htmlParaTexto(b.uso), selos: (b.selos || []).slice() };
+            if (b.t === 'li' || b.t === 'p') return { t: b.t, txt: htmlParaTexto(b.html), nota: !!b.nota };
+            if (b.t === 'sub') return { t: 'sub', tom: NOME_TOM[b.tom] ? b.tom : 'orient', nota: b.nota || '' };
+            if (b.t === 'grupo') return { t: 'grupo', texto: b.texto || '' };
+            return { t: 'ou' };
+          })
+        };
+      })
+    };
+  }
+
+  function deRascunho(r) {
+    var secoes = [];
+    r.secoes.forEach(function (s) {
+      var blocos = [], nItem = 0;
+      s.blocos.forEach(function (b) {
+        if (b.t === 'item') {
+          if (!b.nome.trim() && !b.uso.trim()) return;
+          nItem++;
+          var it = { t: 'item', n: b.n.trim().replace(/\.$/, '') || String(nItem), nome: b.nome.trim(), remedios: remediosDoItem(b.nome) };
+          if (b.qtd.trim()) it.qtd = b.qtd.trim();
+          if (b.uso.trim()) it.uso = textoParaHtml(b.uso);
+          if (b.selos.length) it.selos = b.selos.slice();
+          blocos.push(it);
+        } else if (b.t === 'li' || b.t === 'p') {
+          if (!b.txt.trim()) return;
+          var o = { t: b.t, html: textoParaHtml(b.txt) };
+          if (b.nota) o.nota = true;
+          blocos.push(o);
+        } else if (b.t === 'sub') {
+          var sb = { t: 'sub', tom: b.tom, texto: NOME_TOM[b.tom].toUpperCase() };
+          if (b.nota && b.nota.trim()) sb.nota = b.nota.trim();
+          blocos.push(sb);
+        } else if (b.t === 'grupo') {
+          if (b.texto.trim()) blocos.push({ t: 'grupo', texto: b.texto.trim() });
+        } else {
+          blocos.push({ t: 'ou' });
+        }
+      });
+      if (!blocos.length && !s.caso.trim()) return;
+      var sec = { tipo: s.tipo, titulo: s.titulo, blocos: blocos };
+      if (s.sub) sec.sub = s.sub;
+      if (s.caso.trim()) sec.caso = s.caso.trim();
+      secoes.push(sec);
+    });
+    var nome = r.nome.trim();
+    return {
+      titulo: nome.toUpperCase(), nome: nome, cid: r.cid.trim(),
+      tags: TAGS.filter(function (t) { return r.tags.indexOf(t) >= 0; }),
+      busque: r.tambem.split(/\s*[,;\n]\s*/).map(function (x) { return x.trim(); }).filter(Boolean).join(', '),
+      apelidos: [], atestado: r.atestado.trim(), retorno: r.retorno.trim(),
+      secoes: secoes, referencias: r.referencias.trim()
+    };
+  }
+
+  function secaoNova(tipo) {
+    var vazio = function () { return { t: 'item', n: '', nome: '', qtd: '', uso: '', selos: [] }; };
+    var li = function () { return { t: 'li', txt: '', nota: false }; };
+    var s = { tipo: tipo, titulo: { antes: 'Antes de prescrever', receita: 'Receita pronta', opcoes: 'Outras opções e ajustes', unidade: 'Na unidade', plantonista: 'Para o plantonista' }[tipo], sub: tipo === 'unidade' ? 'prescrição do PS' : '', caso: '', blocos: [] };
+    if (tipo === 'antes') s.blocos = [{ t: 'p', txt: '', nota: false }];
+    else if (tipo === 'receita') s.blocos = [vazio(), { t: 'sub', tom: 'orient', nota: '' }, li(), { t: 'sub', tom: 'alarme', nota: '' }, li()];
+    else if (tipo === 'plantonista') s.blocos = [{ t: 'sub', tom: 'seguranca', nota: '' }, li(), { t: 'sub', tom: 'encaminhar', nota: '' }, li()];
+    else s.blocos = [vazio()];
+    return s;
+  }
+
+  function novaConduta(nome) {
+    var id = 'minha-' + Date.now().toString(36);
+    var r = { nome: nome || '', cid: '', tags: [], tambem: '', atestado: '', retorno: '', referencias: '', secoes: [secaoNova('receita')] };
+    ED = { tipo: 'ficha', id: id, r: r, orig: JSON.stringify(r), nova: true };
+    E.rascunho = ED;
+    guardar();
+    ir('#/e/' + id);
+  }
+
+  /* ── edição: tela da conduta ────────────────────────────────────────── */
+
+  function abrirEditor(id) {
+    fichaAtual = null;
+    $('#detalhe-saltos').hidden = true;
+    if (!ED || ED.tipo !== 'ficha' || ED.id !== id) {
+      if (E.rascunho && E.rascunho.tipo === 'ficha' && E.rascunho.id === id) {
+        ED = E.rascunho;
+        ED.recuperado = true;
+      } else if (POR_ID[id]) {
+        var r = paraRascunho(POR_ID[id]);
+        ED = { tipo: 'ficha', id: id, r: r, orig: JSON.stringify(r), nova: !BASE_POR_ID[id] };
+      } else {
+        ED = null;
+        $('#detalhe-titulo').textContent = 'Editar';
+        $('#detalhe-acoes').innerHTML = '';
+        $('#detalhe-corpo').innerHTML = '<div class="vazio"><strong>Conduta não encontrada</strong></div>';
+        return;
+      }
+    }
+    desenharEditor();
+  }
+
+  function campoEd(rotulo, caminho, valor, tipo, dica) {
+    var c = 'data-c="' + caminho + '" placeholder="' + esc(dica || '') + '"';
+    return '<label class="campo"><span class="campo-rot">' + esc(rotulo) + '</span>' +
+      (tipo === 'area' ? '<textarea rows="2" ' + c + '>' + esc(valor) + '</textarea>' : '<input type="text" ' + c + ' value="' + esc(valor) + '">') + '</label>';
+  }
+  function ferramentas(si, bi, total) {
+    var d = ' data-s="' + si + '" data-b="' + bi + '"';
+    return '<span class="ed-ferr">' +
+      '<button type="button" class="icone-btn" data-ed="subir"' + d + (bi === 0 ? ' disabled' : '') + ' aria-label="Subir"><svg><use href="#i-cima"/></svg></button>' +
+      '<button type="button" class="icone-btn" data-ed="descer"' + d + (bi === total - 1 ? ' disabled' : '') + ' aria-label="Descer"><svg><use href="#i-baixo"/></svg></button>' +
+      '<button type="button" class="icone-btn" data-ed="tirar"' + d + ' aria-label="Apagar"><svg><use href="#i-lixo"/></svg></button></span>';
+  }
+  function blocoEd(b, si, bi, total) {
+    var p = 'secoes.' + si + '.blocos.' + bi + '.';
+    var cab = function (nome) { return '<div class="ed-bloco-cab"><span class="ed-tipo">' + nome + '</span>' + ferramentas(si, bi, total) + '</div>'; };
+    var id = ' id="eb-' + si + '-' + bi + '"';
+    if (b.t === 'item') {
+      return '<div class="ed-bloco ed-item"' + id + '>' + cab('Remédio') +
+        '<div class="ed-linha"><input type="text" class="ed-n" data-c="' + p + 'n" value="' + esc(b.n) + '" placeholder="nº" aria-label="Número">' +
+        '<input type="text" data-c="' + p + 'nome" value="' + esc(b.nome) + '" placeholder="Remédio e apresentação (ex.: Cefalexina 500 mg)" aria-label="Remédio"></div>' +
+        '<input type="text" data-c="' + p + 'qtd" value="' + esc(b.qtd) + '" placeholder="Quantidade (ex.: 28 cápsulas)" aria-label="Quantidade">' +
+        '<textarea rows="2" data-c="' + p + 'uso" placeholder="Como usar (ex.: Tomar 1 cápsula, via oral, de 6/6h, por 7 dias.)" aria-label="Como usar">' + esc(b.uso) + '</textarea>' +
+        '<div class="ed-chips">' + ['sus', 'fp', 'ce'].map(function (x) {
+          return '<button type="button" class="chip" data-ed="selo" data-s="' + si + '" data-b="' + bi + '" data-v="' + x + '" aria-pressed="' + (b.selos.indexOf(x) >= 0) + '">' + SELO_CURTO[x] + '</button>';
+        }).join('') + '</div></div>';
+    }
+    if (b.t === 'li' || b.t === 'p') {
+      return '<div class="ed-bloco"' + id + '>' + cab(b.t === 'li' ? 'Tópico' : 'Parágrafo') +
+        '<textarea rows="2" data-c="' + p + 'txt" aria-label="Texto">' + esc(b.txt) + '</textarea></div>';
+    }
+    if (b.t === 'sub') {
+      return '<div class="ed-bloco ed-sub"' + id + '>' + cab('Título de lista') +
+        '<select data-c="' + p + 'tom" aria-label="Título">' + Object.keys(NOME_TOM).map(function (k) {
+          return '<option value="' + k + '"' + (b.tom === k ? ' selected' : '') + '>' + NOME_TOM[k] + '</option>';
+        }).join('') + '</select></div>';
+    }
+    if (b.t === 'grupo') {
+      return '<div class="ed-bloco"' + id + '>' + cab('Grupo de opções') +
+        '<input type="text" data-c="' + p + 'texto" value="' + esc(b.texto) + '" placeholder="Ex.: ANTIBIÓTICO, QUANDO INDICADO (ESCOLHER 1)" aria-label="Grupo"></div>';
+    }
+    return '<div class="ed-bloco ed-ou"' + id + '>' + cab('<b>OU</b> escolha 1') + '</div>';
+  }
+
+  function desenharEditor() {
+    var r = ED.r;
+    $('#detalhe-titulo').textContent = ED.nova && !POR_ID[ED.id] ? 'Nova conduta' : 'Editar conduta';
+    $('#detalhe-acoes').innerHTML = '<button class="botao botao-cheio" type="button" data-ed="salvar"><svg><use href="#i-feito"/></svg>Salvar</button>';
+    var h = '';
+    if (ED.recuperado) h += '<p class="ed-faixa">Continuando a edição que não tinha sido salva.</p>';
+    h += '<p class="ed-dica">Escreva <b>**assim**</b> para destacar em negrito (ex.: <b>**Gestante:**</b> evitar…). Campo vazio some da ficha.</p>';
+    h += '<section class="ed-card"><h3 class="ed-titulo">Identificação</h3>' +
+      campoEd('Nome da conduta', 'nome', r.nome, 'input', 'Ex.: Cistite / ITU não complicada') +
+      campoEd('CID', 'cid', r.cid, 'input', 'Ex.: N30.0 / N39.0') +
+      '<div class="campo"><span class="campo-rot">Etiquetas</span><div class="ed-chips">' + TAGS.map(function (t) {
+        return '<button type="button" class="chip" data-ed="tag" data-v="' + t + '" aria-pressed="' + (r.tags.indexOf(t) >= 0) + '"><i class="ponto ' + TAG_CLASSE(t) + '"></i>' + TAG_NOME[t] + '</button>';
+      }).join('') + '</div></div>' +
+      campoEd('Outros nomes, para achar na busca', 'tambem', r.tambem, 'area', 'Separados por vírgula: ITU, infecção de urina, ardência para urinar') +
+      campoEd('Atestado sugerido', 'atestado', r.atestado, 'input', 'Ex.: 1 a 2 dias') +
+      campoEd('Retorno', 'retorno', r.retorno, 'input', 'Ex.: 48 a 72h se não melhorar') + '</section>';
+    r.secoes.forEach(function (s, si) {
+      h += '<section class="ed-card ed-sec ed-sec-' + s.tipo + '" id="es-' + si + '"><div class="ed-sec-cab"><h3 class="ed-titulo">' + esc(s.titulo) + '</h3>' +
+        '<button type="button" class="icone-btn" data-ed="tirar-secao" data-s="' + si + '" aria-label="Apagar a seção ' + esc(s.titulo) + '"><svg><use href="#i-lixo"/></svg></button></div>';
+      if (s.tipo === 'receita') h += campoEd('Caso', 'secoes.' + si + '.caso', s.caso, 'input', 'Ex.: Mulher não gestante');
+      h += s.blocos.map(function (b, bi) { return blocoEd(b, si, bi, s.blocos.length); }).join('');
+      h += '<div class="ed-somar">' +
+        (s.tipo !== 'antes' && s.tipo !== 'plantonista' ? '<button type="button" class="botao botao-claro" data-ed="somar" data-s="' + si + '" data-v="item"><svg><use href="#i-somar"/></svg>Remédio</button>' : '') +
+        '<button type="button" class="botao botao-claro" data-ed="somar" data-s="' + si + '" data-v="li"><svg><use href="#i-somar"/></svg>Tópico</button>' +
+        '<button type="button" class="botao botao-claro" data-ed="outro" data-s="' + si + '"><svg><use href="#i-somar"/></svg>Outro…</button></div></section>';
+    });
+    var faltam = ORDEM_SECOES.filter(function (t) { return !r.secoes.some(function (s) { return s.tipo === t; }); });
+    if (faltam.length) {
+      h += '<section class="ed-card"><h3 class="ed-titulo">Acrescentar seção</h3><div class="botoes">' + faltam.map(function (t) {
+        return '<button type="button" class="botao botao-claro" data-ed="secao" data-v="' + t + '"><svg><use href="#i-somar"/></svg>' + esc(secaoNova(t).titulo) + '</button>';
+      }).join('') + '</div></section>';
+    }
+    h += '<section class="ed-card">' + campoEd('Referências (diretriz que embasa)', 'referencias', r.referencias, 'area', 'Ex.: Ministério da Saúde, protocolo de 2026') + '</section>';
+    h += '<div class="botoes ed-fim">';
+    if (BASE_POR_ID[ED.id] && E.edits.fichas[ED.id]) h += '<button type="button" class="botao botao-claro" data-ed="restaurar">Voltar ao original do PDF</button>';
+    if (POR_ID[ED.id]) h += '<button type="button" class="botao botao-claro" data-ed="copia">Salvar como conduta nova…</button>';
+    if (!BASE_POR_ID[ED.id] && E.edits.fichas[ED.id]) h += '<button type="button" class="botao botao-perigo" data-ed="apagar-ficha"><svg><use href="#i-lixo"/></svg>Apagar esta conduta</button>';
+    h += '</div>';
+    $('#detalhe-corpo').innerHTML = '<div class="ed">' + h + '</div>';
+    crescerTodos();
+  }
+
+  /* ── edição: tela da tabela ─────────────────────────────────────────── */
+
+  function abrirEditorTabela(ti) {
+    fichaAtual = null;
+    $('#detalhe-saltos').hidden = true;
+    var t = TABELAS[ti];
+    if (!t) { $('#detalhe-corpo').innerHTML = '<div class="vazio"><strong>Tabela não encontrada</strong></div>'; return; }
+    if (!ED || ED.tipo !== 'tabela' || ED.ti !== ti) {
+      if (E.rascunho && E.rascunho.tipo === 'tabela' && E.rascunho.ti === ti) {
+        ED = E.rascunho;
+        ED.recuperado = true;
+      } else {
+        var r = { linhas: t.linhas.map(function (l) { return l.map(function (c) { return semTags(c); }); }) };
+        ED = { tipo: 'tabela', ti: ti, id: 't' + ti, r: r, orig: JSON.stringify(r) };
+      }
+    }
+    desenharEditorTabela();
+  }
+
+  function desenharEditorTabela() {
+    var t = TABELAS[ED.ti];
+    $('#detalhe-titulo').textContent = 'Editar tabela';
+    $('#detalhe-acoes').innerHTML = '<button class="botao botao-cheio" type="button" data-ed="salvar"><svg><use href="#i-feito"/></svg>Salvar</button>';
+    var h = '';
+    if (ED.recuperado) h += '<p class="ed-faixa">Continuando a edição que não tinha sido salva.</p>';
+    h += '<h2 class="ed-tab-titulo">' + esc(tituloTabela(t)) + (t.colunas[0] !== 'Antibiótico' && TABELAS.filter(function (x) { return x.titulo === t.titulo; }).length > 1 ? ' · ' + esc(t.colunas[0]) : '') + '</h2>';
+    h += '<p class="ed-dica">Nas colunas de gestação, amamentação e doença renal, as palavras Seguro, Compatível, Cautela, Evitar e Contraindicado ganham a cor sozinhas.</p>';
+    var n = ED.r.linhas.length;
+    ED.r.linhas.forEach(function (l, li) {
+      h += '<section class="ed-card" id="eb-0-' + li + '"><div class="ed-bloco-cab"><span class="ed-tipo">Linha ' + (li + 1) + '</span>' + ferramentas(0, li, n) + '</div>' +
+        t.colunas.map(function (c, ci) { return campoEd(c, 'linhas.' + li + '.' + ci, l[ci] || '', ci === 0 ? 'input' : 'area', ''); }).join('') + '</section>';
+    });
+    h += '<div class="botoes"><button type="button" class="botao botao-claro" data-ed="somar-linha"><svg><use href="#i-somar"/></svg>Nova linha</button></div>';
+    if (E.edits.tabelas[ED.ti]) h += '<div class="botoes ed-fim"><button type="button" class="botao botao-claro" data-ed="restaurar">Voltar à tabela original do PDF</button></div>';
+    $('#detalhe-corpo').innerHTML = '<div class="ed">' + h + '</div>';
+    crescerTodos();
+  }
+
+  var COLUNAS_COR = { 'Gestação': 1, 'Amamentação': 1, 'Doença renal': 1 };
+  function celulaHtml(t, ci, texto, mapa) {
+    texto = texto.trim();
+    if (!texto) return '';
+    if (mapa[ci] && mapa[ci][texto]) return mapa[ci][texto]; // não mexeu: mantém como estava no PDF
+    var h = esc(texto);
+    if (ci === 0) return '<b class="neg">' + h + '</b>';
+    if (COLUNAS_COR[t.colunas[ci]]) {
+      h = h.replace(/(^|[^A-Za-zÀ-ÿ])(seguro|compatível|cautela|evitar|contraindicado)(?![A-Za-zÀ-ÿ])/gi, function (m, a, w) {
+        var k = norm(w);
+        var cls = k === 'seguro' || k === 'compativel' ? 'vde' : k === 'cautela' ? 'amb' : 'ver';
+        return a + '<b class="' + cls + '">' + w + '</b>';
+      });
+    }
+    return h;
+  }
+
+  /* ── edição: ações ──────────────────────────────────────────────────── */
+
+  function definir(obj, caminho, v) {
+    var ps = caminho.split('.');
+    for (var i = 0; i < ps.length - 1; i++) obj = obj[/^\d+$/.test(ps[i]) ? +ps[i] : ps[i]];
+    obj[ps[ps.length - 1]] = v;
+  }
+  function crescer(t) { t.style.height = 'auto'; t.style.height = (t.scrollHeight + 3) + 'px'; }
+  function crescerTodos() { $$('#detalhe-corpo .ed textarea').forEach(crescer); }
+  function redesenharEd(foco) {
+    var y = window.scrollY;
+    if (ED.tipo === 'tabela') desenharEditorTabela(); else desenharEditor();
+    window.scrollTo(0, y);
+    guardarRascunho();
+    if (foco) {
+      var el = document.getElementById(foco);
+      if (el) {
+        rolarAte(el);
+        var c = el.querySelector('input, textarea, select');
+        if (c) c.focus();
+      }
+    }
+  }
+
+  $('#detalhe-corpo').addEventListener('input', function (ev) {
+    if (!ED) return;
+    var c = ev.target.getAttribute('data-c');
+    if (!c) return;
+    definir(ED.r, c, ev.target.value);
+    if (ev.target.tagName === 'TEXTAREA') crescer(ev.target);
+    guardarRascunho();
+  });
+
+  $('#tela-detalhe').addEventListener('click', function (ev) {
+    var b = ev.target.closest('[data-ed]');
+    if (!b || !ED || b.disabled) return;
+    var acao = b.getAttribute('data-ed');
+    var si = +b.getAttribute('data-s'), bi = +b.getAttribute('data-b'), v = b.getAttribute('data-v');
+    var lista = ED.tipo === 'tabela' ? ED.r.linhas : ED.r.secoes[si] && ED.r.secoes[si].blocos;
+    if (acao === 'salvar') { salvarEdicao(); return; }
+    if (acao === 'subir' || acao === 'descer') {
+      var j = acao === 'subir' ? bi - 1 : bi + 1;
+      var x = lista[bi]; lista[bi] = lista[j]; lista[j] = x;
+      redesenharEd();
+    } else if (acao === 'tirar') {
+      var tirado = lista.splice(bi, 1)[0];
+      redesenharEd();
+      avisar('Apagado', 'Desfazer', function () { lista.splice(bi, 0, tirado); redesenharEd(); });
+    } else if (acao === 'selo') {
+      var sl = lista[bi].selos, k = sl.indexOf(v);
+      if (k >= 0) sl.splice(k, 1); else sl.push(v);
+      b.setAttribute('aria-pressed', String(k < 0));
+      guardarRascunho();
+    } else if (acao === 'tag') {
+      var tg = ED.r.tags, kt = tg.indexOf(v);
+      if (kt >= 0) tg.splice(kt, 1); else tg.push(v);
+      b.setAttribute('aria-pressed', String(kt < 0));
+      guardarRascunho();
+    } else if (acao === 'somar') {
+      somarBloco(si, v);
+    } else if (acao === 'outro') {
+      perguntar('O que acrescentar?', [
+        { t: 'Título de lista (Orientações, Retornar se…)', v: 'sub' }, { t: 'Grupo de opções', v: 'grupo' },
+        { t: '“OU” entre duas opções', v: 'ou' }, { t: 'Parágrafo', v: 'p' }, { t: 'Cancelar' }
+      ], function (tipo) { if (tipo) somarBloco(si, tipo); }, true);
+    } else if (acao === 'secao') {
+      var pos = ED.r.secoes.filter(function (s) { return ORDEM_SECOES.indexOf(s.tipo) < ORDEM_SECOES.indexOf(v); }).length;
+      ED.r.secoes.splice(pos, 0, secaoNova(v));
+      redesenharEd('es-' + pos);
+    } else if (acao === 'tirar-secao') {
+      var sec = ED.r.secoes[si];
+      perguntar('Apagar a seção “' + sec.titulo + '” inteira?', [{ t: 'Cancelar' }, { t: 'Apagar', v: 1, perigo: true }], function (ok) {
+        if (!ok) return;
+        ED.r.secoes.splice(si, 1);
+        redesenharEd();
+        avisar('Seção apagada', 'Desfazer', function () { ED.r.secoes.splice(si, 0, sec); redesenharEd(); });
+      });
+    } else if (acao === 'somar-linha') {
+      ED.r.linhas.push(TABELAS[ED.ti].colunas.map(function () { return ''; }));
+      redesenharEd('eb-0-' + (ED.r.linhas.length - 1));
+    } else if (acao === 'restaurar') {
+      restaurarOriginal();
+    } else if (acao === 'copia') {
+      salvarComoNova();
+    } else if (acao === 'apagar-ficha') {
+      apagarConduta();
+    }
+  });
+
+  function somarBloco(si, tipo) {
+    var s = ED.r.secoes[si];
+    var b;
+    if (tipo === 'item') {
+      var n = s.blocos.filter(function (x) { return x.t === 'item'; }).length + 1;
+      b = { t: 'item', n: String(n), nome: '', qtd: '', uso: '', selos: [] };
+    } else if (tipo === 'li' || tipo === 'p') b = { t: tipo, txt: '', nota: false };
+    else if (tipo === 'sub') b = { t: 'sub', tom: s.tipo === 'plantonista' ? 'seguranca' : 'orient', nota: '' };
+    else if (tipo === 'grupo') b = { t: 'grupo', texto: '' };
+    else b = { t: 'ou' };
+    s.blocos.push(b);
+    redesenharEd('eb-' + si + '-' + (s.blocos.length - 1));
+  }
+
+  function salvarEdicao() {
+    if (ED.tipo === 'tabela') {
+      var t = D.tabelas[ED.ti];
+      var mapa = t.colunas.map(function () { return {}; });
+      t.linhas.forEach(function (l) { l.forEach(function (c, ci) { mapa[ci][semTags(c).trim()] = c; }); });
+      var linhas = ED.r.linhas.map(function (l) { return l.map(function (c, ci) { return celulaHtml(t, ci, c || '', mapa); }); })
+        .filter(function (l) { return l.some(Boolean); });
+      E.edits.tabelas[ED.ti] = { linhas: linhas, em: Date.now() };
+      fecharEditor();
+      depoisDeMudar();
+      avisar('Tabela salva');
+      voltarOu('#/tabelas');
+      return;
+    }
+    var r = ED.r;
+    if (!r.nome.trim()) {
+      avisar('Dê um nome à conduta');
+      var cn = $('[data-c="nome"]');
+      if (cn) { rolarAte(cn); cn.focus(); }
+      return;
+    }
+    var f = deRascunho(r);
+    var id = ED.id;
+    var antiga = E.edits.fichas[id];
+    var base = BASE_POR_ID[id];
+    f.id = id;
+    f.editada = Date.now();
+    if (base) f.pagina = base.pagina;
+    else { f.minha = true; f.criada = antiga && antiga.criada || Date.now(); }
+    var primeira = !POR_ID[id];
+    E.edits.fichas[id] = f;
+    fecharEditor();
+    depoisDeMudar();
+    avisar(primeira ? 'Conduta criada' : 'Alterações salvas');
+    if (primeira) ir('#/f/' + id, true);
+    else voltarOu('#/f/' + id);
+  }
+
+  function restaurarOriginal() {
+    var tabela = ED.tipo === 'tabela';
+    perguntar(tabela ? 'Voltar à tabela original do PDF? Suas alterações nela serão apagadas.' :
+      'Voltar ao texto original do PDF? Suas alterações nesta conduta serão apagadas.', [
+      { t: 'Cancelar' }, { t: 'Voltar ao original', v: 1, perigo: true }
+    ], function (ok) {
+      if (!ok) return;
+      if (tabela) delete E.edits.tabelas[ED.ti]; else delete E.edits.fichas[ED.id];
+      fecharEditor();
+      depoisDeMudar();
+      avisar('Original restaurado');
+      voltarOu(tabela ? '#/tabelas' : '#/');
+    });
+  }
+
+  function salvarComoNova() {
+    var r = JSON.parse(JSON.stringify(ED.r));
+    r.nome = (r.nome.trim() || 'Conduta') + ' (nova versão)';
+    var id = 'minha-' + Date.now().toString(36);
+    ED = { tipo: 'ficha', id: id, r: r, orig: '', nova: true };
+    E.rascunho = ED;
+    guardar();
+    avisar('Cópia aberta: ajuste o nome e salve');
+    ir('#/e/' + id, true);
+  }
+
+  function apagarConduta() {
+    var id = ED.id, nome = ED.r.nome || 'esta conduta';
+    perguntar('Apagar “' + nome + '”? Não dá para desfazer.', [{ t: 'Cancelar' }, { t: 'Apagar', v: 1, perigo: true }], function (ok) {
+      if (!ok) return;
+      delete E.edits.fichas[id];
+      fecharEditor();
+      depoisDeMudar();
+      avisar('Conduta apagada');
+      ir('#/', true);
+    });
+  }
+
+  /* ── cópia de segurança das alterações ──────────────────────────────── */
+
+  function blocoCopia() {
+    var nf = 0, nn = 0;
+    Object.keys(E.edits.fichas).forEach(function (id) { if (BASE_POR_ID[id]) nf++; else nn++; });
+    var nt = Object.keys(E.edits.tabelas).length;
+    var resumo = (nf || nn || nt) ?
+      [nf ? nf + (nf === 1 ? ' conduta editada' : ' condutas editadas') : '', nn ? nn + (nn === 1 ? ' conduta criada' : ' condutas criadas') : '', nt ? nt + (nt === 1 ? ' tabela editada' : ' tabelas editadas') : '']
+        .filter(Boolean).join(', ') + '.' : 'Nenhuma alteração ainda.';
+    return '<h2 class="rotulo">Suas alterações</h2><div class="ficha-grupo texto" style="padding:4px 14px 14px">' +
+      '<p><b>' + esc(resumo) + '</b> Edite qualquer conduta pelo lápis no alto da ficha, crie novas em “Nova conduta” na lista e edite as tabelas pelo botão de cada uma.</p>' +
+      '<p class="tab-nota" style="margin:0 0 10px">As alterações ficam só neste aparelho e passam para as versões novas do app. Se desinstalar o app, elas se perdem: guarde uma cópia. A mesma cópia abre no Prescricoes.html do computador.</p>' +
+      '<div class="botoes"><button type="button" class="botao botao-claro" data-copia="salvar"><svg><use href="#i-baixo"/></svg>Salvar cópia</button>' +
+      '<button type="button" class="botao botao-claro" data-copia="abrir"><svg><use href="#i-cima"/></svg>Restaurar cópia</button></div></div>';
+  }
+
+  function exportarEdicoes() {
+    var dados = { app: 'prescricoes', formato: 1, salvo: new Date().toISOString(), fichas: E.edits.fichas, tabelas: E.edits.tabelas };
+    var texto = JSON.stringify(dados, null, 1);
+    var d = new Date();
+    var nome = 'prescricoes-alteracoes-' + d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2) + '.json';
+    try { if (ponte && ponte.salvarArquivo) { ponte.salvarArquivo(nome, texto); return; } } catch (e) { /* segue */ }
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([texto], { type: 'application/json' }));
+    a.download = nome;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.parentNode.removeChild(a); }, 1000);
+    avisar('Cópia salva em ' + nome);
+  }
+
+  function importarEdicoes() {
+    try { if (ponte && ponte.abrirArquivo) { ponte.abrirArquivo(); return; } } catch (e) { /* segue */ }
+    var inp = document.createElement('input');
+    inp.type = 'file';
+    inp.accept = '.json,application/json,text/plain';
+    inp.onchange = function () {
+      if (!inp.files || !inp.files[0]) return;
+      var fr = new FileReader();
+      fr.onload = function () { receberCopia(String(fr.result)); };
+      fr.readAsText(inp.files[0]);
+    };
+    inp.click();
+  }
+  window.__arquivo = function () {
+    try { var t = ponte && ponte.pendente ? ponte.pendente() : ''; if (t) receberCopia(t); } catch (e) { avisar('Não consegui ler o arquivo'); }
+  };
+
+  function receberCopia(texto) {
+    var d;
+    try { d = JSON.parse(texto); } catch (e) { d = null; }
+    if (!d || d.app !== 'prescricoes' || typeof d.fichas !== 'object' || !d.fichas) { avisar('Esse arquivo não é uma cópia das alterações'); return; }
+    var fichas = {}, tabelas = {};
+    Object.keys(d.fichas).forEach(function (id) {
+      var f = d.fichas[id];
+      if (!f || typeof f.nome !== 'string' || !Array.isArray(f.secoes) || !/^[a-z0-9-]{1,80}$/.test(id)) return;
+      if (!BASE_POR_ID[id] && !/^minha-/.test(id)) return;
+      f.id = id;
+      delete f._n; delete f._corpo;
+      fichas[id] = f;
+    });
+    Object.keys(d.tabelas || {}).forEach(function (ti) {
+      var t = d.tabelas[ti];
+      if (D.tabelas[+ti] && t && Array.isArray(t.linhas)) tabelas[+ti] = t;
+    });
+    var nf = Object.keys(fichas).length, nt = Object.keys(tabelas).length;
+    if (!nf && !nt) { avisar('A cópia está vazia'); return; }
+    perguntar('Restaurar ' + nf + (nf === 1 ? ' conduta' : ' condutas') + ' e ' + nt + (nt === 1 ? ' tabela' : ' tabelas') +
+      ' desta cópia? Onde houver a mesma conduta ou tabela, fica a da cópia; o resto continua como está.', [
+      { t: 'Cancelar' }, { t: 'Restaurar', v: 1, cheio: true }
+    ], function (ok) {
+      if (!ok) return;
+      Object.keys(fichas).forEach(function (id) { E.edits.fichas[id] = fichas[id]; });
+      Object.keys(tabelas).forEach(function (ti) { E.edits.tabelas[ti] = tabelas[ti]; });
+      depoisDeMudar();
+      avisar('Cópia restaurada');
+      if ((lerRota().partes[0] || '') === 'sobre') desenharSobre();
+    });
+  }
 
   /* ── começo ─────────────────────────────────────────────────────────── */
 
@@ -990,4 +1679,10 @@
   desenharFiltros();
   contador();
   mostrar(lerRota());
+  if (E.rascunho && !/^#\/et?\//.test(location.hash)) {
+    var rr = E.rascunho;
+    avisar('Há uma edição não salva' + (rr.r && rr.r.nome ? ' de “' + rr.r.nome + '”' : ''), 'Continuar', function () {
+      ir(rr.tipo === 'tabela' ? '#/et/' + rr.ti : '#/e/' + rr.id);
+    });
+  }
 })();

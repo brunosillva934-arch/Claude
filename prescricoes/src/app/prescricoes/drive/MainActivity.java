@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
@@ -28,19 +29,26 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.io.OutputStream;
 
 /**
  * Uma tela só: um WebView com a página embutida em assets/index.html, que já traz as fichas.
  * O app não pede permissão nenhuma e não usa a rede. O que esta classe faz pela página:
  * guarda favoritas e a receita montada num arquivo privado, copia e compartilha texto
- * e pinta as barras do sistema com as cores do tema.
+ * e pinta as barras do sistema com as cores do tema, e grava ou lê a cópia das alterações
+ * num arquivo que a pessoa escolhe.
  */
 public class MainActivity extends Activity {
     private static final int LIMITE_ENVIO = 180000;
+    private static final int PEDIR_ARQUIVO = 41;
+    private static final int PEDIR_DESTINO = 42;
+    private static final int LIMITE_ARQUIVO = 16 * 1024 * 1024;
 
     private WebView web;
     private boolean pronta;
     private File pasta;
+    private String paraSalvar;
+    private String pendente;
 
     @Override
     protected void onCreate(Bundle estado) {
@@ -127,6 +135,70 @@ public class MainActivity extends Activity {
                 if (!"true".equals(tratou)) finish();
             }
         });
+    }
+
+    @Override
+    protected void onActivityResult(int pedido, int resultado, Intent dados) {
+        super.onActivityResult(pedido, resultado, dados);
+        final Uri uri = resultado == RESULT_OK && dados != null ? dados.getData() : null;
+        if (pedido == PEDIR_DESTINO) {
+            final String texto = paraSalvar;
+            paraSalvar = null;
+            if (uri == null || texto == null) return;
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    OutputStream out = null;
+                    boolean ok = false;
+                    try {
+                        out = getContentResolver().openOutputStream(uri, "wt");
+                        if (out != null) {
+                            out.write(texto.getBytes("UTF-8"));
+                            out.flush();
+                            ok = true;
+                        }
+                    } catch (Exception e) {
+                        ok = false;
+                    } finally {
+                        fechar(out);
+                    }
+                    dizer(ok ? "Cópia salva." : "Não deu para salvar nesse lugar.");
+                }
+            }).start();
+        } else if (pedido == PEDIR_ARQUIVO) {
+            if (uri == null) return;
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    InputStream in = null;
+                    String texto = null;
+                    try {
+                        in = getContentResolver().openInputStream(uri);
+                        if (in != null) {
+                            byte[] b = lerTudo(in);
+                            if (b.length <= LIMITE_ARQUIVO) texto = new String(b, "UTF-8");
+                        }
+                    } catch (Exception e) {
+                        texto = null;
+                    } finally {
+                        fechar(in);
+                    }
+                    if (texto == null) {
+                        dizer("Não consegui ler esse arquivo.");
+                        return;
+                    }
+                    synchronized (MainActivity.this) {
+                        pendente = texto;
+                    }
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            if (web != null) web.evaluateJavascript("window.__arquivo&&window.__arquivo()", null);
+                        }
+                    });
+                }
+            }).start();
+        }
     }
 
     /* ── utilidades ──────────────────────────────────────────────────── */
@@ -259,6 +331,62 @@ public class MainActivity extends Activity {
                     }
                 }
             });
+        }
+
+        /** Abre o "salvar como" do sistema; o texto é gravado quando a pessoa escolhe o lugar. */
+        @JavascriptInterface
+        public void salvarArquivo(final String nome, final String texto) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    if (texto == null) return;
+                    paraSalvar = texto;
+                    Intent i = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+                    i.addCategory(Intent.CATEGORY_OPENABLE);
+                    i.setType("application/json");
+                    i.putExtra(Intent.EXTRA_TITLE, nome == null ? "prescricoes-alteracoes.json" : nome);
+                    try {
+                        startActivityForResult(i, PEDIR_DESTINO);
+                    } catch (Exception e) {
+                        paraSalvar = null;
+                        dizer("Este aparelho não tem onde escolher o arquivo.");
+                    }
+                }
+            });
+        }
+
+        /** Abre o seletor de arquivos; o texto lido chega à página por window.__arquivo e pendente(). */
+        @JavascriptInterface
+        public void abrirArquivo() {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                    i.addCategory(Intent.CATEGORY_OPENABLE);
+                    i.setType("*/*");
+                    try {
+                        startActivityForResult(i, PEDIR_ARQUIVO);
+                    } catch (Exception semSeletor) {
+                        Intent g = new Intent(Intent.ACTION_GET_CONTENT);
+                        g.addCategory(Intent.CATEGORY_OPENABLE);
+                        g.setType("*/*");
+                        try {
+                            startActivityForResult(Intent.createChooser(g, "Escolha a cópia"), PEDIR_ARQUIVO);
+                        } catch (Exception e) {
+                            dizer("Este aparelho não tem seletor de arquivos.");
+                        }
+                    }
+                }
+            });
+        }
+
+        @JavascriptInterface
+        public String pendente() {
+            synchronized (MainActivity.this) {
+                String t = pendente;
+                pendente = null;
+                return t == null ? "" : t;
+            }
         }
 
         @JavascriptInterface

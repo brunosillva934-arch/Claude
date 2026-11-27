@@ -28,7 +28,39 @@ tem o PDF gera o app na própria máquina.
   no celular.
 - **Receita**: monte a sua a partir da receita pronta, troque itens pelas opções
   (de qualquer ficha), desmarque orientações e copie ou compartilhe.
+- **Editar e criar**: qualquer conduta pode ser atualizada pelo lápis no alto da ficha
+  (nome, CID, etiquetas, outros nomes, atestado, retorno, remédios, quantidades,
+  posologia, selos, orientações, sinais de alarme, seções inteiras e referências), e
+  dá para criar condutas novas e editar as linhas das tabelas. Veja abaixo.
 - Tema claro ou escuro (segue o sistema) e quatro tamanhos de letra.
+
+## Editar, criar e guardar
+
+- **Editar uma conduta**: abra a ficha e toque no lápis (ou em "Editar esta conduta",
+  no fim). Cada remédio, tópico e título tem setas para subir e descer e a lixeira;
+  embaixo de cada seção há "+ Remédio", "+ Tópico" e "Outro…" (título de lista, grupo
+  de opções, "OU", parágrafo). `**texto**` vira negrito, como o "**Gestante:**" das
+  fichas. Toque em **Salvar** no alto.
+- A ficha editada ganha a faixa "Editada por você em …" com o link **Ver o original do
+  PDF**; no editor, **Voltar ao original do PDF** desfaz tudo. "Salvar como conduta
+  nova…" guarda a versão editada à parte e deixa a original como estava.
+- **Criar uma conduta**: "Nova conduta", ao lado de "Todas as condutas", ou o botão
+  que aparece quando a busca não acha nada. Ela entra na busca, na lista, nos remédios
+  e no filtro **Minhas**.
+- **Tabelas**: "Editar tabela" em cada uma. Nas colunas de gestação, amamentação e
+  doença renal, Seguro, Compatível, Cautela, Evitar e Contraindicado ganham a cor
+  sozinhos.
+- Voltar sem salvar pergunta antes. Se o app for fechado no meio da edição, ele avisa
+  ao abrir de novo e continua de onde parou.
+- **Onde fica**: só no aparelho, num arquivo privado do app. Atualizar o app (instalar
+  a versão nova por cima) mantém tudo; **desinstalar apaga**. Por isso, em Sobre e
+  ajustes → Suas alterações, use **Salvar cópia** de vez em quando (gera um `.json`)
+  e **Restaurar cópia** para trazer de volta, num celular novo ou no
+  `Prescricoes.html` do computador. A restauração só troca as condutas e tabelas que
+  estão na cópia; o resto fica.
+- As edições ficam por cima do conteúdo do PDF, ligadas a cada conduta pelo nome
+  original. Se você gerar o app de novo com um PDF atualizado, as suas versões
+  continuam valendo onde houver edição.
 
 ## Gerar o app
 
@@ -81,6 +113,11 @@ O `extrair.py` usa essas marcas para separar as seções. Detalhes que ele resol
 ## O que foi e o que não foi testado
 
 Conferido: todo trecho de texto das páginas de fichas aparece nos dados extraídos;
+edição de conduta (mudar dose e posologia, somar e reordenar remédio, apagar
+orientação, negrito), ver o original e voltar a ele, sair sem salvar, rascunho
+recuperado depois de fechar, conduta nova (achada pelo nome, pelos outros nomes e pelo
+CID, e no filtro Minhas), edição de tabela com as cores, e a cópia de segurança indo
+de um navegador para outro e recusando arquivo errado;
 as 123 fichas e os 209 remédios abrem sem erro numa tela de 360 px; a receita
 pronta de todas as fichas copia; busca por nome, apelido, CID, remédio e texto;
 receita montada, favoritas e ajustes sobrevivendo ao recarregar; tema escuro.
