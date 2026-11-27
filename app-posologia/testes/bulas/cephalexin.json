@@ -1,0 +1,32 @@
+{
+"set_id": "36882c6d-7b6f-41e3-8c54-e3b0073b8c07",
+"id": "4703ecf1-655c-4ef8-ac07-10ec63c94797",
+"version": "4",
+"effective_time": "20261016",
+"indications_and_usage": [
+"INDICATIONS & USAGE Cephalexin tablets are indicated for the treatment of the following infections when caused by susceptible strains of the designated microorganisms: Respiratory tract infections caused by susceptible isolates of Streptococcus pneumoniae and Streptococcus pyogenes Otitis media due to susceptible isolates of Streptococcu.. pneumoniae, Haemophilus influenzae , Staphylococcus aureus , Streptococcus pyogenes , and Moraxella Catarrhalis. Skin and skin structure infections caused by susceptible isolates of the following Gram-positive bacteria: Staphylococcus aureus, and Streptococcus pyogenes Bone infections caused by susceptible isolates of Staphylococcus aureus and Proteus Mirabilis Genitourinary tract infections, including acute prostatitis, caused by susceptible isolates of Escherichia coli, Proteus mirabilis, and Klebsiella pneumoniare To reduce the development of drug-resistant bacteria and maintain the effectiveness of cephalexin tablets and other antibacterial drugs, cephalexin tablets should be used only to treat or prevent infections that are proven or strongly suspected to be caused by susceptible bacteria. When culture and susceptibility information are available, they should be considered in selecting or modifying antibacterial therapy. In the absence of such data, local epidemiology and susceptibility patterns may contribute to the empiric selection of therapy."
+],
+"dosage_and_administration": [
+"DOSAGE & ADMINISTRATION Cephalexin tablets are administered orally. Adults and Pediatric Patients at Least 15 Years of Age The usual dose is 250 mg every 6 hours but a dose of 500 mg every 12 hours may be administered. Treatment is administered for 7 to 14 days. For more severe infections larger doses of oral cephalexin may be needed, up to 4 grams in two to four equally divided doses. Pediatric Patients (over 1 year of age) The recommended total daily dose of oral cephalexin for pediatric patients is 25 to 50 mg/kg in equally divided doses for 7 to 14 days. In the treatment of β-hemolytic streptococcal infections, duration of at least 10 days is recommended. In severe infections, a total daily dose of 50 to 100 mg/kg may be administered in equally divided doses. In the treatment of otitis media, the recommended daily dose is 75 to 100 mg/kg/day in equally divided doses. Dosage adjustments in Adults and Pediatric Patients at Least 15 years of Age with Renal Impairment Administer the following dosing regimens for cephalexin tablets to patients with renal impairment [see PRECAUTIONS]. Table 1. Recommended Dose Regimen for Patients with Renal Impairment Renal function Dose regimen recommendation Creatinine clearance >60 mL/min No dose adjustment Creatinine clearance 30 to 59 mL/min No dose adjustment; maximum daily dose should not exceed 1 g Creatinine clearance 15 to 29 mL/min 250 mg, every 8 hours or every 12 hours Creatinine clearance 5 to 14 mL/min not yet on dialysis* 250 mg, every 24 hours Creatinine clearance 1 to 4 mL/min not yet on dialysis* 250 mg, every 48 hours or every 60 hours *There is insufficient information to make dose adjustment recommendations in patients on hemodialysis."
+],
+"dosage_and_administration_table": [
+"<table cellspacing=\"0\" cellpadding=\"0\" border=\"0\" width=\"829.92\"> <colgroup> <col width=\"50%\"/> <col width=\"50%\"/> </colgroup> <tbody> <tr styleCode=\"Botrule\"> <td styleCode=\"Lrule Rrule\" valign=\"top\"> <content styleCode=\"bold\">Renal function</content>   </td> <td styleCode=\"Rrule\" valign=\"top\"> <content styleCode=\"bold\">Dose regimen recommendation</content>   </td> </tr> <tr styleCode=\"Botrule\"> <td styleCode=\"Lrule Rrule\" valign=\"top\">Creatinine clearance &gt;60 mL/min  </td> <td styleCode=\"Rrule\" valign=\"top\">No dose adjustment  </td> </tr> <tr styleCode=\"Botrule\"> <td styleCode=\"Lrule Rrule\" valign=\"top\">Creatinine clearance 30 to 59 mL/min  </td> <td styleCode=\"Rrule\" valign=\"top\">No dose adjustment; maximum daily dose should not exceed 1 g  </td> </tr> <tr styleCode=\"Botrule\"> <td styleCode=\"Lrule Rrule\" valign=\"top\">Creatinine clearance 15 to 29 mL/min  </td> <td styleCode=\"Rrule\" valign=\"top\">250 mg, every 8 hours or every 12 hours  </td> </tr> <tr styleCode=\"Botrule\"> <td styleCode=\"Lrule Rrule\" valign=\"top\">Creatinine clearance 5 to 14 mL/min not yet on dialysis*  </td> <td styleCode=\"Rrule\" valign=\"top\">250 mg, every 24 hours  </td> </tr> <tr> <td styleCode=\"Lrule Rrule\" valign=\"top\">Creatinine clearance 1 to 4 mL/min not yet on dialysis*  </td> <td styleCode=\"Rrule\" valign=\"top\">250 mg, every 48 hours or every 60 hours  </td> </tr> </tbody> </table>"
+],
+"openfda": {
+"brand_name": [
+"Cephalexin"
+],
+"generic_name": [
+"CEPHALEXIN"
+],
+"manufacturer_name": [
+"Ascend Laboratories, LLC"
+],
+"application_number": [
+"ANDA218947"
+],
+"route": [
+"ORAL"
+]
+}
+}

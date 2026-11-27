@@ -181,6 +181,35 @@ async function passo(nome, fn) {
     }
   });
 
+  await passo("amoxicilina + otite: abre a bula, mostra a dose da doença e confere a prescrição", async () => {
+    await p.locator(".aba", { hasText: "Buscar" }).click();
+    await p.fill("#busca", "amoxicilina");
+    await p.fill("#busca-doenca", "otite");
+    await p.press("#busca-doenca", "Enter");
+    await esperaCarga();
+    if ((await p.getAttribute("#app", "data-tela")) === "grupos") {
+      await p.locator(".item", { hasText: /^Amoxicillin\d/ }).first().click();
+    }
+    await p.waitForSelector("#dose-card", { timeout: 60000 });
+    assert.match(await p.locator(".procurado").textContent(), /Otite média, procurada na bula como: otitis media, otitis, ear/);
+    assert.ok((await p.locator(".trecho").count()) >= 1, "trecho da dose");
+    assert.match(await p.locator(".trechos").textContent(), /mg/);
+    await foto("12-dose-otite");
+    await p.fill("#p-dose", "875");
+    await p.selectOption("#p-intervalo", "12");
+    await p.waitForSelector("#conf-res .alerta");
+    const resumo = await p.locator("#conf-res .alerta").first().textContent();
+    assert.match(resumo, /^Coincide com a bula: 875/);
+    await p.locator("#conferir .segmento button", { hasText: "Criança" }).click();
+    await p.fill("#p-peso", "20");
+    await p.fill("#p-dose", "400");
+    await p.waitForFunction(() => /intervalo não/.test(document.querySelector("#conf-res .alerta").textContent));
+    await p.locator("#conferir").scrollIntoViewIfNeeded();
+    await foto("13-conferencia");
+    await p.fill("#p-dose", "");
+    await p.locator("#conferir .segmento button", { hasText: "Adulto" }).click();
+  });
+
   await passo("calculadora: mg/kg/dia com máximo e apresentação", async () => {
     await p.locator(".aba", { hasText: "Calcular" }).click();
     await p.fill("#c-peso", "25");

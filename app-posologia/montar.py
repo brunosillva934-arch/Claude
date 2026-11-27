@@ -28,7 +28,7 @@ FONTES = [
     ("IBM Plex Sans", 600, "normal", "ibm-plex-sans-latin-600-normal.woff2"),
     ("IBM Plex Mono", 400, "normal", "ibm-plex-mono-latin-400-normal.woff2"),
 ]
-SCRIPTS = ["calculo.js", "integridade.js", "bulas.js", "app.js"]
+SCRIPTS = ["calculo.js", "integridade.js", "bulas.js", "doses.js", "app.js"]
 SERVIDORES = ["https://api.fda.gov", "https://rxnav.nlm.nih.gov"]
 
 

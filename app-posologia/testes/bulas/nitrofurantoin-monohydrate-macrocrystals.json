@@ -1,0 +1,29 @@
+{
+"set_id": "55c75f27-b5fc-4f19-8607-08f8ec0c69ec",
+"id": "7a5a2365-bab1-46d8-a6e6-95c623dbea9a",
+"version": "21",
+"effective_time": "20241030",
+"indications_and_usage": [
+"INDICATIONS AND USAGE Nitrofurantoin capsules, USP (monohydrate/macrocrystals) are indicated only for the treatment of acute uncomplicated urinary tract infections (acute cystitis) caused by susceptible strains of Escherichia coli or Staphylococcus saprophyticus . Nitrofurantoin is not indicated for the treatment of pyelonephritis or perinephric abscesses. To reduce the development of drug-resistant bacteria and maintain the effectiveness of nitrofurantoin capsules, USP (monohydrate/macrocrystals) and other antibacterial drugs, nitrofurantoin capsules, USP (monohydrate/macrocrystals) should be used only to treat or prevent infections that are proven or strongly suspected to be caused by susceptible bacteria. When culture and susceptibility information are available, they should be considered in selecting or modifying antibacterial therapy. In the absence of such data, local epidemiology and susceptibility patterns may contribute to the empiric selection of therapy. Nitrofurantoins lack the broader tissue distribution of other therapeutic agents approved for urinary tract infections. Consequently, many patients who are treated with nitrofurantoin capsules, USP (monohydrate/macrocrystals) are predisposed to persistence or reappearance of bacteriuria (see CLINICAL STUDIES ). Urine specimens for culture and susceptibility testing should be obtained before and after completion of therapy. If persistence or reappearance of bacteriuria occurs after treatment with nitrofurantoin capsules, USP (monohydrate/macrocrystals), other therapeutic agents with broader tissue distribution should be selected. In considering the use of nitrofurantoin capsules, USP (monohydrate/macrocrystals), lower eradication rates should be balanced against the increased potential for systemic toxicity and for the development of antimicrobial resistance when agents with broader tissue distribution are utilized."
+],
+"dosage_and_administration": [
+"DOSAGE AND ADMINISTRATION Nitrofurantoin capsules (monohydrate/macrocrystals) should be taken with food. Adults and Pediatric Patients Over 12 Years: One 100 mg capsule every 12 hours for seven days."
+],
+"openfda": {
+"brand_name": [
+"Nitrofurantoin (monohydrate/macrocrystals)"
+],
+"generic_name": [
+"NITROFURANTOIN MONOHYDRATE/MACROCRYSTALS"
+],
+"manufacturer_name": [
+"Amneal Pharmaceuticals LLC"
+],
+"application_number": [
+"ANDA207372"
+],
+"route": [
+"ORAL"
+]
+}
+}

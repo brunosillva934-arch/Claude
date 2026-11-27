@@ -89,6 +89,13 @@
       sentido: "dose", iDose: "", iUnidade: "mcg", porKg: "kg", tempo: "min", vazao: "", qtd: "", qtdUnidade: "mg", volume: ""
     },
     removendo: null,
+    doenca: "",        // doença digitada para achar a dose na bula
+    autoAberta: false, // a bula foi aberta sozinha (busca com doença)
+    doseMais: false,
+    cacheTab: {},
+    cacheDose: null,
+    // a prescrição a conferir fica só na memória: nada disso é gravado
+    prescr: { dose: "", unidade: "mg", concQtd: "", concUnidade: "mg", concVol: "", intervalo: "12", outroIntervalo: "", paciente: "adulto", peso: "", renal: false, hepatica: false },
     conferindoTodas: false
   };
 
@@ -297,12 +304,13 @@
     render();
   }
 
-  function buscar(termo) {
+  function buscar(termo, doenca) {
     termo = String(termo || "").trim().replace(/\s+/g, " ");
     if (termo.length < 2) {
       aviso("Digite pelo menos duas letras do princípio ativo.");
       return;
     }
+    if (doenca != null) trocarDoencaSemDesenhar(doenca);
     E.busca = termo;
     E.resolucao = E.ingrediente = E.grupos = E.grupo = E.lista = null;
     var n = ++E.pedido;
@@ -362,6 +370,11 @@
       if (n !== E.pedido) return;
       E.lista = l;
       E.estado = null;
+      // com a doença já escolhida, abre direto a primeira bula (a de referência, se houver)
+      if (E.doenca && l.itens.length) {
+        abrirRotulo(l.itens[0], null, true);
+        return;
+      }
       render();
     }, function (e) { falha(n, e, function () { escolherGrupo(g, true); }); });
   }
@@ -388,7 +401,9 @@
     });
   }
 
-  function abrirRotulo(rotulo, salva) {
+  function abrirRotulo(rotulo, salva, automatica) {
+    E.autoAberta = !!automatica;
+    E.doseMais = false;
     E.rotulo = rotulo;
     E.salva = salva || null;
     E.deSalvas = !!salva;
@@ -665,11 +680,32 @@
       "aria-label": "Princípio ativo",
       valor: E.busca
     });
+    var campoDoenca = h("input", {
+      id: "busca-doenca",
+      type: "search",
+      classe: "busca-campo",
+      placeholder: "Doença (opcional): otite, pneumonia, ITU",
+      autocomplete: "off",
+      autocapitalize: "off",
+      spellcheck: "false",
+      enterkeyhint: "search",
+      "aria-label": "Doença, para ir direto à dose",
+      valor: E.doenca
+    });
     var form = h(
       "form",
-      { classe: "busca", role: "search", onsubmit: function (ev) { ev.preventDefault(); campo.blur(); buscar(campo.value); } },
-      icone("busca", 20),
-      campo,
+      {
+        classe: "busca-dupla",
+        role: "search",
+        onsubmit: function (ev) {
+          ev.preventDefault();
+          campo.blur();
+          campoDoenca.blur();
+          buscar(campo.value, campoDoenca.value);
+        }
+      },
+      h("label", { classe: "busca" }, icone("bula", 20), campo),
+      h("label", { classe: "busca" }, icone("info", 20), campoDoenca),
       h("button", { type: "submit", classe: "bt bt-pri", texto: "Buscar" })
     );
     var recentes = lerJSON("recentes", []);
@@ -681,13 +717,13 @@
         "section",
         { classe: "abertura" },
         h("h1", { texto: "Posologia direto da bula oficial" }),
-        h("p", { classe: "sub", texto: "Digite o princípio ativo, em português ou inglês. O app encontra a bula aprovada pela FDA e mostra a posologia exatamente como está escrita, com a fonte e a versão." }),
+        h("p", { classe: "sub", texto: "Digite o princípio ativo e, se quiser, a doença. O app encontra a bula aprovada pela FDA, mostra a dose para aquela doença exatamente como está escrita e confere a sua prescrição contra ela." }),
         form,
         recentes.length
           ? h(
               "div",
               { classe: "fichas", "aria-label": "Buscas recentes" },
-              recentes.map(function (t) { return h("button", { type: "button", classe: "ficha", texto: t, onclick: function () { buscar(t); } }); })
+              recentes.map(function (t) { return h("button", { type: "button", classe: "ficha", texto: t, onclick: function () { buscar(t, campoDoenca.value); } }); })
             )
           : null
       ),
@@ -713,7 +749,7 @@
           h("dt", { texto: "Brasil" }),
           h("dd", { texto: "Bulário Eletrônico da ANVISA, aberto no navegador a partir de cada bula." })
         ),
-        nota("O app não sugere dose, não usa inteligência artificial e não tem bula escrita à mão. A decisão continua sendo sua: confira a dose, a apresentação e o paciente.")
+        nota("O app não inventa dose: toda dose que aparece é um trecho da bula oficial, e a conferência mostra como leu cada número. Não usa inteligência artificial. A decisão continua sendo sua.")
       )
     );
   }
@@ -1117,8 +1153,12 @@
           linkFora("ANVISA", B.linkAnvisa((E.deSalvas ? E.nomeBR : E.busca) || t.generico || t.principal), "bt-sec"),
           botao("", function () { copiar(referencia(r), "Referência da bula copiada."); }, { classe: "bt-sec", icone: "copiar", rotulo: "Copiar a referência da bula" })
         ),
-        nota("Texto oficial da bula americana, em inglês, exatamente como aprovado pela FDA: sem tradução e sem resumo. Apresentações e doses aprovadas no Brasil podem ser diferentes; confira também a bula da ANVISA.")
+        nota("Texto oficial da bula americana, em inglês, exatamente como aprovado pela FDA: sem tradução e sem resumo. Apresentações e doses aprovadas no Brasil podem ser diferentes; confira também a bula da ANVISA."),
+        E.autoAberta ? nota("Aberta automaticamente a primeira da lista (a de referência mais recente, quando há). Para escolher outra bula, volte.") : null
       ),
+      painelDose(),
+      painelConferir(),
+      h("h2", { classe: "titulo-sec", texto: "Bula completa" }),
       h(
         "div",
         { classe: "procura" },
@@ -1136,6 +1176,481 @@
         h("p", { texto: "Destaques em amarelo marcam doses e frequências para facilitar a leitura. São só marcações visuais: o texto não foi alterado." })
       )
     );
+  }
+
+  /* ── dose para a doença e conferência da prescrição ─────────────── */
+
+  var D = window.Doses;
+  var NOME_POP = { adulto: "Adulto", crianca: "Criança", ambos: "Adulto e criança" };
+
+  function trocarDoencaSemDesenhar(v) {
+    E.doenca = String(v || "").trim().replace(/\s+/g, " ");
+    E.cacheDose = null;
+    E.doseMais = false;
+  }
+
+  function trocarDoenca(v) {
+    trocarDoencaSemDesenhar(v);
+    var y = window.scrollY;
+    render();
+    window.scrollTo(0, y);
+  }
+
+  /** As tabelas da posologia, já limpas e lidas, guardadas para a bula aberta. */
+  function tabelasDe(r) {
+    var k = r.id || r.set_id;
+    if (E.cacheTab[k]) return E.cacheTab[k];
+    var lidas = [];
+    [].concat(r.secoes.dosage_and_administration_table || []).forEach(function (html) {
+      var caixa = document.createElement("div");
+      caixa.appendChild(B.tabelaSegura(html));
+      var t = caixa.querySelector("table");
+      if (t) lidas.push(D.linhasDaTabela(t));
+    });
+    E.cacheTab = {};
+    E.cacheTab[k] = lidas;
+    return lidas;
+  }
+
+  function doseParaDoenca() {
+    var r = E.rotulo;
+    var chave = (r.id || r.set_id) + "|" + E.doenca;
+    if (E.cacheDose && E.cacheDose.chave === chave) return E.cacheDose.res;
+    var res = D.paraDoenca(r, tabelasDe(r), E.doenca);
+    E.cacheDose = { chave: chave, res: res };
+    return res;
+  }
+
+  /** Os trechos que a tela mostra e a conferência usa. */
+  function trechosEmUso(res) {
+    if (res.alvo.termos.length && !res.trechos.length) {
+      return { lista: res.todos.filter(function (u) { return u.valores.length; }), naoAchou: true };
+    }
+    return { lista: res.trechos, naoAchou: false };
+  }
+
+  function cortar(t, n) {
+    t = String(t || "");
+    return t.length > n ? t.slice(0, n - 1).replace(/\s+\S*$/, "") + "…" : t;
+  }
+
+  /** Como o app entendeu um valor da bula, em português: "20 a 45 mg/kg/dia, a cada 8 a 12 h". */
+  function descrever(v) {
+    var faixa = v.lo === v.hi ? C.num(v.lo) : C.num(v.lo) + " a " + C.num(v.hi);
+    var u = v.u + (v.porKg ? "/kg" : v.porM2 ? "/m²" : "");
+    var por = v.base === "dia" ? "/dia" : v.base === "h" ? "/h" : v.base === "min" ? "/min" : v.base === "dose" && (v.porKg || v.porM2) ? "/dose" : "";
+    var t = (v.max ? "máximo " : "") + faixa + " " + u + por;
+    if (v.max && v.maxBase === "dia" && v.base !== "dia") t += " por dia";
+    if (v.max && v.maxBase === "?") t += " (a bula não diz se por dose ou por dia)";
+    if (v.unica) t += ", dose única";
+    else if (v.freq) {
+      var ops = v.freq.opcoes && v.freq.opcoes.length ? v.freq.opcoes : [v.freq];
+      t += ", a cada " + ops.map(function (o) { return o.lo === o.hi ? C.num(o.lo) : C.num(o.lo) + " a " + C.num(o.hi); }).join(" ou ") + " h";
+    }
+    return t;
+  }
+
+  function selosTrecho(u) {
+    var s = [];
+    if (NOME_POP[u.pop]) s.push(h("span", { classe: "selo", texto: NOME_POP[u.pop] + (u.popHerdada ? " (pelo parágrafo)" : "") }));
+    if (u.situacao === "renal") s.push(h("span", { classe: "selo selo-atencao", texto: "Ajuste renal" }));
+    if (u.situacao === "hepatica") s.push(h("span", { classe: "selo selo-atencao", texto: "Ajuste hepático" }));
+    if (u.termo && u.termo.termo.amplo) s.push(h("span", { classe: "selo selo-atencao", texto: "categoria ampla: " + u.termo.achado }));
+    if (u.tipo === "linha") s.push(h("span", { texto: "Tabela " + u.tabela + (u.titulo ? " · " + cortar(u.titulo, 70) : "") }));
+    else if (u.subsecao) s.push(h("span", { texto: "Subseção " + u.subsecao }));
+    if (u.continuacao) s.push(h("span", { texto: "continuação do trecho anterior" }));
+    return s;
+  }
+
+  function trechoDose(u) {
+    var destaque = u.termo ? u.termo.achado : "";
+    var corpo;
+    if (u.tipo === "linha") {
+      corpo = h("dl", { classe: "linha-tab" });
+      u.celulas.forEach(function (c) {
+        if (!c.texto) return;
+        var dd = h("dd");
+        dd.appendChild(pintarTexto(c.texto, destaque));
+        corpo.appendChild(h("dt", { texto: c.cab || "—" }));
+        corpo.appendChild(dd);
+      });
+    } else {
+      corpo = h("p", { classe: "trecho-t" });
+      corpo.appendChild(pintarTexto(u.texto, destaque));
+    }
+    return h(
+      "li",
+      { classe: "trecho" + (u.situacao ? " trecho-sit" : "") },
+      h("div", { classe: "item-m" }, selosTrecho(u)),
+      u.subtitulo ? h("p", { classe: "trecho-sub", texto: u.subtitulo }) : null,
+      corpo
+    );
+  }
+
+  function listaTrechos(lista) {
+    var mostrar = E.doseMais ? lista : lista.slice(0, 6);
+    return h(
+      "div",
+      null,
+      h("ul", { classe: "trechos" }, mostrar.map(trechoDose)),
+      lista.length > mostrar.length
+        ? h("div", { classe: "acoes" }, botao("Mostrar mais " + (lista.length - mostrar.length) + " trechos", function () {
+            E.doseMais = true;
+            var y = window.scrollY;
+            render();
+            window.scrollTo(0, y);
+          }, { classe: "bt-ter" }))
+        : null
+    );
+  }
+
+  function resultadoDose(res) {
+    var partes = [];
+    var alvo = res.alvo;
+    var nomeDoenca = alvo.doencas.length ? alvo.doencas.map(function (d) { return d.pt; }).join(" / ") : "“" + E.doenca + "”";
+    if (alvo.termos.length) {
+      partes.push(h("p", {
+        classe: "procurado",
+        texto: (alvo.doencas.length ? nomeDoenca + ", procurada na bula como: " : "Procurado na bula como está escrito: ") +
+          alvo.termos.map(function (t) { return t.termo + (t.amplo ? " (categoria ampla)" : ""); }).join(", ") + "."
+      }));
+      if (res.indicacoes.length) {
+        var caixa = h("div", { classe: "indicacao" }, h("p", { classe: "rotulo-c", texto: "Consta nas indicações da bula" }));
+        res.indicacoes.slice(0, 2).forEach(function (i) {
+          var p = h("p", { classe: "trecho-t" });
+          p.appendChild(pintarTexto(cortar(i.texto, 360), i.termo.achado));
+          caixa.appendChild(p);
+        });
+        partes.push(caixa);
+      } else {
+        partes.push(nota(nomeDoenca + " não aparece nas indicações desta bula da FDA. Pode ser uso fora da bula nos EUA, ou a bula chamar a doença por outro nome.", "alerta"));
+      }
+    }
+    var uso = trechosEmUso(res);
+    if (uso.naoAchou) {
+      partes.push(nota("Não achei " + nomeDoenca + " na posologia desta bula. Abaixo, a posologia geral.", "alerta"));
+      partes.push(h("h3", { classe: "form-t", texto: "Posologia geral (texto oficial)" }));
+    } else if (!alvo.termos.length) {
+      partes.push(h("h3", { classe: "form-t", texto: "Posologia geral (texto oficial)" }));
+      partes.push(h("p", { classe: "dica", texto: "Digite a doença acima para ver só o trecho dela." }));
+    } else {
+      partes.push(h("h3", { classe: "form-t", texto: "Dose na bula (texto oficial)" }));
+      if (res.porIndicacao) partes.push(nota("A posologia desta bula não separa por doença: vale a dose geral abaixo."));
+      if (res.soAmplos) partes.push(nota("Achado só pela categoria ampla em que a doença costuma estar na bula americana. Confira se " + nomeDoenca.toLowerCase() + " está mesmo dentro dela.", "alerta"));
+    }
+    if (!uso.lista.length) partes.push(nota("A posologia desta bula não tem número de dose em mg, mcg, g ou unidades (pode estar em comprimidos). Leia a seção completa abaixo."));
+    else partes.push(listaTrechos(uso.lista));
+    return partes;
+  }
+
+  function painelDose() {
+    var r = E.rotulo;
+    var campo = h("input", {
+      id: "doenca",
+      type: "search",
+      classe: "busca-campo",
+      placeholder: "Doença: otite, pneumonia, ITU, TVP…",
+      autocomplete: "off",
+      autocapitalize: "off",
+      spellcheck: "false",
+      enterkeyhint: "search",
+      "aria-label": "Doença ou situação",
+      valor: E.doenca
+    });
+    var ativas = D.interpretar(E.doenca).doencas;
+    var chips = D.doencasDaBula(r);
+    return h(
+      "section",
+      { classe: "cartao dose-card", id: "dose-card" },
+      h("h2", { texto: "Dose para a doença" }),
+      h(
+        "form",
+        { classe: "busca", onsubmit: function (ev) { ev.preventDefault(); campo.blur(); trocarDoenca(campo.value); } },
+        icone("busca", 18),
+        campo,
+        h("button", { type: "submit", classe: "bt bt-pri", texto: "Ver dose" })
+      ),
+      chips.length
+        ? h(
+            "div",
+            { classe: "fichas", "aria-label": "Doenças citadas nas indicações desta bula" },
+            chips.slice(0, 16).map(function (d) {
+              var ativa = ativas.indexOf(d) >= 0;
+              return h("button", { type: "button", classe: "ficha" + (ativa ? " ficha-ativa" : ""), "aria-pressed": ativa ? "true" : "false", texto: d.pt, onclick: function () { trocarDoenca(ativa ? "" : d.chaves[0]); } });
+            }).concat(
+              /renal|creatinine|dialysis|GFR/i.test((r.secoes.dosage_and_administration || "") + (r.secoes.dosage_and_administration_table || []).join(" "))
+                ? [h("button", { type: "button", classe: "ficha ficha-sit", texto: "Ajuste renal", onclick: function () { trocarDoenca("ajuste renal"); } })]
+                : []
+            )
+          )
+        : null,
+      h("div", { id: "dose-res" }, resultadoDose(doseParaDoenca()))
+    );
+  }
+
+  /* campos da prescrição */
+
+  function campoP(campo, rotulo, sufixo, dica) {
+    var input = h("input", {
+      type: "text",
+      inputmode: "decimal",
+      autocomplete: "off",
+      classe: "num",
+      id: "p-" + campo,
+      valor: E.prescr[campo],
+      "aria-describedby": "pe-" + campo,
+      oninput: function (ev) {
+        E.prescr[campo] = ev.target.value;
+        atualizarConferencia();
+      }
+    });
+    return h(
+      "div",
+      { classe: "campo" },
+      h("label", { for: "p-" + campo, texto: rotulo }),
+      h("div", { classe: "campo-l" }, input, sufixo ? (typeof sufixo === "string" ? h("span", { classe: "suf", texto: sufixo }) : sufixo) : null),
+      dica ? h("p", { classe: "dica", texto: dica }) : null,
+      h("p", { classe: "campo-erro", id: "pe-" + campo, "aria-live": "polite" })
+    );
+  }
+
+  function seletorP(campo, lista, rotulo, id, redesenha) {
+    return h(
+      "select",
+      {
+        classe: "sel",
+        id: id || null,
+        "aria-label": rotulo,
+        onchange: function (ev) {
+          E.prescr[campo] = ev.target.value;
+          if (redesenha) {
+            var y = window.scrollY;
+            render();
+            window.scrollTo(0, y);
+          } else atualizarConferencia();
+        }
+      },
+      opcoes(lista, E.prescr[campo])
+    );
+  }
+
+  function painelConferir() {
+    var p = E.prescr;
+    return h(
+      "section",
+      { classe: "cartao", id: "conferir" },
+      h("h2", { texto: "Conferir a prescrição" }),
+      h("p", { classe: "sub", texto: "Digite o que foi prescrito. O app compara com os números do trecho acima e mostra o que coincide, o que fica perto e o que passa de um máximo citado." }),
+      h(
+        "div",
+        { classe: "form" },
+        campoP("dose", "Dose por tomada", seletorP("unidade", ["mg", "mcg", "g", "UI", "mEq", "mL"], "Unidade da dose", null, true)),
+        p.unidade === "mL"
+          ? h("div", { classe: "grade" }, campoP("concQtd", "Concentração", seletorP("concUnidade", ["mg", "mcg", "g", "UI", "mEq"], "Unidade da concentração")), campoP("concVol", "em", "mL", "Ex.: 250 mg em 5 mL."))
+          : null,
+        h(
+          "div",
+          { classe: "campo" },
+          h("label", { for: "p-intervalo", texto: "Intervalo" }),
+          seletorP("intervalo", [["24", "a cada 24 h (1×/dia)"], ["12", "a cada 12 h (2×/dia)"], ["8", "a cada 8 h (3×/dia)"], ["6", "a cada 6 h (4×/dia)"], ["4", "a cada 4 h (6×/dia)"], ["48", "a cada 48 h"], ["168", "1×/semana"], ["unica", "dose única"], ["outro", "outro intervalo…"]], "Intervalo", "p-intervalo", true)
+        ),
+        h(
+          "div",
+          { classe: "grade" },
+          p.intervalo === "outro" ? campoP("outroIntervalo", "A cada", "h") : null,
+          campoP("peso", "Peso", "kg", "Para comparar doses por kg.")
+        ),
+        h(
+          "div",
+          { classe: "segmento", role: "radiogroup", "aria-label": "Paciente" },
+          [["adulto", "Adulto"], ["crianca", "Criança"]].map(function (o) {
+            var ativo = p.paciente === o[0];
+            return h("button", {
+              type: "button", role: "radio", "aria-checked": ativo ? "true" : "false", classe: ativo ? "ativo" : null, texto: o[1],
+              onclick: function () { p.paciente = o[0]; var y = window.scrollY; render(); window.scrollTo(0, y); }
+            });
+          })
+        ),
+        h(
+          "div",
+          { classe: "checks" },
+          [["renal", "Função renal reduzida"], ["hepatica", "Insuficiência hepática"]].map(function (o) {
+            return h(
+              "label",
+              { classe: "check" },
+              h("input", { type: "checkbox", checked: p[o[0]] ? true : null, onchange: function (ev) { p[o[0]] = ev.target.checked; atualizarConferencia(); } }),
+              h("span", { texto: o[1] })
+            );
+          })
+        )
+      ),
+      h("div", { id: "conf-res", classe: "conf-res", "aria-live": "polite" })
+    );
+  }
+
+  var MAPA_UNIDADE = { mg: ["mg", 1], mcg: ["mg", 0.001], g: ["mg", 1000], UI: ["UI", 1], mEq: ["mEq", 1] };
+
+  /** A prescrição digitada, em unidades da comparação, com os erros por campo. */
+  function lerPrescricao() {
+    var p = E.prescr;
+    var erros = {};
+    var faltam = [];
+    var dose = C.lerNumero(p.dose);
+    if (dose.erro) erros.dose = dose.erro;
+    else if (dose.vazio) faltam.push("dose");
+    var peso = C.lerNumero(p.peso, { max: 1000 });
+    if (peso.erro) erros.peso = peso.erro;
+    var intervalo = null;
+    if (p.intervalo === "outro") {
+      var oi = C.lerNumero(p.outroIntervalo, { max: 720 });
+      if (oi.erro) erros.outroIntervalo = oi.erro;
+      else if (oi.vazio) faltam.push("intervalo");
+      else intervalo = oi.valor;
+    } else if (p.intervalo !== "unica") intervalo = +p.intervalo;
+    var valor = dose.valor;
+    var unidade = p.unidade;
+    var conversao = null;
+    if (p.unidade === "mL") {
+      var cq = C.lerNumero(p.concQtd);
+      var cv = C.lerNumero(p.concVol);
+      if (cq.erro) erros.concQtd = cq.erro;
+      else if (cq.vazio) faltam.push("concentração");
+      if (cv.erro) erros.concVol = cv.erro;
+      else if (cv.vazio) faltam.push("volume da concentração");
+      if (dose.valor && cq.valor && cv.valor) {
+        valor = (dose.valor * cq.valor) / cv.valor;
+        unidade = p.concUnidade;
+        conversao = C.com(dose.valor, "mL") + " × " + C.com(cq.valor, p.concUnidade) + " ÷ " + C.com(cv.valor, "mL") + " = " + C.com(valor, unidade);
+      }
+    }
+    if (Object.keys(erros).length || faltam.length || !valor) return { erros: erros, faltam: faltam };
+    var m = MAPA_UNIDADE[unidade];
+    var presc = { dose: valor * m[1], u: m[0], intervalo: intervalo, peso: peso.valor || null, paciente: p.paciente, renal: p.renal, hepatica: p.hepatica };
+    return { erros: erros, faltam: faltam, presc: presc, conversao: conversao, digitada: { valor: valor, unidade: unidade } };
+  }
+
+  function descreverPrescricao(lp) {
+    var pr = lp.presc;
+    var partes = [];
+    var u = pr.u;
+    var porDia = pr.intervalo ? (pr.dose * 24) / pr.intervalo : pr.dose;
+    var dig = lp.digitada.unidade !== u ? " (" + C.com(lp.digitada.valor, lp.digitada.unidade) + ")" : "";
+    partes.push(C.com(pr.dose, u) + dig + " por dose");
+    partes.push(pr.intervalo ? "a cada " + C.com(pr.intervalo, "h") : "dose única");
+    if (pr.intervalo) partes.push(C.com(porDia, u) + " por dia");
+    if (pr.peso) {
+      partes.push(C.com(pr.dose / pr.peso, u + "/kg") + " por dose");
+      if (pr.intervalo) partes.push(C.com(porDia / pr.peso, u + "/kg") + " por dia");
+    }
+    return partes.join(" · ");
+  }
+
+  var ESTADOS = {
+    coincide: ["ok", "Coincide"],
+    intervalo: ["atencao", "Dose igual, intervalo diferente"],
+    perto: ["atencao", ""],
+    diferente: ["neutro", "Diferente"],
+    "maximo-passa": ["grave", "Passa do máximo"],
+    "maximo-talvez": ["atencao", "Pode passar do máximo"],
+    "maximo-ok": ["ok", "Dentro do máximo"],
+    "outra-populacao": ["neutro", "Outra população"],
+    "outra-situacao": ["neutro", ""],
+    "sem-peso": ["neutro", "Precisa do peso"],
+    "nao-comparavel": ["neutro", ""]
+  };
+
+  function contextoDe(item) {
+    var u = item.trecho;
+    var v = item.r.v;
+    if (u.tipo === "linha") {
+      var rotuloLinha = u.celulas.filter(function (c) { return c.texto && !D.valores(c.texto).length; }).map(function (c) { return c.texto; }).join(" · ");
+      return cortar([u.subtitulo, rotuloLinha, v.cab].filter(Boolean).join(" · "), 170);
+    }
+    return cortar(u.texto, 200);
+  }
+
+  function itemConferencia(item) {
+    var r = item.r;
+    var e = ESTADOS[r.estado] || ["neutro", r.estado];
+    var rotulo = e[1];
+    if (r.estado === "perto") rotulo = "Perto: " + C.num(Math.abs(r.desvio) * 100) + "% " + (r.desvio > 0 ? "acima" : "abaixo");
+    if (r.estado === "outra-situacao" || r.estado === "nao-comparavel") rotulo = "Não comparado: " + r.motivo;
+    var unidadePresc = r.prescrito ? r.v.u + (r.v.porKg ? "/kg" : "") + (r.prescrito.por === "dia" ? "/dia" : "/dose") : "";
+    var valor = h("p", { classe: "conf-valor" });
+    valor.appendChild(pintarTexto("“" + r.v.texto + "”", ""));
+    return h(
+      "li",
+      { classe: "conf-item conf-" + e[0] },
+      h("span", { classe: "conf-estado", texto: rotulo }),
+      valor,
+      h("p", { classe: "conf-lido", texto: "Lido como: " + descrever(r.v) + (r.prescrito ? " · prescrito: " + C.com(r.prescrito.valor, unidadePresc) : "") }),
+      h("p", { classe: "conf-ctx", texto: (NOME_POP[r.v.pop] ? NOME_POP[r.v.pop] + " · " : "") + contextoDe(item) })
+    );
+  }
+
+  function resultadoConferencia() {
+    var caixa = document.createDocumentFragment();
+    var lp = lerPrescricao();
+    ["dose", "peso", "outroIntervalo", "concQtd", "concVol"].forEach(function (k) {
+      var el = document.getElementById("pe-" + k);
+      var input = document.getElementById("p-" + k);
+      var msg = lp.erros[k] || "";
+      if (el) el.textContent = msg;
+      if (input) input.setAttribute("aria-invalid", msg ? "true" : "false");
+    });
+    if (!lp.presc) {
+      caixa.appendChild(h("p", { classe: "resultado-vazio", texto: Object.keys(lp.erros).length ? "Corrija o campo marcado para conferir." : "Para conferir, falta: " + lp.faltam.join(", ") + "." }));
+      return caixa;
+    }
+    var res = doseParaDoenca();
+    var uso = trechosEmUso(res);
+    var c = D.conferir(lp.presc, uso.lista);
+    caixa.appendChild(h("p", { classe: "presc-linha" }, h("strong", { texto: "Prescrito: " }), descreverPrescricao(lp)));
+    if (lp.conversao) caixa.appendChild(h("p", { classe: "dica", texto: lp.conversao }));
+    if (!c.itens.length) {
+      caixa.appendChild(nota("O trecho não tem número de dose para comparar. Compare lendo o texto acima."));
+      return caixa;
+    }
+    var primeiro;
+    if (c.resumo === "passa") {
+      primeiro = c.passa[0];
+      caixa.appendChild(h("div", { classe: "alerta alerta-grave", role: "alert" }, icone("alerta", 18), h("p", { texto: "Passa de um máximo citado na bula: " + descrever(primeiro.r.v) + ". Prescrito: " + C.com(primeiro.r.prescrito.valor, primeiro.r.v.u + (primeiro.r.v.porKg ? "/kg" : "") + "/" + primeiro.r.prescrito.por) + "." })));
+    } else if (c.resumo === "coincide") {
+      primeiro = c.coincide[0];
+      caixa.appendChild(h("div", { classe: "alerta alerta-ok" }, icone("ok", 18), h("p", { texto: "Coincide com a bula: " + descrever(primeiro.r.v) + (c.coincide.length > 1 ? " (e mais " + (c.coincide.length - 1) + ")" : "") + ". Confira se o trecho é da mesma população, gravidade e situação do paciente." })));
+    } else if (c.resumo === "intervalo") {
+      primeiro = c.intervalo[0];
+      caixa.appendChild(h("div", { classe: "alerta alerta-atencao" }, icone("alerta", 18), h("p", { texto: "A dose bate com a bula, mas o intervalo não: a bula diz " + descrever(primeiro.r.v) + "." })));
+    } else if (c.resumo === "perto") {
+      primeiro = c.perto[0];
+      caixa.appendChild(h("div", { classe: "alerta alerta-atencao" }, icone("alerta", 18), h("p", { texto: "Não coincide; o mais perto é " + descrever(primeiro.r.v) + ", " + C.num(Math.abs(primeiro.r.desvio) * 100) + "% " + (primeiro.r.desvio > 0 ? "acima" : "abaixo") + "." })));
+    } else if (c.resumo === "diferente") {
+      caixa.appendChild(h("div", { classe: "alerta alerta-atencao" }, icone("alerta", 18), h("p", { texto: "Nenhum número deste trecho da bula coincide com a prescrição. Leia o trecho acima antes de seguir." })));
+    } else {
+      caixa.appendChild(nota("Nenhum número do trecho pôde ser comparado com esta prescrição (veja os motivos abaixo)."));
+    }
+    if (c.talvez.length) caixa.appendChild(h("div", { classe: "alerta alerta-atencao" }, icone("alerta", 18), h("p", { texto: "A dose do dia passa de " + descrever(c.talvez[0].r.v) + ". Se esse máximo for diário, a prescrição passa dele." })));
+    var avisos = [];
+    if (c.semPeso && !lp.presc.peso) avisos.push(c.semPeso + (c.semPeso === 1 ? " valor é" : " valores são") + " por kg: informe o peso para comparar.");
+    if (c.outraPop) avisos.push(c.outraPop + (c.outraPop === 1 ? " valor é" : " valores são") + " de " + (lp.presc.paciente === "adulto" ? "criança" : "adulto") + " e ficaram de fora.");
+    if (c.outraSit) avisos.push(c.outraSit + (c.outraSit === 1 ? " valor é" : " valores são") + " de ajuste renal ou hepático e ficaram de fora. Marque a situação, se for o caso.");
+    avisos.forEach(function (a) { caixa.appendChild(h("p", { classe: "dica", texto: a })); });
+
+    var principais = c.passa.concat(c.coincide, c.intervalo, c.talvez, c.perto.slice(0, 3), c.itens.filter(function (i) { return i.r.estado === "maximo-ok"; }));
+    var resto = c.itens.filter(function (i) { return principais.indexOf(i) < 0; });
+    if (principais.length) caixa.appendChild(h("ul", { classe: "conf-lista" }, principais.map(itemConferencia)));
+    if (resto.length) {
+      caixa.appendChild(h("details", { classe: "conf-resto" }, h("summary", { texto: "Outros números do trecho (" + resto.length + ")" }), h("ul", { classe: "conf-lista" }, resto.map(itemConferencia))));
+    }
+    caixa.appendChild(h("p", { classe: "dica", texto: "A conferência compara números e mostra como leu cada um. Ela não sabe a gravidade, o resto do caso nem a apresentação disponível no Brasil." }));
+    return caixa;
+  }
+
+  function atualizarConferencia() {
+    var alvo = document.getElementById("conf-res");
+    if (!alvo) return;
+    alvo.textContent = "";
+    alvo.appendChild(resultadoConferencia());
   }
 
   /* ── salvas ─────────────────────────────────────────────────────── */
@@ -1548,6 +2063,8 @@
         h("p", { texto: "A bula aprovada pela FDA, no formato oficial SPL que os fabricantes enviam à agência. É o mesmo documento publicado no DailyMed, da Biblioteca Nacional de Medicina dos EUA. O app lista primeiro as bulas de referência (NDA e BLA) e esconde as das reembaladoras, que repetem o texto do fabricante." }),
         h("h3", { texto: "Nome: RxNorm" }),
         h("p", { texto: "Vocabulário padrão de medicamentos da Biblioteca Nacional de Medicina dos EUA. Entende boa parte dos nomes em português (pelo DrugBank) e erros de digitação. Para os poucos nomes brasileiros que ele não entende (dipirona, noradrenalina, paracetamol, varfarina…), o app tem uma pequena tabela de equivalência que é sempre confirmada no RxNorm e mostrada na tela." }),
+        h("h3", { texto: "Doença: tabela de nomes" }),
+        h("p", { texto: "As bulas americanas chamam as doenças pelo nome em inglês, às vezes por categoria (otite está em “infections of the ear, nose, and throat”). O app tem uma tabela que traduz o nome em português para esses termos. Ela não tem dose nenhuma, e a tela sempre mostra por qual termo achou o trecho; o que vem de categoria ampla aparece marcado." }),
         h("h3", { texto: "Brasil: ANVISA" }),
         h("p", { texto: "A ANVISA não oferece um serviço aberto para outros programas consultarem o Bulário Eletrônico. Por isso o app abre o bulário no navegador, já com a busca feita, em vez de copiar o texto de lá." })
       ),
@@ -1559,7 +2076,8 @@
           "ul",
           { classe: "marcadores" },
           h("li", { texto: "Não traduz, não resume e não reescreve a bula." }),
-          h("li", { texto: "Não sugere dose nem preenche a calculadora sozinho a partir da bula." }),
+          h("li", { texto: "Não cria dose. A dose para a doença é o trecho da bula, sem tradução; a conferência só compara os números desse trecho com a prescrição e mostra como leu cada um." }),
+          h("li", { texto: "A conferência não sabe a gravidade, o resto do caso nem a apresentação disponível no Brasil. “Coincide” quer dizer que o número bate com um trecho da bula, não que a prescrição está certa para o paciente." }),
           h("li", { texto: "Não usa inteligência artificial." }),
           h("li", { texto: "Não substitui bases clínicas pagas (Micromedex, Lexicomp, UpToDate), que trazem ajuste renal, pediatria e interações revisados por farmacêuticos." }),
           h("li", { texto: "Não tem a bula brasileira: as doses e apresentações aprovadas aqui podem ser diferentes das americanas." })
@@ -1602,6 +2120,7 @@
       if (el) el.focus();
     }
     if (E.tela === "bula" && E.consulta) atualizarAchados(false);
+    if (E.tela === "bula") atualizarConferencia();
   }
 
   function aplicarTema() {

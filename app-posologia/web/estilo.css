@@ -251,3 +251,53 @@ mark.achado.atual{background:var(--achado-atual);outline:2px solid var(--achado-
 #aviso.visivel{opacity:1;transform:translate(-50%,0)}
 @media (min-width:760px){#aviso{bottom:24px}}
 #erro{position:sticky;top:0;z-index:60;background:var(--bad);color:#fff;padding:10px 14px;font-size:.9rem}
+
+/* ── busca com doença ───────────────────────── */
+.busca-dupla{display:grid;grid-template-columns:1fr;gap:8px}
+.busca-dupla .busca{padding:5px 12px}
+.busca-dupla .bt{min-height:48px}
+@media (min-width:760px){.busca-dupla{grid-template-columns:1.1fr 1fr auto}}
+
+/* ── dose para a doença ─────────────────────── */
+.dose-card{border:1.5px solid var(--acento)}
+.dose-card .busca{box-shadow:none}
+.ficha-ativa{background:var(--acento);border-color:var(--acento);color:var(--on-acento)}
+.ficha-ativa:hover{color:var(--on-acento)}
+.ficha-sit{border-style:dashed}
+#dose-res{display:flex;flex-direction:column;gap:10px}
+.procurado{font-size:.84rem;color:var(--ink-3)}
+.indicacao{padding:10px 12px;border-radius:12px;background:var(--ok-soft);display:flex;flex-direction:column;gap:6px}
+.trechos{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.trecho{padding:11px 13px;border-radius:12px;background:var(--surface-2);display:flex;flex-direction:column;gap:7px}
+.trecho .item-m{margin-top:0}
+.trecho-sit{background:var(--warn-soft)}
+.trecho-t{font-size:.96rem;line-height:1.6}
+.trecho-sub{font-size:.84rem;font-weight:600;color:var(--ink-2)}
+.linha-tab{display:grid;grid-template-columns:minmax(0,38%) 1fr;gap:5px 12px;margin:0;font-size:.93rem;line-height:1.5}
+.linha-tab dt{color:var(--ink-3);font-size:.8rem;padding-top:2px}
+.linha-tab dd{margin:0}
+@media (max-width:420px){.linha-tab{grid-template-columns:1fr}.linha-tab dt{padding-top:6px}}
+
+/* ── conferência da prescrição ──────────────── */
+.checks{display:flex;flex-wrap:wrap;gap:8px 18px}
+.check{display:flex;align-items:center;gap:8px;font-size:.92rem;min-height:36px;cursor:pointer}
+.check input{width:20px;height:20px;accent-color:var(--acento)}
+.conf-res{display:flex;flex-direction:column;gap:10px;margin-top:4px;padding-top:14px;border-top:1px solid var(--rule)}
+.presc-linha{font-size:.95rem}
+.alerta-ok{background:var(--ok-soft);color:var(--ink);border:1.5px solid var(--ok)}
+.alerta-ok .ic{color:var(--ok)}
+.conf-lista{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.conf-item{padding:10px 12px;border-radius:12px;background:var(--surface-2);display:flex;flex-direction:column;gap:4px;border-left:4px solid var(--rule-strong)}
+.conf-ok{border-left-color:var(--ok)}
+.conf-atencao{border-left-color:var(--warn)}
+.conf-grave{border-left-color:var(--bad);background:var(--bad-soft)}
+.conf-estado{font-weight:600;font-size:.82rem;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-2)}
+.conf-ok .conf-estado{color:var(--ok)}
+.conf-atencao .conf-estado{color:var(--warn)}
+.conf-grave .conf-estado{color:var(--bad)}
+.conf-valor{font-size:.95rem}
+.conf-lido{font-size:.85rem;color:var(--ink-2)}
+.conf-ctx{font-size:.8rem;color:var(--ink-3)}
+.conf-resto summary{cursor:pointer;font-size:.88rem;color:var(--acento-ink);font-weight:500;padding:4px 0}
+.conf-resto[open] summary{margin-bottom:8px}
+.campo>.sel{width:100%}

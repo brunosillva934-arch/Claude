@@ -1,9 +1,11 @@
 # Posologia · bulas oficiais (celular e computador)
 
-App de consulta de posologia direto da bula oficial. Você digita o princípio ativo, em
-português ou em inglês, e o app mostra a bula aprovada pela FDA com a seção de posologia
-aberta, as doses destacadas e a fonte, a versão e a data de cada texto. Traz também uma
-calculadora de dose que só faz a conta com os números que você digita.
+App de consulta de posologia direto da bula oficial. Você digita o princípio ativo e a
+doença, em português, e o app mostra **a dose para aquela doença** como está escrita na
+bula aprovada pela FDA, com a fonte, a versão e a data. Depois você digita a prescrição
+pronta e o app **confere** contra os números da bula: o que coincide, o que fica perto
+(com a diferença em %), o que tem outro intervalo e o que passa de um máximo citado.
+Traz também uma calculadora de dose que só faz a conta com os números que você digita.
 
 | Onde | Arquivo |
 | --- | --- |
@@ -36,6 +38,49 @@ O caminho de uma busca, sempre visível no topo da tela:
    repetem o texto. As de referência (NDA ou BLA) vêm primeiro; depois as demais, da mais
    recente para a mais antiga.
 
+## Dose para a doença e conferência da prescrição
+
+**Dose para a doença.** Na busca, ou já dentro da bula, digite a doença em português
+(otite, pneumonia, ITU, TVP, gonorreia, H. pylori…) ou toque numa das doenças que a própria
+bula cita. O app:
+
+1. traduz o nome para os termos que as bulas americanas usam, pela tabela `DOENCAS` em
+   `web/doses.js` (só nomes, nenhuma dose). Às vezes a bula usa uma categoria: otite está
+   em "infections of the ear, nose, and throat". O que é achado por categoria ampla aparece
+   marcado, e a tela sempre diz por qual termo achou;
+2. diz se a doença **consta nas indicações** da bula, e avisa quando não consta (pode ser
+   uso fora da bula nos EUA);
+3. mostra **os trechos da posologia que falam da doença**: frases e linhas de tabela, como
+   estão escritas, com a população (adulto, criança) e marcando o que é ajuste renal ou
+   hepático. Bula de uma indicação só, que não repete o nome da doença na posologia, mostra
+   a posologia geral e diz isso.
+
+**Conferir a prescrição.** Digite a dose por tomada (em mg, mcg, g, UI, mEq ou em mL com a
+concentração), o intervalo, adulto ou criança, o peso e, se for o caso, função renal reduzida
+ou insuficiência hepática. O app lê os números dos trechos ("25 mg/kg/day in divided doses
+every 12 hours", "500 mg once daily", "not to exceed 4 g/day") e, para cada um, mostra o texto
+da bula, **como leu** ("25 mg/kg/dia, a cada 12 h") e o valor prescrito na mesma unidade. O
+resumo é um destes:
+
+| Resumo | Quando |
+| --- | --- |
+| **Passa do máximo** (vermelho) | A prescrição passa de um "not to exceed", "maximum" ou "up to" do trecho |
+| **Coincide** (verde) | Dose e intervalo batem com um valor do trecho (até 2% de diferença) |
+| **Dose igual, intervalo diferente** | A dose bate, o intervalo da bula é outro |
+| **Perto** | Até 10% de diferença, com o % e o lado |
+| **Diferente** | Nenhum número do trecho bate |
+
+Valores de outra população (dose de criança para adulto e vice-versa) e de ajuste renal ou
+hepático, quando o paciente não tem essa condição, **ficam de fora** e o app diz quantos.
+Isso impede, por exemplo, que 875 mg de 12/12 h num adulto de 70 kg "coincida" com os
+25 mg/kg/dia da coluna de criança, ou que 30 mg/dia de enoxaparina coincida com a tabela de
+insuficiência renal num paciente com rim normal.
+
+"Coincide" quer dizer que o número bate com um trecho da bula, não que a prescrição está
+certa para o paciente. A conferência não sabe a gravidade, o resto do caso nem a
+apresentação disponível no Brasil. Dose em comprimidos ("take 1 tablet") ou em mL sem
+concentração não é comparada; o texto continua na tela.
+
 ## O que o app faz e o que não faz
 
 Faz:
@@ -55,7 +100,7 @@ Faz:
 
 Não faz:
 
-- **não sugere dose** e não preenche a calculadora a partir da bula;
+- **não cria dose**: toda dose na tela é trecho da bula, e a conferência mostra como leu cada número;
 - não usa inteligência artificial;
 - não tem a bula brasileira. Doses e apresentações aprovadas no Brasil podem ser diferentes
   das americanas. Medicamentos sem registro nos EUA (dipirona, por exemplo) não têm bula na
@@ -160,6 +205,7 @@ Para uma versão nova, aumente `NOME` e `CODIGO` em `montar.sh`.
 | Caminho | O que é |
 | --- | --- |
 | `web/bulas.js` | Fontes (RxNorm e openFDA), tabela de nomes brasileiros, ordem das seções, limpeza das tabelas |
+| `web/doses.js` | Dose por doença: tabela de nomes de doença, leitura dos números de dose da bula, conferência da prescrição |
 | `web/calculo.js` | Calculadora: leitura de números, conversão de unidades, contas e avisos |
 | `web/integridade.js` | SHA-256 das bulas salvas |
 | `web/app.js` | As telas |
@@ -168,22 +214,36 @@ Para uma versão nova, aumente `NOME` e `CODIGO` em `montar.sh`.
 | `src/`, `res/`, `AndroidManifest.xml` | O app Android: um WebView, a trava de rede e a ponte para salvar e abrir links |
 | `icone.js` | Redesenha os PNG do ícone (precisa do Playwright) |
 | `testes/unidade.test.js` | Calculadora, números, SHA-256 e tratamento do texto. `node --test testes/unidade.test.js` |
+| `testes/doses.test.js` | Leitura das doses, nomes de doença, conferência. `node --test testes/doses.test.js` |
+| `testes/dose-bulas.js`, `testes/bulas/` | 29 conferências contra 12 bulas reais da FDA salvas, sem internet. `node testes/dose-bulas.js` |
 | `testes/navegador.js` | Ponta a ponta no Chromium, contra a FDA e o RxNorm de verdade. `node testes/navegador.js` |
 
 ## O que foi e o que não foi testado
 
 **Testado:**
 
-- 32 testes de unidade, entre eles 2000 casos aleatórios da calculadora conferidos contra
-  a fórmula, o SHA-256 contra os vetores oficiais, e a garantia de que quebrar parágrafos e
-  destacar doses não muda nenhum caractere da bula.
-- 16 passos de ponta a ponta no Chromium, em tamanho de celular e de computador, contra os
+- 55 testes de unidade, entre eles 2000 casos aleatórios da calculadora conferidos contra
+  a fórmula, o SHA-256 contra os vetores oficiais, a garantia de que quebrar parágrafos e
+  destacar doses não muda nenhum caractere da bula, e a leitura de doses com frases tiradas
+  de bulas reais.
+- 29 conferências de prescrição contra 12 bulas reais da FDA (amoxicilina, azitromicina,
+  cefalexina, ceftriaxona, enoxaparina, levofloxacino, vancomicina, metronidazol, fluconazol,
+  nitrofurantoína, oseltamivir, piperacilina-tazobactam), cada resultado conferido no texto
+  da bula: otite, pneumonia, H. pylori, gonorreia (1 g é da uretrite **não** gonocócica e
+  não pode coincidir), meningite com máximo de 4 g, profilaxia e tratamento de TVP com e sem
+  ajuste renal, ITU, C. difficile, tricomoníase, candidíase vaginal, gripe em adulto e criança.
+- Nenhuma dose some da tela: a frase que é cópia achatada de uma tabela só sai se cada dose
+  dela estiver na tabela. Conferido em 40 bulas; foi assim que apareceu (e foi corrigido)
+  o caso da piperacilina, cuja tabela de adultos só existe no texto.
+- 17 passos de ponta a ponta no Chromium, em tamanho de celular e de computador, contra os
   servidores reais: amoxicilina do nome à bula; o texto da posologia na tela conferido letra
   por letra com o da FDA; procura dentro da bula; tabela maliciosa limpa sem executar nada;
   salvar, reabrir, conferir versão; cópia salva adulterada recusada; dipirona levando à
   ANVISA; nome inexistente sem resultado inventado; varfarina, paracetamol e noradrenalina
   chegando ao princípio ativo certo; calculadora por peso com dose máxima, número ambíguo
-  recusado, infusão; CSP bloqueando outro servidor e script injetado; tema escuro.
+  recusado, infusão; amoxicilina + otite da busca até a conferência (adulto coincide;
+  criança com o intervalo errado é apontada); CSP bloqueando outro servidor e script
+  injetado; tema escuro.
 - Os 44 nomes da tabela de equivalência, um a um, no RxNorm.
 - O APK foi conferido por dentro (manifesto, permissão, assinatura, página embutida).
 
